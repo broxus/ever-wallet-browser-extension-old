@@ -1,0 +1,19 @@
+$windowBg: #ffffff; // white: fallback for background
+$windowFg: #000000; // black: fallback for text
+$windowBgOver: #f1f1f1; // light gray: fallback for background with mouse over
+$windowBgRipple: #e5e5e5; // darker gray: fallback for ripple effect
+$windowFgOver: $windowFg; // black: fallback for text with mouse over
+$windowSubTextFg: #999999; // gray: fallback for additional text
+$windowSubTextFgOver: #919191; // darker gray: fallback for additional text with mouse over
+$windowBoldFg: #222222; // dark gray: fallback for bold text
+$windowBoldFgOver: #222222; // dark gray: fallback for bold text with mouse over
+$windowBgActive: #40a7e3; // bright blue: fallback for blue filled active areas
+$windowFgActive: #ffffff; // white: fallback for text on active areas
+$windowActiveTextFg: #168acd; // online blue: fallback for active text like online status
+$windowShadowFg: #000000; // black: fallback for shadow
+$windowShadowFgFallback: #f1f1f1; // gray: fallback for shadow without opacity
+
+$shadowFg: #00000018; // most shadows (including opacity)
+
+$walletTitleBg: #121213; // wallet window title background when window is inactive
+$walletTopBg: #1e1f21; // wallet top part background

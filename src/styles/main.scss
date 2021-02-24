@@ -1,0 +1,33 @@
+@import "fonts";
+@import "reset";
+@import "colors";
+
+$font-family: 'DAOpenSans';
+
+html {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.noselect {
+  user-select: none;
+}
+
+* {
+  font-family: $font-family;
+  box-sizing: border-box;
+}
+
+body {
+  width: 392px;
+  height: 520px;
+  line-height: 1.3;
+  font-size: 1.2em;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  background-color: $walletTopBg;
+}

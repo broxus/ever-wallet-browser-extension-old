@@ -1,0 +1,15 @@
+@import "../../styles/colors";
+
+$walletTopBarHeight: 62px;
+
+.top-bar {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  height: $walletTopBarHeight;
+
+  background-color: $walletTitleBg;
+  color: $windowBg;
+}
