@@ -12,4 +12,9 @@ $walletTopBarHeight: 62px;
 
   background-color: $walletTitleBg;
   color: $windowBg;
+
+  &__refresh {
+    width: 30px;
+    height: 30px;
+  }
 }

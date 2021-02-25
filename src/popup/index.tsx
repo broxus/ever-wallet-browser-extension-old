@@ -3,13 +3,15 @@ import ReactDOM from 'react-dom';
 
 import '../styles/main.scss';
 
-import { TopBar } from '../components/topBar';
+import {TopBar} from '../components/topBar';
+import {AssetsList} from "../components/assetsList";
 
 class App extends React.Component<{}, {}> {
     render() {
         return (
             <div>
                 <TopBar/>
+                <AssetsList/>
             </div>
         );
     }
