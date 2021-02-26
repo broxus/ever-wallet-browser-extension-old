@@ -1,4 +1,8 @@
+mod transport;
+
 use wasm_bindgen::prelude::*;
+
+use transport::adnl::AdnlStreamCrypto;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -10,15 +14,12 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn greet() {
-    log("TEST!");
+pub struct AdnlConnection {
+
 }
 
 #[wasm_bindgen(start)]
 pub fn main_js() -> Result<(), JsValue> {
     console_error_panic_hook::set_once();
-
-    log("Hello from WASM!");
-
     Ok(())
 }
