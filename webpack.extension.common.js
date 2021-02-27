@@ -1,13 +1,13 @@
-const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const {CleanWebpackPlugin} = require('clean-webpack-plugin');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const {CleanWebpackPlugin} = require("clean-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = {
     entry: {
-        popup: './src/popup/index.tsx',
-        background: './src/background/index.ts'
+        popup: "./src/popup/index.tsx",
+        background: "./src/background/extension.ts",
     },
     module: {
         rules: [
@@ -57,7 +57,7 @@ module.exports = {
         }),
         new CopyWebpackPlugin({
             patterns: [
-                {from: './src/manifest.json'},
+                {from: './src/extension_manifest.json', to: 'manifest.json'},
                 {from: './src/icons/icon16.png'},
                 {from: './src/icons/icon48.png'},
                 {from: './src/icons/icon128.png'},

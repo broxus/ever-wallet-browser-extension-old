@@ -1,14 +1,14 @@
-use std::net::SocketAddr;
-
 use sha2::digest::{FixedOutput};
 use aes_ctr::cipher::SyncStreamCipher;
 use rand::{Rng, CryptoRng, RngCore};
 
-pub struct AdnlClient {
+use ton_api::ton;
+
+pub struct ClientState {
     crypto: AdnlStreamCrypto,
 }
 
-impl AdnlClient {
+impl ClientState {
     pub fn init(server_key: &ExternalKey) -> (Self, Vec<u8>) {
         let mut rng = rand::thread_rng();
         let (crypto, nonce) = AdnlStreamCrypto::new_with_nonce(&mut rng);
@@ -21,79 +21,32 @@ impl AdnlClient {
         (client, init_packet)
     }
 
-    pub fn build_ping_packet(&self) -> Vec<u8> {
-        const PING_ID: u32 = 0x1faaa1bf;
+    pub fn build_ping_query(&self) -> (QueryId, Vec<u8>) {
+        let mut rng = rand::thread_rng();
+        let value = rng.gen();
+        let query = ton::TLObject::new(ton::rpc::adnl::Ping { value });
+        build_adnl_message(&mut rng, &query)
+    }
 
-        let now = std::time::SystemTime::now();
-        let value: i64 = rand::thread_rng().gen();
-        todo!()
+    pub fn build_query(&self, query: &ton::TLObject) -> (QueryId, Vec<u8>) {
+        let mut rng = rand::thread_rng();
+        build_adnl_message(&mut rng, query)
     }
 }
 
 type QueryId = [u8; 32];
 
-fn build_adnl_message<T>(rng: &mut T, prefix: Option<&[u8]>, data: &[u8]) -> (QueryId, Vec<u8>)
+fn build_adnl_message<T>(rng: &mut T, data: &ton::TLObject) -> (QueryId, Vec<u8>)
     where T: RngCore
 {
     const ADNL_MESSAGE_ID: u32 = 0xb48bf97a;
 
     let query_id: QueryId = rng.gen();
-    let data = SliceSerializer::new(data);
-
-    let mut result: Vec<u8> = Vec::with_capacity(4 + query_id.len() + prefix.map(<[_]>::len).unwrap_or_default() + data.len());
+    let mut result: Vec<u8> = Vec::with_capacity(4 + query_id.len());
     result.extend(&ADNL_MESSAGE_ID.to_le_bytes());
     result.extend(&query_id);
-    if let Some(prefix) = prefix {
-        result.extend(prefix);
-    }
-    data.write(&mut result);
-
+    ton_api::Serializer::new(&mut result).write_boxed(data).expect("Shouldn't fail");
     (query_id, result)
-}
-
-struct SliceSerializer<'a> {
-    data: &'a [u8]
-}
-
-impl<'a> SliceSerializer<'a> {
-    fn new(data: &'a [u8]) -> Self {
-        Self {
-            data
-        }
-    }
-
-    const fn packed_len_limit(&self) -> usize {
-        254
-    }
-
-    fn prefix_len(&self) -> usize {
-        if self.data.len() < self.packed_len_limit() {
-            1
-        } else {
-            4
-        }
-    }
-
-    fn len(&self) -> usize {
-        self.prefix_len() + self.data.len()
-    }
-
-    fn write(&self, output: &mut Vec<u8>) {
-        let mut have_written = if self.data.len() < self.packed_len_limit() {
-            output.push(self.data.len() as u8);
-            1
-        } else {
-            output.push(self.packed_len_limit() as u8);
-            output.extend((self.data.len() as u32).to_le_bytes().iter().skip(1));
-            4
-        };
-        output.extend(self.data);
-        have_written += self.data.len();
-        let remainder = have_written % 4;
-        if remainder != 0 {
-            output.extend(&[0u8; 4][remainder..]);
-        }
-    }
 }
 
 struct AdnlStreamCrypto {

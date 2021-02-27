@@ -1,2 +1,6 @@
 [workspace]
 members = ["nekoton"]
+
+[profile.release]
+opt-level = "s"
+lto = true
