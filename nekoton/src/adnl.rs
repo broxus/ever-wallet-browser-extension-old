@@ -109,7 +109,7 @@ fn build_adnl_handshake_packet(buffer: &[u8], local: &LocalKey, other: &External
     result.extend(buffer);
 
     let mut shared_secret = calculate_shared_secret(&local.private_key, &other.public_key);
-    build_packet_cipher(&shared_secret, checksum.as_ref()).apply_keystream(result.as_mut());
+    build_packet_cipher(&shared_secret, checksum.as_ref()).apply_keystream(&mut result[96..]);
     result
 }
 

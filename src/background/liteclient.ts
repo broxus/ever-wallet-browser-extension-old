@@ -29,7 +29,7 @@ const parseConfig = (config: RawConfig): Config => {
         const b = ((ip >> 8) & 0xff);
         const c = ((ip >> 16) & 0xff);
         const d = ((ip >> 24) & 0xff);
-        return `${a}.${b}.${c}.${d}`;
+        return `${d}.${c}.${b}.${a}`;
     }
 
     const liteserver = config.liteservers[0];
@@ -48,7 +48,7 @@ class AdnlClient {
         this.connection = connection;
     }
 
-    async connect(address: string, port: number) {
+    public async connect(address: string, port: number) {
         const createSocket = new Promise<number>((resolve,) => {
             chrome.sockets.tcp.create({}, (createInfo => {
                 resolve(createInfo.socketId);
@@ -65,20 +65,34 @@ class AdnlClient {
                 } else {
                     reject(result);
                 }
-            })
+            });
         });
         const result = await connection;
         console.log(`Connected to ${address}:${port} with result ${result}`);
+
+        chrome.sockets.tcp.onReceive.addListener(this.onReceive);
+        chrome.sockets.tcp.send(socketId, this.connection.initPacket, (sendInfo) => {
+            console.log(sendInfo);
+        });
     }
 
-    async close() {
+    public async close() {
         await new Promise<void>((resolve,) => {
             if (this.socketId != null) {
                 chrome.sockets.tcp.close(this.socketId, resolve);
+                chrome.sockets.tcp.onReceive.removeListener(this.onReceive);
             } else {
                 resolve();
             }
         });
+    }
+
+    private onReceive(args: chrome.sockets.ReceiveEventArgs) {
+        console.log(args);
+        if (args.socketId != this.socketId) {
+            return;
+        }
+        console.log("Received data:", args.data);
     }
 }
 
@@ -92,5 +106,8 @@ class AdnlClient {
 
     console.log("Working...");
 
-    await client.close();
+    setTimeout(async () => {
+        await client.close();
+        console.log("Closed");
+    }, 10000);
 })();
