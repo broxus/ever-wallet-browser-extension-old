@@ -6,7 +6,7 @@ use sha2::digest::FixedOutput;
 use wasm_bindgen::prelude::*;
 
 use ton_api::ton::TLObject;
-use ton_api::{ton, Deserializer};
+use ton_api::{ton, BoxedSerialize, Deserializer, IntoBoxed};
 
 #[wasm_bindgen]
 extern "C" {
@@ -45,7 +45,13 @@ impl ClientState {
 
     pub fn build_query(&mut self, query: &ton::TLObject) -> (QueryId, Vec<u8>) {
         let mut rng = rand::thread_rng();
-        let (query_id, data) = build_adnl_message(&mut rng, query);
+        let query_bytes = query.boxed_serialized_bytes().expect("Shouldn't fail");
+        let (query_id, data) = build_adnl_message(
+            &mut rng,
+            &ton::TLObject::new(ton::rpc::lite_server::Query {
+                data: ton::bytes(query_bytes),
+            }),
+        );
         let data = self.crypto.pack(&data);
         (query_id, data)
     }
@@ -57,13 +63,19 @@ impl ClientState {
         self.buffer.extend(data);
         let mut processed = 0;
         loop {
-            log(&format!("iteration: {}", processed));
+            log(&format!(
+                "iteration: {}, buffer len: {}",
+                processed,
+                self.buffer.len()
+            ));
 
             match (self.receiver_state, self.buffer.len() - processed) {
                 (ReceiverState::WaitingLength, remaining) if remaining >= 4 => {
                     let length = self
                         .crypto
                         .unpack_length(&self.buffer[processed..processed + 4]);
+
+                    log(&format!("Got length: {}", length));
 
                     processed += 4;
                     if length >= 64 {
@@ -117,22 +129,30 @@ enum ReceiverState {
     WaitingPayload(NonZeroUsize),
 }
 
-type QueryId = [u8; 32];
+pub type QueryId = [u8; 32];
 
 fn build_adnl_message<T>(rng: &mut T, data: &ton::TLObject) -> (QueryId, Vec<u8>)
 where
     T: RngCore,
 {
-    const ADNL_MESSAGE_ID: u32 = 0xb48bf97a;
-
     let query_id: QueryId = rng.gen();
-    let mut result: Vec<u8> = Vec::with_capacity(4 + query_id.len());
-    result.extend(&ADNL_MESSAGE_ID.to_le_bytes());
-    result.extend(&query_id);
-    ton_api::Serializer::new(&mut result)
+
+    let mut query = Vec::new();
+    ton_api::Serializer::new(&mut query)
         .write_boxed(data)
         .expect("Shouldn't fail");
-    (query_id, result)
+
+    let message = ton::adnl::message::message::Query {
+        query_id: ton::int256(query_id),
+        query: ton::bytes(query),
+    }
+    .into_boxed();
+    let mut data = Vec::new();
+    ton_api::Serializer::new(&mut data)
+        .write_boxed(&message)
+        .expect("Shouldn't fail");
+
+    (query_id, data)
 }
 
 struct AdnlStreamCrypto {

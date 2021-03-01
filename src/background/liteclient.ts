@@ -40,16 +40,35 @@ const parseConfig = (config: RawConfig): Config => {
     };
 };
 
+class Mutex {
+    current: Promise<void> = Promise.resolve();
+
+    public lock = () => {
+        let resolveChanged: () => void;
+        const chained = new Promise<void>((resolve,) => {
+            resolveChanged = () => resolve();
+        });
+
+        const result = this.current.then(() => resolveChanged);
+        this.current = chained;
+
+        return result;
+    };
+}
+
 class AdnlClient {
     connection: libnekoton.AdnlConnection;
     socketId: number | null = null;
-    responseHandlers: Map<string, () => {}> = new Map<string, () => {}>();
+    channelMutex: Mutex = new Mutex();
+    responseHandler: ((data: ArrayBuffer) => void) | null = null;
 
     constructor(connection: libnekoton.AdnlConnection) {
         this.connection = connection;
     }
 
     public async connect(address: string, port: number) {
+        await this.close();
+
         const createSocket = new Promise<number>((resolve,) => {
             chrome.sockets.tcp.create({}, (createInfo => {
                 resolve(createInfo.socketId);
@@ -72,7 +91,8 @@ class AdnlClient {
         console.log(`Connected to ${address}:${port} with result ${result}`);
 
         chrome.sockets.tcp.onReceive.addListener(this.onReceive);
-        await this.send(this.connection.initPacket);
+        await this.send(this.connection.initPacket, () => {
+        });
     }
 
     public async getLatestBlockId() {
@@ -80,9 +100,11 @@ class AdnlClient {
             return;
         }
 
-        const query = this.connection.getMasterchainInfoPacket();
+        const query = this.connection.getMasterchainInfo();
         console.log(query);
-        await this.send(query.data);
+        return await this.send(query.data, response => {
+            return query.handleResult(this.connection, new Uint8Array(response));
+        });
     }
 
     public async close() {
@@ -96,15 +118,23 @@ class AdnlClient {
         });
     }
 
-    private async send(data: Uint8Array) {
-        await new Promise<void>((resolve, reject) => {
+    private async send<T>(data: Uint8Array, onResponse: (data: ArrayBuffer) => T): Promise<T> {
+        const unlock = await this.channelMutex.lock();
+
+        return await new Promise<T>((resolve, reject) => {
             if (this.socketId == null) {
                 return reject(new Error("liteclient was not initialized"));
             }
 
+            this.responseHandler = (data) => {
+                const result = onResponse(data);
+                this.responseHandler = null;
+                unlock();
+                resolve(result);
+            };
+
             chrome.sockets.tcp.send(this.socketId, data, (sendInfo => {
                 console.log("Sent:", sendInfo);
-                resolve();
             }))
         });
     }
@@ -113,13 +143,10 @@ class AdnlClient {
         if (args.socketId != this.socketId) {
             return;
         }
-        while (true) {
-            console.log("Received data:", args.data);
-            const processed = this.connection.processReceived(new Uint8Array(args.data));
-            console.log(processed);
-            if (processed == null) {
-                return
-            }
+
+        console.log("Received data:", args.data);
+        if (this.responseHandler != null) {
+            this.responseHandler(args.data);
         }
     }
 }
@@ -134,7 +161,8 @@ class AdnlClient {
 
     console.log("Working...");
 
-    await client.getLatestBlockId();
+    const latestBlockId = await client.getLatestBlockId();
+    console.log(latestBlockId);
 
     setTimeout(async () => {
         await client.close();

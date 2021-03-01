@@ -16,20 +16,48 @@ extern "C" {
 
 #[wasm_bindgen]
 pub struct Query {
-    query_id: [u8; 32],
-    data: Vec<u8>,
+    #[wasm_bindgen(skip)]
+    pub query_id: [u8; 32],
+    #[wasm_bindgen(skip)]
+    pub data: Vec<u8>,
 }
 
-#[wasm_bindgen]
 impl Query {
-    #[wasm_bindgen(getter, js_name = "queryId")]
-    pub fn qwery_id(&mut self) -> Uint8Array {
-        unsafe { Uint8Array::view_mut_raw(self.query_id.as_mut_ptr(), self.query_id.len()) }
+    pub fn js_data(&mut self) -> Uint8Array {
+        unsafe { Uint8Array::view_mut_raw(self.data.as_mut_ptr(), self.data.len()) }
     }
 
-    #[wasm_bindgen(getter, js_name = "data")]
-    pub fn data(&mut self) -> Uint8Array {
-        unsafe { Uint8Array::view_mut_raw(self.data.as_mut_ptr(), self.data.len()) }
+    pub fn handle_result<T>(&self, connection: &mut AdnlConnection, data: &[u8]) -> Option<T::Reply>
+    where
+        T: ton_api::Function,
+    {
+        let query = connection.state.handle_query(data)?;
+        if query.query_id.0 != self.query_id {
+            log("Invalid query id");
+            return None;
+        }
+
+        let answer = match ton_api::Deserializer::new(&mut std::io::Cursor::new(&query.answer.0))
+            .read_boxed::<ton::TLObject>()
+        {
+            Ok(answer) => answer,
+            Err(e) => {
+                log(&e.to_string());
+                return None;
+            }
+        };
+
+        let reply = match answer.downcast::<T::Reply>() {
+            Ok(reply) => reply,
+            Err(_) => {
+                log("Invalid reply");
+                return None;
+            }
+        };
+
+        // TODO: change Option to Result
+
+        Some(reply)
     }
 }
 
@@ -116,6 +144,38 @@ impl AccountState {
 }
 
 #[wasm_bindgen]
+pub struct QueryGetMasterchainInfo {
+    #[wasm_bindgen(skip)]
+    pub query: Query,
+}
+
+#[wasm_bindgen]
+impl QueryGetMasterchainInfo {
+    #[wasm_bindgen(getter)]
+    pub fn data(&mut self) -> Uint8Array {
+        self.query.js_data()
+    }
+
+    #[wasm_bindgen(js_name = "handleResult")]
+    pub fn handle_result(
+        &self,
+        connection: &mut AdnlConnection,
+        data: &[u8],
+    ) -> Option<LastBlockIdExt> {
+        let result = self
+            .query
+            .handle_result::<ton::rpc::lite_server::GetMasterchainInfo>(connection, data)?;
+        Some(LastBlockIdExt {
+            workchain: result.last().workchain as i8,
+            shard: result.last().shard as u64,
+            seqno: result.last().seqno as u32,
+            root_hash: result.last().root_hash.0,
+            file_hash: result.last().file_hash.0,
+        })
+    }
+}
+
+#[wasm_bindgen]
 pub struct AdnlConnection {
     state: adnl::ClientState,
     init_packet: Vec<u8>,
@@ -144,17 +204,23 @@ impl AdnlConnection {
         unsafe { Uint8Array::view_mut_raw(self.init_packet.as_mut_ptr(), self.init_packet.len()) }
     }
 
-    #[wasm_bindgen(js_name = "getMasterchainInfoPacket")]
-    pub fn get_masterchain_info_packet(&mut self) -> Query {
+    #[wasm_bindgen(js_name = "getMasterchainInfo")]
+    pub fn get_masterchain_info(&mut self) -> QueryGetMasterchainInfo {
         let (query_id, data) = self.state.build_query(&ton::TLObject::new(
             ton::rpc::lite_server::GetMasterchainInfo,
         ));
 
-        Query { query_id, data }
+        QueryGetMasterchainInfo {
+            query: Query { query_id, data },
+        }
     }
 
     #[wasm_bindgen(js_name = "getAccountInfoPacket")]
-    pub fn get_account_info_packet(&mut self, last_block_id: &LastBlockIdExt, account_id: &AccountId) -> Query {
+    pub fn get_account_info_packet(
+        &mut self,
+        last_block_id: &LastBlockIdExt,
+        account_id: &AccountId,
+    ) -> Query {
         let (query_id, data) = self.state.build_query(&ton::TLObject::new(
             ton::rpc::lite_server::GetAccountState {
                 id: ton::ton_node::blockidext::BlockIdExt {
@@ -168,19 +234,10 @@ impl AdnlConnection {
                     workchain: account_id.workchain as ton::int,
                     id: ton::int256(account_id.id),
                 },
-            }
+            },
         ));
 
-        Query {
-            query_id,
-            data,
-        }
-    }
-
-    #[wasm_bindgen(js_name = "processReceived")]
-    pub fn process_received(&mut self, data: &[u8]) -> Option<usize> {
-        let query = self.state.handle_query(data)?;
-        Some(query.answer.len())
+        Query { query_id, data }
     }
 }
 
