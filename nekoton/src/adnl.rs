@@ -1,11 +1,23 @@
-use sha2::digest::{FixedOutput};
-use aes_ctr::cipher::SyncStreamCipher;
-use rand::{Rng, CryptoRng, RngCore};
+use std::num::NonZeroUsize;
 
-use ton_api::ton;
+use aes_ctr::cipher::SyncStreamCipher;
+use rand::{CryptoRng, Rng, RngCore};
+use sha2::digest::FixedOutput;
+use wasm_bindgen::prelude::*;
+
+use ton_api::ton::TLObject;
+use ton_api::{ton, Deserializer};
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
 
 pub struct ClientState {
     crypto: AdnlStreamCrypto,
+    buffer: Vec<u8>,
+    receiver_state: ReceiverState,
 }
 
 impl ClientState {
@@ -15,8 +27,11 @@ impl ClientState {
 
         let client = Self {
             crypto,
+            buffer: Vec::with_capacity(1024),
+            receiver_state: ReceiverState::WaitingLength,
         };
-        let init_packet = build_adnl_handshake_packet(&nonce, &LocalKey::generate(&mut rng), server_key);
+        let init_packet =
+            build_adnl_handshake_packet(&nonce, &LocalKey::generate(&mut rng), server_key);
 
         (client, init_packet)
     }
@@ -28,16 +43,85 @@ impl ClientState {
         build_adnl_message(&mut rng, &query)
     }
 
-    pub fn build_query(&self, query: &ton::TLObject) -> (QueryId, Vec<u8>) {
+    pub fn build_query(&mut self, query: &ton::TLObject) -> (QueryId, Vec<u8>) {
         let mut rng = rand::thread_rng();
-        build_adnl_message(&mut rng, query)
+        let (query_id, data) = build_adnl_message(&mut rng, query);
+        let data = self.crypto.pack(&data);
+        (query_id, data)
     }
+
+    pub fn handle_query(
+        &mut self,
+        data: &[u8],
+    ) -> Option<Box<ton::adnl::message::message::Answer>> {
+        self.buffer.extend(data);
+        let mut processed = 0;
+        loop {
+            log(&format!("iteration: {}", processed));
+
+            match (self.receiver_state, self.buffer.len() - processed) {
+                (ReceiverState::WaitingLength, remaining) if remaining >= 4 => {
+                    let length = self
+                        .crypto
+                        .unpack_length(&self.buffer[processed..processed + 4]);
+
+                    processed += 4;
+                    if length >= 64 {
+                        // SAFETY: length is always greater than zero
+                        self.receiver_state = ReceiverState::WaitingPayload(unsafe {
+                            NonZeroUsize::new_unchecked(length)
+                        });
+                    }
+                }
+                (ReceiverState::WaitingPayload(length), remaining) if remaining >= length.get() => {
+                    let data = self.crypto.unpack_payload(
+                        length.get(),
+                        &mut self.buffer[processed..processed + length.get()],
+                    );
+
+                    processed += length.get();
+                    self.receiver_state = ReceiverState::WaitingLength;
+
+                    let answer = data
+                        .and_then(|data| {
+                            Deserializer::new(&mut std::io::Cursor::new(data))
+                                .read_boxed::<TLObject>()
+                                .ok()
+                        })
+                        .and_then(|object| object.downcast::<ton::adnl::Message>().ok())
+                        .and_then(|message| {
+                            if let ton::adnl::Message::Adnl_Message_Answer(answer) = message {
+                                Some(answer)
+                            } else {
+                                None
+                            }
+                        });
+
+                    if answer.is_some() {
+                        self.buffer.drain(..processed);
+                        return answer;
+                    }
+                }
+                _ => {
+                    self.buffer.drain(..processed);
+                    return None;
+                }
+            }
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+enum ReceiverState {
+    WaitingLength,
+    WaitingPayload(NonZeroUsize),
 }
 
 type QueryId = [u8; 32];
 
 fn build_adnl_message<T>(rng: &mut T, data: &ton::TLObject) -> (QueryId, Vec<u8>)
-    where T: RngCore
+where
+    T: RngCore,
 {
     const ADNL_MESSAGE_ID: u32 = 0xb48bf97a;
 
@@ -45,7 +129,9 @@ fn build_adnl_message<T>(rng: &mut T, data: &ton::TLObject) -> (QueryId, Vec<u8>
     let mut result: Vec<u8> = Vec::with_capacity(4 + query_id.len());
     result.extend(&ADNL_MESSAGE_ID.to_le_bytes());
     result.extend(&query_id);
-    ton_api::Serializer::new(&mut result).write_boxed(data).expect("Shouldn't fail");
+    ton_api::Serializer::new(&mut result)
+        .write_boxed(data)
+        .expect("Shouldn't fail");
     (query_id, result)
 }
 
@@ -56,7 +142,8 @@ struct AdnlStreamCrypto {
 
 impl AdnlStreamCrypto {
     fn new_with_nonce<T>(rng: &mut T) -> (Self, Vec<u8>)
-        where T: CryptoRng + RngCore
+    where
+        T: CryptoRng + RngCore,
     {
         let nonce: Vec<u8> = (0..160).map(|_| rng.gen()).collect();
 
@@ -85,14 +172,44 @@ impl AdnlStreamCrypto {
         let data_len = data.len();
         let mut result = Vec::with_capacity(data_len + 68);
         result.extend(&((data_len + 64) as u32).to_le_bytes());
+        log(&format!("Intermediate length: {}", result.len()));
+
         result.extend(&nonce);
+        log(&format!("Intermediate length: {}", result.len()));
+
         result.extend(data);
+        log(&format!("Intermediate length: {}", result.len()));
 
         let checksum = sha2::Sha256::digest(&result[4..]);
         result.extend(checksum.as_slice());
+        log(&format!("Intermediate length: {}", result.len()));
 
         self.cipher_send.apply_keystream(result.as_mut());
         result
+    }
+
+    fn unpack_length(&mut self, data: &[u8]) -> usize {
+        let mut len = [data[0], data[1], data[2], data[3]];
+        self.cipher_receive.apply_keystream(len.as_mut());
+        u32::from_le_bytes(len) as usize
+    }
+
+    fn unpack_payload<'a>(&mut self, length: usize, data: &'a mut [u8]) -> Option<&'a [u8]> {
+        use sha2::Digest;
+
+        const NONCE_LEN: usize = 32;
+        const CHECKSUM_LEN: usize = 32;
+
+        let checksum_begin = length - CHECKSUM_LEN;
+
+        self.cipher_receive.apply_keystream(data);
+
+        let checksum = sha2::Sha256::digest(&data[..checksum_begin]);
+        if checksum.as_slice() == &data[checksum_begin..length] {
+            Some(&data[NONCE_LEN..checksum_begin])
+        } else {
+            None
+        }
     }
 }
 
@@ -108,7 +225,7 @@ fn build_adnl_handshake_packet(buffer: &[u8], local: &LocalKey, other: &External
     result.extend(checksum.as_slice());
     result.extend(buffer);
 
-    let mut shared_secret = calculate_shared_secret(&local.private_key, &other.public_key);
+    let shared_secret = calculate_shared_secret(&local.private_key, &other.public_key);
     build_packet_cipher(&shared_secret, checksum.as_ref()).apply_keystream(&mut result[96..]);
     result
 }
@@ -117,8 +234,7 @@ fn build_adnl_handshake_packet(buffer: &[u8], local: &LocalKey, other: &External
 struct KeyId([u8; 32]);
 
 impl KeyId {
-    pub fn new(buffer: &[u8; 32]) -> Self
-    {
+    pub fn new(buffer: &[u8; 32]) -> Self {
         Self(*buffer)
     }
 
@@ -136,7 +252,8 @@ struct LocalKey {
 
 impl LocalKey {
     fn generate<T>(rng: &mut T) -> Self
-        where T: CryptoRng + RngCore
+    where
+        T: CryptoRng + RngCore,
     {
         Self::from_ed25519_secret_key(&ed25519_dalek::SecretKey::generate(rng))
     }
@@ -145,7 +262,9 @@ impl LocalKey {
         Self::from_ed25519_expanded_secret_key(&ed25519_dalek::ExpandedSecretKey::from(private_key))
     }
 
-    fn from_ed25519_expanded_secret_key(expended_secret_key: &ed25519_dalek::ExpandedSecretKey) -> Self {
+    fn from_ed25519_expanded_secret_key(
+        expended_secret_key: &ed25519_dalek::ExpandedSecretKey,
+    ) -> Self {
         let public_key = ed25519_dalek::PublicKey::from(expended_secret_key).to_bytes();
 
         Self {

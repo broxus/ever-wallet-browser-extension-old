@@ -15,6 +15,7 @@ aes-ctr = "0.6"
 base64 = "0.13"
 curve25519-dalek = "3.0"
 ed25519-dalek = "1.0"
+hex = "0.4"
 js-sys = "0.3"
 rand = { version = "0.7", features = ["getrandom"] }
 serde = { version = "1.0", features = ["derive"] }

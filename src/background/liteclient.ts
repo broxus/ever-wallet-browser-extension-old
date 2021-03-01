@@ -43,6 +43,7 @@ const parseConfig = (config: RawConfig): Config => {
 class AdnlClient {
     connection: libnekoton.AdnlConnection;
     socketId: number | null = null;
+    responseHandlers: Map<string, () => {}> = new Map<string, () => {}>();
 
     constructor(connection: libnekoton.AdnlConnection) {
         this.connection = connection;
@@ -71,9 +72,17 @@ class AdnlClient {
         console.log(`Connected to ${address}:${port} with result ${result}`);
 
         chrome.sockets.tcp.onReceive.addListener(this.onReceive);
-        chrome.sockets.tcp.send(socketId, this.connection.initPacket, (sendInfo) => {
-            console.log(sendInfo);
-        });
+        await this.send(this.connection.initPacket);
+    }
+
+    public async getLatestBlockId() {
+        if (this.socketId == null) {
+            return;
+        }
+
+        const query = this.connection.getMasterchainInfoPacket();
+        console.log(query);
+        await this.send(query.data);
     }
 
     public async close() {
@@ -87,12 +96,31 @@ class AdnlClient {
         });
     }
 
-    private onReceive(args: chrome.sockets.ReceiveEventArgs) {
-        console.log(args);
+    private async send(data: Uint8Array) {
+        await new Promise<void>((resolve, reject) => {
+            if (this.socketId == null) {
+                return reject(new Error("liteclient was not initialized"));
+            }
+
+            chrome.sockets.tcp.send(this.socketId, data, (sendInfo => {
+                console.log("Sent:", sendInfo);
+                resolve();
+            }))
+        });
+    }
+
+    private onReceive = (args: chrome.sockets.ReceiveEventArgs) => {
         if (args.socketId != this.socketId) {
             return;
         }
-        console.log("Received data:", args.data);
+        while (true) {
+            console.log("Received data:", args.data);
+            const processed = this.connection.processReceived(new Uint8Array(args.data));
+            console.log(processed);
+            if (processed == null) {
+                return
+            }
+        }
     }
 }
 
@@ -106,8 +134,10 @@ class AdnlClient {
 
     console.log("Working...");
 
+    await client.getLatestBlockId();
+
     setTimeout(async () => {
         await client.close();
         console.log("Closed");
-    }, 10000);
+    }, 20000);
 })();
