@@ -3,16 +3,9 @@ use std::num::NonZeroUsize;
 use aes_ctr::cipher::SyncStreamCipher;
 use rand::{CryptoRng, Rng, RngCore};
 use sha2::digest::FixedOutput;
-use wasm_bindgen::prelude::*;
 
 use ton_api::ton::TLObject;
 use ton_api::{ton, BoxedSerialize, Deserializer, IntoBoxed};
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
 
 pub struct ClientState {
     crypto: AdnlStreamCrypto,
@@ -56,26 +49,22 @@ impl ClientState {
         (query_id, data)
     }
 
+    pub fn handle_init_response(&mut self, data: &mut [u8]) {
+        self.crypto.unpack_init_packet(data);
+    }
+
     pub fn handle_query(
         &mut self,
         data: &[u8],
-    ) -> Option<Box<ton::adnl::message::message::Answer>> {
+    ) -> Result<Option<Box<ton::adnl::message::message::Answer>>, QueryError> {
         self.buffer.extend(data);
         let mut processed = 0;
         loop {
-            log(&format!(
-                "iteration: {}, buffer len: {}",
-                processed,
-                self.buffer.len()
-            ));
-
             match (self.receiver_state, self.buffer.len() - processed) {
                 (ReceiverState::WaitingLength, remaining) if remaining >= 4 => {
                     let length = self
                         .crypto
                         .unpack_length(&self.buffer[processed..processed + 4]);
-
-                    log(&format!("Got length: {}", length));
 
                     processed += 4;
                     if length >= 64 {
@@ -109,14 +98,16 @@ impl ClientState {
                             }
                         });
 
-                    if answer.is_some() {
+                    return if answer.is_some() {
                         self.buffer.drain(..processed);
-                        return answer;
-                    }
+                        Ok(answer)
+                    } else {
+                        Err(QueryError::InvalidResponse)
+                    };
                 }
                 _ => {
                     self.buffer.drain(..processed);
-                    return None;
+                    return Ok(None);
                 }
             }
         }
@@ -127,6 +118,12 @@ impl ClientState {
 enum ReceiverState {
     WaitingLength,
     WaitingPayload(NonZeroUsize),
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum QueryError {
+    #[error("Invalid ADNL response")]
+    InvalidResponse,
 }
 
 pub type QueryId = [u8; 32];
@@ -192,20 +189,18 @@ impl AdnlStreamCrypto {
         let data_len = data.len();
         let mut result = Vec::with_capacity(data_len + 68);
         result.extend(&((data_len + 64) as u32).to_le_bytes());
-        log(&format!("Intermediate length: {}", result.len()));
-
         result.extend(&nonce);
-        log(&format!("Intermediate length: {}", result.len()));
-
         result.extend(data);
-        log(&format!("Intermediate length: {}", result.len()));
 
         let checksum = sha2::Sha256::digest(&result[4..]);
         result.extend(checksum.as_slice());
-        log(&format!("Intermediate length: {}", result.len()));
 
         self.cipher_send.apply_keystream(result.as_mut());
         result
+    }
+
+    fn unpack_init_packet(&mut self, data: &mut [u8]) {
+        self.cipher_receive.apply_keystream(data);
     }
 
     fn unpack_length(&mut self, data: &[u8]) -> usize {

@@ -1,4 +1,4 @@
-import libnekoton from "../../nekoton/pkg";
+import libnekoton, {AccountId, AdnlConnection, LastBlockIdExt, TransactionId} from "../../nekoton/pkg";
 
 const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json';
 
@@ -13,47 +13,46 @@ type RawConfig = {
     }>,
 }
 
-type Config = {
-    address: string,
-    port: number,
-    key: string
-}
+(async () => {
+    const nekoton = await libnekoton;
 
-const parseConfig = (config: RawConfig): Config => {
-    if (config.liteservers.length === 0) {
-        throw new Error("No liteservers found");
-    }
+    const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(Config.parse);
+    console.log("Config loaded:", config);
 
-    const parseIp = (ip: number): string => {
-        const a = ip & 0xff;
-        const b = ((ip >> 8) & 0xff);
-        const c = ((ip >> 16) & 0xff);
-        const d = ((ip >> 24) & 0xff);
-        return `${d}.${c}.${b}.${a}`;
-    }
+    const client = new AdnlClient(nekoton.AdnlConnection.fromKey(config.key));
+    await client.connect(config.address, config.port);
 
-    const liteserver = config.liteservers[0];
-    return <Config>{
-        address: parseIp(liteserver.ip),
-        port: liteserver.port,
-        key: liteserver.id.key
-    };
-};
+    console.log("Initialized");
 
-class Mutex {
-    current: Promise<void> = Promise.resolve();
+    const latestBlockId = await client.getLatestBlockId();
+    console.log(latestBlockId);
 
-    public lock = () => {
-        let resolveChanged: () => void;
-        const chained = new Promise<void>((resolve,) => {
-            resolveChanged = () => resolve();
+    const accountId = nekoton.AccountId.parse('0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb');
+
+    const accountState = await client.getAccountState(latestBlockId, accountId);
+    console.log("Got account state for", accountId.toString(), accountState);
+
+    let lastTransactionId = accountState.lastTransactionId;
+    while (lastTransactionId != null) {
+        const transactions = await client.getTransactions(accountId, lastTransactionId, 16);
+
+        lastTransactionId = undefined;
+        transactions.forEach(transaction => {
+            lastTransactionId = transaction.previousTransactionId;
+            console.log(transaction.id.toString(), transaction.now);
         });
+    }
 
-        const result = this.current.then(() => resolveChanged);
-        this.current = chained;
+    setTimeout(async () => {
+        await client.close();
+        console.log("Closed");
+    }, 20000);
+})();
 
-        return result;
-    };
+interface Query<T> {
+    readonly data: Uint8Array,
+
+    onResponse(connection: AdnlConnection, data: Uint8Array): T | undefined;
 }
 
 class AdnlClient {
@@ -62,8 +61,20 @@ class AdnlClient {
     channelMutex: Mutex = new Mutex();
     responseHandler: ((data: ArrayBuffer) => void) | null = null;
 
-    constructor(connection: libnekoton.AdnlConnection) {
+    constructor(connection: AdnlConnection) {
         this.connection = connection;
+    }
+
+    public async getLatestBlockId() {
+        return await this.query(this.connection.getMasterchainInfo());
+    }
+
+    public async getAccountState(latestBlockId: LastBlockIdExt, address: AccountId) {
+        return await this.query(this.connection.getAccountState(latestBlockId, address));
+    }
+
+    public async getTransactions(address: AccountId, from: TransactionId, count: number) {
+        return await this.query(this.connection.getTransactions(address, from, count));
     }
 
     public async connect(address: string, port: number) {
@@ -91,19 +102,12 @@ class AdnlClient {
         console.log(`Connected to ${address}:${port} with result ${result}`);
 
         chrome.sockets.tcp.onReceive.addListener(this.onReceive);
-        await this.send(this.connection.initPacket, () => {
-        });
-    }
-
-    public async getLatestBlockId() {
-        if (this.socketId == null) {
-            return;
-        }
-
-        const query = this.connection.getMasterchainInfo();
-        console.log(query);
-        return await this.send(query.data, response => {
-            return query.handleResult(this.connection, new Uint8Array(response));
+        await this.query(<Query<true>>{
+            data: this.connection.initPacket,
+            onResponse: (connection, data) => {
+                connection.handleInitPacket(data);
+                return true;
+            },
         });
     }
 
@@ -118,7 +122,7 @@ class AdnlClient {
         });
     }
 
-    private async send<T>(data: Uint8Array, onResponse: (data: ArrayBuffer) => T): Promise<T> {
+    private async query<T>(query: Query<T>): Promise<T> {
         const unlock = await this.channelMutex.lock();
 
         return await new Promise<T>((resolve, reject) => {
@@ -127,15 +131,16 @@ class AdnlClient {
             }
 
             this.responseHandler = (data) => {
-                const result = onResponse(data);
-                this.responseHandler = null;
-                unlock();
-                resolve(result);
+                const result = query.onResponse(this.connection, new Uint8Array(data));
+                if (result != null) {
+                    this.responseHandler = null;
+                    unlock();
+                    resolve(result);
+                }
             };
 
-            chrome.sockets.tcp.send(this.socketId, data, (sendInfo => {
-                console.log("Sent:", sendInfo);
-            }))
+            chrome.sockets.tcp.send(this.socketId, query.data, _sendInfo => {
+            })
         });
     }
 
@@ -144,28 +149,52 @@ class AdnlClient {
             return;
         }
 
-        console.log("Received data:", args.data);
         if (this.responseHandler != null) {
             this.responseHandler(args.data);
         }
     }
 }
 
-(async () => {
-    const nekoton = await libnekoton;
-    const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(parseConfig);
-    console.log("Loaded config:", config);
+class Config {
+    address!: string;
+    port!: number;
+    key!: string;
 
-    const client = new AdnlClient(nekoton.AdnlConnection.fromKey(config.key));
-    await client.connect(config.address, config.port);
+    public static parse(raw: RawConfig): Config {
+        if (raw.liteservers.length === 0) {
+            throw new Error("No liteservers found");
+        }
 
-    console.log("Working...");
+        const parseIp = (ip: number): string => {
+            const a = ip & 0xff;
+            const b = ((ip >> 8) & 0xff);
+            const c = ((ip >> 16) & 0xff);
+            const d = ((ip >> 24) & 0xff);
+            return `${d}.${c}.${b}.${a}`;
+        }
 
-    const latestBlockId = await client.getLatestBlockId();
-    console.log(latestBlockId);
+        const liteserver = raw.liteservers[0];
+        return <Config>{
+            address: parseIp(liteserver.ip),
+            port: liteserver.port,
+            key: liteserver.id.key
+        };
+    };
 
-    setTimeout(async () => {
-        await client.close();
-        console.log("Closed");
-    }, 20000);
-})();
+}
+
+class Mutex {
+    current: Promise<void> = Promise.resolve();
+
+    public lock = () => {
+        let resolveChanged: () => void;
+        const chained = new Promise<void>((resolve,) => {
+            resolveChanged = () => resolve();
+        });
+
+        const result = this.current.then(() => resolveChanged);
+        this.current = chained;
+
+        return result;
+    };
+}

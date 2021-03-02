@@ -48,6 +48,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -161,6 +170,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chrono"
+version = "0.4.19"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
+dependencies = [
+ "libc",
+ "num-integer",
+ "num-traits",
+ "time",
+ "winapi",
+]
+
+[[package]]
 name = "cipher"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -224,6 +246,12 @@ dependencies = [
  "subtle",
  "zeroize",
 ]
+
+[[package]]
+name = "difference"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "524cbf6897b527295dff137cec09ecf3a05f4fddffd7dfcd1585403449e74198"
 
 [[package]]
 name = "digest"
@@ -337,7 +365,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "js-sys",
  "libc",
- "wasi",
+ "wasi 0.9.0+wasi-snapshot-preview1",
  "wasm-bindgen",
 ]
 
@@ -346,6 +374,12 @@ name = "gimli"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
+
+[[package]]
+name = "hex"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
 
 [[package]]
 name = "hex"
@@ -423,13 +457,17 @@ dependencies = [
  "curve25519-dalek",
  "ed25519-dalek",
  "getrandom",
- "hex",
+ "hex 0.4.2",
  "js-sys",
  "rand",
  "serde",
  "serde_json",
  "sha2 0.9.3",
+ "thiserror",
+ "ton_abi",
  "ton_api",
+ "ton_block",
+ "ton_types",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
@@ -570,6 +608,16 @@ name = "ppv-lite86"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac74c624d6b2d21f425f752262f42188365d7b8ff1aff74c82e45136510a4857"
+
+[[package]]
+name = "pretty_assertions"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3a029430f0d744bc3d15dd474d591bed2402b645d024583082b9f63bb936dac6"
+dependencies = [
+ "ansi_term",
+ "difference",
+]
 
 [[package]]
 name = "proc-macro2"
@@ -779,6 +827,60 @@ dependencies = [
 ]
 
 [[package]]
+name = "thiserror"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e0f4a65597094d4483ddaed134f409b2cb7c1beccf25201a9f73c719254fa98e"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7765189610d8241a44529806d6fd1f2e0a08734313a35d5b3a556f92b381f3c0"
+dependencies = [
+ "proc-macro2 1.0.24",
+ "quote 1.0.9",
+ "syn 1.0.60",
+]
+
+[[package]]
+name = "time"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6db9e6914ab8b1ae1c260a4ae7a49b6c5611b40328a735b21862567685e73255"
+dependencies = [
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+ "winapi",
+]
+
+[[package]]
+name = "ton_abi"
+version = "1.0.0"
+source = "git+https://github.com/tonlabs/ton-labs-abi.git#1f640b6b421ec7a2b62a54b476e614c26cbb70a7"
+dependencies = [
+ "base64 0.10.1",
+ "byteorder",
+ "chrono",
+ "ed25519",
+ "ed25519-dalek",
+ "failure",
+ "hex 0.3.2",
+ "num-bigint",
+ "num-traits",
+ "pretty_assertions",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.8.2",
+ "ton_block",
+ "ton_types",
+]
+
+[[package]]
 name = "ton_api"
 version = "0.0.1"
 source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fcb184ed287288cfbaee2bedae4cba541e8e3849"
@@ -787,7 +889,7 @@ dependencies = [
  "erased-serde",
  "extfmt",
  "failure",
- "hex",
+ "hex 0.4.2",
  "lazy_static",
  "ordered-float",
  "rand",
@@ -809,7 +911,7 @@ dependencies = [
  "ed25519",
  "ed25519-dalek",
  "failure",
- "hex",
+ "hex 0.4.2",
  "log",
  "num",
  "num-traits",
@@ -839,7 +941,7 @@ dependencies = [
  "base64 0.11.0",
  "crc",
  "failure",
- "hex",
+ "hex 0.4.2",
  "lockfree",
  "log",
  "num",
@@ -878,6 +980,12 @@ name = "wasi"
 version = "0.9.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
+
+[[package]]
+name = "wasi"
+version = "0.10.0+wasi-snapshot-preview1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wasm-bindgen"
