@@ -29,14 +29,16 @@ impl ClientState {
         (client, init_packet)
     }
 
-    pub fn build_ping_query(&self) -> (QueryId, Vec<u8>) {
+    pub fn build_ping_query(&mut self) -> Query {
         let mut rng = rand::thread_rng();
         let value = rng.gen();
         let query = ton::TLObject::new(ton::rpc::adnl::Ping { value });
-        build_adnl_message(&mut rng, &query)
+        let (query_id, data) = build_adnl_message(&mut rng, &query);
+        let data = self.crypto.pack(&data);
+        Query { query_id, data }
     }
 
-    pub fn build_query(&mut self, query: &ton::TLObject) -> (QueryId, Vec<u8>) {
+    pub fn build_query(&mut self, query: &ton::TLObject) -> Query {
         let mut rng = rand::thread_rng();
         let query_bytes = query.boxed_serialized_bytes().expect("Shouldn't fail");
         let (query_id, data) = build_adnl_message(
@@ -46,7 +48,7 @@ impl ClientState {
             }),
         );
         let data = self.crypto.pack(&data);
-        (query_id, data)
+        Query { query_id, data }
     }
 
     pub fn handle_init_response(&mut self, data: &mut [u8]) {
@@ -127,6 +129,11 @@ pub enum QueryError {
 }
 
 pub type QueryId = [u8; 32];
+
+pub struct Query {
+    pub query_id: [u8; 32],
+    pub data: Vec<u8>,
+}
 
 fn build_adnl_message<T>(rng: &mut T, data: &ton::TLObject) -> (QueryId, Vec<u8>)
 where

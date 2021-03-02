@@ -2,17 +2,6 @@ import libnekoton, {AccountId, AdnlConnection, LastBlockIdExt, TransactionId} fr
 
 const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json';
 
-type RawConfig = {
-    liteservers: Array<{
-        id: {
-            '@type': 'pub.ed25519',
-            'key': string
-        },
-        ip: number,
-        port: number
-    }>,
-}
-
 (async () => {
     const nekoton = await libnekoton;
 
@@ -75,6 +64,10 @@ class AdnlClient {
 
     public async getTransactions(address: AccountId, from: TransactionId, count: number) {
         return await this.query(this.connection.getTransactions(address, from, count));
+    }
+
+    public async sendMessage(data: Uint8Array) {
+        return await this.query(this.connection.sendMessage(data));
     }
 
     public async connect(address: string, port: number) {
@@ -153,6 +146,17 @@ class AdnlClient {
             this.responseHandler(args.data);
         }
     }
+}
+
+type RawConfig = {
+    liteservers: Array<{
+        id: {
+            '@type': 'pub.ed25519',
+            'key': string
+        },
+        ip: number,
+        port: number
+    }>,
 }
 
 class Config {

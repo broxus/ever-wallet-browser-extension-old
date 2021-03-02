@@ -1,12 +1,13 @@
 use std::str::FromStr;
 
 use js_sys::{Array, Uint8Array};
+use ton_api::ton;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 pub mod adnl;
 
-use ton_api::ton;
+use self::adnl::Query;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -59,13 +60,10 @@ impl AdnlConnection {
 
     #[wasm_bindgen(js_name = "getMasterchainInfo")]
     pub fn get_masterchain_info(&mut self) -> QueryGetMasterchainInfo {
-        let (query_id, data) = self.state.build_query(&ton::TLObject::new(
+        let query = self.state.build_query(&ton::TLObject::new(
             ton::rpc::lite_server::GetMasterchainInfo,
         ));
-
-        QueryGetMasterchainInfo {
-            query: Query { query_id, data },
-        }
+        QueryGetMasterchainInfo { query }
     }
 
     #[wasm_bindgen(js_name = "getAccountState")]
@@ -74,7 +72,7 @@ impl AdnlConnection {
         last_block_id: &LastBlockIdExt,
         account_id: &AccountId,
     ) -> QueryAccountState {
-        let (query_id, data) = self.state.build_query(&ton::TLObject::new(
+        let query = self.state.build_query(&ton::TLObject::new(
             ton::rpc::lite_server::GetAccountState {
                 id: ton::ton_node::blockidext::BlockIdExt {
                     workchain: last_block_id.workchain as ton::int,
@@ -92,7 +90,7 @@ impl AdnlConnection {
 
         QueryAccountState {
             account_addr: ton_types::UInt256::from(account_id.id),
-            query: Query { query_id, data },
+            query,
         }
     }
 
@@ -103,7 +101,7 @@ impl AdnlConnection {
         from: &TransactionId,
         count: u8,
     ) -> QueryGetTransactions {
-        let (query_id, data) = self.state.build_query(&ton::TLObject::new(
+        let query = self.state.build_query(&ton::TLObject::new(
             ton::rpc::lite_server::GetTransactions {
                 count: count as i32,
                 account: ton::lite_server::accountid::AccountId {
@@ -114,9 +112,17 @@ impl AdnlConnection {
                 hash: ton::int256(from.hash),
             },
         ));
-        QueryGetTransactions {
-            query: Query { query_id, data },
-        }
+        QueryGetTransactions { query }
+    }
+
+    #[wasm_bindgen(js_name = "sendMessage")]
+    pub fn send_message(&mut self, data: Box<[u8]>) -> QuerySendMessage {
+        let query =
+            self.state
+                .build_query(&ton::TLObject::new(ton::rpc::lite_server::SendMessage {
+                    body: ton::bytes(data.into_vec()),
+                }));
+        QuerySendMessage { query }
     }
 }
 
@@ -303,6 +309,32 @@ impl QueryGetTransactions {
 }
 
 #[wasm_bindgen]
+pub struct QuerySendMessage {
+    #[wasm_bindgen(skip)]
+    pub query: Query,
+}
+
+#[wasm_bindgen]
+impl QuerySendMessage {
+    #[wasm_bindgen(getter)]
+    pub fn data(&mut self) -> Uint8Array {
+        self.query.js_data()
+    }
+
+    #[wasm_bindgen(js_name = "onResponse")]
+    pub fn on_response(
+        &self,
+        connection: &mut AdnlConnection,
+        data: &[u8],
+    ) -> Result<Option<i32>, JsValue> {
+        Ok(self
+            .query
+            .handle_result::<ton::rpc::lite_server::SendMessage>(connection, data)?
+            .map(|status| status.only().status))
+    }
+}
+
+#[wasm_bindgen]
 pub struct AccountId {
     #[wasm_bindgen(skip)]
     pub workchain: i8,
@@ -469,11 +501,6 @@ impl AccountState {
     pub fn balance(&self) -> String {
         self.balance.to_string()
     }
-}
-
-pub struct Query {
-    pub query_id: [u8; 32],
-    pub data: Vec<u8>,
 }
 
 impl Query {
