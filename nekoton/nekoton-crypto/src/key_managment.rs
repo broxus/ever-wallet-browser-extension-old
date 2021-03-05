@@ -13,7 +13,7 @@ use serde_json::{from_reader, to_writer_pretty};
 use sodiumoxide::crypto::secretbox;
 use sodiumoxide::crypto::secretbox::{Key, Nonce};
 use std::sync::Arc;
-use std::io::Read;
+use std::io::{Read, Write};
 use anyhow::anyhow;
 
 
@@ -144,7 +144,7 @@ impl TonSigner {
         ton_key_pair: ed25519_dalek::Keypair,
     ) -> Result<Self, Error>
         where
-            T: AsRef<Path>,
+            T: Write,
     {
         sodiumoxide::init().expect("Failed initializing libsodium");
 
@@ -168,8 +168,7 @@ impl TonSigner {
             ton_nonce,
         };
 
-        let crypto_config = File::create(pem_file_path)?;
-        to_writer_pretty(crypto_config, &data)?;
+        to_writer_pretty(pem_file_path, &data)?;
         Ok(Self {
                 inner: Arc::new(ton_key_pair),
         })
@@ -210,19 +209,12 @@ mod test {
     use std::str::FromStr;
 
     use bip39::Language;
-    use pretty_assertions::assert_eq;
-    use secp256k1::{PublicKey, SecretKey};
     use secstr::SecStr;
+    use crate::key_managment::TonSigner;
+    use std::io::{Write, Read};
 
-    use crate::crypto::key_managment::{EthSigner, KeyData};
 
-    fn default_keys() -> (SecretKey, ed25519_dalek::Keypair) {
-        let eth_private_key = SecretKey::from_slice(
-            &hex::decode("416ddb82736d0ddf80cc50eda0639a2dd9f104aef121fb9c8af647ad8944a8b1")
-                .unwrap(),
-        )
-            .unwrap();
-
+    fn default_keys() ->  ed25519_dalek::Keypair {
         let ton_private_key = ed25519_dalek::SecretKey::from_bytes(
             &hex::decode("e371ef1d7266fc47b30d49dc886861598f09e2e6294d7f0520fe9aa460114e51")
                 .unwrap(),
@@ -234,70 +226,32 @@ mod test {
             public: ton_public_key,
         };
 
-        (eth_private_key, ton_key_pair)
+         ton_key_pair
     }
 
-    #[test]
-    fn test_sign() {
-        use secp256k1::PublicKey;
-        let message_text = b"hello_world1";
-
-        let (private_key, _) = default_keys();
-        let curve = secp256k1::Secp256k1::new();
-        let signer = EthSigner {
-            pubkey: PublicKey::from_secret_key(&curve, &private_key),
-            private_key,
-        };
-        let res = signer.sign(message_text);
-        let expected = hex::decode("ff244ad5573d02bc6ead270d5ff48c490b0113225dd61617791ba6610ed1e56a007ec790f8fca53243907b888e6b33ad15c52fed3bc6a7ee5da2fa287ea4f8211b").unwrap();
-        assert_eq!(expected.len(), res.len());
-        assert_eq!(res, expected.as_slice());
-    }
-
-    #[test]
-    fn test_signing_bytes() {
-        let tokens = [ethabi::Token::String("lol".into())];
-        let data = ethabi::encode(&tokens);
-        use secp256k1::PublicKey;
-
-        let private_key = crate::crypto::recovery::derive_from_words_eth(
-            Language::English,
-            "uniform noble fix song endless broccoli occur access witness void unfold sleep",
-            None,
-        )
-            .unwrap();
-        let curve = secp256k1::Secp256k1::new();
-        let signer = EthSigner {
-            pubkey: PublicKey::from_secret_key(&curve, &private_key),
-            private_key,
-        };
-        let res = signer.sign(&*data);
-        println!("{}\n{}", hex::encode(&data), hex::encode(&res));
-    }
 
     #[test]
     fn test_init() {
         let password = SecStr::new("123".into());
-        let path = "./test/test_init.key";
 
-        let (eth_private_key, ton_key_pair) = default_keys();
+        let  ton_key_pair = default_keys();
+        let mut data_store = vec![0;1024*1024];
+        let data_store1 = vec![0;1024*1024];;
+        let signer = TonSigner::init(data_store.as_mut_slice(), password.clone(), ton_key_pair).unwrap();
+        let read_signer = TonSigner::from_reader(&*data_store1, password).unwrap();
 
-        let signer = KeyData::init(&path, password.clone(), eth_private_key, ton_key_pair).unwrap();
-        let read_signer = KeyData::from_file(&path, password).unwrap();
-        std::fs::remove_file(path).unwrap();
         assert_eq!(read_signer, signer);
     }
 
     #[test]
     fn test_bad_password() {
         let password = SecStr::new("123".into());
-        let path = "./test/test_bad.key";
+        let mut data_store =vec![0;1024*1024];;
 
-        let (eth_private_key, ton_key_pair) = default_keys();
+        let ton_key_pair = default_keys();
 
-        KeyData::init(&path, password, eth_private_key, ton_key_pair).unwrap();
-        let result = KeyData::from_file(&path, SecStr::new("lol".into()));
-        std::fs::remove_file(path).unwrap();
+        TonSigner::init(data_store.as_mut_slice() , password,  ton_key_pair).unwrap();
+        let result = TonSigner::from_reader(&*data_store , SecStr::new("lol".into()));
         assert!(result.is_err());
     }
 
@@ -309,17 +263,5 @@ mod test {
         );
     }
 
-    #[test]
-    fn address_from_pubkey() {
-        let (key, _) = default_keys();
-        let curve = secp256k1::Secp256k1::new();
-        let signer = EthSigner {
-            pubkey: PublicKey::from_secret_key(&curve, &key),
-            private_key: key,
-        };
-        let address = signer.address();
-        let expected =
-            ethereum_types::Address::from_str("9c5a095ae311cad1b09bc36ac8635f4ed4765dcf").unwrap();
-        assert_eq!(address, expected);
-    }
+
 }
