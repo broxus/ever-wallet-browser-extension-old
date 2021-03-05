@@ -1,2 +1,2 @@
-mod key_managment;
-mod recovery;
+pub mod key_management;
+pub mod recovery;

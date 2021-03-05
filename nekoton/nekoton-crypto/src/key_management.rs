@@ -209,13 +209,9 @@ impl TonSigner {
 
 #[cfg(test)]
 mod test {
-    use std::io::{Read, Write};
-    use std::str::FromStr;
-
-    use bip39::Language;
     use secstr::SecStr;
 
-    use crate::key_managment::TonSigner;
+    use crate::key_management::TonSigner;
 
     fn default_keys() -> ed25519_dalek::Keypair {
         let ton_private_key = ed25519_dalek::SecretKey::from_bytes(
