@@ -1,21 +1,23 @@
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
+use std::io::Read;
 use std::num::NonZeroU32;
 use std::path::Path;
+use std::sync::Arc;
+
+use anyhow::anyhow;
 use anyhow::Error;
-use ed25519_dalek::{ed25519, Keypair, Signer,};
+use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
+use chacha20poly1305::aead::{Aead, NewAead};
+use ed25519_dalek::{ed25519, Keypair, Signer};
 use rand::prelude::*;
 use ring::{digest, pbkdf2};
 use secstr::{SecStr, SecVec};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_reader, to_writer_pretty};
-use sodiumoxide::crypto::secretbox;
-use sodiumoxide::crypto::secretbox::{Key, Nonce};
-use std::sync::Arc;
-use std::io::{Read, Write};
-use anyhow::anyhow;
 
+const NONCE_LENGTH: usize = 12;
 
 const CREDENTIAL_LEN: usize = digest::SHA256_OUTPUT_LEN;
 
@@ -49,7 +51,6 @@ impl Debug for TonSigner {
         write!(f, "{:?}", self.inner.public)
     }
 }
-
 
 
 ///Data, stored on disk in `encrypted_data` filed of config.
@@ -97,10 +98,15 @@ fn deserialize_nonce<'de, D>(deser: D) -> Result<Nonce, D::Error>
         D: Deserializer<'de>,
 {
     hex_to_buffer(deser).and_then(|x| {
-        Nonce::from_slice(&*x).ok_or_else(|| serde::de::Error::custom("Failed deserializing nonce"))
+        if x.len() !=NONCE_LENGTH{
+            Err(serde::de::Error::custom(format!("Bad nonce len: {}, expected: 12", x.len())))
+        }
+        else {
+            Ok(Nonce::clone_from_slice(&*x))
+
+        }
     })
 }
-
 
 
 impl TonSigner {
@@ -122,7 +128,6 @@ impl TonSigner {
         where
             T: Read,
     {
-
         let crypto_data: CryptoData = from_reader(reader)?;
         let sym_key = Self::symmetric_key_from_password(password, &*crypto_data.salt);
 
@@ -133,9 +138,9 @@ impl TonSigner {
             &crypto_data.ton_nonce,
         )?;
 
-        Ok( TonSigner {
-                inner: Arc::new(ton_data),
-            })
+        Ok(TonSigner {
+            inner: Arc::new(ton_data),
+        })
     }
 
     pub fn init<T>(
@@ -146,8 +151,6 @@ impl TonSigner {
         where
             T: Write,
     {
-        sodiumoxide::init().expect("Failed initializing libsodium");
-
         let mut rng = rand::rngs::OsRng::new().expect("OsRng fail");
         let mut salt = vec![0u8; CREDENTIAL_LEN];
         rng.fill(salt.as_mut_slice());
@@ -156,8 +159,12 @@ impl TonSigner {
 
         // TON
         let (ton_encrypted_private_key, ton_nonce) = {
-            let nonce = secretbox::gen_nonce();
-            let private_key = secretbox::seal(ton_key_pair.secret.as_bytes(), &nonce, &key);
+            let mut nonce_bytes = [0u8; 12];
+            rng.fill(&mut nonce_bytes);
+            let nonce = Nonce::clone_from_slice(&nonce_bytes);
+            let cipher = ChaCha20Poly1305::new(&key);
+
+            let private_key = cipher.encrypt(&nonce, ton_key_pair.secret.as_ref()).map_err(|e| Error::msg(e.to_string()).context("Failed encrypting private key"))?;
             (private_key, nonce)
         };
 
@@ -170,7 +177,7 @@ impl TonSigner {
 
         to_writer_pretty(pem_file_path, &data)?;
         Ok(Self {
-                inner: Arc::new(ton_key_pair),
+            inner: Arc::new(ton_key_pair),
         })
     }
 
@@ -184,7 +191,7 @@ impl TonSigner {
             password.unsecure(),
             &mut pbkdf2_hash.unsecure_mut(),
         );
-        secretbox::Key::from_slice(&pbkdf2_hash.unsecure()).expect("Shouldn't panic")
+        chacha20poly1305::Key::clone_from_slice(&pbkdf2_hash.unsecure())
     }
 
 
@@ -193,7 +200,9 @@ impl TonSigner {
         key: &Key,
         nonce: &Nonce,
     ) -> Result<ed25519_dalek::Keypair, Error> {
-        secretbox::open(encrypted_key, nonce, key)
+        let decryptor = ChaCha20Poly1305::new(&key);
+
+        decryptor.decrypt(nonce, encrypted_key)
             .map_err(|_| anyhow!("Failed decrypting with provided password"))
             .and_then(|data| {
                 let secret = ed25519_dalek::SecretKey::from_bytes(&data)
