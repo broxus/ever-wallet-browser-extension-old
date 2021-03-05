@@ -1,7 +1,7 @@
 use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::fs::File;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::num::NonZeroU32;
 use std::path::Path;
 use std::sync::Arc;
@@ -98,12 +98,10 @@ fn deserialize_nonce<'de, D>(deser: D) -> Result<Nonce, D::Error>
         D: Deserializer<'de>,
 {
     hex_to_buffer(deser).and_then(|x| {
-        if x.len() !=NONCE_LENGTH{
+        if x.len() != NONCE_LENGTH {
             Err(serde::de::Error::custom(format!("Bad nonce len: {}, expected: 12", x.len())))
-        }
-        else {
+        } else {
             Ok(Nonce::clone_from_slice(&*x))
-
         }
     })
 }
@@ -143,13 +141,10 @@ impl TonSigner {
         })
     }
 
-    pub fn init<T>(
-        pem_file_path: T,
+    pub fn init(
         password: SecStr,
         ton_key_pair: ed25519_dalek::Keypair,
-    ) -> Result<Self, Error>
-        where
-            T: Write,
+    ) -> Result<(Self, Vec<u8>), Error>
     {
         let mut rng = rand::rngs::OsRng::new().expect("OsRng fail");
         let mut salt = vec![0u8; CREDENTIAL_LEN];
@@ -175,10 +170,10 @@ impl TonSigner {
             ton_nonce,
         };
 
-        to_writer_pretty(pem_file_path, &data)?;
-        Ok(Self {
+        Ok((Self {
             inner: Arc::new(ton_key_pair),
-        })
+        }, serde_json::to_vec(&data)?
+        ))
     }
 
     ///Calculates symmetric key from user password, using pbkdf2
@@ -215,15 +210,15 @@ impl TonSigner {
 
 #[cfg(test)]
 mod test {
+    use std::io::{Read, Write};
     use std::str::FromStr;
 
     use bip39::Language;
     use secstr::SecStr;
+
     use crate::key_managment::TonSigner;
-    use std::io::{Write, Read};
 
-
-    fn default_keys() ->  ed25519_dalek::Keypair {
+    fn default_keys() -> ed25519_dalek::Keypair {
         let ton_private_key = ed25519_dalek::SecretKey::from_bytes(
             &hex::decode("e371ef1d7266fc47b30d49dc886861598f09e2e6294d7f0520fe9aa460114e51")
                 .unwrap(),
@@ -235,7 +230,7 @@ mod test {
             public: ton_public_key,
         };
 
-         ton_key_pair
+        ton_key_pair
     }
 
 
@@ -243,11 +238,10 @@ mod test {
     fn test_init() {
         let password = SecStr::new("123".into());
 
-        let  ton_key_pair = default_keys();
-        let mut data_store = vec![0;1024*1024];
-        let data_store1 = vec![0;1024*1024];;
-        let signer = TonSigner::init(data_store.as_mut_slice(), password.clone(), ton_key_pair).unwrap();
-        let read_signer = TonSigner::from_reader(&*data_store1, password).unwrap();
+        let ton_key_pair = default_keys();
+
+        let (signer,data) = TonSigner::init(password.clone(), ton_key_pair).unwrap();
+        let read_signer = TonSigner::from_reader(&*data, password).unwrap();
 
         assert_eq!(read_signer, signer);
     }
@@ -255,22 +249,12 @@ mod test {
     #[test]
     fn test_bad_password() {
         let password = SecStr::new("123".into());
-        let mut data_store =vec![0;1024*1024];;
+
 
         let ton_key_pair = default_keys();
 
-        TonSigner::init(data_store.as_mut_slice() , password,  ton_key_pair).unwrap();
-        let result = TonSigner::from_reader(&*data_store , SecStr::new("lol".into()));
+        let (_,data)= TonSigner::init( password, ton_key_pair).unwrap();
+        let result = TonSigner::from_reader(&*data, SecStr::new("lol".into()));
         assert!(result.is_err());
     }
-
-    #[test]
-    fn test_size() {
-        assert_eq!(
-            sodiumoxide::crypto::secretbox::xsalsa20poly1305::KEYBYTES,
-            ring::digest::SHA256_OUTPUT_LEN
-        );
-    }
-
-
 }
