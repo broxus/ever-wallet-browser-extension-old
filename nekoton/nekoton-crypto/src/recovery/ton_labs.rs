@@ -5,17 +5,15 @@ use tiny_hderive::bip32::ExtendedPrivKey;
 pub fn derive_from_words_ton(
     lang: Language,
     phrase: &str,
-    derivation_path: Option<&str>,
 ) -> Result<ed25519_dalek::Keypair, Error> {
     let mnemonic = bip39::Mnemonic::from_phrase(phrase, lang)?;
     let hd = Seed::new(&mnemonic, "");
     let seed_bytes = hd.as_bytes();
 
-    let path = derivation_path.unwrap_or("m/44'/396'/0'/0/0");
-    let derived =
-        ExtendedPrivKey::derive(seed_bytes, path).map_err(|e| Error::msg(format!("{:#?}", e)))?;
+    let derived = ExtendedPrivKey::derive(seed_bytes, "m/44'/396'/0'/0/0")
+        .map_err(|e| Error::msg(format!("{:#?}", e)))?;
 
-    ed25519_keys_from_secret_bytes(&derived.secret())
+    ed25519_keys_from_secret_bytes(&derived.secret()) //todo check me
 }
 
 fn ed25519_keys_from_secret_bytes(bytes: &[u8]) -> Result<ed25519_dalek::Keypair, Error> {
