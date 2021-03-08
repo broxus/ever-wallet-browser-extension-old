@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::convert::TryInto;
 use std::num::NonZeroU32;
 
 use anyhow::Error;
@@ -8,17 +9,22 @@ use ring::pbkdf2::{derive, PBKDF2_HMAC_SHA512};
 
 use super::util::{Bits, Bits11, IterExt};
 
-const PBKDF_ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100_000) };
+const PBKDF_ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100000) };
 
 pub struct DurovMnemonic {
     pub key: Keypair,
     pub phrase: String,
 }
 
-fn phrase_to_entropy(phrase: &[&str]) -> Vec<u8> {
+fn phrase_to_entropy(phrase: &[&str]) -> [u8; 64] {
+    // Left:  AQTgx4XyYW9pWnxPjPTkVhNNlK04i7BMiNQZ9arvBTA=
+    // use hmac_sha512::HMAC;
     let phrase: String = phrase.join(" ");
     let key = hmac::Key::new(hmac::HMAC_SHA512, b"");
-    hmac::sign(&key, phrase.as_bytes()).as_ref().to_vec()
+    hmac::sign(&key, phrase.as_bytes())
+        .as_ref()
+        .try_into()
+        .expect("Shouldn't' fail")
 }
 
 fn phrase_to_seed(phrase: &[&str]) -> [u8; 64] {
@@ -26,7 +32,7 @@ fn phrase_to_seed(phrase: &[&str]) -> [u8; 64] {
     derive(
         PBKDF2_HMAC_SHA512,
         PBKDF_ITERATIONS,
-        b"TON seed version",
+        b"TON default seed",
         phrase_to_entropy(phrase).as_ref(),
         &mut storage,
     );
@@ -37,8 +43,10 @@ fn phrase_to_key(phrase: &str) -> Result<Keypair, Error> {
     let phrase: Vec<_> = phrase.split_whitespace().collect();
     phrase_is_ok(&phrase)?;
     let seed = phrase_to_seed(&phrase);
-    let keypair = Keypair::from_bytes(&seed[0..32]);
-    Ok(keypair?)
+    let secret = ed25519_dalek::SecretKey::from_bytes(&seed[0..32])?;
+    let public = ed25519_dalek::PublicKey::from(&secret);
+    let keypair = Keypair { secret, public };
+    Ok(keypair)
 }
 
 impl DurovMnemonic {
@@ -101,7 +109,7 @@ fn phrase_is_ok(phrase: &[&str]) -> Result<(), Error> {
 
 #[cfg(test)]
 mod test {
-    use crate::recovery::durov::phrase_is_ok;
+    use crate::recovery::durov::{phrase_is_ok, phrase_to_key};
 
     #[test]
     fn test_validate() {
@@ -115,6 +123,16 @@ mod test {
         assert!(phrase_is_ok(
             &"spark remain person kitchen mule spell knee armed position rail grid ankle park remain person kitchen mule spell knee armed position rail grid ankle".split_whitespace().collect::<Vec<&str>>()
         ).is_err())
+    }
+
+    #[test]
+    fn test_derivation() {
+        let keypair = phrase_to_key("unaware face erupt ceiling frost shiver crumble know party before brisk skirt fence boat powder copy plastic until butter fluid property concert say verify").unwrap();
+        let expected = "o0kpHL39KRq0KX11zZ0/sCwJL66t+gA4vnfuwBjhAWU=";
+        let pub_expecteed = "lHW4ZS8QvCHcgR4uChD7QJWU2kf5JRMtUnZ2p1GSZjg=";
+        assert_eq!(base64::encode(&keypair.public.as_bytes()), pub_expecteed);
+        let got = base64::encode(&keypair.secret.as_bytes());
+        assert_eq!(got, expected);
     }
 }
 
