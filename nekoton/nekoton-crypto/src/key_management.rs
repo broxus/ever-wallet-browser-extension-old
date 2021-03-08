@@ -9,7 +9,6 @@ use anyhow::Error;
 use chacha20poly1305::aead::{Aead, NewAead};
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
 use ed25519_dalek::{ed25519, Keypair, Signer};
-use rand::prelude::*;
 use ring::{digest, pbkdf2};
 use secstr::{SecStr, SecVec};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -117,9 +116,8 @@ impl TonSigner {
     pub fn keypair(&self) -> Arc<ed25519_dalek::Keypair> {
         self.inner.clone()
     }
-}
 
-impl TonSigner {
+    /// Initializes signer from any `reader`, decrypting data.
     pub fn from_reader<T>(reader: T, password: SecStr) -> Result<Self, Error>
     where
         T: Read,
@@ -138,19 +136,25 @@ impl TonSigner {
         })
     }
 
+    /// Initializes signer
     pub fn init(
         password: SecStr,
         ton_key_pair: ed25519_dalek::Keypair,
     ) -> Result<(Self, Vec<u8>), Error> {
-        let mut rng = rand::rngs::OsRng::new().expect("OsRng fail");
+        use ring::rand;
+        use ring::rand::SecureRandom;
+        let rng = rand::SystemRandom::new();
+
         let mut salt = vec![0u8; CREDENTIAL_LEN];
-        rng.fill(salt.as_mut_slice());
+        rng.fill(salt.as_mut_slice())
+            .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
         let key = Self::symmetric_key_from_password(password, &salt);
 
         // TON
         let (ton_encrypted_private_key, ton_nonce) = {
             let mut nonce_bytes = [0u8; 12];
-            rng.fill(&mut nonce_bytes);
+            rng.fill(&mut nonce_bytes)
+                .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
             let nonce = Nonce::clone_from_slice(&nonce_bytes);
             let cipher = ChaCha20Poly1305::new(&key);
 
@@ -160,7 +164,6 @@ impl TonSigner {
             (private_key, nonce)
         };
 
-        //
         let data = CryptoData {
             salt,
             ton_encrypted_private_key,
@@ -193,9 +196,9 @@ impl TonSigner {
         key: &Key,
         nonce: &Nonce,
     ) -> Result<ed25519_dalek::Keypair, Error> {
-        let decryptor = ChaCha20Poly1305::new(&key);
+        let decrypter = ChaCha20Poly1305::new(&key);
 
-        decryptor
+        decrypter
             .decrypt(nonce, encrypted_key)
             .map_err(|_| anyhow!("Failed decrypting with provided password"))
             .and_then(|data| {

@@ -15,9 +15,7 @@ pub fn derive_from_words_labs(phrase: &str) -> Result<ed25519_dalek::Keypair, Er
     ed25519_keys_from_secret_bytes(&derived.secret()) //todo check me
 }
 
-pub fn generate_words_labs() -> Result<GeneratedData, Error> {
-    let mut entropy = [0; 256 / 8];
-    getrandom::getrandom(&mut entropy).map_err(|e| Error::msg(e.to_string()))?;
+pub fn generate_words_labs(entropy: [u8; 32]) -> Result<GeneratedData, Error> {
     let mnemonic = bip39::Mnemonic::from_entropy(&entropy, Language::English)?
         .phrase()
         .to_string();

@@ -40,7 +40,7 @@ fn phrase_to_seed(phrase: &[&str]) -> [u8; 64] {
     storage
 }
 
-fn phrase_to_key_durov(phrase: &str) -> Result<Keypair, Error> {
+pub fn phrase_to_key_durov(phrase: &str) -> Result<Keypair, Error> {
     let phrase: Vec<_> = phrase.split_whitespace().collect();
     phrase_is_ok(&phrase)?;
     let seed = phrase_to_seed(&phrase);
@@ -50,9 +50,7 @@ fn phrase_to_key_durov(phrase: &str) -> Result<Keypair, Error> {
     Ok(keypair)
 }
 
-pub fn generate_durov() -> Result<GeneratedData, Error> {
-    let mut entropy = [0; 256 / 8];
-    getrandom::getrandom(&mut entropy).map_err(|e| Error::msg(e.to_string()))?; //todo use rings random?
+pub fn generate_durov(entropy: [u8; 32]) -> Result<GeneratedData, Error> {
     from_entropy_unchecked(entropy)
 }
 
@@ -80,6 +78,7 @@ fn from_entropy_unchecked(entropy: [u8; 256 / 8]) -> Result<GeneratedData, Error
         .bits()
         .map(|bits: Bits11| wordlist[bits.bits() as usize]) //todo should we check index?
         .join(" ");
+
     Ok(GeneratedData {
         keypair: phrase_to_key_durov(&phrase)?,
         words: phrase.split_whitespace().map(|x| x.to_string()).collect(),
@@ -99,36 +98,6 @@ fn phrase_is_ok(phrase: &[&str]) -> Result<(), Error> {
         false => {
             anyhow::bail!("Bad words in wordlist: {:?}", bad)
         }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::recovery::durov::{phrase_is_ok, phrase_to_key_durov};
-    use crate::DurovMnemonic;
-
-    #[test]
-    fn test_validate() {
-        phrase_is_ok(
-            &"park remain person kitchen mule spell knee armed position rail grid ankle park remain person kitchen mule spell knee armed position rail grid ankle".split_whitespace().collect::<Vec<&str>>()
-        ).unwrap()
-    }
-
-    #[test]
-    fn test_validate_is_bad() {
-        assert!(phrase_is_ok(
-            &"spark remain person kitchen mule spell knee armed position rail grid ankle park remain person kitchen mule spell knee armed position rail grid ankle".split_whitespace().collect::<Vec<&str>>()
-        ).is_err())
-    }
-
-    #[test]
-    fn test_derivation() {
-        let keypair = phrase_to_key_durov("unaware face erupt ceiling frost shiver crumble know party before brisk skirt fence boat powder copy plastic until butter fluid property concert say verify").unwrap();
-        let expected = "o0kpHL39KRq0KX11zZ0/sCwJL66t+gA4vnfuwBjhAWU=";
-        let pub_expecteed = "lHW4ZS8QvCHcgR4uChD7QJWU2kf5JRMtUnZ2p1GSZjg=";
-        assert_eq!(base64::encode(&keypair.public.as_bytes()), pub_expecteed);
-        let got = base64::encode(&keypair.secret.as_bytes());
-        assert_eq!(got, expected);
     }
 }
 
@@ -345,3 +314,33 @@ const TON_WORDS: [&str; 2048] = [
     "write", "wrong", "yard", "year", "yellow", "you", "young", "youth", "zebra", "zero", "zone",
     "zoo",
 ];
+
+#[cfg(test)]
+mod test {
+    use crate::recovery::durov::{phrase_is_ok, phrase_to_key_durov};
+    use crate::DurovMnemonic;
+
+    #[test]
+    fn test_validate() {
+        phrase_is_ok(
+            &"park remain person kitchen mule spell knee armed position rail grid ankle park remain person kitchen mule spell knee armed position rail grid ankle".split_whitespace().collect::<Vec<&str>>()
+        ).unwrap()
+    }
+
+    #[test]
+    fn test_validate_is_bad() {
+        assert!(phrase_is_ok(
+            &"spark remain person kitchen mule spell knee armed position rail grid ankle park remain person kitchen mule spell knee armed position rail grid ankle".split_whitespace().collect::<Vec<&str>>()
+        ).is_err())
+    }
+
+    #[test]
+    fn test_derivation() {
+        let keypair = phrase_to_key_durov("unaware face erupt ceiling frost shiver crumble know party before brisk skirt fence boat powder copy plastic until butter fluid property concert say verify").unwrap();
+        let expected = "o0kpHL39KRq0KX11zZ0/sCwJL66t+gA4vnfuwBjhAWU=";
+        let pub_expecteed = "lHW4ZS8QvCHcgR4uChD7QJWU2kf5JRMtUnZ2p1GSZjg=";
+        assert_eq!(base64::encode(&keypair.public.as_bytes()), pub_expecteed);
+        let got = base64::encode(&keypair.secret.as_bytes());
+        assert_eq!(got, expected);
+    }
+}

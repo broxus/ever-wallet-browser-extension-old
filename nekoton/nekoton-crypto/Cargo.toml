@@ -15,7 +15,6 @@ tiny-bip39 = "0.8.0"
 hex ="0.4.3"
 rand = "0.6"
 anyhow = "*"
-getrandom = "0.2.2"
 ring = "0.16.20"
 
 serde = {version =  "1", features =["derive"] }
