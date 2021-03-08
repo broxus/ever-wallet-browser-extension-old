@@ -18,11 +18,11 @@ pub struct GeneratedData {
 /// # Arguments
 /// * `phrase` 12 or 24 words
 ///  * `mnemonic_type` -  [`LEGACY_MNEMONIC`] or [`LABS_MNEMONIC`]
-pub fn derive_from_words(phrase: &str, mnemonic_type: u8) -> Result<Keypair, Error> {
+pub fn derive_from_words(mnemonic: &str, mnemonic_type: u8) -> Result<Keypair, Error> {
     anyhow::ensure!(mnemonic_type < 2, "Unsupported mnemonic type");
     match mnemonic_type {
-        LEGACY_MNEMONIC => durov::phrase_to_key_durov(phrase),
-        LABS_MNEMONIC => ton_labs::derive_from_words_labs(phrase),
+        LEGACY_MNEMONIC => durov::phrase_to_key_durov(&mnemonic),
+        LABS_MNEMONIC => ton_labs::derive_from_words_labs(&mnemonic),
         _ => unreachable!(),
     }
 }
