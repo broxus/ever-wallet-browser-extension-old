@@ -318,8 +318,6 @@ const TON_WORDS: [&str; 2048] = [
 #[cfg(test)]
 mod test {
     use crate::recovery::durov::{phrase_is_ok, phrase_to_key_durov};
-    use crate::DurovMnemonic;
-
     #[test]
     fn test_validate() {
         phrase_is_ok(

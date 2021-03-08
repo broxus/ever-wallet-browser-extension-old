@@ -272,7 +272,7 @@ mod test {
         let ton_key_pair = default_keys();
 
         let (signer, data) = TonSigner::init(password.clone(), ton_key_pair).unwrap();
-        let read_signer = TonSigner::from_reader(&*data, password).unwrap();
+        let read_signer = TonSigner::from_reader(data.as_bytes(), password).unwrap();
 
         assert_eq!(read_signer, signer);
     }
@@ -284,7 +284,7 @@ mod test {
         let ton_key_pair = default_keys();
 
         let (_, data) = TonSigner::init(password, ton_key_pair).unwrap();
-        let result = TonSigner::from_reader(&*data, SecStr::new("lol".into()));
+        let result = TonSigner::from_reader(data.as_bytes(), SecStr::new("lol".into()));
         assert!(result.is_err());
     }
 }
