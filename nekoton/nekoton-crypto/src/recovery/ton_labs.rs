@@ -2,11 +2,10 @@ use anyhow::Error;
 use bip39::{Language, Seed};
 use tiny_hderive::bip32::ExtendedPrivKey;
 
-pub fn derive_from_words_ton(
-    lang: Language,
-    phrase: &str,
-) -> Result<ed25519_dalek::Keypair, Error> {
-    let mnemonic = bip39::Mnemonic::from_phrase(phrase, lang)?;
+use crate::recovery::GeneratedData;
+
+pub fn derive_from_words_labs(phrase: &str) -> Result<ed25519_dalek::Keypair, Error> {
+    let mnemonic = bip39::Mnemonic::from_phrase(phrase, Language::English)?;
     let hd = Seed::new(&mnemonic, "");
     let seed_bytes = hd.as_bytes();
 
@@ -14,6 +13,18 @@ pub fn derive_from_words_ton(
         .map_err(|e| Error::msg(format!("{:#?}", e)))?;
 
     ed25519_keys_from_secret_bytes(&derived.secret()) //todo check me
+}
+
+pub fn generate_words_labs() -> Result<GeneratedData, Error> {
+    let mut entropy = [0; 256 / 8];
+    getrandom::getrandom(&mut entropy).map_err(|e| Error::msg(e.to_string()))?;
+    let mnemonic = bip39::Mnemonic::from_entropy(&entropy, Language::English)?
+        .phrase()
+        .to_string();
+    Ok(GeneratedData {
+        keypair: derive_from_words_labs(&mnemonic)?,
+        words: mnemonic.split_whitespace().map(|x| x.to_string()).collect(),
+    })
 }
 
 fn ed25519_keys_from_secret_bytes(bytes: &[u8]) -> Result<ed25519_dalek::Keypair, Error> {
@@ -31,25 +42,22 @@ fn ed25519_keys_from_secret_bytes(bytes: &[u8]) -> Result<ed25519_dalek::Keypair
 
 #[cfg(test)]
 mod test {
-    use crate::recovery::derive_from_words_ton;
     use bip39::Language;
+
+    use crate::recovery::ton_labs::derive_from_words_labs;
 
     #[test]
     fn bad_mnemonic() {
-        let key = derive_from_words_ton(
-            Language::English,
+        let key = derive_from_words_labs(
             "pioneer fever hazard scam install wise reform corn bubble leisure amazing note",
-            None,
         );
         assert!(key.is_err());
     }
 
     #[test]
     fn ton_recovery() {
-        let key = derive_from_words_ton(
-            Language::English,
+        let key = derive_from_words_labs(
             "pioneer fever hazard scan install wise reform corn bubble leisure amazing note",
-            None,
         )
         .unwrap();
         let secret = key.secret;

@@ -8,23 +8,24 @@ use ring::hmac;
 use ring::pbkdf2::{derive, PBKDF2_HMAC_SHA512};
 
 use super::util::{Bits, Bits11, IterExt};
+use crate::recovery::GeneratedData;
 
-const PBKDF_ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100000) };
+const PBKDF_ITERATIONS: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100_000) };
 
+#[derive(Debug)]
 pub struct DurovMnemonic {
     pub key: Keypair,
     pub phrase: String,
 }
 
 fn phrase_to_entropy(phrase: &[&str]) -> [u8; 64] {
-    // Left:  AQTgx4XyYW9pWnxPjPTkVhNNlK04i7BMiNQZ9arvBTA=
-    // use hmac_sha512::HMAC;
     let phrase: String = phrase.join(" ");
-    let key = hmac::Key::new(hmac::HMAC_SHA512, b"");
-    hmac::sign(&key, phrase.as_bytes())
+    let key = hmac::Key::new(hmac::HMAC_SHA512, phrase.as_bytes());
+    let res = hmac::sign(&key, b"")
         .as_ref()
         .try_into()
-        .expect("Shouldn't' fail")
+        .expect("Shouldn't' fail");
+    res
 }
 
 fn phrase_to_seed(phrase: &[&str]) -> [u8; 64] {
@@ -39,7 +40,7 @@ fn phrase_to_seed(phrase: &[&str]) -> [u8; 64] {
     storage
 }
 
-fn phrase_to_key(phrase: &str) -> Result<Keypair, Error> {
+fn phrase_to_key_durov(phrase: &str) -> Result<Keypair, Error> {
     let phrase: Vec<_> = phrase.split_whitespace().collect();
     phrase_is_ok(&phrase)?;
     let seed = phrase_to_seed(&phrase);
@@ -49,46 +50,40 @@ fn phrase_to_key(phrase: &str) -> Result<Keypair, Error> {
     Ok(keypair)
 }
 
-impl DurovMnemonic {
-    pub fn generate() -> Result<Self, Error> {
-        let mut entropy = [0; 256 / 8];
-        getrandom::getrandom(&mut entropy).map_err(|e| Error::msg(e.to_string()))?; //todo use rings random?
-        Ok(Self::from_entropy_unchecked(entropy)?)
+pub fn generate_durov() -> Result<GeneratedData, Error> {
+    let mut entropy = [0; 256 / 8];
+    getrandom::getrandom(&mut entropy).map_err(|e| Error::msg(e.to_string()))?; //todo use rings random?
+    from_entropy_unchecked(entropy)
+}
+
+fn from_entropy_unchecked(entropy: [u8; 256 / 8]) -> Result<GeneratedData, Error> {
+    fn sha256_first_byte(input: &[u8]) -> u8 {
+        use ring::digest;
+        digest::digest(&digest::SHA256, input).as_ref()[0]
     }
+    let wordlist = TON_WORDS;
 
-    pub fn from_entropy_unchecked<E>(entropy: E) -> Result<Self, Error>
-    where
-        E: Into<Vec<u8>>,
-    {
-        fn sha256_first_byte(input: &[u8]) -> u8 {
-            use ring::digest;
-            digest::digest(&digest::SHA256, input).as_ref()[0]
-        }
-        let entropy = entropy.into();
-        let wordlist = TON_WORDS;
+    let checksum_byte = sha256_first_byte(&entropy);
 
-        let checksum_byte = sha256_first_byte(&entropy);
-
-        // First, create a byte iterator for the given entropy and the first byte of the
-        // hash of the entropy that will serve as the checksum (up to 8 bits for biggest
-        // entropy source).
-        //
-        // Then we transform that into a bits iterator that returns 11 bits at a
-        // time (as u16), which we can map to the words on the `wordlist`.
-        //
-        // Given the entropy is of correct size, this ought to give us the correct word
-        // count.
-        let phrase: String = entropy
-            .iter()
-            .chain(Some(&checksum_byte))
-            .bits()
-            .map(|bits: Bits11| wordlist[bits.bits() as usize]) //todo should we check index?
-            .join(" ");
-        Ok(Self {
-            key: phrase_to_key(&phrase)?,
-            phrase,
-        })
-    }
+    // First, create a byte iterator for the given entropy and the first byte of the
+    // hash of the entropy that will serve as the checksum (up to 8 bits for biggest
+    // entropy source).
+    //
+    // Then we transform that into a bits iterator that returns 11 bits at a
+    // time (as u16), which we can map to the words on the `wordlist`.
+    //
+    // Given the entropy is of correct size, this ought to give us the correct word
+    // count.
+    let phrase: String = entropy
+        .iter()
+        .chain(Some(&checksum_byte))
+        .bits()
+        .map(|bits: Bits11| wordlist[bits.bits() as usize]) //todo should we check index?
+        .join(" ");
+    Ok(GeneratedData {
+        keypair: phrase_to_key_durov(&phrase)?,
+        words: phrase.split_whitespace().map(|x| x.to_string()).collect(),
+    })
 }
 
 fn phrase_is_ok(phrase: &[&str]) -> Result<(), Error> {
@@ -109,7 +104,8 @@ fn phrase_is_ok(phrase: &[&str]) -> Result<(), Error> {
 
 #[cfg(test)]
 mod test {
-    use crate::recovery::durov::{phrase_is_ok, phrase_to_key};
+    use crate::recovery::durov::{phrase_is_ok, phrase_to_key_durov};
+    use crate::DurovMnemonic;
 
     #[test]
     fn test_validate() {
@@ -127,7 +123,7 @@ mod test {
 
     #[test]
     fn test_derivation() {
-        let keypair = phrase_to_key("unaware face erupt ceiling frost shiver crumble know party before brisk skirt fence boat powder copy plastic until butter fluid property concert say verify").unwrap();
+        let keypair = phrase_to_key_durov("unaware face erupt ceiling frost shiver crumble know party before brisk skirt fence boat powder copy plastic until butter fluid property concert say verify").unwrap();
         let expected = "o0kpHL39KRq0KX11zZ0/sCwJL66t+gA4vnfuwBjhAWU=";
         let pub_expecteed = "lHW4ZS8QvCHcgR4uChD7QJWU2kf5JRMtUnZ2p1GSZjg=";
         assert_eq!(base64::encode(&keypair.public.as_bytes()), pub_expecteed);
