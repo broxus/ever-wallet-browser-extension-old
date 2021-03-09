@@ -8,6 +8,7 @@ const AssetsListTitle = () => (
     <div className="assets-list__title">
         <h1>Assets</h1>
         <Button text="Add" />
+        <Button text="White" white />
     </div>
 )
 
