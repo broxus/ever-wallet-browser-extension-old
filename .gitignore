@@ -7,4 +7,6 @@
 
 /dist/
 /pkg/
+
 .prettierrc
+.DS_Store
