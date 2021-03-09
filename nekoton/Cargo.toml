@@ -15,6 +15,8 @@ members=["nekoton-crypto"]
 
 
 [dependencies]
+nekoton-crypto = {path = "./nekoton-crypto"}
+
 aes-ctr = "0.6"
 base64 = "0.13"
 curve25519-dalek = "3.0"

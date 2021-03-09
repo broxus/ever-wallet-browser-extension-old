@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 pub mod adnl;
+pub mod crypto;
 
 use self::adnl::Query;
 

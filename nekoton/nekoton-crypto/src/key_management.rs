@@ -9,7 +9,7 @@ use anyhow::Error;
 use chacha20poly1305::aead::{Aead, NewAead};
 use chacha20poly1305::{ChaCha20Poly1305, Key, Nonce};
 use ed25519_dalek::{ed25519, Keypair, Signer};
-use rand::prelude::*;
+use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2};
 use secstr::{SecStr, SecVec};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -117,9 +117,8 @@ impl TonSigner {
     pub fn keypair(&self) -> Arc<ed25519_dalek::Keypair> {
         self.inner.clone()
     }
-}
 
-impl TonSigner {
+    /// Initializes signer from any `reader`, decrypting data.
     pub fn from_reader<T>(reader: T, password: SecStr) -> Result<Self, Error>
     where
         T: Read,
@@ -137,30 +136,39 @@ impl TonSigner {
             inner: Arc::new(ton_data),
         })
     }
+    fn encrypt_keypair(
+        keypair: &Keypair,
+        nonce: &Nonce,
+        encryption_key: &Key,
+    ) -> Result<Vec<u8>, Error> {
+        let cipher = ChaCha20Poly1305::new(&encryption_key);
 
-    pub fn init(
-        password: SecStr,
-        ton_key_pair: ed25519_dalek::Keypair,
-    ) -> Result<(Self, Vec<u8>), Error> {
-        let mut rng = rand::rngs::OsRng::new().expect("OsRng fail");
+        let private_key = cipher
+            .encrypt(&nonce, keypair.secret.as_ref())
+            .map_err(|e| Error::msg(e.to_string()).context("Failed encrypting private key"))?;
+        Ok(private_key)
+    }
+    /// Initializes signer
+    /// Returns [`TonSigner`] and Base64 encoded encrypted version of it
+    pub fn init(password: SecStr, ton_key_pair: Keypair) -> Result<(Self, String), Error> {
+        use ring::rand;
+        let rng = rand::SystemRandom::new();
+
         let mut salt = vec![0u8; CREDENTIAL_LEN];
-        rng.fill(salt.as_mut_slice());
+        rng.fill(salt.as_mut_slice())
+            .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
         let key = Self::symmetric_key_from_password(password, &salt);
 
         // TON
         let (ton_encrypted_private_key, ton_nonce) = {
             let mut nonce_bytes = [0u8; 12];
-            rng.fill(&mut nonce_bytes);
+            rng.fill(&mut nonce_bytes)
+                .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
             let nonce = Nonce::clone_from_slice(&nonce_bytes);
-            let cipher = ChaCha20Poly1305::new(&key);
-
-            let private_key = cipher
-                .encrypt(&nonce, ton_key_pair.secret.as_ref())
-                .map_err(|e| Error::msg(e.to_string()).context("Failed encrypting private key"))?;
+            let private_key = Self::encrypt_keypair(&ton_key_pair, &nonce, &key)?;
             (private_key, nonce)
         };
 
-        //
         let data = CryptoData {
             salt,
             ton_encrypted_private_key,
@@ -171,8 +179,37 @@ impl TonSigner {
             Self {
                 inner: Arc::new(ton_key_pair),
             },
-            serde_json::to_vec(&data)?,
+            serde_json::to_string(&data)?,
         ))
+    }
+
+    pub fn reencrypt(
+        old_password: SecStr,
+        new_password: SecStr,
+        data: String,
+    ) -> Result<String, Error> {
+        let data: CryptoData = serde_json::from_str(&data)?;
+        let old_key = Self::symmetric_key_from_password(old_password, &data.salt);
+        let mut new_salt = vec![0u8; CREDENTIAL_LEN];
+        let mut new_nonce = vec![0u8; 12];
+        let rng = ring::rand::SystemRandom::new();
+        rng.fill(&mut new_nonce)
+            .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
+        rng.fill(new_salt.as_mut_slice())
+            .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
+        let new_nonce = Nonce::clone_from_slice(&new_nonce);
+        let new_key = Self::symmetric_key_from_password(new_password, &new_salt);
+        let kp = Self::ton_private_key_from_encrypted(
+            &*data.ton_encrypted_private_key,
+            &old_key,
+            &data.ton_nonce,
+        )?;
+        let res = Self::encrypt_keypair(&kp, &new_nonce, &new_key);
+        Ok(serde_json::to_string(&CryptoData {
+            ton_nonce: new_nonce,
+            ton_encrypted_private_key: res?,
+            salt: new_salt,
+        })?)
     }
 
     ///Calculates symmetric key from user password, using pbkdf2
@@ -193,9 +230,9 @@ impl TonSigner {
         key: &Key,
         nonce: &Nonce,
     ) -> Result<ed25519_dalek::Keypair, Error> {
-        let decryptor = ChaCha20Poly1305::new(&key);
+        let decrypter = ChaCha20Poly1305::new(&key);
 
-        decryptor
+        decrypter
             .decrypt(nonce, encrypted_key)
             .map_err(|_| anyhow!("Failed decrypting with provided password"))
             .and_then(|data| {
@@ -235,7 +272,7 @@ mod test {
         let ton_key_pair = default_keys();
 
         let (signer, data) = TonSigner::init(password.clone(), ton_key_pair).unwrap();
-        let read_signer = TonSigner::from_reader(&*data, password).unwrap();
+        let read_signer = TonSigner::from_reader(data.as_bytes(), password).unwrap();
 
         assert_eq!(read_signer, signer);
     }
@@ -247,7 +284,7 @@ mod test {
         let ton_key_pair = default_keys();
 
         let (_, data) = TonSigner::init(password, ton_key_pair).unwrap();
-        let result = TonSigner::from_reader(&*data, SecStr::new("lol".into()));
+        let result = TonSigner::from_reader(data.as_bytes(), SecStr::new("lol".into()));
         assert!(result.is_err());
     }
 }
