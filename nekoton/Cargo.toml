@@ -10,12 +10,8 @@ crate-type = ["cdylib"]
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = ["-Oz", "--enable-mutable-globals"]
 
-[workspace]
-members=["nekoton-crypto"]
-
-
 [dependencies]
-nekoton-crypto = {path = "./nekoton-crypto"}
+nekoton-crypto = { path = "../nekoton-crypto" }
 
 aes-ctr = "0.6"
 base64 = "0.13"
