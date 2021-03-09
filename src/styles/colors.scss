@@ -8,7 +8,7 @@ $windowSubTextFg: #999999; // gray: fallback for additional text
 $windowSubTextFgOver: #919191; // darker gray: fallback for additional text with mouse over
 $windowBoldFg: #222222; // dark gray: fallback for bold text
 $windowBoldFgOver: #222222; // dark gray: fallback for bold text with mouse over
-$windowBgActive: #40a7e3; // bright blue: fallback for blue filled active areas
+$windowBgActive: #0088CC; // bright blue: fallback for blue filled active areas
 $windowFgActive: #ffffff; // white: fallback for text on active areas
 $windowActiveTextFg: #168acd; // online blue: fallback for active text like online status
 $windowShadowFg: #000000; // black: fallback for shadow
@@ -21,7 +21,7 @@ $walletTopBg: #1e1f21; // wallet top part background
 
 // widgets
 $activeButtonBg: $windowBgActive; // default active button background
-$activeButtonBgOver: #39a5db; // default active button background with mouse over
+$activeButtonBgOver: #0088cc; // default active button background with mouse over
 $activeButtonBgRipple: #2095d0; // default active button ripple effect
 $activeButtonFg: $windowFgActive; // default active button text
 $activeButtonFgOver: $activeButtonFg; // default active button text with mouse over

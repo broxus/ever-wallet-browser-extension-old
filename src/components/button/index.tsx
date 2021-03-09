@@ -10,18 +10,20 @@ export type ButtonProps = {
 
 export class Button extends React.Component<ButtonProps, {}> {
     render() {
-        const {text, onClick} = this.props;
+        const { text, onClick } = this.props
 
         return (
-            <button className="button"
-                    onMouseDown={createRipple}
-                    onMouseLeave={removeRipple}
-                    onMouseUp={(event) => {
-                        removeRipple(event);
-                        onClick && onClick();
-                    }}>
+            <button
+                className="button"
+                onMouseDown={createRipple}
+                onMouseLeave={removeRipple}
+                onMouseUp={(event) => {
+                    removeRipple(event)
+                    onClick && onClick()
+                }}
+            >
                 <div className="button__content">{text}</div>
             </button>
-        );
+        )
     }
 }
