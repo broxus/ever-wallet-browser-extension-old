@@ -34,7 +34,7 @@ span.ripple {
 
     &._white {
         background-color: $whiteButtonBg;
-        border: 1px solid rgba(0, 136, 204, 0.2);
+        border: $whiteButtonBorder;
         color: $whiteButtonFg;
         &:hover {
             color: $whiteButtonFgOver;

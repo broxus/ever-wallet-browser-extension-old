@@ -1,18 +1,20 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
-import '../styles/main.scss'
-
 import { TopBar } from '../components/topBar'
+
 import { AssetsList } from '../components/assetsList'
+import WelcomeScreen from '../pages/WelcomeScreen'
+import '../styles/main.scss'
 
 class App extends React.Component<{}, {}> {
     render() {
         return (
-            <div>
-                <TopBar />
-                <AssetsList />
-            </div>
+            <WelcomeScreen />
+            // <div>
+            //     <TopBar />
+            //     <AssetsList />
+            // </div>
         )
     }
 }

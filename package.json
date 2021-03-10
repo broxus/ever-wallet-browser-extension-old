@@ -25,6 +25,7 @@
   },
   "homepage": "https://github.com/Rexagon/nekoton#readme",
   "devDependencies": {
+    "@svgr/webpack": "^5.5.0",
     "@types/chrome": "0.0.133",
     "@types/chrome-apps": "0.0.12",
     "@types/classnames": "^2.2.11",
