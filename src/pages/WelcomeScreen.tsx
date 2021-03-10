@@ -8,12 +8,12 @@ const WelcomeScreen = () => (
         <div className="welcome-page__bg"></div>
         <div className="welcome-page__content">
             <div>
-                <h1 className="welcome-page__header-xl">Welcome to Crystal Wallet</h1>
-                <h3 className="welcome-page__header-s">Create a new wallet or sign in</h3>
-                <SittingMan className="welcome-page__illustration" />
+                <h1 className="welcome-page__content-header-xl">Welcome to Crystal Wallet</h1>
+                <h3 className="welcome-page__content-header-s">Create a new wallet or sign in</h3>
+                <SittingMan className="welcome-page__content-illustration" />
             </div>
             <div>
-                <div className="welcome-page__button">
+                <div className="welcome-page__content-button">
                     <Button text="Create a new wallet" />
                 </div>
                 <Button text="Sign in with seed phrase or private key" white />

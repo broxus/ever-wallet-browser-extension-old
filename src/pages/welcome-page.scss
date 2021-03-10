@@ -8,15 +8,6 @@
         width: 92%;
     }
 
-    &__header-xl {
-        top: 12px;
-        margin-bottom: 20px;
-    }
-
-    &__header-s {
-        margin-bottom: 40px;
-    }
-
     &__content {
         display: flex;
         flex-direction: column;
@@ -25,13 +16,22 @@
         position: absolute;
         top: 0;
         height: 100%;
-    }
 
-    &__button {
-        margin-bottom: 12px;
-    }
+        &-header-xl {
+            top: 12px;
+            margin-bottom: 20px;
+        }
 
-    &__illustration {
-        top: 216px;
+        &-header-s {
+            margin-bottom: 40px;
+        }
+
+        &-button {
+            margin-bottom: 12px;
+        }
+
+        &-illustration {
+            top: 216px;
+        }
     }
 }
