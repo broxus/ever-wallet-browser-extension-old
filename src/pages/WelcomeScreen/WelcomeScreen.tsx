@@ -1,6 +1,6 @@
 import React from 'react'
-import { ReactComponent as SittingMan } from '../img/welcome.svg'
-import { Button } from '../components/button'
+import SittingMan from '../../img/welcome.svg'
+import { Button } from '../../components/button'
 import './welcome-page.scss'
 
 const WelcomeScreen = () => (
@@ -10,7 +10,7 @@ const WelcomeScreen = () => (
             <div>
                 <h1 className="welcome-page__content-header-xl">Welcome to Crystal Wallet</h1>
                 <h3 className="welcome-page__content-header-s">Create a new wallet or sign in</h3>
-                <SittingMan className="welcome-page__content-illustration" />
+                <SittingMan />
             </div>
             <div>
                 <div className="welcome-page__content-button">
