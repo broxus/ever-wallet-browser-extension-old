@@ -1,0 +1,43 @@
+@import '../../styles/colors';
+
+.policy-sign-page {
+    &__illustration {
+        left: -28px;
+        top: 0;
+        position: absolute;
+    }
+
+    &__bg {
+        background-color: $illustrationBg;
+        height: 300px;
+        position: relative;
+        margin-left: 28px;
+        width: 92%;
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 28px 28px;
+        height: 310px;
+        max-width: 360px;
+        position: absolute;
+
+        &-checkbox {
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #000000;
+
+            &--link {
+                cursor: pointer;
+                text-decoration: underline;
+            }
+        }
+
+        &-button {
+            margin-bottom: 12px;
+        }
+    }
+}

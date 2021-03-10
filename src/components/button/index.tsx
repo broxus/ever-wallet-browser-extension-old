@@ -8,6 +8,7 @@ export type ButtonProps = {
     text: string
     white?: boolean
     onClick?: () => void
+    disabled?: boolean
 }
 
 export class Button extends React.Component<ButtonProps, {}> {

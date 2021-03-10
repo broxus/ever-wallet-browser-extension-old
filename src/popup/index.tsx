@@ -1,19 +1,15 @@
-import React from 'react'
+import React, { useState } from 'react'
 import ReactDOM from 'react-dom'
 
 import WelcomeScreen from '../pages/WelcomeScreen/WelcomeScreen'
+import PolicySignScreen from '../pages/PolicySignScreen/PolicySignScreen'
 import '../styles/main.scss'
 
-class App extends React.Component<{}, {}> {
-    render() {
-        return (
-            <WelcomeScreen />
-            // <div>
-            //     <TopBar />
-            //     <AssetsList />
-            // </div>
-        )
-    }
+const tempScreens = [<WelcomeScreen />, <PolicySignScreen />]
+
+const App: React.FC = () => {
+    const [step, setStep] = useState(1)
+    return tempScreens[step]
 }
 
 ReactDOM.render(
