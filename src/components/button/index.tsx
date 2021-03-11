@@ -9,12 +9,13 @@ export type ButtonProps = {
     white?: boolean
     onClick?: () => void
     disabled?: boolean
+    noBorder?: boolean
 }
 
 export class Button extends React.Component<ButtonProps, {}> {
     render() {
-        const { text, white, disabled, onClick } = this.props
-        let className = cn('button', { _white: white, _blue: !white, _disabled: disabled })
+        const { text, white, disabled, noBorder, onClick } = this.props
+        let className = cn('button', { _white: white, _blue: !white, _disabled: disabled, _noborder: noBorder })
 
         return (
             <button

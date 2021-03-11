@@ -24,6 +24,7 @@ span.ripple {
 
     &._blue {
         background-color: $activeButtonBg;
+        border: 1px solid $activeButtonBg;
         color: $activeButtonFg;
         &:hover {
             color: $activeButtonFgOver;
@@ -36,7 +37,7 @@ span.ripple {
 
     &._white {
         background-color: $whiteButtonBg;
-        border: $whiteButtonBorder;
+        border: 1px solid $whiteButtonBorder;
         color: $whiteButtonFg;
         &:hover {
             color: $whiteButtonFgOver;
@@ -53,6 +54,9 @@ span.ripple {
         &:hover {
             background-color: $disabledButtonBg;
         }
+    }
+    &._noborder {
+        border: none;
     }
 
     &__content {
