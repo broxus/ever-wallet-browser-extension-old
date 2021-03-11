@@ -1,4 +1,4 @@
-use js_sys::{Error, JsString};
+use js_sys::Error;
 use wasm_bindgen::prelude::*;
 
 use nekoton_crypto::TonSigner;
@@ -65,7 +65,7 @@ impl CryptoHandler {
         Ok(CreateOutput {
             handler: CryptoHandler { signer },
             encrypted_data,
-            mnemonic: mnemonic.to_string(),
+            mnemonic,
         })
     }
 
@@ -95,6 +95,6 @@ impl CryptoHandler {
             encrypted_data.into(),
         )
         .map_err(|e| Error::new(&e.to_string()))?;
-        Ok(data.into())
+        Ok(data)
     }
 }
