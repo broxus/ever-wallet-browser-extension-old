@@ -742,6 +742,7 @@ dependencies = [
  "anyhow",
  "base64 0.13.0",
  "ed25519-dalek",
+ "hex 0.4.3",
  "pretty_assertions 0.7.1",
  "ton_block",
  "ton_sdk",

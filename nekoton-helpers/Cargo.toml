@@ -15,3 +15,4 @@ ton_sdk = {git = "https://github.com/tonlabs/TON-SDK.git"}
 ed25519-dalek = "1.0.1"
 [dev-dependencies]
 pretty_assertions = "0.7.1"
+hex = "0.4.3"
