@@ -6,6 +6,8 @@ use base64::URL_SAFE;
 use ton_block::MsgAddrStd;
 use ton_types::AccountId;
 
+pub use compute::*;
+
 ///Packs std address to base64 format
 /// # Arguments
 /// `base64_url` - encode with url friendly charset or not

@@ -1,8 +1,8 @@
 use anyhow::Error;
-use ed25519_dalek::{Keypair, PublicKey};
+use ed25519_dalek::PublicKey;
 use ton_block::{MsgAddrStd, MsgAddressInt, Serializable, StateInit};
 use ton_sdk::ContractImage;
-use ton_types::{BuilderData, Cell, IBitstring, Result, SliceData, UInt256};
+use ton_types::{BuilderData, Cell, IBitstring, Result, UInt256};
 
 const SAFE_MULTISIG_WALLET_CODE: &[u8] = include_bytes!("../contracts/SafeMultisigWallet.tvc");
 const SAFE_MULTISIG_WALLET24H_CODE: &[u8] =
@@ -26,8 +26,11 @@ fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAddrStd, Error
         }
     }
 }
-
-pub fn compute(
+///Computes address from public key
+/// # Arguments
+/// `pk` - public Key  
+/// `contract` - one of [`SAFE_MULTISIG_WALLET`], [`SAFE_MULTISIG_WALLET24H`], [`SETCODE_MULTISIG_WALLET`], [`SURF_WALLET`], [`WALLET_V3`]
+pub fn compute_address(
     pk: &ed25519_dalek::PublicKey,
     contract_type: u8,
     workchain: i32,
@@ -59,7 +62,7 @@ pub fn compute(
 }
 
 /// Compute deposit address from key and wallet id
-pub fn compute_deposit_address(key: &PublicKey, id: u32) -> anyhow::Result<MsgAddrStd> {
+fn compute_deposit_address(key: &PublicKey, id: u32) -> anyhow::Result<MsgAddrStd> {
     msg_addr_int_to_std(
         &InitData::from_key(&key)
             .with_wallet_id(id)
@@ -100,19 +103,6 @@ impl InitData {
             code: Some(load_code()),
             data: Some(self.serialize()?),
             ..Default::default()
-        })
-    }
-
-    pub fn deserialize(data: Cell) -> Result<Self> {
-        let mut slice: SliceData = data.into();
-        let seqno = slice.get_next_u32()?;
-        let wallet_id = slice.get_next_u32()?;
-        let public_key = slice.get_next_bytes(32)?.into();
-
-        Ok(InitData {
-            seqno,
-            wallet_id,
-            public_key,
         })
     }
 
