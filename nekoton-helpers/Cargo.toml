@@ -11,5 +11,7 @@ ton_block ={git="https://github.com/tonlabs/ton-labs-block.git"}
 ton_types = {git = "https://github.com/tonlabs/ton-labs-types.git"}
 base64 = "0.13.0"
 anyhow = "1.0.38"
+ton_sdk = {git = "https://github.com/tonlabs/TON-SDK.git"}
+ed25519-dalek = "1.0.1"
 [dev-dependencies]
 pretty_assertions = "0.7.1"

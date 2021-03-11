@@ -81,6 +81,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afddf7f520a80dbf76e6f50a35bca42a2331ef227a28b3b6dc5c2e2338d114b1"
 
 [[package]]
+name = "api_derive"
+version = "1.10.0"
+source = "git+https://github.com/tonlabs/TON-SDK.git#85c6a8f2c3a68a2786766206a5b34c93407a7faf"
+dependencies = [
+ "api_info",
+ "quote 1.0.9",
+ "serde_json",
+ "syn 1.0.60",
+]
+
+[[package]]
+name = "api_info"
+version = "1.10.0"
+source = "git+https://github.com/tonlabs/TON-SDK.git#85c6a8f2c3a68a2786766206a5b34c93407a7faf"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -312,6 +333,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "crc-any"
+version = "2.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3784befdf9469f4d51c69ef0b774f6a99de6bcc655285f746f16e0dd63d9007"
+dependencies = [
+ "debug-helper",
+]
+
+[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -368,6 +398,12 @@ dependencies = [
  "subtle 2.4.0",
  "zeroize",
 ]
+
+[[package]]
+name = "debug-helper"
+version = "0.3.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a8a5bb894f24f42c247f19b25928a88e31867c0f84552c05df41a9dd527435e"
 
 [[package]]
 name = "diff"
@@ -705,8 +741,10 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "base64 0.13.0",
+ "ed25519-dalek",
  "pretty_assertions 0.7.1",
  "ton_block",
+ "ton_sdk",
  "ton_types",
 ]
 
@@ -1445,6 +1483,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "ton_labs_assembler"
+version = "1.0.0"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#8dea5c6ad9afd1f47d4f597330d06e604780ea49"
+dependencies = [
+ "failure",
+ "hex 0.4.3",
+ "log",
+ "num",
+ "num-traits",
+ "ton_types",
+]
+
+[[package]]
+name = "ton_sdk"
+version = "1.10.0"
+source = "git+https://github.com/tonlabs/TON-SDK.git#85c6a8f2c3a68a2786766206a5b34c93407a7faf"
+dependencies = [
+ "api_derive",
+ "api_info",
+ "base64 0.10.1",
+ "chrono",
+ "crc-any",
+ "ed25519-dalek",
+ "failure",
+ "hex 0.3.2",
+ "lazy_static",
+ "log",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.8.2",
+ "ton_abi",
+ "ton_block",
+ "ton_types",
+ "ton_vm",
+]
+
+[[package]]
 name = "ton_tl_codegen"
 version = "0.0.1"
 source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fcb184ed287288cfbaee2bedae4cba541e8e3849"
@@ -1473,6 +1551,24 @@ dependencies = [
  "num-traits",
  "rand 0.7.3",
  "sha2 0.8.2",
+]
+
+[[package]]
+name = "ton_vm"
+version = "1.0.0"
+source = "git+https://github.com/tonlabs/ton-labs-vm.git#c817670f6e17d73dc8f05a5fd4af00302e8e12bb"
+dependencies = [
+ "ed25519",
+ "ed25519-dalek",
+ "failure",
+ "hex 0.4.3",
+ "log",
+ "num",
+ "num-traits",
+ "rand 0.7.3",
+ "sha2 0.8.2",
+ "ton_labs_assembler",
+ "ton_types",
 ]
 
 [[package]]
