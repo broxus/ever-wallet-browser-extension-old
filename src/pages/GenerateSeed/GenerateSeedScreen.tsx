@@ -1,6 +1,7 @@
 import React from 'react'
 import './generate-seed.scss'
 import { Button } from '../../components/button'
+import CopyButton from '../../components/CopyButton/CopyButton'
 
 const words = [
     'Secure',
@@ -32,13 +33,14 @@ const words = [
 const generateMockSeed = () => Array.from(words.sort(() => 0.5 - Math.random()))
 
 const GenerateSeedScreen = () => {
+    const seed = generateMockSeed()
     return (
         <>
             <div className="generate-seed-page__bg"></div>
             <div className="generate-seed-page__content">
                 <h2>Save the seed phrase</h2>
                 <ol>
-                    {generateMockSeed().map((item: string, i: number) => (
+                    {seed.map((item: string, i: number) => (
                         <li key={i} className="generate-seed-page__content-word">
                             {item.toLowerCase()}
                         </li>
@@ -46,7 +48,9 @@ const GenerateSeedScreen = () => {
                 </ol>
                 <div className="generate-seed-page__content-buttons">
                     <Button text={'I wrote it down on paper'} />
-                    <Button text={'Copy all words'} white />
+                    <CopyButton text={seed.join(',')}>
+                        <Button text={'Copy all words'} white />
+                    </CopyButton>
                     <Button text={'Back'} white noBorder />
                 </div>
             </div>
