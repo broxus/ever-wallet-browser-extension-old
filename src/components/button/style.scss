@@ -47,6 +47,14 @@ span.ripple {
         }
     }
 
+    &._disabled {
+        background-color: $disabledButtonBg;
+        cursor: not-allowed;
+        &:hover {
+            background-color: $disabledButtonBg;
+        }
+    }
+
     &__content {
         font-style: normal;
         font-family: 'PT Root UI', serif;

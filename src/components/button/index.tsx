@@ -13,8 +13,8 @@ export type ButtonProps = {
 
 export class Button extends React.Component<ButtonProps, {}> {
     render() {
-        const { text, white, onClick } = this.props
-        let className = cn('button', { _white: white, _blue: !white })
+        const { text, white, disabled, onClick } = this.props
+        let className = cn('button', { _white: white, _blue: !white, _disabled: disabled })
 
         return (
             <button

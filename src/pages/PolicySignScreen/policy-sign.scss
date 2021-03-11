@@ -25,14 +25,18 @@
         position: absolute;
 
         &-checkbox {
-            font-size: 14px;
-            line-height: 20px;
-            letter-spacing: 0.75px;
-            color: #000000;
+            display: flex;
 
-            &--link {
-                cursor: pointer;
-                text-decoration: underline;
+            &-label {
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                color: #000000;
+
+                &--link {
+                    cursor: pointer;
+                    text-decoration: underline;
+                }
             }
         }
 
