@@ -50,6 +50,7 @@ span.ripple {
 
     &._disabled {
         background-color: $disabledButtonBg;
+        border: 1px solid $disabledButtonBg;
         cursor: not-allowed;
         &:hover {
             background-color: $disabledButtonBg;

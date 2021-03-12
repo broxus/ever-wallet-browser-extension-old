@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
 
 import WelcomeScreen from '../pages/WelcomeScreen/WelcomeScreen'
@@ -8,6 +8,7 @@ import CreatePasswordScreen, {
     ConfirmPasswordScreen,
 } from '../pages/CreatePassword/CreatePasswordScreen'
 import '../styles/main.scss'
+import MainPageScreen from '../pages/MainPage/MainPageScreen'
 
 const tempScreens = [
     <WelcomeScreen />,
@@ -16,11 +17,35 @@ const tempScreens = [
     <CheckSeed />,
     <CreatePasswordScreen />,
     <ConfirmPasswordScreen />,
+    <MainPageScreen />,
 ]
 
 const App: React.FC = () => {
-    const [step, setStep] = useState(5)
-    return tempScreens[step]
+    const [step, setStep] = useState(0)
+
+    const navigate = (event: { key: any }) => {
+        const key = event.key // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
+        switch (key) {
+            case 'ArrowLeft':
+                setStep((prevState => prevState - 1)
+                break
+            case 'ArrowRight':
+                setStep(prevState => prevState + 1)
+                break
+            case 'ArrowUp':
+                // Up pressed
+                break
+            case 'ArrowDown':
+                // Down pressed
+                break
+        }
+    }
+    useEffect(() => {
+        document.addEventListener('keydown', navigate)
+        // return () => document.removeEventListener('keydown', navigate, true) // Succeeds
+    }, [])
+
+    return tempScreens[step] || <div>failed</div>
 }
 
 ReactDOM.render(
