@@ -1,17 +1,56 @@
 import React, { useState } from 'react'
+import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
+import UserPicS from '../../img/user-avatar-placeholder-s.svg'
 import Receive from '../../img/receive.svg'
 import Send from '../../img/send.svg'
 import TonLogo from '../../img/ton-logo.svg'
 import TonLogoS from '../../img/ton-logo-s.svg'
+import USDTLogoS from '../../img/usdt-logo-s.svg'
+import Plus from '../../img/plus.svg'
 import Arrow from '../../img/arrow.svg'
-
-import './main-page.scss'
 import { Button } from '../../components/button'
 import { createRipple, removeRipple } from '../../common/ripple'
-import cn from 'classnames'
+import './main-page.scss'
+
+const AccountModal = () => {
+    return (
+        <div className="main-page__account-settings">
+            <div className="main-page__account-settings-section">
+                <div
+                    className="main-page__account-settings-section-item"
+                    style={{ display: 'flex' }}
+                >
+                    <UserPicS />
+                    <div style={{ padding: '0 12px' }}>
+                        <div className="main-page__account-settings-section-account">Account 1</div>
+                        <div className="main-page__account-settings-section-item-value">
+                            $1,200.00
+                        </div>
+                        <div>Connected sites</div>
+                    </div>
+                </div>
+            </div>
+            <div className="main-page__account-settings-section">
+                <div
+                    className="main-page__account-settings-section-item"
+                    style={{ display: 'flex' }}
+                >
+                    <Plus />
+                    <div style={{ padding: '0 12px' }}>Create account</div>
+                </div>
+            </div>
+            <div className="main-page__account-settings-section">
+                <div className="main-page__account-settings-section-item">Wallet settings</div>
+                <div className="main-page__account-settings-section-item">Information and help</div>
+            </div>
+            <div className="main-page__account-settings-section-item">Log out</div>
+        </div>
+    )
+}
 
 const AccountDetails = () => {
+    const [modalVisible, setModalVisible] = useState(false)
     const handleClick = () => {
         console.log('clicked')
     }
@@ -20,7 +59,14 @@ const AccountDetails = () => {
         <div className="main-page__account-details">
             <div className="main-page__account-details-top-panel">
                 <div className="main-page__account-details-network">Free TON main net</div>
-                <UserPic />
+                {/*// @ts-ignore*/}
+                <div
+                    onClick={() => setModalVisible(true)}
+                    style={{ cursor: 'pointer', position: 'relevant' }}
+                >
+                    <UserPic />
+                </div>
+                {modalVisible && <AccountModal />}
             </div>
             <div className="main-page__account-details-acc">
                 <span className="main-page__account-details-acc-account"> Account 1</span>
@@ -115,31 +161,68 @@ const Assets = () => (
 
 const Transaction = () => {
     return (
-        <div className="main-page__user-assets-asset">
-            <div style={{ display: 'flex', width: '100%' }}>
-                {/*// @ts-ignore*/}
-                <TonLogoS style={{ marginRight: '16px' }} />
-                <div className="main-page__user-assets-asset-number">
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="main-page__user-assets-asset-number-amount">
-                            0xa55d...0D8D
-                        </span>
-                        <span className="main-page__user-assets-asset-number-dollars">
-                            + 204.00 TON
+        <>
+            <div className="main-page__user-assets-asset">
+                <div style={{ display: 'flex', width: '100%' }}>
+                    {/*// @ts-ignore*/}
+                    <TonLogoS style={{ marginRight: '16px', minWidth: '36px' }} />
+                    <div className="main-page__user-assets-asset-number">
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span className="main-page__user-assets-asset-number-amount">
+                                0xa55d...0D8D
+                            </span>
+                            <span className="main-page__user-assets-asset-number-income">
+                                + 204.00 TON
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span className="main-page__user-assets-asset-number-dollars">
+                                14:56
+                            </span>
+                            <span className="main-page__user-assets-asset-number-dollars">
+                                Fees: 0.00034 TON
+                            </span>
+                        </div>
+                        <span
+                            className="main-page__user-assets-asset-number-dollars"
+                            style={{ color: '#000000', padding: '10px 0 0' }}
+                        >
+                            Staking reward.
                         </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="main-page__user-assets-asset-number-dollars">14:56</span>
-                        <span className="main-page__user-assets-asset-number-dollars">
-                            Fees: 0.00034 TON
-                        </span>
-                    </div>
-                    <span className="main-page__user-assets-asset-number-dollars">
-                        Staking reward.
-                    </span>
                 </div>
             </div>
-        </div>
+            <div className="main-page__user-assets-asset">
+                <div style={{ display: 'flex', width: '100%' }}>
+                    {/*// @ts-ignore*/}
+                    <USDTLogoS style={{ marginRight: '16px', minWidth: '36px' }} />
+                    <div className="main-page__user-assets-asset-number">
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span className="main-page__user-assets-asset-number-amount">
+                                0xa55d...0D8D
+                            </span>
+                            <span className="main-page__user-assets-asset-number-expense">
+                                - 1,076.00 USDT
+                            </span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span className="main-page__user-assets-asset-number-dollars">
+                                2:27
+                            </span>
+                            <span className="main-page__user-assets-asset-number-dollars">
+                                Fees: 0.00034 TON
+                            </span>
+                        </div>
+                        <span
+                            className="main-page__user-assets-asset-number-dollars"
+                            style={{ color: '#000000', padding: '10px 0 0' }}
+                        >
+                            Ordinary stake.
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </>
     )
 }
 

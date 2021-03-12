@@ -124,10 +124,65 @@
         }
     }
 
+    &__account-settings {
+        background: #ffffff;
+        border: 1px solid #ebedee;
+        box-shadow: 0px 4px 19px rgba(0, 0, 0, 0.25);
+        border-radius: 2px;
+        //height: 160px;
+        width: 208px;
+        padding: 16px;
+        position: absolute;
+        top: 60px;
+        z-index: 10;
+
+        &-section {
+            border-bottom: 1px solid #ebedee;
+            margin-bottom: 16px;
+
+            &-account {
+                font-style: normal;
+                font-weight: bold;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: #000000;
+            }
+            &-item {
+                color: #000000;
+                cursor: pointer;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                margin-bottom: 16px;
+                &:hover {
+                    color: $activeButtonBg;
+
+                    //background-color: #919191;
+                }
+                //&:not(:first-child) {
+                //    padding: 0 12px;
+                //}
+                &-value {
+                    margin-bottom: 16px;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 12px;
+                    line-height: 16px;
+                    letter-spacing: 0.4px;
+                    color: #96a1a7;
+                }
+            }
+        }
+    }
+
     &__user-assets {
         padding: 0 20px;
         &-panel {
             display: flex;
+            border-bottom: 1px solid #ebedee;
             &-tab {
                 font-style: normal;
                 font-weight: 500;
@@ -142,6 +197,7 @@
                 &._active {
                     color: $windowBgActive;
                     border-bottom: 2px solid $windowBgActive;
+                    margin-bottom: -1px;
                 }
             }
         }
@@ -175,6 +231,24 @@
                     line-height: 20px;
                     letter-spacing: 0.75px;
                     color: $inactiveTab;
+                }
+                &-income {
+                    font-style: normal;
+                    font-weight: bold;
+                    font-size: 16px;
+                    line-height: 20px;
+                    text-align: right;
+                    letter-spacing: 0.25px;
+                    color: #00ac47;
+                }
+                &-expense {
+                    font-style: normal;
+                    font-weight: bold;
+                    font-size: 16px;
+                    line-height: 20px;
+                    text-align: right;
+                    letter-spacing: 0.25px;
+                    color: #000000;
                 }
             }
         }
