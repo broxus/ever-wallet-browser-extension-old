@@ -54,5 +54,11 @@
             height: 130px;
             justify-content: space-around;
         }
+        &-check-seed-buttons {
+            display: flex;
+            flex-direction: column;
+            height: 108px;
+            justify-content: space-around;
+        }
     }
 }

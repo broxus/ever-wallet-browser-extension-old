@@ -1,7 +1,8 @@
 import React from 'react'
-import './generate-seed.scss'
 import { Button } from '../../components/button'
 import CopyButton from '../../components/CopyButton/CopyButton'
+import Input from '../../components/Input/Input'
+import './generate-seed.scss'
 
 const words = [
     'Secure',
@@ -31,6 +32,22 @@ const words = [
 ]
 
 const generateMockSeed = () => Array.from(words.sort(() => 0.5 - Math.random()))
+
+export const CheckSeed = () => (
+    <div className="generate-seed-page__content">
+        <h2>Let’s check the seed phrase</h2>
+        <div>
+            <Input label={'4.  Enter the word'} autoFocus type={'text'} />
+            <Input label={'7.  Enter the word'} type={'text'} />
+            <Input label={'13.  Enter the word'} type={'text'} />
+            <Input label={'16.  Enter the word'} type={'text'} />
+        </div>
+        <div className="generate-seed-page__content-check-seed-buttons">
+            <Button text={'Confirm'} />
+            <Button text={'Back'} white noBorder />
+        </div>
+    </div>
+)
 
 const GenerateSeedScreen = () => {
     const seed = generateMockSeed()
