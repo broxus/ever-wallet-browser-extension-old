@@ -744,6 +744,7 @@ dependencies = [
  "ed25519-dalek",
  "hex 0.4.3",
  "pretty_assertions 0.7.1",
+ "ton_abi",
  "ton_block",
  "ton_sdk",
  "ton_types",

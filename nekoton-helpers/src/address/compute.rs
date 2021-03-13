@@ -18,7 +18,7 @@ pub const SETCODE_MULTISIG_WALLET: u8 = 2;
 pub const SURF_WALLET: u8 = 3;
 pub const WALLET_V3: u8 = 4;
 
-fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAddrStd, Error> {
+pub(crate) fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAddrStd, Error> {
     match addr {
         MsgAddressInt::AddrStd(a) => Ok(a.clone()),
         MsgAddressInt::AddrVar(_) => {
@@ -127,7 +127,7 @@ mod test {
     use ton_block::{MsgAddrStd, MsgAddressInt};
 
     use crate::address::compute::{compute_address, SAFE_MULTISIG_WALLET, SURF_WALLET, WALLET_V3};
-    use crate::address::pack_std_smc_addr;
+    use crate::address::{msg_addr_int_to_std, pack_std_smc_addr};
 
     fn default_pubkey() -> ed25519_dalek::PublicKey {
         ed25519_dalek::PublicKey::from_bytes(
@@ -164,7 +164,14 @@ mod test {
         )
         .unwrap();
         let addr = compute_address(&pk, SAFE_MULTISIG_WALLET, 0).unwrap();
-        let expected_address = add
+
+        let expected_address = msg_addr_int_to_std(
+            &MsgAddressInt::from_str(
+                "0:5C3BCF647CDFD678FBEC95754ACCB2668F7CD651F60FCDD9689C1829A94CFEE6",
+            )
+            .unwrap(),
+        )
+        .unwrap();
         assert_eq!(addr, expected_address);
     }
 }
