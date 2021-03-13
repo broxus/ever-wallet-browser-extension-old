@@ -1,10 +1,10 @@
 use anyhow::{Error, Result};
 use std::collections::HashMap;
-use std::iter::FromIterator;
+
 use ton_abi::{Contract, DecodedMessage, Token, TokenValue};
 use ton_types::{BuilderData, SliceData};
 
-struct ContractState {
+pub struct ContractState {
     contract: Contract,
 }
 

@@ -1,4 +1,4 @@
 pub mod address;
 
-mod abi;
+pub mod abi;
 mod crc;

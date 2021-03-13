@@ -3,7 +3,7 @@ use ton_block::messages::Message;
 use ton_block::Deserializable;
 
 pub struct MessageState {
-    message: Message,
+    pub message: Message,
 }
 
 impl MessageState {

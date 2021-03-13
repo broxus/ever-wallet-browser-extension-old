@@ -1,5 +1,6 @@
 use anyhow::Error;
 use ed25519_dalek::PublicKey;
+use std::str::FromStr;
 use ton_block::{MsgAddrStd, MsgAddressInt, Serializable, StateInit};
 use ton_sdk::ContractImage;
 use ton_types::{BuilderData, Cell, IBitstring, Result, UInt256};
@@ -18,7 +19,8 @@ pub const SETCODE_MULTISIG_WALLET: u8 = 2;
 pub const SURF_WALLET: u8 = 3;
 pub const WALLET_V3: u8 = 4;
 
-pub(crate) fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAddrStd, Error> {
+///Constructs std address from [`MsgAddressInt`] assuming, that [`ton_block::MsgAddrVar`] is not used.
+pub fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAddrStd, Error> {
     match addr {
         MsgAddressInt::AddrStd(a) => Ok(a.clone()),
         MsgAddressInt::AddrVar(_) => {
@@ -26,7 +28,14 @@ pub(crate) fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAdd
         }
     }
 }
-///Computes address from public key
+
+///Constructs std address from [`str`]
+pub fn msg_addr_from_str(addr: &str) -> anyhow::Result<MsgAddrStd> {
+    let adr = MsgAddressInt::from_str(addr).map_err(|e| Error::msg(e.to_string()))?;
+    msg_addr_int_to_std(&adr)
+}
+
+///Computes address from [`PublicKey`]
 /// # Arguments
 /// `pk` - public Key  
 /// `contract` - one of [`SAFE_MULTISIG_WALLET`], [`SAFE_MULTISIG_WALLET24H`], [`SETCODE_MULTISIG_WALLET`], [`SURF_WALLET`], [`WALLET_V3`]
@@ -124,7 +133,7 @@ mod test {
     use std::str::FromStr;
 
     use pretty_assertions::assert_eq;
-    use ton_block::{MsgAddrStd, MsgAddressInt};
+    use ton_block::MsgAddressInt;
 
     use crate::address::compute::{compute_address, SAFE_MULTISIG_WALLET, SURF_WALLET, WALLET_V3};
     use crate::address::{msg_addr_int_to_std, pack_std_smc_addr};
