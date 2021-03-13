@@ -121,9 +121,12 @@ fn load_code() -> Cell {
 
 #[cfg(test)]
 mod test {
-    use pretty_assertions::assert_eq;
+    use std::str::FromStr;
 
-    use crate::address::compute::{compute, SAFE_MULTISIG_WALLET, SURF_WALLET, WALLET_V3};
+    use pretty_assertions::assert_eq;
+    use ton_block::{MsgAddrStd, MsgAddressInt};
+
+    use crate::address::compute::{compute_address, SAFE_MULTISIG_WALLET, SURF_WALLET, WALLET_V3};
     use crate::address::pack_std_smc_addr;
 
     fn default_pubkey() -> ed25519_dalek::PublicKey {
@@ -137,7 +140,7 @@ mod test {
     #[test]
     fn test_v3() {
         let pk = default_pubkey();
-        let addr = compute(&pk, WALLET_V3, 0).unwrap();
+        let addr = compute_address(&pk, WALLET_V3, 0).unwrap();
         assert_eq!(
             pack_std_smc_addr(true, &addr, false),
             "UQDIsJmoySkJdZEX5NNj02aix0BXE4-Ym4zcGFCfmo0xaeFc"
@@ -147,10 +150,21 @@ mod test {
     #[test]
     fn test_surf() {
         let pk = default_pubkey();
-        let addr = compute(&pk, SURF_WALLET, 0).unwrap();
+        let addr = compute_address(&pk, SURF_WALLET, 0).unwrap();
         assert_eq!(
             pack_std_smc_addr(true, &addr, true),
             "EQC5aPHGTz9B4EaZpq7wYq-eoKWiOFXwUx05vURmxwl4W4Jn"
         );
+    }
+    #[test]
+    fn test_multisig() {
+        let pk = ed25519_dalek::PublicKey::from_bytes(
+            &*hex::decode("1e6e5912e156d02dd4769caae5c5d8ee9058726c75d263bafc642d64669cc46d")
+                .unwrap(),
+        )
+        .unwrap();
+        let addr = compute_address(&pk, SAFE_MULTISIG_WALLET, 0).unwrap();
+        let expected_address = add
+        assert_eq!(addr, expected_address);
     }
 }
