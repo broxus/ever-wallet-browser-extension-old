@@ -1,6 +1,7 @@
+use std::str::FromStr;
+
 use anyhow::Error;
 use ed25519_dalek::PublicKey;
-use std::str::FromStr;
 use ton_block::{MsgAddrStd, MsgAddressInt, Serializable, StateInit};
 use ton_sdk::ContractImage;
 use ton_types::{BuilderData, Cell, IBitstring, Result, UInt256};
@@ -13,11 +14,13 @@ const SETCODE_MULTISIG_WALLET_CODE: &[u8] =
 const SURF_WALLET_CODE: &[u8] = include_bytes!("../contracts/Surf.tvc");
 const WALLET_V3_CODE: &[u8] = include_bytes!("../contracts/wallet_code.boc");
 
-pub const SAFE_MULTISIG_WALLET: u8 = 0;
-pub const SAFE_MULTISIG_WALLET24H: u8 = 1;
-pub const SETCODE_MULTISIG_WALLET: u8 = 2;
-pub const SURF_WALLET: u8 = 3;
-pub const WALLET_V3: u8 = 4;
+pub enum Wallet {
+    SafeMultisigWallet,
+    SafeMultisigWallet24h,
+    SetcodeMultisigWallet,
+    SurfWallet,
+    WalletV3,
+}
 
 ///Constructs std address from [`MsgAddressInt`] assuming, that [`ton_block::MsgAddrVar`] is not used.
 pub fn msg_addr_int_to_std(addr: &MsgAddressInt) -> anyhow::Result<MsgAddrStd, Error> {
@@ -38,33 +41,33 @@ pub fn msg_addr_from_str(addr: &str) -> anyhow::Result<MsgAddrStd> {
 ///Computes address from [`PublicKey`]
 /// # Arguments
 /// `pk` - public Key  
-/// `contract` - one of [`SAFE_MULTISIG_WALLET`], [`SAFE_MULTISIG_WALLET24H`], [`SETCODE_MULTISIG_WALLET`], [`SURF_WALLET`], [`WALLET_V3`]
+/// `contract` - one of [`SafeMultisigWallet`], [`SafeMultisigWallet24h`], [`SetcodeMultisigWallet`], [`SurfWallet`], [`WalletV3`]
 pub fn compute_address(
     pk: &ed25519_dalek::PublicKey,
-    contract_type: u8,
+    contract_type: Wallet,
     workchain: i32,
 ) -> anyhow::Result<MsgAddrStd, Error> {
     use std::io::Cursor;
+    use Wallet::*;
     let contract = match contract_type {
-        SAFE_MULTISIG_WALLET => {
+        SafeMultisigWallet => {
             ContractImage::from_state_init_and_key(&mut Cursor::new(SAFE_MULTISIG_WALLET_CODE), pk)
         }
-        SAFE_MULTISIG_WALLET24H => ContractImage::from_state_init_and_key(
+        SafeMultisigWallet24h => ContractImage::from_state_init_and_key(
             &mut Cursor::new(SAFE_MULTISIG_WALLET24H_CODE),
             pk,
         ),
-        SETCODE_MULTISIG_WALLET => ContractImage::from_state_init_and_key(
+        SetcodeMultisigWallet => ContractImage::from_state_init_and_key(
             &mut Cursor::new(SETCODE_MULTISIG_WALLET_CODE),
             pk,
         ),
-        SURF_WALLET => {
+        SurfWallet => {
             ContractImage::from_state_init_and_key(&mut Cursor::new(SURF_WALLET_CODE), pk)
         }
 
-        WALLET_V3 => {
+        WalletV3 => {
             return compute_deposit_address(pk, 0x4BA92D8A).map_err(|e| Error::msg(e.to_string()))
         }
-        n => anyhow::bail!("Compute not implemented for {}", n),
     }
     .map_err(|e| Error::msg(e.to_string()).context("Failed constructing contract"))?;
     msg_addr_int_to_std(&contract.msg_address(workchain))
@@ -135,8 +138,8 @@ mod test {
     use pretty_assertions::assert_eq;
     use ton_block::MsgAddressInt;
 
-    use crate::address::compute::{compute_address, SAFE_MULTISIG_WALLET, SURF_WALLET, WALLET_V3};
-    use crate::address::{msg_addr_int_to_std, pack_std_smc_addr};
+    use crate::address::compute::{compute_address, Wallet};
+    use crate::address::{msg_addr_from_str, msg_addr_int_to_std, pack_std_smc_addr};
 
     fn default_pubkey() -> ed25519_dalek::PublicKey {
         ed25519_dalek::PublicKey::from_bytes(
@@ -149,7 +152,7 @@ mod test {
     #[test]
     fn test_v3() {
         let pk = default_pubkey();
-        let addr = compute_address(&pk, WALLET_V3, 0).unwrap();
+        let addr = compute_address(&pk, Wallet::WalletV3, 0).unwrap();
         assert_eq!(
             pack_std_smc_addr(true, &addr, false),
             "UQDIsJmoySkJdZEX5NNj02aix0BXE4-Ym4zcGFCfmo0xaeFc"
@@ -159,7 +162,7 @@ mod test {
     #[test]
     fn test_surf() {
         let pk = default_pubkey();
-        let addr = compute_address(&pk, SURF_WALLET, 0).unwrap();
+        let addr = compute_address(&pk, Wallet::SurfWallet, 0).unwrap();
         assert_eq!(
             pack_std_smc_addr(true, &addr, true),
             "EQC5aPHGTz9B4EaZpq7wYq-eoKWiOFXwUx05vURmxwl4W4Jn"
@@ -172,7 +175,7 @@ mod test {
                 .unwrap(),
         )
         .unwrap();
-        let addr = compute_address(&pk, SAFE_MULTISIG_WALLET, 0).unwrap();
+        let addr = compute_address(&pk, Wallet::SafeMultisigWallet, 0).unwrap();
 
         let expected_address = msg_addr_int_to_std(
             &MsgAddressInt::from_str(
@@ -181,6 +184,34 @@ mod test {
             .unwrap(),
         )
         .unwrap();
+        assert_eq!(addr, expected_address);
+    }
+
+    #[test]
+    fn test_multisig24() {
+        let pk = ed25519_dalek::PublicKey::from_bytes(
+            &*hex::decode("32e6c4634145353e8ee270adf837beb519e02a59c503d206e85c5e25c2be535b")
+                .unwrap(),
+        )
+        .unwrap();
+        let addr = compute_address(&pk, Wallet::SafeMultisigWallet24h, 0).unwrap();
+        let expected_address =
+            msg_addr_from_str("0:2d0f4b099b346f51cb1b736188b1ee19d71c2ac4688da3fa126020ac2b5a2b5c")
+                .unwrap();
+        assert_eq!(addr, expected_address);
+    }
+
+    #[test]
+    fn test_setcode() {
+        let pk = ed25519_dalek::PublicKey::from_bytes(
+            &*hex::decode("32e6c4634145353e8ee270adf837beb519e02a59c503d206e85c5e25c2be535b")
+                .unwrap(),
+        )
+        .unwrap();
+        let addr = compute_address(&pk, Wallet::SetcodeMultisigWallet, 0).unwrap();
+        let expected_address =
+            msg_addr_from_str("0:9d368d911c9444e7805d7ea0fd8d05005f3e8a739d053ed1622c2313cd99a15d")
+                .unwrap();
         assert_eq!(addr, expected_address);
     }
 }

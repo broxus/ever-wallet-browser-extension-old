@@ -1,7 +1,7 @@
 use anyhow::{Error, Result};
 use std::collections::HashMap;
 
-use ton_abi::{Contract, DecodedMessage, Token, TokenValue};
+use ton_abi::{Contract, Token, TokenValue};
 use ton_types::{BuilderData, SliceData};
 
 pub struct ContractState {
