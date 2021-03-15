@@ -89,7 +89,7 @@ impl CryptoHandler {
         new_password: &str,
         encrypted_data: &str,
     ) -> Result<String, JsValue> {
-        let data = TonSigner::reencrypt(
+        let data = TonSigner::change_password(
             old_password.into(),
             new_password.into(),
             encrypted_data.into(),

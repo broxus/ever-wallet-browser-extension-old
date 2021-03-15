@@ -2,7 +2,6 @@ use std::fmt;
 use std::fmt::{Debug, Formatter};
 use std::io::Read;
 use std::num::NonZeroU32;
-use std::sync::Arc;
 
 use anyhow::anyhow;
 use anyhow::Error;
@@ -12,8 +11,10 @@ use ed25519_dalek::{ed25519, Keypair, Signer};
 use ring::rand::SecureRandom;
 use ring::{digest, pbkdf2};
 use secstr::{SecStr, SecVec};
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use serde_json::from_reader;
+
+use crate::AccountType;
 
 const NONCE_LENGTH: usize = 12;
 
@@ -29,128 +30,161 @@ const N_ITER: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(5_000_000) };
 
 #[derive(Clone)]
 pub struct TonSigner {
-    inner: Arc<Keypair>,
-}
-
-impl Eq for TonSigner {}
-
-impl PartialEq for TonSigner {
-    fn eq(&self, other: &Self) -> bool {
-        self.inner
-            .secret
-            .as_bytes()
-            .eq(other.inner.secret.as_bytes())
-    }
+    inner: CryptoData,
 }
 
 impl Debug for TonSigner {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self.inner.public)
+        write!(f, "{:?}", self.inner.pubkey)
     }
 }
 
 ///Data, stored on disk in `encrypted_data` filed of config.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 struct CryptoData {
-    #[serde(serialize_with = "buffer_to_hex", deserialize_with = "hex_to_buffer")]
+    #[serde(with = "hex_encode")]
     salt: Vec<u8>,
-    #[serde(serialize_with = "buffer_to_hex", deserialize_with = "hex_to_buffer")]
+    #[serde(with = "hex_encode")]
     ton_encrypted_private_key: Vec<u8>,
-    #[serde(
-        serialize_with = "serialize_nonce",
-        deserialize_with = "deserialize_nonce"
-    )]
+    #[serde(with = "hex_nonce")]
     ton_nonce: Nonce,
+    account_type: AccountType,
+    #[serde(with = "hex_encode")]
+    encrypted_seed_phrase: Vec<u8>,
+    #[serde(with = "hex_nonce")]
+    seed_phrase_nonce: Nonce,
+    #[serde(with = "hex_pubkey")]
+    pubkey: ed25519_dalek::PublicKey,
 }
 
-/// Serializes `buffer` to a lowercase hex string.
-pub fn buffer_to_hex<T, S>(buffer: &T, serializer: S) -> Result<S::Ok, S::Error>
-where
-    T: AsRef<[u8]> + ?Sized,
-    S: Serializer,
-{
-    serializer.serialize_str(&*hex::encode(&buffer.as_ref()))
+impl CryptoData {
+    pub fn sign(
+        &self,
+        data: &[u8],
+        password: SecStr,
+    ) -> Result<[u8; ed25519::SIGNATURE_LENGTH], Error> {
+        let key = TonSigner::symmetric_key_from_password(password, &*self.salt);
+        let decrypter = ChaCha20Poly1305::new(&key);
+        let priv_key = decrypter
+            .decrypt(&self.ton_nonce, self.ton_encrypted_private_key.as_slice())
+            .map(SecVec::new)
+            .map(|x| ed25519_dalek::SecretKey::from_bytes(x.unsecure()))
+            .map_err(|e| Error::msg(e.to_string()))??;
+
+        let pair = Keypair {
+            secret: priv_key,
+            public: self.pubkey,
+        };
+        Ok(pair.sign(&data).to_bytes())
+    }
 }
 
-/// Deserializes a lowercase hex string to a `Vec<u8>`.
-pub fn hex_to_buffer<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use serde::de::Error;
-    <String as serde::Deserialize>::deserialize(deserializer)
-        .and_then(|string| hex::decode(string).map_err(|e| D::Error::custom(e.to_string())))
+mod hex_encode {
+    pub fn serialize<S, T>(data: T, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        T: AsRef<[u8]> + Sized,
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&*hex::encode(&data.as_ref()))
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        <String as serde::Deserialize>::deserialize(deserializer)
+            .and_then(|string| hex::decode(string).map_err(|e| D::Error::custom(e.to_string())))
+    }
 }
 
-fn serialize_nonce<S>(t: &Nonce, ser: S) -> Result<S::Ok, S::Error>
-where
-    S: Serializer,
-{
-    buffer_to_hex(&t[..], ser)
+mod hex_pubkey {
+    use ed25519_dalek::PublicKey;
+
+    use super::hex_encode;
+
+    pub fn serialize<S>(data: &PublicKey, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&*hex::encode(&data.as_ref()))
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<PublicKey, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        hex_encode::deserialize(deserializer).and_then(|x| {
+            PublicKey::from_bytes(x.as_slice()).map_err(|e| D::Error::custom(e.to_string()))
+        })
+    }
 }
 
-fn deserialize_nonce<'de, D>(deser: D) -> Result<Nonce, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    hex_to_buffer(deser).and_then(|x| {
-        if x.len() != NONCE_LENGTH {
-            Err(serde::de::Error::custom(format!(
-                "Bad nonce len: {}, expected: 12",
-                x.len()
-            )))
-        } else {
-            Ok(Nonce::clone_from_slice(&*x))
-        }
-    })
+mod hex_nonce {
+    use chacha20poly1305::Nonce;
+
+    use crate::key_management::NONCE_LENGTH;
+
+    use super::hex_encode;
+
+    pub fn serialize<S>(data: &Nonce, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        hex_encode::serialize(data, serializer)
+    }
+
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<Nonce, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        hex_encode::deserialize(deserializer).and_then(|x| {
+            if x.len() != NONCE_LENGTH {
+                Err(serde::de::Error::custom(format!(
+                    "Bad nonce len: {}, expected: 12",
+                    x.len()
+                )))
+            } else {
+                Ok(Nonce::clone_from_slice(&*x))
+            }
+        })
+    }
 }
 
 impl TonSigner {
     pub fn public_key(&self) -> &[u8; 32] {
-        self.inner.public.as_bytes()
+        self.inner.pubkey.as_bytes()
     }
 
-    pub fn sign(&self, data: &[u8]) -> [u8; ed25519::SIGNATURE_LENGTH] {
-        self.inner.sign(data).to_bytes()
-    }
-
-    pub fn keypair(&self) -> Arc<ed25519_dalek::Keypair> {
-        self.inner.clone()
+    pub fn sign(
+        &self,
+        data: &[u8],
+        pasword: SecStr,
+    ) -> Result<[u8; ed25519::SIGNATURE_LENGTH], Error> {
+        self.inner.sign(data, pasword)
     }
 
     /// Initializes signer from any `reader`, decrypting data.
-    pub fn from_reader<T>(reader: T, password: SecStr) -> Result<Self, Error>
+    pub fn from_reader<T>(reader: T) -> Result<Self, Error>
     where
         T: Read,
     {
         let crypto_data: CryptoData = from_reader(reader)?;
-        let sym_key = Self::symmetric_key_from_password(password, &*crypto_data.salt);
 
-        let ton_data = Self::ton_private_key_from_encrypted(
-            &crypto_data.ton_encrypted_private_key,
-            &sym_key,
-            &crypto_data.ton_nonce,
-        )?;
-
-        Ok(TonSigner {
-            inner: Arc::new(ton_data),
-        })
+        Ok(TonSigner { inner: crypto_data })
     }
-    fn encrypt_keypair(
-        keypair: &Keypair,
-        nonce: &Nonce,
-        encryption_key: &Key,
-    ) -> Result<Vec<u8>, Error> {
-        let cipher = ChaCha20Poly1305::new(&encryption_key);
 
-        let private_key = cipher
-            .encrypt(&nonce, keypair.secret.as_ref())
-            .map_err(|e| Error::msg(e.to_string()).context("Failed encrypting private key"))?;
-        Ok(private_key)
-    }
     /// Initializes signer
     /// Returns [`TonSigner`] and Base64 encoded encrypted version of it
-    pub fn init(password: SecStr, ton_key_pair: Keypair) -> Result<(Self, String), Error> {
+    pub fn init(
+        password: SecStr,
+        ton_key_pair: Keypair,
+        account_type: AccountType,
+        phrase: &str,
+    ) -> Result<Self, Error> {
         use ring::rand;
         let rng = rand::SystemRandom::new();
 
@@ -158,57 +192,107 @@ impl TonSigner {
         rng.fill(salt.as_mut_slice())
             .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
         let key = Self::symmetric_key_from_password(password, &salt);
+        let chacha_encryptor = ChaCha20Poly1305::new(&key);
 
-        // TON
+        // key encryption
         let (ton_encrypted_private_key, ton_nonce) = {
             let mut nonce_bytes = [0u8; 12];
             rng.fill(&mut nonce_bytes)
                 .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
             let nonce = Nonce::clone_from_slice(&nonce_bytes);
-            let private_key = Self::encrypt_keypair(&ton_key_pair, &nonce, &key)?;
+            let private_key =
+                Self::encrypt(&chacha_encryptor, &nonce, ton_key_pair.secret.as_ref())?;
             (private_key, nonce)
+        };
+        let pubkey = ton_key_pair.public;
+        drop(ton_key_pair);
+        //phrase encryption
+        let (encrypted_seed_phrase, seed_phrase_nonce) = {
+            let mut nonce_bytes = [0u8; 12];
+            rng.fill(&mut nonce_bytes)
+                .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
+            let nonce = Nonce::clone_from_slice(&nonce_bytes);
+            let data = Self::encrypt(&chacha_encryptor, &nonce, phrase.as_ref())
+                .map_err(|e| Error::msg(e.to_string()))?;
+            (data, nonce)
         };
 
         let data = CryptoData {
             salt,
             ton_encrypted_private_key,
             ton_nonce,
+            account_type,
+            encrypted_seed_phrase,
+            seed_phrase_nonce,
+            pubkey,
         };
 
-        Ok((
-            Self {
-                inner: Arc::new(ton_key_pair),
-            },
-            serde_json::to_string(&data)?,
-        ))
+        Ok(Self { inner: data })
     }
 
-    pub fn reencrypt(
+    pub fn change_password(
         old_password: SecStr,
         new_password: SecStr,
         data: String,
     ) -> Result<String, Error> {
+        let rng = ring::rand::SystemRandom::new();
+
         let data: CryptoData = serde_json::from_str(&data)?;
         let old_key = Self::symmetric_key_from_password(old_password, &data.salt);
-        let mut new_salt = vec![0u8; CREDENTIAL_LEN];
-        let mut new_nonce = vec![0u8; 12];
-        let rng = ring::rand::SystemRandom::new();
-        rng.fill(&mut new_nonce)
+
+        let mut new_salt = vec![0u8; 12];
+        let mut new_seed_nonce = [0u8; 12];
+        let mut new_ton_nonce = vec![0u8; 12];
+
+        rng.fill(&mut new_ton_nonce)
             .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
-        rng.fill(new_salt.as_mut_slice())
+        rng.fill(&mut new_salt)
             .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
-        let new_nonce = Nonce::clone_from_slice(&new_nonce);
+        rng.fill(&mut new_salt)
+            .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
+        rng.fill(&mut new_seed_nonce)
+            .map_err(|e| anyhow!("Failed generating random bytes: {:?}", e))?;
+
+        let new_ton_nonce = Nonce::clone_from_slice(&new_ton_nonce);
+        let new_seed_nonce = Nonce::clone_from_slice(&new_seed_nonce);
         let new_key = Self::symmetric_key_from_password(new_password, &new_salt);
+
+        let decrypter = ChaCha20Poly1305::new(&old_key);
+        let encryptor = ChaCha20Poly1305::new(&new_key);
+
+        let seed_phrase = SecVec::new(
+            decrypter
+                .decrypt(
+                    &data.seed_phrase_nonce,
+                    data.encrypted_seed_phrase.as_slice(),
+                )
+                .map_err(|e| Error::msg(e.to_string()))?,
+        );
+        let new_encrypted_seed_phrase = encryptor
+            .encrypt(&new_seed_nonce, seed_phrase.unsecure())
+            .map_err(|e| Error::msg(e.to_string()))?;
+        drop(seed_phrase);
+
         let kp = Self::ton_private_key_from_encrypted(
             &*data.ton_encrypted_private_key,
             &old_key,
             &data.ton_nonce,
         )?;
-        let res = Self::encrypt_keypair(&kp, &new_nonce, &new_key);
+
+        let new_encrypted_private_key = encryptor
+            .encrypt(&new_ton_nonce, kp.secret.as_ref())
+            .map_err(|e| Error::msg(e.to_string()))?;
+
+        drop(kp);
+
         Ok(serde_json::to_string(&CryptoData {
-            ton_nonce: new_nonce,
-            ton_encrypted_private_key: res?,
+            ton_nonce: new_ton_nonce,
+            account_type: data.account_type,
+            encrypted_seed_phrase: new_encrypted_seed_phrase,
+            seed_phrase_nonce: new_seed_nonce,
+            ton_encrypted_private_key: new_encrypted_private_key,
             salt: new_salt,
+            pubkey: data.pubkey,
         })?)
     }
 
@@ -223,6 +307,11 @@ impl TonSigner {
             &mut pbkdf2_hash.unsecure_mut(),
         );
         chacha20poly1305::Key::clone_from_slice(&pbkdf2_hash.unsecure())
+    }
+
+    fn encrypt(enc: &ChaCha20Poly1305, nonce: &Nonce, data: &[u8]) -> Result<Vec<u8>, Error> {
+        enc.encrypt(nonce, data)
+            .map_err(|e| Error::msg(e.to_string()).context("Failed encrypting private key"))
     }
 
     fn ton_private_key_from_encrypted(
@@ -243,6 +332,7 @@ impl TonSigner {
             })
     }
 }
+//todo fake key
 
 #[cfg(test)]
 mod test {

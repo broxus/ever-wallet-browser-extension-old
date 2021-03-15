@@ -4,23 +4,29 @@ use tiny_hderive::bip32::ExtendedPrivKey;
 
 use crate::recovery::GeneratedData;
 
-pub fn derive_from_words_labs(phrase: &str) -> Result<ed25519_dalek::Keypair, Error> {
+pub fn derive_from_words_labs(
+    phrase: &str,
+    account_id: u16,
+) -> Result<ed25519_dalek::Keypair, Error> {
     let mnemonic = bip39::Mnemonic::from_phrase(phrase, Language::English)?;
     let hd = Seed::new(&mnemonic, "");
     let seed_bytes = hd.as_bytes();
 
-    let derived = ExtendedPrivKey::derive(seed_bytes, "m/44'/396'/0'/0/0")
-        .map_err(|e| Error::msg(format!("{:#?}", e)))?;
+    let derived = ExtendedPrivKey::derive(
+        seed_bytes,
+        format!("m/44'/396'/0'/0/{}", account_id).as_str(),
+    )
+    .map_err(|e| Error::msg(format!("{:#?}", e)))?;
 
     ed25519_keys_from_secret_bytes(&derived.secret()) //todo check me
 }
 
-pub fn generate_words_labs(entropy: [u8; 32]) -> Result<GeneratedData, Error> {
+pub fn generate_words_labs(entropy: [u8; 32], account_id: u16) -> Result<GeneratedData, Error> {
     let mnemonic = bip39::Mnemonic::from_entropy(&entropy, Language::English)?
         .phrase()
         .to_string();
     Ok(GeneratedData {
-        keypair: derive_from_words_labs(&mnemonic)?,
+        keypair: derive_from_words_labs(&mnemonic, account_id)?,
         words: mnemonic.split_whitespace().map(|x| x.to_string()).collect(),
     })
 }

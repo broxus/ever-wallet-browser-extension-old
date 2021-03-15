@@ -11,6 +11,7 @@ use self::adnl::Query;
 
 pub mod adnl;
 pub mod crypto;
+mod storage;
 mod utils;
 
 #[global_allocator]
