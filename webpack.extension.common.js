@@ -53,6 +53,7 @@ module.exports = {
         new CleanWebpackPlugin({cleanStaleWebpackAssets: false}),
         new HtmlWebpackPlugin({template: 'src/popup/index.html'}),
         new WasmPackPlugin({
+            extraArgs: '--target web',
             crateDirectory: path.resolve(__dirname, 'nekoton'),
         }),
         new CopyWebpackPlugin({
@@ -61,6 +62,7 @@ module.exports = {
                 {from: './src/icons/icon16.png'},
                 {from: './src/icons/icon48.png'},
                 {from: './src/icons/icon128.png'},
+                {from: path.resolve(__dirname, "nekoton/pkg/index_bg.wasm")}
             ],
         }),
     ],

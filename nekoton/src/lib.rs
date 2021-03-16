@@ -1,22 +1,16 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use js_sys::{Array, Uint8Array};
-use pin_project_lite::pin_project;
+use js_sys::{Array, Promise, Uint8Array};
 use ton_api::ton;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::{future_to_promise, JsFuture};
 
 use crate::utils::HandleError;
-
-use self::adnl::Query;
-use futures::Future;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::task::{Context, Poll};
 
 pub mod adnl;
 pub mod core;
@@ -41,78 +35,84 @@ pub fn main_js() -> Result<(), JsValue> {
 #[wasm_bindgen]
 pub struct TonInterface {
     #[wasm_bindgen(skip)]
-    pub inner: core::TonInterface,
+    pub inner: Arc<core::TonInterface>,
 }
 
 #[wasm_bindgen]
 impl TonInterface {
-    #[wasm_bindgen(js_name = "fromAdnlConnection")]
-    pub fn from_adnl_connection(connection: AdnlConnection) -> Result<TonInterface, JsValue> {
-        let adnl_transport = core::AdnlTransport::new(connection);
-        Ok(TonInterface {
-            inner: core::TonInterface::new(adnl_transport),
-        })
+    #[wasm_bindgen(constructor)]
+    pub fn new(connection: AdnlConnection) -> TonInterface {
+        let adnl_transport = core::AdnlTransport::new(Arc::new(connection));
+        TonInterface {
+            inner: Arc::new(core::TonInterface::new(Box::new(adnl_transport))),
+        }
     }
 
     #[wasm_bindgen(js_name = "getLatestMasterchainBlock")]
-    pub async fn get_latest_masterchain_block(&self) -> Result<LastBlockIdExt, JsValue> {
-        let data = self.inner.get_masterchain_info().await.handle_error()?;
-        Ok(LastBlockIdExt {
-            workchain: data.workchain,
-            shard: data.shard,
-            seqno: data.seqno,
-            root_hash: data.root_hash,
-            file_hash: data.file_hash,
+    pub fn get_latest_masterchain_block(&self) -> Promise {
+        let inner = self.inner.clone();
+
+        future_to_promise(async move {
+            let data = inner.get_masterchain_info().await.handle_error()?;
+
+            Ok(JsValue::from(LastBlockIdExt {
+                workchain: data.workchain,
+                shard: data.shard,
+                seqno: data.seqno,
+                root_hash: data.root_hash,
+                file_hash: data.file_hash,
+            }))
         })
     }
 }
 
 #[wasm_bindgen]
 extern "C" {
-    type TcpSender;
+    pub type TcpSender;
 
     #[wasm_bindgen(method)]
-    async fn send(this: &TcpSender, data: &[u8]);
+    pub fn send(this: &TcpSender, data: &[u8]);
 }
 
 #[wasm_bindgen]
 pub struct AdnlConnection {
-    tx: Arc<TcpSender>,
-    state: AdnlConnectionState,
-    queries: RefCell<HashMap<adnl::QueryId, oneshot::Sender<ton::TLObject>>>,
+    #[wasm_bindgen(skip)]
+    pub inner: Arc<Mutex<AdnlConnectionImpl>>,
 }
 
-// SAFETY: wasm is single-threaded
-unsafe impl Send for AdnlConnection {}
-unsafe impl Sync for AdnlConnection {}
+type AdnlResponse = Result<ton::TLObject, anyhow::Error>;
+
+pub struct AdnlConnectionImpl {
+    tx: Arc<TcpSender>,
+    state: AdnlConnectionState,
+    queries: HashMap<adnl::QueryId, oneshot::Sender<AdnlResponse>>,
+}
 
 unsafe impl Send for TcpSender {}
 unsafe impl Sync for TcpSender {}
 
 #[async_trait]
 impl core::AdnlConnection for AdnlConnection {
-    async fn query(&self, request: ton::TLObject) -> Result<ton::TLObject, anyhow::Error> {
-        let (rx, data) = {
-            let mut state = match &self.state {
-                AdnlConnectionState::Initialized(state) => state.borrow_mut(),
+    async fn query(&self, request: ton::TLObject) -> AdnlResponse {
+        let rx = {
+            let mut inner = self.inner.lock().unwrap();
+
+            let state = match &mut inner.state {
+                AdnlConnectionState::Initialized(state) => state,
                 _ => return Err(QueryError::Uninitialized.into()),
             };
 
             let adnl::Query { query_id, data } = state.build_query(&request);
 
             let (tx, rx) = oneshot::channel();
-            let mut queries = self.queries.borrow_mut();
-            queries.insert(query_id, tx);
+            inner.queries.insert(query_id, tx);
 
-            (rx, data)
+            inner.tx.send(&data);
+
+            rx
         };
-
-        let tx: Arc<TcpSender> = Arc::clone(&self.tx);
-        wasm_bindgen_futures::spawn_local(async move {
-            tx.send(&data).await;
-        });
-
-        rx.await.map_err(|_| QueryError::ConnectionDropped.into())
+        rx.await
+            .unwrap_or_else(|_| Err(QueryError::ConnectionDropped.into()))
     }
 }
 
@@ -121,14 +121,16 @@ impl AdnlConnection {
     #[wasm_bindgen(constructor)]
     pub fn new(tx: TcpSender) -> AdnlConnection {
         Self {
-            tx: Arc::new(tx),
-            state: AdnlConnectionState::Uninitialized,
-            queries: Default::default(),
+            inner: Arc::new(Mutex::new(AdnlConnectionImpl {
+                tx: Arc::new(tx),
+                state: AdnlConnectionState::Uninitialized,
+                queries: Default::default(),
+            })),
         }
     }
 
     #[wasm_bindgen(js_name = "init")]
-    pub async fn init(&mut self, key: &str) -> Result<(), JsValue> {
+    pub fn init(&mut self, key: &str) -> Result<TcpReceiver, JsValue> {
         let key = base64::decode(key)
             .map_err(|_| "Invalid key")
             .handle_error()?;
@@ -139,17 +141,33 @@ impl AdnlConnection {
             return Err("Invalid key").handle_error();
         };
 
-        let (state, init_packet) = adnl::ClientState::init(&key);
-        self.state = AdnlConnectionState::WaitingInitialization(Some(state));
-        self.tx.send(&init_packet).await;
+        {
+            let mut inner = self.inner.lock().unwrap();
 
-        assert!(matches!(self.state, AdnlConnectionState::Initialized(_))); // TODO: remove if guaranteed
-        Ok(())
+            let (state, init_packet) = adnl::ClientState::init(&key);
+            inner.state = AdnlConnectionState::WaitingInitialization(Some(state));
+            inner.tx.send(&init_packet);
+        }
+
+        Ok(TcpReceiver {
+            inner: self.inner.clone(),
+        })
     }
+}
 
+#[wasm_bindgen]
+pub struct TcpReceiver {
+    #[wasm_bindgen(skip)]
+    pub inner: Arc<Mutex<AdnlConnectionImpl>>,
+}
+
+#[wasm_bindgen]
+impl TcpReceiver {
     #[wasm_bindgen(js_name = "onReceive")]
     pub fn on_receive(&mut self, data: &mut [u8]) -> Result<(), JsValue> {
-        match &mut self.state {
+        let mut inner = self.inner.lock().unwrap();
+
+        match &mut inner.state {
             AdnlConnectionState::Uninitialized
             | AdnlConnectionState::WaitingInitialization(None) => {
                 Err(QueryError::Uninitialized).handle_error()
@@ -157,12 +175,27 @@ impl AdnlConnection {
             AdnlConnectionState::WaitingInitialization(state) => {
                 let mut state = state.take().expect("Shouldn't fail");
                 state.handle_init_response(data);
-                self.state = AdnlConnectionState::Initialized(RefCell::new(state));
+                inner.state = AdnlConnectionState::Initialized(state);
                 Ok(())
             }
             AdnlConnectionState::Initialized(state) => {
-                log(&hex::encode(data));
-                // TODO
+                let query = match state.handle_query(data).handle_error()? {
+                    Some(query) => query,
+                    None => return Ok(()),
+                };
+
+                let tx = match inner.queries.remove(&query.query_id.0) {
+                    Some(tx) => tx,
+                    None => return Ok(()),
+                };
+
+                let result: AdnlResponse =
+                    ton_api::Deserializer::new(&mut std::io::Cursor::new(&query.answer.0))
+                        .read_boxed::<ton::TLObject>()
+                        .map_err(|_| QueryError::InvalidAnswerBody.into());
+
+                let _ = tx.send(result);
+
                 Ok(())
             }
         }
@@ -172,7 +205,7 @@ impl AdnlConnection {
 enum AdnlConnectionState {
     Uninitialized,
     WaitingInitialization(Option<adnl::ClientState>),
-    Initialized(RefCell<adnl::ClientState>),
+    Initialized(adnl::ClientState),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -181,8 +214,8 @@ enum QueryError {
     Uninitialized,
     #[error("Connection dropped unexpectedly")]
     ConnectionDropped,
-    #[error("Failed to send")]
-    FailedToSend,
+    #[error("Invalid answer body")]
+    InvalidAnswerBody,
 }
 
 #[wasm_bindgen]

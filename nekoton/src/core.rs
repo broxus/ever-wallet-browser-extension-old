@@ -1,20 +1,17 @@
+use std::sync::Arc;
+
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use ton_api::ton;
 use ton_block::{Deserializable, MsgAddressInt};
 
 pub struct TonInterface {
-    transport: Box<dyn TonTransport + Send>,
+    transport: Box<dyn TonTransport>,
 }
 
 impl TonInterface {
-    pub fn new<T>(transport: T) -> Self
-    where
-        T: TonTransport,
-    {
-        Self {
-            transport: Box::new(transport),
-        }
+    pub fn new(transport: Box<dyn TonTransport>) -> Self {
+        Self { transport }
     }
 
     pub async fn get_masterchain_info(&self) -> Result<LastBlockIdExt> {
@@ -40,17 +37,12 @@ pub trait TonTransport: Send + Sync {
 }
 
 pub struct AdnlTransport {
-    connection: Box<dyn AdnlConnection + Send>,
+    connection: Arc<dyn AdnlConnection>,
 }
 
 impl AdnlTransport {
-    pub fn new<T>(connection: T) -> Self
-    where
-        T: AdnlConnection,
-    {
-        Self {
-            connection: Box::new(connection),
-        }
+    pub fn new(connection: Arc<dyn AdnlConnection>) -> Self {
+        Self { connection }
     }
 
     async fn query<T>(&self, query: T) -> Result<T::Reply>
