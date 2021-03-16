@@ -1,6 +1,11 @@
+use std::cell::RefCell;
+use std::collections::HashMap;
 use std::str::FromStr;
 
+use async_trait::async_trait;
+use futures::channel::oneshot;
 use js_sys::{Array, Uint8Array};
+use pin_project_lite::pin_project;
 use ton_api::ton;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -8,8 +13,13 @@ use wasm_bindgen::JsCast;
 use crate::utils::HandleError;
 
 use self::adnl::Query;
+use futures::Future;
+use std::pin::Pin;
+use std::sync::Arc;
+use std::task::{Context, Poll};
 
 pub mod adnl;
+pub mod core;
 pub mod crypto;
 mod utils;
 
@@ -29,15 +39,96 @@ pub fn main_js() -> Result<(), JsValue> {
 }
 
 #[wasm_bindgen]
+pub struct TonInterface {
+    #[wasm_bindgen(skip)]
+    pub inner: core::TonInterface,
+}
+
+#[wasm_bindgen]
+impl TonInterface {
+    #[wasm_bindgen(js_name = "fromAdnlConnection")]
+    pub fn from_adnl_connection(connection: AdnlConnection) -> Result<TonInterface, JsValue> {
+        let adnl_transport = core::AdnlTransport::new(connection);
+        Ok(TonInterface {
+            inner: core::TonInterface::new(adnl_transport),
+        })
+    }
+
+    #[wasm_bindgen(js_name = "getLatestMasterchainBlock")]
+    pub async fn get_latest_masterchain_block(&self) -> Result<LastBlockIdExt, JsValue> {
+        let data = self.inner.get_masterchain_info().await.handle_error()?;
+        Ok(LastBlockIdExt {
+            workchain: data.workchain,
+            shard: data.shard,
+            seqno: data.seqno,
+            root_hash: data.root_hash,
+            file_hash: data.file_hash,
+        })
+    }
+}
+
+#[wasm_bindgen]
+extern "C" {
+    type TcpSender;
+
+    #[wasm_bindgen(method)]
+    async fn send(this: &TcpSender, data: &[u8]);
+}
+
+#[wasm_bindgen]
 pub struct AdnlConnection {
-    state: adnl::ClientState,
-    init_packet: Vec<u8>,
+    tx: Arc<TcpSender>,
+    state: AdnlConnectionState,
+    queries: RefCell<HashMap<adnl::QueryId, oneshot::Sender<ton::TLObject>>>,
+}
+
+// SAFETY: wasm is single-threaded
+unsafe impl Send for AdnlConnection {}
+unsafe impl Sync for AdnlConnection {}
+
+unsafe impl Send for TcpSender {}
+unsafe impl Sync for TcpSender {}
+
+#[async_trait]
+impl core::AdnlConnection for AdnlConnection {
+    async fn query(&self, request: ton::TLObject) -> Result<ton::TLObject, anyhow::Error> {
+        let (rx, data) = {
+            let mut state = match &self.state {
+                AdnlConnectionState::Initialized(state) => state.borrow_mut(),
+                _ => return Err(QueryError::Uninitialized.into()),
+            };
+
+            let adnl::Query { query_id, data } = state.build_query(&request);
+
+            let (tx, rx) = oneshot::channel();
+            let mut queries = self.queries.borrow_mut();
+            queries.insert(query_id, tx);
+
+            (rx, data)
+        };
+
+        let tx: Arc<TcpSender> = Arc::clone(&self.tx);
+        wasm_bindgen_futures::spawn_local(async move {
+            tx.send(&data).await;
+        });
+
+        rx.await.map_err(|_| QueryError::ConnectionDropped.into())
+    }
 }
 
 #[wasm_bindgen]
 impl AdnlConnection {
-    #[wasm_bindgen(js_name = "fromKey")]
-    pub fn from_key(key: &str) -> Result<AdnlConnection, JsValue> {
+    #[wasm_bindgen(constructor)]
+    pub fn new(tx: TcpSender) -> AdnlConnection {
+        Self {
+            tx: Arc::new(tx),
+            state: AdnlConnectionState::Uninitialized,
+            queries: Default::default(),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "init")]
+    pub async fn init(&mut self, key: &str) -> Result<(), JsValue> {
         let key = base64::decode(key)
             .map_err(|_| "Invalid key")
             .handle_error()?;
@@ -49,293 +140,55 @@ impl AdnlConnection {
         };
 
         let (state, init_packet) = adnl::ClientState::init(&key);
-        Ok(Self { state, init_packet })
+        self.state = AdnlConnectionState::WaitingInitialization(Some(state));
+        self.tx.send(&init_packet).await;
+
+        assert!(matches!(self.state, AdnlConnectionState::Initialized(_))); // TODO: remove if guaranteed
+        Ok(())
     }
 
-    #[wasm_bindgen(getter, js_name = "initPacket")]
-    pub fn init_packet(&mut self) -> Uint8Array {
-        unsafe { Uint8Array::view_mut_raw(self.init_packet.as_mut_ptr(), self.init_packet.len()) }
-    }
-
-    #[wasm_bindgen(js_name = "handleInitPacket")]
-    pub fn handle_init_response(&mut self, data: &mut [u8]) {
-        self.state.handle_init_response(data);
-    }
-
-    #[wasm_bindgen(js_name = "getMasterchainInfo")]
-    pub fn get_masterchain_info(&mut self) -> QueryGetMasterchainInfo {
-        let query = self.state.build_query(&ton::TLObject::new(
-            ton::rpc::lite_server::GetMasterchainInfo,
-        ));
-        QueryGetMasterchainInfo { query }
-    }
-
-    #[wasm_bindgen(js_name = "getAccountState")]
-    pub fn get_account_state(
-        &mut self,
-        last_block_id: &LastBlockIdExt,
-        account_id: &AccountId,
-    ) -> QueryAccountState {
-        let query = self.state.build_query(&ton::TLObject::new(
-            ton::rpc::lite_server::GetAccountState {
-                id: ton::ton_node::blockidext::BlockIdExt {
-                    workchain: last_block_id.workchain as ton::int,
-                    shard: last_block_id.shard as ton::int64,
-                    seqno: last_block_id.seqno as ton::int,
-                    root_hash: ton::int256(last_block_id.root_hash),
-                    file_hash: ton::int256(last_block_id.file_hash),
-                },
-                account: ton::lite_server::accountid::AccountId {
-                    workchain: account_id.workchain as ton::int,
-                    id: ton::int256(account_id.id),
-                },
-            },
-        ));
-
-        QueryAccountState {
-            account_addr: ton_types::UInt256::from(account_id.id),
-            query,
-        }
-    }
-
-    #[wasm_bindgen(js_name = "getTransactions")]
-    pub fn get_transactions(
-        &mut self,
-        account_id: &AccountId,
-        from: &TransactionId,
-        count: u8,
-    ) -> QueryGetTransactions {
-        let query = self.state.build_query(&ton::TLObject::new(
-            ton::rpc::lite_server::GetTransactions {
-                count: count as i32,
-                account: ton::lite_server::accountid::AccountId {
-                    workchain: account_id.workchain as i32,
-                    id: ton::int256(account_id.id),
-                },
-                lt: from.lt as i64,
-                hash: ton::int256(from.hash),
-            },
-        ));
-        QueryGetTransactions { query }
-    }
-
-    #[wasm_bindgen(js_name = "sendMessage")]
-    pub fn send_message(&mut self, data: Box<[u8]>) -> QuerySendMessage {
-        let query =
-            self.state
-                .build_query(&ton::TLObject::new(ton::rpc::lite_server::SendMessage {
-                    body: ton::bytes(data.into_vec()),
-                }));
-        QuerySendMessage { query }
-    }
-}
-
-#[wasm_bindgen]
-pub struct QueryGetMasterchainInfo {
-    #[wasm_bindgen(skip)]
-    pub query: Query,
-}
-
-#[wasm_bindgen]
-impl QueryGetMasterchainInfo {
-    #[wasm_bindgen(getter)]
-    pub fn data(&mut self) -> Uint8Array {
-        self.query.js_data()
-    }
-
-    #[wasm_bindgen(js_name = "onResponse")]
-    pub fn on_response(
-        &self,
-        connection: &mut AdnlConnection,
-        data: &[u8],
-    ) -> Result<Option<LastBlockIdExt>, JsValue> {
-        Ok(self
-            .query
-            .handle_result::<ton::rpc::lite_server::GetMasterchainInfo>(connection, data)?
-            .map(|info| LastBlockIdExt {
-                workchain: info.last().workchain as i8,
-                shard: info.last().shard as u64,
-                seqno: info.last().seqno as u32,
-                root_hash: info.last().root_hash.0,
-                file_hash: info.last().file_hash.0,
-            }))
-    }
-}
-
-#[wasm_bindgen]
-pub struct QueryAccountState {
-    #[wasm_bindgen(skip)]
-    pub account_addr: ton_types::UInt256,
-    #[wasm_bindgen(skip)]
-    pub query: Query,
-}
-
-#[wasm_bindgen]
-impl QueryAccountState {
-    #[wasm_bindgen(getter)]
-    pub fn data(&mut self) -> Uint8Array {
-        self.query.js_data()
-    }
-
-    #[wasm_bindgen(js_name = "onResponse")]
-    pub fn on_response(
-        &self,
-        connection: &mut AdnlConnection,
-        data: &[u8],
-    ) -> Result<Option<AccountState>, JsValue> {
-        use ton_block::{Deserializable, HashmapAugType};
-
-        let response = match self
-            .query
-            .handle_result::<ton::rpc::lite_server::GetAccountState>(connection, data)?
-        {
-            Some(response) => response.only(),
-            None => return Ok(None),
-        };
-
-        match ton_block::Account::construct_from_bytes(&response.state.0) {
-            Ok(ton_block::Account::Account(info)) => {
-                let q_roots =
-                    ton_types::deserialize_cells_tree(&mut std::io::Cursor::new(&response.proof.0))
-                        .map_err(|_| QueryAccountStateError::InvalidAccountStateProof)
-                        .handle_error()?;
-                if q_roots.len() != 2 {
-                    return Err(QueryAccountStateError::InvalidAccountStateProof).handle_error();
-                }
-
-                let merkle_proof = ton_block::MerkleProof::construct_from_cell(q_roots[0].clone())
-                    .map_err(|_| QueryAccountStateError::InvalidAccountStateProof)
-                    .handle_error()?;
-                let proof_root = merkle_proof.proof.virtualize(1);
-
-                let ss = ton_block::ShardStateUnsplit::construct_from(&mut proof_root.into())
-                    .map_err(|_| QueryAccountStateError::InvalidAccountStateProof)
-                    .handle_error()?;
-
-                let shard_info = ss
-                    .read_accounts()
-                    .map_err(|_| QueryAccountStateError::InvalidAccountStateProof)
-                    .handle_error()?
-                    .get(&self.account_addr)
-                    .handle_error()?
-                    .ok_or(QueryAccountStateError::AccountNotFound)
-                    .handle_error()?;
-
-                Ok(Some(AccountState {
-                    last_trans_id: TransactionId {
-                        lt: shard_info.last_trans_lt(),
-                        hash: shard_info.last_trans_hash().clone().into(),
-                    },
-                    gen_lt: ss.gen_lt(),
-                    gen_utime: ss.gen_time(),
-                    balance: info.storage.balance.grams.0 as u64,
-                }))
+    #[wasm_bindgen(js_name = "onReceive")]
+    pub fn on_receive(&mut self, data: &mut [u8]) -> Result<(), JsValue> {
+        match &mut self.state {
+            AdnlConnectionState::Uninitialized
+            | AdnlConnectionState::WaitingInitialization(None) => {
+                Err(QueryError::Uninitialized).handle_error()
             }
-            Ok(_) => Err(QueryAccountStateError::AccountNotFound).handle_error(),
-            Err(_) => Err(QueryAccountStateError::InvalidAccountState).handle_error(),
+            AdnlConnectionState::WaitingInitialization(state) => {
+                let mut state = state.take().expect("Shouldn't fail");
+                state.handle_init_response(data);
+                self.state = AdnlConnectionState::Initialized(RefCell::new(state));
+                Ok(())
+            }
+            AdnlConnectionState::Initialized(state) => {
+                log(&hex::encode(data));
+                // TODO
+                Ok(())
+            }
         }
     }
+}
+
+enum AdnlConnectionState {
+    Uninitialized,
+    WaitingInitialization(Option<adnl::ClientState>),
+    Initialized(RefCell<adnl::ClientState>),
 }
 
 #[derive(thiserror::Error, Debug)]
-pub enum QueryAccountStateError {
-    #[error("Account not found")]
-    AccountNotFound,
-    #[error("Invalid account state")]
-    InvalidAccountState,
-    #[error("Invalid account state proof")]
-    InvalidAccountStateProof,
+enum QueryError {
+    #[error("Connection wasn't initialized")]
+    Uninitialized,
+    #[error("Connection dropped unexpectedly")]
+    ConnectionDropped,
+    #[error("Failed to send")]
+    FailedToSend,
 }
 
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "Array<Transaction>")]
     pub type TransactionsArray;
-}
-
-#[wasm_bindgen]
-pub struct QueryGetTransactions {
-    #[wasm_bindgen(skip)]
-    pub query: Query,
-}
-
-#[wasm_bindgen]
-impl QueryGetTransactions {
-    #[wasm_bindgen(getter)]
-    pub fn data(&mut self) -> Uint8Array {
-        self.query.js_data()
-    }
-
-    #[wasm_bindgen(js_name = "onResponse")]
-    pub fn on_response(
-        &self,
-        connection: &mut AdnlConnection,
-        data: &[u8],
-    ) -> Result<Option<TransactionsArray>, JsValue> {
-        use ton_block::Deserializable;
-
-        let transactions = match self
-            .query
-            .handle_result::<ton::rpc::lite_server::GetTransactions>(connection, data)?
-        {
-            Some(data) => data.only().transactions.0,
-            None => return Ok(None),
-        };
-        let transactions =
-            ton_types::deserialize_cells_tree(&mut std::io::Cursor::new(transactions))
-                .map_err(|_| "Failed to deserialize transactions list")
-                .handle_error()?;
-
-        let result = transactions
-            .into_iter()
-            .map::<Result<JsValue, JsValue>, _>(|item| {
-                let hash = item.repr_hash();
-                let transaction = ton_block::Transaction::construct_from_cell(item)
-                    .map_err(|_| "Failed to deserialize transaction")
-                    .handle_error()?;
-                Ok(JsValue::from(Transaction {
-                    id: TransactionId {
-                        lt: transaction.lt,
-                        hash: hash.into(),
-                    },
-                    prev_trans_id: (transaction.prev_trans_lt != 0).then(|| TransactionId {
-                        lt: transaction.prev_trans_lt,
-                        hash: transaction.prev_trans_hash.into(),
-                    }),
-                    now: transaction.now,
-                }))
-            })
-            .collect::<Result<Array, _>>()?
-            .unchecked_into::<TransactionsArray>();
-
-        Ok(Some(result))
-    }
-}
-
-#[wasm_bindgen]
-pub struct QuerySendMessage {
-    #[wasm_bindgen(skip)]
-    pub query: Query,
-}
-
-#[wasm_bindgen]
-impl QuerySendMessage {
-    #[wasm_bindgen(getter)]
-    pub fn data(&mut self) -> Uint8Array {
-        self.query.js_data()
-    }
-
-    #[wasm_bindgen(js_name = "onResponse")]
-    pub fn on_response(
-        &self,
-        connection: &mut AdnlConnection,
-        data: &[u8],
-    ) -> Result<Option<i32>, JsValue> {
-        Ok(self
-            .query
-            .handle_result::<ton::rpc::lite_server::SendMessage>(connection, data)?
-            .map(|status| status.only().status))
-    }
 }
 
 #[wasm_bindgen]
@@ -504,47 +357,5 @@ impl AccountState {
     #[wasm_bindgen(getter)]
     pub fn balance(&self) -> String {
         self.balance.to_string()
-    }
-}
-
-impl Query {
-    pub fn js_data(&mut self) -> Uint8Array {
-        unsafe { Uint8Array::view_mut_raw(self.data.as_mut_ptr(), self.data.len()) }
-    }
-
-    pub fn handle_result<T>(
-        &self,
-        connection: &mut AdnlConnection,
-        data: &[u8],
-    ) -> Result<Option<T::Reply>, JsValue>
-    where
-        T: ton_api::Function,
-    {
-        let query = match connection.state.handle_query(data).handle_error()? {
-            Some(query) => query,
-            None => return Ok(None),
-        };
-
-        if query.query_id.0 != self.query_id {
-            return Err("Invalid response query id").handle_error();
-        }
-
-        let answer = ton_api::Deserializer::new(&mut std::io::Cursor::new(&query.answer.0))
-            .read_boxed::<ton::TLObject>()
-            .map_err(|_| "Invalid answer body")
-            .handle_error()?;
-
-        match answer.downcast::<T::Reply>() {
-            Ok(reply) => Ok(Some(reply)),
-            Err(error) => match error.downcast::<ton::lite_server::Error>() {
-                Ok(error) => Err(format!(
-                    "Query error. Core: {}. Reason: {}",
-                    *error.code(),
-                    error.message()
-                ))
-                .handle_error(),
-                Err(_) => Err("Unknown query error").handle_error(),
-            },
-        }
     }
 }
