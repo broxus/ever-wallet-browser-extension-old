@@ -3,3 +3,4 @@ pub use recovery::*;
 
 mod key_management;
 mod recovery;
+mod storage;

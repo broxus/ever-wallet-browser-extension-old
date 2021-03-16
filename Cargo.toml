@@ -1,5 +1,5 @@
 [workspace]
-members = ["nekoton"]
+members = ["nekoton", "nekoton-crypto" ,"nekoton-helpers"]
 
 [profile.release]
 opt-level = "s"

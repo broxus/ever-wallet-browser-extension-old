@@ -5,10 +5,15 @@ use ton_api::ton;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-pub mod adnl;
-pub mod crypto;
+use crate::utils::HandleError;
 
 use self::adnl::Query;
+
+mod address_manipulation;
+pub mod adnl;
+pub mod crypto;
+mod storage;
+mod utils;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
@@ -544,21 +549,4 @@ impl Query {
             },
         }
     }
-}
-
-impl<T, E> HandleError for Result<T, E>
-where
-    E: ToString,
-{
-    type Output = T;
-
-    fn handle_error(self) -> Result<Self::Output, JsValue> {
-        self.map_err(|e| js_sys::Error::new(&e.to_string()).into())
-    }
-}
-
-trait HandleError {
-    type Output;
-
-    fn handle_error(self) -> Result<Self::Output, JsValue>;
 }
