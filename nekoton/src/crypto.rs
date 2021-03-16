@@ -33,18 +33,26 @@ impl CreateOutput {
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(constructor)]
 #[derive(Copy, Clone)]
 pub enum MnemonicEnum {
     Legacy = "Legacy",
     Labs = "Labs",
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(constructor)]
 #[derive(Copy, Clone)]
 pub struct MnemonicType {
     pub mtype: MnemonicEnum,
     pub id: u16,
+}
+
+#[wasm_bindgen]
+impl MnemonicType {
+    #[wasm_bindgen(constructor)]
+    pub fn new(id: u16, mtype: MnemonicEnum) -> MnemonicType {
+        MnemonicType { mtype, id }
+    }
 }
 
 impl From<MnemonicType> for AccountType {
@@ -55,7 +63,7 @@ impl From<MnemonicType> for AccountType {
                 0 => Self::LabsDefault,
                 a => Self::LabsDerived(a),
             },
-            MnemonicEnum::__Nonexhaustive => unreachable!("__Nonexhaustive"),
+            _ => unreachable!(),
         }
     }
 }
