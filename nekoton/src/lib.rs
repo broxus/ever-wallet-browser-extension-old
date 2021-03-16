@@ -9,6 +9,7 @@ use crate::utils::HandleError;
 
 use self::adnl::Query;
 
+mod address_manipulation;
 pub mod adnl;
 pub mod crypto;
 mod storage;

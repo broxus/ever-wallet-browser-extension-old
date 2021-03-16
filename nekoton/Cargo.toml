@@ -12,6 +12,7 @@ wasm-opt = ["-Oz", "--enable-mutable-globals"]
 
 [dependencies]
 nekoton-crypto = { path = "../nekoton-crypto" }
+nekoton-helpers = {path = "../nekoton-helpers"}
 
 aes-ctr = "0.6"
 base64 = "0.13"

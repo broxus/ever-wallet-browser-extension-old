@@ -683,6 +683,7 @@ dependencies = [
  "hex 0.4.3",
  "js-sys",
  "nekoton-crypto",
+ "nekoton-helpers",
  "rand",
  "serde",
  "serde_json",

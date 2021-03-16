@@ -26,7 +26,7 @@ const N_ITER: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(1) };
 ///Change it to tune number of iterations in pbkdf2 function. Higher number - password bruteforce becomes slower.
 /// Initial value is optimal for the current machine, so you maybe want to change it.
 #[cfg(not(debug_assertions))]
-const N_ITER: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(5_000_000) };
+const N_ITER: NonZeroU32 = unsafe { NonZeroU32::new_unchecked(100_000) };
 
 #[derive(Clone)]
 pub struct TonSigner {
@@ -157,6 +157,10 @@ mod hex_nonce {
 impl TonSigner {
     pub fn public_key(&self) -> &[u8; 32] {
         self.inner.pubkey.as_bytes()
+    }
+
+    pub fn as_json(&self) -> String {
+        serde_json::to_string(&self.inner).expect("Shouldn't fail")
     }
 
     pub fn sign(

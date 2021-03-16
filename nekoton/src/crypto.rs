@@ -2,11 +2,11 @@ use js_sys::Error;
 use wasm_bindgen::prelude::*;
 
 use nekoton_crypto::{AccountType, TonSigner};
-pub use nekoton_crypto::{LABS_MNEMONIC, LEGACY_MNEMONIC};
 
 use crate::utils::*;
 
 #[wasm_bindgen]
+#[derive(Clone)]
 pub struct CryptoHandler {
     #[wasm_bindgen(skip)]
     pub signer: TonSigner,
@@ -23,8 +23,8 @@ pub struct CreateOutput {
 #[wasm_bindgen]
 impl CreateOutput {
     #[wasm_bindgen(getter)]
-    pub fn handler(&self) -> *const CryptoHandler {
-        &self.handler as *const _
+    pub fn handler(&self) -> CryptoHandler {
+        self.handler.clone()
     }
 
     #[wasm_bindgen(getter)]
@@ -33,7 +33,7 @@ impl CreateOutput {
     }
 }
 
-#[wasm_bindgen(constructor)]
+#[wasm_bindgen]
 #[derive(Copy, Clone)]
 pub enum MnemonicEnum {
     Legacy = "Legacy",
@@ -44,14 +44,14 @@ pub enum MnemonicEnum {
 #[derive(Copy, Clone)]
 pub struct MnemonicType {
     pub mtype: MnemonicEnum,
-    pub id: u16,
+    pub account_id: u16,
 }
 
 #[wasm_bindgen]
 impl MnemonicType {
     #[wasm_bindgen(constructor)]
-    pub fn new(id: u16, mtype: MnemonicEnum) -> MnemonicType {
-        MnemonicType { mtype, id }
+    pub fn new(account_id: u16, mtype: MnemonicEnum) -> MnemonicType {
+        MnemonicType { mtype, account_id }
     }
 }
 
@@ -59,7 +59,7 @@ impl From<MnemonicType> for AccountType {
     fn from(mt: MnemonicType) -> Self {
         match mt.mtype {
             MnemonicEnum::Legacy => Self::Legacy,
-            MnemonicEnum::Labs => match mt.id {
+            MnemonicEnum::Labs => match mt.account_id {
                 0 => Self::LabsDefault,
                 a => Self::LabsDerived(a),
             },
@@ -92,6 +92,11 @@ impl CryptoHandler {
         let signer = TonSigner::init(password.into(), data, mnemonic_type.into(), &mnemonic)
             .handle_error()?;
         Ok(CryptoHandler { signer })
+    }
+
+    #[wasm_bindgen]
+    pub fn as_json(&self) -> String {
+        self.signer.as_json()
     }
 
     #[wasm_bindgen]
