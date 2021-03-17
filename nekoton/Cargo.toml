@@ -11,16 +11,10 @@ crate-type = ["cdylib"]
 wasm-opt = ["-Oz", "--enable-mutable-globals"]
 
 [dependencies]
-nekoton-crypto = { path = "../nekoton-crypto" }
-nekoton-helpers = {path = "../nekoton-helpers"}
-
 anyhow = "1.0"
 async-trait = "0.1"
-aes-ctr = "0.6"
-base64 = "0.13"
-curve25519-dalek = "3.0"
-ed25519-dalek = "1.0"
 hex = "0.4"
+base64 = "0.13"
 futures = "0.3"
 js-sys = "0.3"
 pin-project-lite = "0.2"
@@ -36,10 +30,14 @@ x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
 
 ton_api = { git = "https://github.com/broxus/ton-labs-tl.git", branch = "original", package = "ton_api" }
-
-ton_abi = { git = "https://github.com/tonlabs/ton-labs-abi.git" }
 ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
 ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
+
+[dependencies.libnekoton]
+package = "nekoton"
+git = "https://gitlab.dexpa.io/crystal-wallet/nekoton"
+branch = "dev"
+features = ["web"]
 
 [target."cfg(debug_assertions)".dependencies]
 console_error_panic_hook = "0.1"

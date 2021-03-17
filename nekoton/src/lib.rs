@@ -10,11 +10,12 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::{future_to_promise, JsFuture};
 
+use libnekoton::core;
+use libnekoton::transport::adnl;
+
 use crate::utils::HandleError;
 
 mod address_manipulation;
-pub mod adnl;
-pub mod core;
 pub mod crypto;
 mod storage;
 mod utils;
@@ -44,7 +45,7 @@ pub struct TonInterface {
 impl TonInterface {
     #[wasm_bindgen(constructor)]
     pub fn new(connection: AdnlConnection) -> TonInterface {
-        let adnl_transport = core::AdnlTransport::new(Arc::new(connection));
+        let adnl_transport = adnl::AdnlTransport::new(Arc::new(connection));
         TonInterface {
             inner: Arc::new(core::TonInterface::new(Box::new(adnl_transport))),
         }
@@ -94,7 +95,7 @@ unsafe impl Send for TcpSender {}
 unsafe impl Sync for TcpSender {}
 
 #[async_trait]
-impl core::AdnlConnection for AdnlConnection {
+impl adnl::AdnlConnection for AdnlConnection {
     async fn query(&self, request: ton::TLObject) -> AdnlResponse {
         let rx = {
             let mut inner = self.inner.lock().unwrap();

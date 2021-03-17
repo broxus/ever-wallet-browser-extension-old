@@ -66,40 +66,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "ansi_term"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "anyhow"
 version = "1.0.38"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "afddf7f520a80dbf76e6f50a35bca42a2331ef227a28b3b6dc5c2e2338d114b1"
-
-[[package]]
-name = "api_derive"
-version = "1.10.0"
-source = "git+https://github.com/tonlabs/TON-SDK.git#85c6a8f2c3a68a2786766206a5b34c93407a7faf"
-dependencies = [
- "api_info",
- "quote 1.0.9",
- "serde_json",
- "syn 1.0.60",
-]
-
-[[package]]
-name = "api_info"
-version = "1.10.0"
-source = "git+https://github.com/tonlabs/TON-SDK.git#85c6a8f2c3a68a2786766206a5b34c93407a7faf"
-dependencies = [
- "serde",
- "serde_derive",
- "serde_json",
-]
 
 [[package]]
 name = "arrayref"
@@ -329,15 +299,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crc-any"
-version = "2.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3784befdf9469f4d51c69ef0b774f6a99de6bcc655285f746f16e0dd63d9007"
-dependencies = [
- "debug-helper",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -364,16 +325,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ctor"
-version = "0.1.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8f45d9ad417bcef4817d614a501ab55cdd96a6fdb24f49aab89a54acfd66b19"
-dependencies = [
- "quote 1.0.9",
- "syn 1.0.60",
-]
-
-[[package]]
 name = "ctr"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -394,18 +345,6 @@ dependencies = [
  "subtle 2.4.0",
  "zeroize",
 ]
-
-[[package]]
-name = "debug-helper"
-version = "0.3.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a8a5bb894f24f42c247f19b25928a88e31867c0f84552c05df41a9dd527435e"
-
-[[package]]
-name = "diff"
-version = "0.1.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e25ea47919b1560c4e3b7fe0aaab9becf5b84a10325ddf7db0f0ba5e1026499"
 
 [[package]]
 name = "difference"
@@ -783,26 +722,21 @@ dependencies = [
 name = "nekoton"
 version = "0.1.0"
 dependencies = [
- "aes-ctr",
  "anyhow",
  "async-trait",
  "base64 0.13.0",
  "console_error_panic_hook",
- "curve25519-dalek",
- "ed25519-dalek",
  "futures",
  "getrandom",
  "hex 0.4.3",
  "js-sys",
- "nekoton-crypto",
- "nekoton-helpers",
+ "nekoton 0.1.0 (git+https://gitlab.dexpa.io/crystal-wallet/nekoton?branch=dev)",
  "pin-project-lite",
  "rand",
  "serde",
  "serde_json",
  "sha2 0.9.3",
  "thiserror",
- "ton_abi",
  "ton_api",
  "ton_block",
  "ton_types",
@@ -814,36 +748,40 @@ dependencies = [
 ]
 
 [[package]]
-name = "nekoton-crypto"
+name = "nekoton"
 version = "0.1.0"
+source = "git+https://gitlab.dexpa.io/crystal-wallet/nekoton?branch=dev#67cb4c7a1f96a5a925d339af22548985ce75db15"
 dependencies = [
+ "aes-ctr",
  "anyhow",
+ "async-trait",
  "base64 0.13.0",
  "chacha20poly1305",
+ "curve25519-dalek",
  "ed25519-dalek",
+ "futures",
+ "getrandom",
  "hex 0.4.3",
+ "js-sys",
  "parking_lot",
+ "pin-project-lite",
+ "rand",
  "ring",
  "secstr",
  "serde",
  "serde_json",
+ "sha2 0.9.3",
+ "thiserror",
  "tiny-bip39",
  "tiny-hderive",
-]
-
-[[package]]
-name = "nekoton-helpers"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.13.0",
- "ed25519-dalek",
- "hex 0.4.3",
- "pretty_assertions 0.7.1",
  "ton_abi",
+ "ton_api",
  "ton_block",
- "ton_sdk",
  "ton_types",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wee_alloc",
+ "x25519-dalek",
 ]
 
 [[package]]
@@ -972,15 +910,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "output_vt100"
-version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53cdc5b785b7a58c5aad8216b3dfa114df64b0b06ae6e1501cef91df2fbdf8f9"
-dependencies = [
- "winapi",
-]
-
-[[package]]
 name = "owned-alloc"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1060,20 +989,8 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3a029430f0d744bc3d15dd474d591bed2402b645d024583082b9f63bb936dac6"
 dependencies = [
- "ansi_term 0.11.0",
+ "ansi_term",
  "difference",
-]
-
-[[package]]
-name = "pretty_assertions"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f297542c27a7df8d45de2b0e620308ab883ad232d06c14b76ac3e144bda50184"
-dependencies = [
- "ansi_term 0.12.1",
- "ctor",
- "diff",
- "output_vt100",
 ]
 
 [[package]]
@@ -1446,7 +1363,7 @@ dependencies = [
  "hex 0.3.2",
  "num-bigint",
  "num-traits",
- "pretty_assertions 0.5.1",
+ "pretty_assertions",
  "serde",
  "serde_derive",
  "serde_json",
@@ -1496,46 +1413,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ton_labs_assembler"
-version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#8dea5c6ad9afd1f47d4f597330d06e604780ea49"
-dependencies = [
- "failure",
- "hex 0.4.3",
- "log",
- "num",
- "num-traits",
- "ton_types",
-]
-
-[[package]]
-name = "ton_sdk"
-version = "1.10.0"
-source = "git+https://github.com/tonlabs/TON-SDK.git#85c6a8f2c3a68a2786766206a5b34c93407a7faf"
-dependencies = [
- "api_derive",
- "api_info",
- "base64 0.10.1",
- "chrono",
- "crc-any",
- "ed25519-dalek",
- "failure",
- "hex 0.3.2",
- "lazy_static",
- "log",
- "num-bigint",
- "num-traits",
- "serde",
- "serde_derive",
- "serde_json",
- "sha2 0.8.2",
- "ton_abi",
- "ton_block",
- "ton_types",
- "ton_vm",
-]
-
-[[package]]
 name = "ton_tl_codegen"
 version = "0.0.1"
 source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fcb184ed287288cfbaee2bedae4cba541e8e3849"
@@ -1564,24 +1441,6 @@ dependencies = [
  "num-traits",
  "rand",
  "sha2 0.8.2",
-]
-
-[[package]]
-name = "ton_vm"
-version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-vm.git#c817670f6e17d73dc8f05a5fd4af00302e8e12bb"
-dependencies = [
- "ed25519",
- "ed25519-dalek",
- "failure",
- "hex 0.4.3",
- "log",
- "num",
- "num-traits",
- "rand",
- "sha2 0.8.2",
- "ton_labs_assembler",
- "ton_types",
 ]
 
 [[package]]
