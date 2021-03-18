@@ -1,25 +1,25 @@
-import React, { CSSProperties, Dispatch, SetStateAction } from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 import CloseIcon from '../CloseIcon/CloseIcon'
+import cn from 'classnames'
 import './sliding-panel.scss'
 
 interface ISlidingPanel {
     isOpen: boolean
     setIsOpen: Dispatch<SetStateAction<boolean>>
     children?: JSX.Element[]
-    height: string
 }
 
-const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, setIsOpen, children, height }) => {
+const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, setIsOpen, children }) => {
     return (
         <>
-            {isOpen ? (
-                <div className="sliding-panel__wrapper" style={{ height }}>
-                    <div className="sliding-panel__content">
+            <div className={cn('sliding-panel__wrapper', { _active: isOpen })}>
+                <div className={cn('sliding-panel__content')}>
+                    <div className="sliding-panel__content-header">
                         <CloseIcon handleClick={setIsOpen} />
-                        {children}
                     </div>
+                    {children}
                 </div>
-            ) : null}
+            </div>
         </>
     )
 }

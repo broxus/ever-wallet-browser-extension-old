@@ -55,7 +55,6 @@ const AccountDetails = () => {
     const [panelVisible, setPanelVisible] = useState(false)
 
     const handleClick = () => {
-        console.log('clicked')
         setPanelVisible(true)
     }
 
@@ -117,7 +116,7 @@ const AccountDetails = () => {
                     </button>
                 </div>
             </div>
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible} height={'590px'}>
+            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
                 <div>Enter receiver address</div>
                 <div>Enter receiver address</div>
                 <div>Enter receiver address</div>

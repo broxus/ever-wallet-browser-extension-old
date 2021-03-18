@@ -23,7 +23,7 @@ const tempScreens = [
 ]
 
 const App: React.FC = () => {
-    const [step, setStep] = useState(0)
+    const [step, setStep] = useState(6)
 
     const navigate = (event: { key: any }) => {
         const key = event.key // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"

@@ -2,22 +2,37 @@
 
 .sliding-panel {
     &__wrapper {
-        width: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        bottom: 0;
+        filter: blur(0);
+        height: 100%;
         overflow: hidden;
         position: fixed;
-        bottom: 0;
+        width: 100%;
         z-index: 20;
-        &:hover > .sliding-panel__content {
-            top: 0;
+        top: 0;
+        left: 0;
+        transform: translateY(100%);
+        transition: transform 500ms ease;
+        &._active {
+            transform: translateY(0);
         }
     }
+
     &__content {
-        top: 100%;
-        position: relative;
-        transition: all 0.3s ease-out;
+        bottom: 0;
+        position: absolute;
         background: $windowBg;
-        padding: 0 20px 20px;
+        padding: 0 14px 20px;
         height: auto;
         width: 100%;
+        &-header {
+            background: $windowBg;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 16px 0 0;
+            width: 100%;
+        }
     }
 }
