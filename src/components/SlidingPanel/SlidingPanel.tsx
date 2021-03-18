@@ -1,30 +1,27 @@
-import React, { Dispatch, SetStateAction } from 'react'
-import './sliding-panel.scss'
-import cn from 'classnames'
+import React, { CSSProperties, Dispatch, SetStateAction } from 'react'
 import CloseIcon from '../CloseIcon/CloseIcon'
+import './sliding-panel.scss'
 
 interface ISlidingPanel {
     isOpen: boolean
     setIsOpen: Dispatch<SetStateAction<boolean>>
     children?: JSX.Element[]
+    height: string
 }
 
-const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, setIsOpen, children }) => (
-    <div
-        className={cn('cd-panel js-cd-panel-main', {
-            _isVisible: isOpen,
-        })}
-    >
-        <header className="cd-panel__header">
-            <h1>Title Goes Here</h1>
-
-            <CloseIcon handleClick={setIsOpen} />
-        </header>
-
-        <div className="cd-panel__container">
-            <div className="cd-panel__content">{children}</div>
-        </div>
-    </div>
-)
+const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, setIsOpen, children, height }) => {
+    return (
+        <>
+            {isOpen ? (
+                <div className="sliding-panel__wrapper" style={{ height }}>
+                    <div className="sliding-panel__content">
+                        <CloseIcon handleClick={setIsOpen} />
+                        {children}
+                    </div>
+                </div>
+            ) : null}
+        </>
+    )
+}
 
 export default SlidingPanel

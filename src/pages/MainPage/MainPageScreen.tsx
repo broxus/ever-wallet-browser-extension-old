@@ -117,14 +117,12 @@ const AccountDetails = () => {
                     </button>
                 </div>
             </div>
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                <div style={{ background: '#ffffff' }}>
-                    <div>Enter receiver address</div>
-                    <div>Enter receiver address</div>
-                    <div>Enter receiver address</div>
-                    <div>Enter receiver address</div>
-                    <div>Enter receiver address</div>
-                </div>
+            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible} height={'590px'}>
+                <div>Enter receiver address</div>
+                <div>Enter receiver address</div>
+                <div>Enter receiver address</div>
+                <div>Enter receiver address</div>
+                <div>Enter receiver address</div>
             </SlidingPanel>
         </>
     )
