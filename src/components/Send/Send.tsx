@@ -12,42 +12,44 @@ const options = [
 const selectStyles = {
     control: (styles) => ({
         ...styles,
-        backgroundColor: '#3c6cce',
-        color: '#fff',
-        border: 'none',
-        borderBottom: '1px solid rgba(255, 255, 255, 0.5)',
+        backgroundColor: '#ffffff',
+        color: '#000000',
+        border: '1px solid #DDE1E2',
         borderRadius: 0,
+        fontSize: '16px',
+        lineHeight: '20px',
+        letterSpacing: '0.25px',
+        minHeight: '48px',
     }),
     option: (styles, { data, isDisabled, isFocused, isSelected }) => {
-        const color = '#3c6cce'
+        const color = '#ffffff'
         return {
             ...styles,
             'backgroundColor': isDisabled ? 'red' : color,
-            'color': '#FFF',
+            'color': '#000000',
             'cursor': isDisabled ? 'not-allowed' : 'pointer',
             '&:hover': {
-                backgroundColor: '#97B9FF',
+                color: '#0088cc',
             },
         }
     },
     indicatorsContainer: (styles) => ({ ...styles, cursor: 'pointer' }),
-    placeholder: (styles) => ({ ...styles, color: 'rgba(255, 255, 255, 0.7)' }),
-    menuList: (styles) => ({ ...styles, padding: 0 }),
+    placeholder: (styles) => ({ ...styles, color: '#000000' }),
+    menu: (styles) => ({ ...styles, marginTop: 2, borderRadius: 0 }),
     valueContainer: (styles) => ({ ...styles, paddingBottom: '12px' }),
     singleValue: (styles) => ({ ...styles, color: '#fff' }),
 }
 
 const Send = () => {
-    const [token, setToken] = useState([])
+    const [token, setToken] = useState<{ value: string; label: string } | null>([])
     return (
         <>
             <UserPic /> <span>Account 1</span>
             <h2>Enter receiver address</h2>
             <Input label={'Amount...'} />
             <Select
-                // className={styles.dropdown}
                 options={options}
-                placeholder={'minutes / hours'}
+                placeholder={'USDT'}
                 styles={selectStyles}
                 w
                 onChange={(token) => {
