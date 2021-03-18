@@ -1,0 +1,44 @@
+@import '../../styles/colors';
+
+.toggle {
+    border: 2px solid #ffffff;
+    box-sizing: border-box;
+    cursor: pointer;
+    width: 32px;
+    height: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.toggle-active {
+    box-sizing: border-box;
+    width: 32px;
+    height: 20px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+input {
+    display: none;
+}
+
+.slider {
+    height: 10px;
+    width: 10px;
+    background-color: white;
+    border-radius: 10px;
+    margin: 3px;
+    transition: 0.5s;
+}
+
+input:checked + .toggle {
+    background-color: #ffffff;
+}
+
+input:checked + .toggle > .slider {
+    background-color: $windowBgActive;
+    align-self: flex-end;
+}

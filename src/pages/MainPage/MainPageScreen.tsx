@@ -3,7 +3,7 @@ import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
 import Receive from '../../img/receive.svg'
-import Send from '../../img/send.svg'
+import SendIcon from '../../img/send.svg'
 import TonLogo from '../../img/ton-logo.svg'
 import TonLogoS from '../../img/ton-logo-s.svg'
 import USDTLogoS from '../../img/usdt-logo-s.svg'
@@ -11,8 +11,9 @@ import Plus from '../../img/plus.svg'
 import Arrow from '../../img/arrow.svg'
 import { Button } from '../../components/button'
 import { createRipple, removeRipple } from '../../common/ripple'
-import './main-page.scss'
 import SlidingPanel from '../../components/SlidingPanel/SlidingPanel'
+import Send from '../../components/Send/Send'
+import './main-page.scss'
 
 const AccountModal = () => {
     return (
@@ -110,18 +111,14 @@ const AccountDetails = () => {
                     >
                         <div className="main-page__account-details-button__content">
                             {/*@ts-ignore*/}
-                            <Send style={{ marginRight: '8px' }} />
+                            <SendIcon style={{ marginRight: '8px' }} />
                             Send
                         </div>
                     </button>
                 </div>
             </div>
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                <div>Enter receiver address</div>
-                <div>Enter receiver address</div>
-                <div>Enter receiver address</div>
-                <div>Enter receiver address</div>
-                <div>Enter receiver address</div>
+                <Send />
             </SlidingPanel>
         </>
     )
@@ -297,10 +294,10 @@ const UserAssets = () => {
 }
 
 const MainPageScreen = () => (
-    <>
+    <div style={{ overflowY: 'hidden', height: '100vh' }}>
         <AccountDetails />
         <UserAssets />
-    </>
+    </div>
 )
 
 export default MainPageScreen

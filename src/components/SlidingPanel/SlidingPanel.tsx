@@ -6,7 +6,7 @@ import './sliding-panel.scss'
 interface ISlidingPanel {
     isOpen: boolean
     setIsOpen: Dispatch<SetStateAction<boolean>>
-    children?: JSX.Element[]
+    children?: JSX.Element
 }
 
 const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, setIsOpen, children }) => {
