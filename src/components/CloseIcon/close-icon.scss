@@ -1,0 +1,44 @@
+@import '../../styles/colors';
+
+$tomatored: #f25c66;
+
+.close-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.leftright {
+    height: 2px;
+    width: 18px;
+    position: absolute;
+    margin-top: 8px;
+    background-color: $iconGrey;
+    border-radius: 3px;
+    transform: rotate(45deg);
+    transition: all 0.3s ease-in;
+}
+
+.rightleft {
+    height: 2px;
+    width: 18px;
+    position: absolute;
+    margin-top: 8px;
+    background-color: $iconGrey;
+    border-radius: 3px;
+    transform: rotate(-45deg);
+    transition: all 0.3s ease-in;
+}
+
+.close-container:hover .leftright {
+    transform: rotate(-45deg);
+    background-color: $tomatored;
+}
+.close-container:hover .rightleft {
+    transform: rotate(45deg);
+    background-color: $tomatored;
+}

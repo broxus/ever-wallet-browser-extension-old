@@ -12,6 +12,7 @@ import Arrow from '../../img/arrow.svg'
 import { Button } from '../../components/button'
 import { createRipple, removeRipple } from '../../common/ripple'
 import './main-page.scss'
+import SlidingPanel from '../../components/SlidingPanel/SlidingPanel'
 
 const AccountModal = () => {
     return (
@@ -51,67 +52,81 @@ const AccountModal = () => {
 
 const AccountDetails = () => {
     const [modalVisible, setModalVisible] = useState(false)
+    const [panelVisible, setPanelVisible] = useState(false)
+
     const handleClick = () => {
         console.log('clicked')
+        setPanelVisible(true)
     }
 
     return (
-        <div className="main-page__account-details">
-            <div className="main-page__account-details-top-panel">
-                <div className="main-page__account-details-network">Free TON main net</div>
-                {/*// @ts-ignore*/}
-                <div
-                    onClick={() => setModalVisible(true)}
-                    style={{ cursor: 'pointer', position: 'relevant' }}
-                >
-                    <UserPic />
+        <>
+            <div className="main-page__account-details">
+                <div className="main-page__account-details-top-panel">
+                    <div className="main-page__account-details-network">Free TON main net</div>
+                    {/*// @ts-ignore*/}
+                    <div
+                        onClick={() => setModalVisible(true)}
+                        style={{ cursor: 'pointer', position: 'relevant' }}
+                    >
+                        <UserPic />
+                    </div>
+                    {modalVisible && <AccountModal />}
                 </div>
-                {modalVisible && <AccountModal />}
-            </div>
-            <div className="main-page__account-details-acc">
-                <span className="main-page__account-details-acc-account"> Account 1</span>
-                <span className="main-page__account-details-acc-address">0:B5d3...cDdB</span>
-            </div>
-            <div className="main-page__account-details-balance">
-                <span className="main-page__account-details-balance-number"> $1,200.00</span>
-                <span className="main-page__account-details-balance-comment">
-                    Total portfolio value
-                </span>
-            </div>
-            <div className="main-page__account-details-buttons">
-                <button
-                    className="main-page__account-details-button _blue"
-                    onMouseDown={createRipple}
-                    onMouseLeave={removeRipple}
-                    onMouseUp={(event) => {
-                        removeRipple(event)
-                        handleClick && handleClick()
-                    }}
-                >
-                    <div className="main-page__account-details-button__content">
-                        {/*@ts-ignore*/}
-                        <Receive style={{ marginRight: '8px' }} />
-                        Receive
-                    </div>
-                </button>
+                <div className="main-page__account-details-acc">
+                    <span className="main-page__account-details-acc-account"> Account 1</span>
+                    <span className="main-page__account-details-acc-address">0:B5d3...cDdB</span>
+                </div>
+                <div className="main-page__account-details-balance">
+                    <span className="main-page__account-details-balance-number"> $1,200.00</span>
+                    <span className="main-page__account-details-balance-comment">
+                        Total portfolio value
+                    </span>
+                </div>
+                <div className="main-page__account-details-buttons">
+                    <button
+                        className="main-page__account-details-button _blue"
+                        onMouseDown={createRipple}
+                        onMouseLeave={removeRipple}
+                        onMouseUp={(event) => {
+                            removeRipple(event)
+                            handleClick && handleClick()
+                        }}
+                    >
+                        <div className="main-page__account-details-button__content">
+                            {/*@ts-ignore*/}
+                            <Receive style={{ marginRight: '8px' }} />
+                            Receive
+                        </div>
+                    </button>
 
-                <button
-                    className="main-page__account-details-button _blue"
-                    onMouseDown={createRipple}
-                    onMouseLeave={removeRipple}
-                    onMouseUp={(event) => {
-                        removeRipple(event)
-                        handleClick && handleClick()
-                    }}
-                >
-                    <div className="main-page__account-details-button__content">
-                        {/*@ts-ignore*/}
-                        <Send style={{ marginRight: '8px' }} />
-                        Send
-                    </div>
-                </button>
+                    <button
+                        className="main-page__account-details-button _blue"
+                        onMouseDown={createRipple}
+                        onMouseLeave={removeRipple}
+                        onMouseUp={(event) => {
+                            removeRipple(event)
+                            handleClick && handleClick()
+                        }}
+                    >
+                        <div className="main-page__account-details-button__content">
+                            {/*@ts-ignore*/}
+                            <Send style={{ marginRight: '8px' }} />
+                            Send
+                        </div>
+                    </button>
+                </div>
             </div>
-        </div>
+            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
+                <div style={{ background: '#ffffff' }}>
+                    <div>Enter receiver address</div>
+                    <div>Enter receiver address</div>
+                    <div>Enter receiver address</div>
+                    <div>Enter receiver address</div>
+                    <div>Enter receiver address</div>
+                </div>
+            </SlidingPanel>
+        </>
     )
 }
 

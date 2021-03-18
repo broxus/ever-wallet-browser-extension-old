@@ -7,8 +7,9 @@ import GenerateSeedScreen, { CheckSeed } from '../pages/GenerateSeed/GenerateSee
 import CreatePasswordScreen, {
     ConfirmPasswordScreen,
 } from '../pages/CreatePassword/CreatePasswordScreen'
-import '../styles/main.scss'
 import MainPageScreen from '../pages/MainPage/MainPageScreen'
+import '../styles/main.scss'
+import CreateAccountScreen from '../pages/CreateAccount/CreateAccountScreen'
 
 const tempScreens = [
     <WelcomeScreen />,
@@ -18,6 +19,7 @@ const tempScreens = [
     <CreatePasswordScreen />,
     <ConfirmPasswordScreen />,
     <MainPageScreen />,
+    <CreateAccountScreen />,
 ]
 
 const App: React.FC = () => {
@@ -27,10 +29,10 @@ const App: React.FC = () => {
         const key = event.key // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
         switch (key) {
             case 'ArrowLeft':
-                setStep((prevState => prevState - 1)
+                setStep((prevState) => prevState - 1)
                 break
             case 'ArrowRight':
-                setStep(prevState => prevState + 1)
+                setStep((prevState) => prevState + 1)
                 break
             case 'ArrowUp':
                 // Up pressed

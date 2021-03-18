@@ -19,13 +19,13 @@ $shadowFg: #00000018; // most shadows (including opacity)
 $walletTitleBg: #121213; // wallet window title background when window is inactive
 $walletTopBg: #1e1f21; // wallet top part background
 
-
 $mainDarkBg: #293166;
 $mainHeader: $mainDarkBg;
 $mainDarkAccent: #182052;
-$mainLightAccent: #F7E3DC;
+$mainLightAccent: #f7e3dc;
 
-$inactiveTab: #96A1A7;
+$inactiveTab: #96a1a7;
+$iconGrey: #7d8b92;
 // widgets
 $activeButtonBg: $windowBgActive; // default active button background
 $activeButtonBgOver: #027bb8; // default active button background with mouse over
@@ -45,7 +45,7 @@ $whiteButtonFgOver: #027bb8;
 $whiteButtonBorder: rgba(0, 136, 204, 0.2);
 $whiteButtonBgRipple: $whiteButtonBorder;
 
-$disabledButtonBg: #C5E4F3;
+$disabledButtonBg: #c5e4f3;
 
 $lightButtonBg: $windowBg; // default light button background (like buttons in boxes)
 $lightButtonBgOver: #e3f1fa; // default light button background with mouse over
