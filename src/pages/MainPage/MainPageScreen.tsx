@@ -15,6 +15,7 @@ import SlidingPanel from '../../components/SlidingPanel/SlidingPanel'
 import Send from '../../components/Send/Send'
 import './main-page.scss'
 import Receive from '../../components/Receive/Receive'
+import AddNewToken from '../../components/AddNewToken/AddNewToken'
 
 const AccountModal = () => {
     return (
@@ -138,7 +139,7 @@ const AccountDetails = () => {
     )
 }
 
-const Asset = () => (
+export const Asset = () => (
     <div className="main-page__user-assets-asset">
         <div style={{ display: 'flex' }}>
             {/*// @ts-ignore*/}
@@ -152,35 +153,42 @@ const Asset = () => (
     </div>
 )
 
-const Assets = () => (
-    <div
-        style={{
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            position: 'relative',
-        }}
-    >
-        <div style={{ overflowY: 'scroll', maxHeight: '260px' }}>
-            <Asset />
-            <Asset />
-            <Asset />
-        </div>
+const Assets = () => {
+    const [panelVisible, setPanelVisible] = useState(false)
+
+    return (
         <div
             style={{
-                width: '100%',
-                height: '70px',
-                background:
-                    'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',
-                bottom: 0,
-                position: 'absolute',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                position: 'relative',
             }}
-        ></div>
-        <div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>
-            <Button text={'Add new asset'} white />
+        >
+            <div style={{ overflowY: 'scroll', maxHeight: '260px' }}>
+                <Asset />
+                <Asset />
+                <Asset />
+            </div>
+            <div
+                style={{
+                    width: '100%',
+                    height: '70px',
+                    background:
+                        'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',
+                    bottom: 0,
+                    position: 'absolute',
+                }}
+            ></div>
+            <div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>
+                <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
+            </div>
+            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
+                <AddNewToken onReturn={setPanelVisible} />
+            </SlidingPanel>
         </div>
-    </div>
-)
+    )
+}
 
 const Transaction = () => {
     return (
