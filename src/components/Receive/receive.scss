@@ -1,0 +1,48 @@
+.receive-screen {
+    &__account_details {
+        display: flex;
+        align-items: center;
+        margin-bottom: 28px;
+
+        &-userpic {
+            margin-right: 16px;
+        }
+
+        &-title {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: #293166;
+            padding: 0 12px;
+        }
+    }
+    &__form {
+        &-title {
+            margin-bottom: 28px;
+        }
+    }
+    &__qr-code {
+        align-items: center;
+        background: #f8f9f9;
+        display: flex;
+        height: 120px;
+        margin-bottom: 40px;
+        &-code {
+            max-width: 100px;
+            max-height: 80px;
+            padding: 0 20px;
+        }
+        &-instruction {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: #000000;
+            width: 60%;
+            padding: 20px;
+        }
+    }
+}

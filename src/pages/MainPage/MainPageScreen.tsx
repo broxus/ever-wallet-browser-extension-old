@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
-import Receive from '../../img/receive.svg'
+import ReceiveIcon from '../../img/receive.svg'
 import SendIcon from '../../img/send.svg'
 import TonLogo from '../../img/ton-logo.svg'
 import TonLogoS from '../../img/ton-logo-s.svg'
@@ -14,6 +14,7 @@ import { createRipple, removeRipple } from '../../common/ripple'
 import SlidingPanel from '../../components/SlidingPanel/SlidingPanel'
 import Send from '../../components/Send/Send'
 import './main-page.scss'
+import Receive from '../../components/Receive/Receive'
 
 const AccountModal = () => {
     return (
@@ -54,13 +55,16 @@ const AccountModal = () => {
 const AccountDetails = () => {
     const [modalVisible, setModalVisible] = useState(false)
     const [panelVisible, setPanelVisible] = useState(false)
+    const [activeContent, setActiveContent] = useState(0)
 
     const handleReceiveClick = () => {
-        console.log('Receive')
+        setPanelVisible(true)
+        setActiveContent(0)
     }
 
     const handleSendClick = () => {
         setPanelVisible(true)
+        setActiveContent(1)
     }
 
     return (
@@ -99,7 +103,7 @@ const AccountDetails = () => {
                     >
                         <div className="main-page__account-details-button__content">
                             {/*@ts-ignore*/}
-                            <Receive style={{ marginRight: '8px' }} />
+                            <ReceiveIcon style={{ marginRight: '8px' }} />
                             Receive
                         </div>
                     </button>
@@ -122,7 +126,13 @@ const AccountDetails = () => {
                 </div>
             </div>
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                <Send onReturn={setPanelVisible} />
+                {activeContent === 0 ? (
+                    <Receive onReturn={setPanelVisible} />
+                ) : activeContent === 1 ? (
+                    <Send onReturn={setPanelVisible} />
+                ) : (
+                    <></>
+                )}
             </SlidingPanel>
         </>
     )
