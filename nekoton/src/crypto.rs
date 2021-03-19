@@ -2,7 +2,7 @@ use js_sys::Error;
 use wasm_bindgen::prelude::*;
 
 use libnekoton::storage::{AccountType, StoredKey};
-use libnekoton::storage::keystore;
+use libnekoton::storage::keystore::mnemonics;
 
 use crate::utils::*;
 
@@ -84,10 +84,7 @@ impl CryptoHandler {
         mnemonic_type: MnemonicType,
         password: &str,
     ) -> Result<CryptoHandler, JsValue> {
-        let mnemonic: String = mnemonic.into();
-        let data = keystore::recovery::derive_from_words(&mnemonic, mnemonic_type.into())
-            .map_err(|e| Error::new(&e.to_string()))?;
-        let signer = StoredKey::new(password.into(), data, mnemonic_type.into(), &mnemonic)
+        let signer = StoredKey::new(password.into(),  mnemonic_type.into(), &mnemonic)
             .handle_error()?;
         Ok(CryptoHandler { signer })
     }
@@ -99,11 +96,10 @@ impl CryptoHandler {
 
     #[wasm_bindgen]
     pub fn generate(mnemonic_type: MnemonicType, password: &str) -> Result<CreateOutput, JsValue> {
-        let data = keystore::recovery::generate(mnemonic_type.into())
+        let data = mnemonics::generate(mnemonic_type.into())
             .map_err(|e| Error::new(&e.to_string()))?;
         let signer = StoredKey::new(
             password.into(),
-            data.keypair,
             mnemonic_type.into(),
             &data.words.join(" "),
         )
@@ -115,18 +111,17 @@ impl CryptoHandler {
         })
     }
 
-    // #[wasm_bindgen]
-    // pub fn change_password(
-    //     old_password: &str,
-    //     new_password: &str,
-    //     encrypted_data: &str,
-    // ) -> Result<String, JsValue> {
-    //     let data = StoredKey::change_password(
-    //         old_password.into(),
-    //         new_password.into(),
-    //         encrypted_data.into(),
-    //     )
-    //     .map_err(|e| Error::new(&e.to_string()))?;
-    //     Ok(data)
-    // }
+    #[wasm_bindgen]
+    pub fn change_password(
+        &mut self,
+        old_password: &str,
+        new_password: &str,
+    ) -> Result<(), JsValue> {
+        self.signer.change_password(
+            old_password.into(),
+            new_password.into(),
+        )
+        .map_err(|e| Error::new(&e.to_string()))?;
+        Ok(())
+    }
 }

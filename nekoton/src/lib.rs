@@ -4,21 +4,19 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use js_sys::{Array, Promise, Uint8Array};
+use js_sys::{ Promise, Uint8Array};
 use ton_api::ton;
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::{future_to_promise, JsFuture};
-
+use wasm_bindgen_futures::{future_to_promise};
 use libnekoton::core;
 use libnekoton::transport::adnl;
 
 use crate::utils::HandleError;
 
-mod address_manipulation;
 pub mod crypto;
 mod storage;
 mod utils;
+mod helpers;
 
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;

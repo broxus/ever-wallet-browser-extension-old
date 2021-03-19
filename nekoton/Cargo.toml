@@ -29,6 +29,9 @@ wee_alloc = "0.4"
 x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
 
+
+ed25519-dalek = "1.0.1"
+
 ton_api = { git = "https://github.com/broxus/ton-labs-tl.git", branch = "original", package = "ton_api" }
 ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
 ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }

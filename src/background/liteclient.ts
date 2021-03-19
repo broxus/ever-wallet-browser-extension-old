@@ -1,4 +1,10 @@
-import init, {AdnlConnection, TcpReceiver, TonInterface} from "../../nekoton/pkg";
+import init, {
+    AdnlConnection,
+    TcpReceiver,
+    TonInterface,
+    CryptoHandler,
+    MnemonicType, unpackAddress,
+} from "../../nekoton/pkg";
 
 const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json';
 
@@ -13,6 +19,11 @@ const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json';
 
     const core = new TonInterface(connection);
     console.log(await core.getLatestMasterchainBlock());
+    let mType :MnemonicType=new MnemonicType(0,"Legacy");
+    let phrase = CryptoHandler.generate(mType, '123').mnemonic;
+    let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ",true);
+    console.log(addr.to_string());
+    console.log(phrase);
 })();
 
 class Socket {
