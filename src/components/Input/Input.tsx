@@ -2,6 +2,7 @@ import React from 'react'
 import './input.scss'
 
 interface ISimpleInput {
+    className?: string
     label?: string
     autoFocus?: boolean
     type?:
@@ -36,6 +37,7 @@ interface ISimpleInput {
 }
 
 const Input: React.FC<ISimpleInput> = ({
+    className,
     label,
     autoFocus = false,
     type = 'number',
@@ -51,7 +53,7 @@ const Input: React.FC<ISimpleInput> = ({
 }) => {
     return (
         <input
-            className="simple-input"
+            className={`${'simple-input'} ${className}`}
             readOnly={readOnly}
             name={name}
             id={id}

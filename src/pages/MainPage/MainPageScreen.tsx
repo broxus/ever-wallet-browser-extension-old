@@ -55,7 +55,11 @@ const AccountDetails = () => {
     const [modalVisible, setModalVisible] = useState(false)
     const [panelVisible, setPanelVisible] = useState(false)
 
-    const handleClick = () => {
+    const handleReceiveClick = () => {
+        console.log('Receive')
+    }
+
+    const handleSendClick = () => {
         setPanelVisible(true)
     }
 
@@ -90,7 +94,7 @@ const AccountDetails = () => {
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            handleClick && handleClick()
+                            handleReceiveClick && handleReceiveClick()
                         }}
                     >
                         <div className="main-page__account-details-button__content">
@@ -106,7 +110,7 @@ const AccountDetails = () => {
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            handleClick && handleClick()
+                            handleSendClick && handleSendClick()
                         }}
                     >
                         <div className="main-page__account-details-button__content">
@@ -118,7 +122,7 @@ const AccountDetails = () => {
                 </div>
             </div>
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                <Send />
+                <Send onReturn={setPanelVisible} />
             </SlidingPanel>
         </>
     )

@@ -1,12 +1,15 @@
 import React, { useState } from 'react'
-import './send.scss'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import Input from '../Input/Input'
 import Select from 'react-select'
+import './send.scss'
+import { Button } from '../button'
 
 const options = [
-    { value: '1', label: 'minutes' },
-    { value: '60', label: 'hours' },
+    { value: '1', label: 'USDT' },
+    { value: '60', label: 'TON' },
+    { value: '60', label: 'BTC' },
+    { value: '60', label: 'ETH' },
 ]
 
 const selectStyles = {
@@ -27,6 +30,9 @@ const selectStyles = {
             ...styles,
             'backgroundColor': isDisabled ? 'red' : color,
             'color': '#000000',
+            'fontSize': '16px',
+            'lineHeight': '20px',
+            'letterSpacing': '0.25px',
             'cursor': isDisabled ? 'not-allowed' : 'pointer',
             '&:hover': {
                 color: '#0088cc',
@@ -37,28 +43,38 @@ const selectStyles = {
     placeholder: (styles) => ({ ...styles, color: '#000000' }),
     menu: (styles) => ({ ...styles, marginTop: 2, borderRadius: 0 }),
     valueContainer: (styles) => ({ ...styles, paddingBottom: '12px' }),
-    singleValue: (styles) => ({ ...styles, color: '#fff' }),
+    singleValue: (styles) => ({ ...styles, color: '#0088cc' }),
 }
 
-const Send = () => {
+const Send = ({ onReturn }) => {
     const [token, setToken] = useState<{ value: string; label: string } | null>([])
     return (
         <>
-            <UserPic /> <span>Account 1</span>
-            <h2>Enter receiver address</h2>
-            <Input label={'Amount...'} />
+            <div className="send-screen__account_details">
+                <UserPic /> <span className="send-screen__account_details-title">Account 1</span>
+            </div>
+
+            <h2 className="send-screen__form-title">Enter receiver address</h2>
             <Select
+                className="send-screen__form-token-dropdown"
                 options={options}
                 placeholder={'USDT'}
                 styles={selectStyles}
                 w
-                onChange={(token) => {
-                    setToken(token)
-                }}
+                // onChange={(token) => {
+                //     setToken(token)
+                // }}
             />
-            <span>Your balance: 1,100.00 USDT</span>
+            <Input label={'Amount...'} />
+            <div className="send-screen__form-balance">Your balance: 1,100.00 USDT</div>
             <Input label={'Receiver address...'} />
-            <Input label={'Comment...'} />
+            <Input className="send-screen__form-comment" label={'Comment...'} />
+            <div style={{ display: 'flex' }}>
+                <div style={{ width: '50%', marginRight: '12px' }}>
+                    <Button text={'Back'} onClick={onReturn} white />
+                </div>
+                <Button text={'Send'} />
+            </div>
         </>
     )
 }

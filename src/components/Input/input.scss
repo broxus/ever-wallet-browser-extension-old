@@ -23,6 +23,11 @@
     &:focus {
         border-bottom: 1px solid $windowBgActive;
     }
+
+    &:hover {
+        border: 1px solid hsl(0, 0%, 70%);
+    }
+
     &::placeholder {
         color: #96a1a7;
     }
