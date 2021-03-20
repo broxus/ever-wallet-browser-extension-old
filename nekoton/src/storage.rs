@@ -1,4 +1,6 @@
+use anyhow::Error;
 use js_sys::Function;
+use libnekoton::storage::KvStorage;
 use wasm_bindgen::JsValue;
 use wasm_bindgen::prelude::*;
 
@@ -19,26 +21,34 @@ impl StorageImpl {
         StorageImpl {
             get_callback,
             set_callback,
-            js_self
+            js_self,
         }
     }
 
-    pub fn get_key(&self, key: &str) -> Result<String, JsValue> {
+    pub fn get_key(&self, key: &str) -> Result<Option<String>, JsValue> {
         let res: JsValue = self.get_callback.call1(&self.js_self, &JsValue::from_str(key))?;
-        res.as_string()
-            .ok_or_else(|| JsValue::from_str("Bad callback return type"))
+        Ok(res.as_string())
     }
 
 
     pub fn set_key(&self, key: &str, value: &str) -> Result<(), JsValue> {
-        let res: JsValue =
             self.set_callback
                 .call2(&self.js_self, &JsValue::from_str(key), &JsValue::from_str(value))?;
         Ok(())
     }
-    #[wasm_bindgen]
-    pub fn test(&self) -> String {
-        self.set_key("lol", "kek").unwrap();
-        self.get_key("lol").unwrap()
+
+}
+
+impl KvStorage for StorageImpl {
+    fn get(&self, key: &str) -> Result<Option<String>, Error> {
+        self
+            .get_key(key)
+            .map_err(|x| anyhow::Error::msg(x.as_string().expect("It's string, yep?")))
+    }
+
+    fn set(&self, key: &str, value: &str) -> Result<(), Error> {
+        self
+            .set_key(key, value)
+            .map_err(|x| anyhow::Error::msg(x.as_string().expect("It's string, yep?")))
     }
 }
