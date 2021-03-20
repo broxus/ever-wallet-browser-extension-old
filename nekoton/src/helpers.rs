@@ -5,7 +5,7 @@ use libnekoton::helpers::address::{
 use libnekoton::helpers::address::Wallet;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::*;
+use crate::utils::HandleError;
 
 #[wasm_bindgen]
 pub enum WalletType {

@@ -68,7 +68,7 @@ impl From<MnemonicType> for AccountType {
 
 #[wasm_bindgen]
 impl CryptoHandler {
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = fromEncryptedData)]
     pub fn from_encrypted_data(data: &str) -> Result<CryptoHandler, JsValue> {
         let data: String = data.into();
         Ok(CryptoHandler {
@@ -78,7 +78,7 @@ impl CryptoHandler {
     /// Creates ['CryptoHandler'] from mnemonic
     /// # Arguments
     /// * `mnemonic` - 12 or 24 words, depending on mnemonic type - [`LABS_MNEMONIC`] or [`LEGACY_MNEMONIC`] set in `mnemonic_type`
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = restoreFromMnemonic)]
     pub fn restore_from_mnemonic(
         mnemonic: &str,
         mnemonic_type: MnemonicType,
@@ -89,7 +89,7 @@ impl CryptoHandler {
         Ok(CryptoHandler { signer })
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = asJson)]
     pub fn as_json(&self) -> String {
         self.signer.as_json()
     }
@@ -111,7 +111,7 @@ impl CryptoHandler {
         })
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = changePassword)]
     pub fn change_password(
         &mut self,
         old_password: &str,
