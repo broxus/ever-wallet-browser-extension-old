@@ -1,39 +1,62 @@
-import init, {
-    AdnlConnection,
-    TcpReceiver,
-    TonInterface,
-    CryptoHandler,
-    MnemonicType, unpackAddress,
-} from "../../nekoton/pkg";
+import {Config, Request, RequestType, RequestObject, ResponseClosed, ResponseReceived, ResponseConnected, unpackData} from "./common";
 
-const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json';
+chrome.runtime.onConnectExternal.addListener((port) => {
+    const client = new Client(port);
+    const socket = new Socket(client);
 
-(async () => {
-    await init('index_bg.wasm');
+    const dispatch: { [K in RequestType]: (message: RequestObject<K>) => Promise<void>; } = {
+        'connect': async (message) => {
+            await socket.connect(message.config);
+        },
+        'send': async (message) => {
+            socket.send(unpackData(message.data));
+        },
+        'close': async (_message) => {
+            await socket.close();
+        }
+    };
 
-    const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(Config.parse);
-    console.log("Config loaded:", config);
+    port.onMessage.addListener(async (message: Request,) => {
+        const handler = dispatch[message.type];
+        if (handler != null) {
+            await handler(message as any);
+        }
+    });
+});
 
-    const socket = new Socket();
-    const connection = await socket.connect(config);
+class Client {
+    private readonly port: chrome.runtime.Port;
 
-    const core = new TonInterface(connection);
-    console.log(await core.getLatestMasterchainBlock());
-    let mType :MnemonicType=new MnemonicType(0,"Legacy");
-    let phrase = CryptoHandler.generate(mType, '123').mnemonic;
-    let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ",true);
-    console.log(addr.to_string());
-    console.log(phrase);
-})();
+    constructor(port: chrome.runtime.Port) {
+        this.port = port;
+    }
+
+    public notifyConnected() {
+        this.port.postMessage(new ResponseConnected());
+    }
+
+    public notifyReceived(data: ArrayBuffer) {
+        this.port.postMessage(new ResponseReceived(data));
+    }
+
+    public notifyClosed() {
+        this.port.postMessage(new ResponseClosed());
+    }
+}
 
 class Socket {
-    socketId: number | null = null;
-    receiver: TcpReceiver | null = null;
+    private readonly client: Client;
 
-    public async connect(config: Config): Promise<AdnlConnection> {
+    private socketId: number | null = null;
+
+    constructor(client: Client) {
+        this.client = client;
+    }
+
+    public async connect(config: Config) {
         await this.close();
 
-        const { address, port, key } = config;
+        const {address, port} = config;
 
         const socketId = await new Promise<number>((resolve,) => {
             chrome.sockets.tcp.create({}, (createInfo => {
@@ -54,106 +77,41 @@ class Socket {
         });
         console.log(`Connected to ${address}:${port} with result ${result}`);
 
-        const connection = new AdnlConnection(new TcpSender((data) => {
-            if (this.socketId == null) {
-                throw Error("Unknown socket id");
-            }
-            chrome.sockets.tcp.send(this.socketId, data, _sendInfo => {
-            });
-        }));
-
-        let initData!: ArrayBuffer;
-        let resolveInitialization!: (data: ArrayBuffer) => void;
-        const initialized = new Promise<void>((resolve,) => {
-            resolveInitialization = (data) => {
-                initData = data;
-                resolve();
-            }
-        });
-
-        const onReceiveInit = (args: chrome.sockets.ReceiveEventArgs) => {
-            if (args.socketId != this.socketId) {
-                throw new Error("Unknown socket id");
-            }
-            resolveInitialization(args.data);
-        };
-
-        chrome.sockets.tcp.onReceive.addListener(onReceiveInit);
-
-        this.receiver = connection.init(key);
-        await initialized;
-
-        this.receiver.onReceive(new Uint8Array(initData));
-
-        chrome.sockets.tcp.onReceive.removeListener(onReceiveInit);
         chrome.sockets.tcp.onReceive.addListener(this.onReceive);
 
-        return connection;
+        this.client.notifyConnected();
+    }
+
+    public send(data: ArrayBuffer) {
+        const socketId = this.checkSocketId();
+        chrome.sockets.tcp.send(socketId, data, _sendInfo => {
+        });
     }
 
     public async close() {
         await new Promise<void>((resolve,) => {
             if (this.socketId != null) {
+                console.log(`Closed socket ${this.socketId}`);
                 chrome.sockets.tcp.close(this.socketId, resolve);
                 chrome.sockets.tcp.onReceive.removeListener(this.onReceive);
             } else {
                 resolve();
             }
         });
+        this.client.notifyClosed();
     }
 
     private onReceive = (args: chrome.sockets.ReceiveEventArgs) => {
-        if (args.socketId != this.socketId || this.receiver == null) {
-            return;
+        if (args.socketId == this.socketId) {
+            this.client.notifyReceived(args.data);
         }
-        this.receiver.onReceive(new Uint8Array(args.data));
-    }
-}
-
-class TcpSender {
-    constructor(private f: (data: Uint8Array) => void) {
     }
 
-    send(data: Uint8Array) {
-        this.f(data);
+    private checkSocketId(): number {
+        if (this.socketId != null) {
+            return this.socketId;
+        } else {
+            throw new Error("Unknown socket id");
+        }
     }
-}
-
-type RawConfig = {
-    liteservers: Array<{
-        id: {
-            '@type': 'pub.ed25519',
-            'key': string
-        },
-        ip: number,
-        port: number
-    }>,
-}
-
-class Config {
-    address!: string;
-    port!: number;
-    key!: string;
-
-    public static parse(raw: RawConfig): Config {
-        if (raw.liteservers.length === 0) {
-            throw new Error("No liteservers found");
-        }
-
-        const parseIp = (ip: number): string => {
-            const a = ip & 0xff;
-            const b = ((ip >> 8) & 0xff);
-            const c = ((ip >> 16) & 0xff);
-            const d = ((ip >> 24) & 0xff);
-            return `${d}.${c}.${b}.${a}`;
-        }
-
-        const liteserver = raw.liteservers[0];
-        return <Config>{
-            address: parseIp(liteserver.ip),
-            port: liteserver.port,
-            key: liteserver.id.key
-        };
-    };
-
 }
