@@ -1,7 +1,8 @@
 use js_sys::Error;
 use wasm_bindgen::prelude::*;
 
-use nekoton_crypto::{AccountType, TonSigner};
+use libnekoton::storage::{AccountType, StoredKey};
+use libnekoton::storage::keystore::mnemonics;
 
 use crate::utils::*;
 
@@ -9,7 +10,7 @@ use crate::utils::*;
 #[derive(Clone)]
 pub struct CryptoHandler {
     #[wasm_bindgen(skip)]
-    pub signer: TonSigner,
+    pub signer: StoredKey,
 }
 
 #[wasm_bindgen]
@@ -59,10 +60,7 @@ impl From<MnemonicType> for AccountType {
     fn from(mt: MnemonicType) -> Self {
         match mt.mtype {
             MnemonicEnum::Legacy => Self::Legacy,
-            MnemonicEnum::Labs => match mt.account_id {
-                0 => Self::LabsDefault,
-                a => Self::LabsDerived(a),
-            },
+            MnemonicEnum::Labs => Self::Labs(mt.account_id),
             _ => unreachable!(),
         }
     }
@@ -70,46 +68,42 @@ impl From<MnemonicType> for AccountType {
 
 #[wasm_bindgen]
 impl CryptoHandler {
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = fromEncryptedData)]
     pub fn from_encrypted_data(data: &str) -> Result<CryptoHandler, JsValue> {
         let data: String = data.into();
         Ok(CryptoHandler {
-            signer: TonSigner::from_reader(data.as_bytes()).handle_error()?,
+            signer: StoredKey::from_reader(data.as_bytes()).handle_error()?,
         })
     }
     /// Creates ['CryptoHandler'] from mnemonic
     /// # Arguments
     /// * `mnemonic` - 12 or 24 words, depending on mnemonic type - [`LABS_MNEMONIC`] or [`LEGACY_MNEMONIC`] set in `mnemonic_type`
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = restoreFromMnemonic)]
     pub fn restore_from_mnemonic(
         mnemonic: &str,
         mnemonic_type: MnemonicType,
         password: &str,
     ) -> Result<CryptoHandler, JsValue> {
-        let mnemonic: String = mnemonic.into();
-        let data = nekoton_crypto::derive_from_words(&mnemonic, mnemonic_type.into())
-            .map_err(|e| Error::new(&e.to_string()))?;
-        let signer = TonSigner::init(password.into(), data, mnemonic_type.into(), &mnemonic)
+        let signer = StoredKey::new(password.into(),  mnemonic_type.into(), &mnemonic)
             .handle_error()?;
         Ok(CryptoHandler { signer })
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = asJson)]
     pub fn as_json(&self) -> String {
         self.signer.as_json()
     }
 
     #[wasm_bindgen]
     pub fn generate(mnemonic_type: MnemonicType, password: &str) -> Result<CreateOutput, JsValue> {
-        let data = nekoton_crypto::generate(mnemonic_type.into())
+        let data = mnemonics::generate(mnemonic_type.into())
             .map_err(|e| Error::new(&e.to_string()))?;
-        let signer = TonSigner::init(
+        let signer = StoredKey::new(
             password.into(),
-            data.keypair,
             mnemonic_type.into(),
             &data.words.join(" "),
         )
-        .handle_error()?;
+            .handle_error()?;
         let handler = CryptoHandler { signer };
         Ok(CreateOutput {
             handler,
@@ -117,18 +111,17 @@ impl CryptoHandler {
         })
     }
 
-    #[wasm_bindgen]
+    #[wasm_bindgen(js_name = changePassword)]
     pub fn change_password(
+        &mut self,
         old_password: &str,
         new_password: &str,
-        encrypted_data: &str,
-    ) -> Result<String, JsValue> {
-        let data = TonSigner::change_password(
+    ) -> Result<(), JsValue> {
+        self.signer.change_password(
             old_password.into(),
             new_password.into(),
-            encrypted_data.into(),
         )
         .map_err(|e| Error::new(&e.to_string()))?;
-        Ok(data)
+        Ok(())
     }
 }

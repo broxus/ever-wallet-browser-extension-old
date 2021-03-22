@@ -45,6 +45,7 @@
   },
   "dependencies": {
     "@types/react-dom": "^17.0.1",
+    "base64-js": "^1.5.1",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   }

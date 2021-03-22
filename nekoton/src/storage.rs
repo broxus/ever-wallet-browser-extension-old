@@ -1,6 +1,8 @@
+use anyhow::Error;
 use js_sys::Function;
-use wasm_bindgen::prelude::*;
+use libnekoton::storage::KvStorage;
 use wasm_bindgen::JsValue;
+use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct StorageImpl {
@@ -8,33 +10,45 @@ pub struct StorageImpl {
     pub get_callback: Function,
     #[wasm_bindgen(skip)]
     pub set_callback: Function,
+    #[wasm_bindgen(skip)]
+    pub js_self: JsValue,
 }
 
 #[wasm_bindgen]
 impl StorageImpl {
-    #[wasm_bindgen]
-    pub fn new(get_callback: Function, set_callback: Function) -> StorageImpl {
+    #[wasm_bindgen(constructor)]
+    pub fn new(get_callback: Function, set_callback: Function, js_self: JsValue) -> StorageImpl {
         StorageImpl {
             get_callback,
             set_callback,
+            js_self,
         }
     }
 
-    #[wasm_bindgen]
-    pub fn get_key(&self, key: &str) -> Result<String, JsValue> {
-        let this = JsValue::NULL;
-        let res: JsValue = self.get_callback.call1(&this, &JsValue::from_str(key))?;
-        res.as_string()
-            .ok_or_else(|| JsValue::from_str("Bad callback return type"))
+    pub fn get_key(&self, key: &str) -> Result<Option<String>, JsValue> {
+        let res: JsValue = self.get_callback.call1(&self.js_self, &JsValue::from_str(key))?;
+        Ok(res.as_string())
     }
 
-    #[wasm_bindgen]
-    pub fn set_key(&self, key: &str, value: &str) -> Result<bool, JsValue> {
-        let this = JsValue::NULL;
-        let res: JsValue =
+
+    pub fn set_key(&self, key: &str, value: &str) -> Result<(), JsValue> {
             self.set_callback
-                .call2(&this, &JsValue::from_str(key), &JsValue::from_str(value))?;
-        res.as_bool()
-            .ok_or_else(|| JsValue::from_str("Bad callback return type"))
+                .call2(&self.js_self, &JsValue::from_str(key), &JsValue::from_str(value))?;
+        Ok(())
+    }
+
+}
+
+impl KvStorage for StorageImpl {
+    fn get(&self, key: &str) -> Result<Option<String>, Error> {
+        self
+            .get_key(key)
+            .map_err(|x| anyhow::Error::msg(x.as_string().expect("It's string, yep?")))
+    }
+
+    fn set(&self, key: &str, value: &str) -> Result<(), Error> {
+        self
+            .set_key(key, value)
+            .map_err(|x| anyhow::Error::msg(x.as_string().expect("It's string, yep?")))
     }
 }
