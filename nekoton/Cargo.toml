@@ -15,6 +15,7 @@ anyhow = "1.0"
 async-trait = "0.1"
 hex = "0.4"
 base64 = "0.13"
+ed25519-dalek = "1.0.1"
 futures = "0.3"
 js-sys = "0.3"
 pin-project-lite = "0.2"
@@ -28,9 +29,6 @@ wasm-bindgen-futures = "0.4"
 wee_alloc = "0.4"
 x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
-
-
-ed25519-dalek = "1.0.1"
 
 ton_api = { git = "https://github.com/broxus/ton-labs-tl.git", branch = "original", package = "ton_api" }
 ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
