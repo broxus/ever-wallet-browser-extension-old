@@ -22,6 +22,10 @@ chrome.runtime.onConnectExternal.addListener((port) => {
             await handler(message as any);
         }
     });
+
+    port.onDisconnect.addListener(async (_port) => {
+        await socket.close();
+    });
 });
 
 class Client {
