@@ -6,8 +6,6 @@ use futures::channel::oneshot;
 use libnekoton::transport::gql;
 use wasm_bindgen::prelude::*;
 
-use crate::utils::*;
-
 #[wasm_bindgen]
 extern "C" {
     pub type GqlSender;

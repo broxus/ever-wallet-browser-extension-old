@@ -1,8 +1,8 @@
 use ed25519_dalek::PublicKey;
+use libnekoton::helpers::address::Wallet;
 use libnekoton::helpers::address::{
     compute_address, msg_addr_from_str, pack_std_smc_addr, unpack_std_smc_addr,
 };
-use libnekoton::helpers::address::Wallet;
 use wasm_bindgen::prelude::*;
 
 use crate::utils::HandleError;
@@ -62,11 +62,10 @@ impl AddressWrapper {
     }
 
     #[wasm_bindgen]
-    pub fn to_string(&self)->String{
+    pub fn to_string(&self) -> String {
         self.inner.to_string()
     }
 }
-
 
 #[wasm_bindgen(js_name = computeAddressFromPubkey)]
 pub fn compute_address_from_key(
@@ -79,10 +78,12 @@ pub fn compute_address_from_key(
 }
 
 #[wasm_bindgen(js_name = packAddress)]
-pub fn pack_address(addr: AddressWrapper,is_url_safe: bool, bouncable: bool) -> String {
+pub fn pack_address(addr: AddressWrapper, is_url_safe: bool, bouncable: bool) -> String {
     pack_std_smc_addr(is_url_safe, &addr.inner, bouncable)
 }
 #[wasm_bindgen(js_name = unpackAddress)]
 pub fn unpack_address(packed_address: &str, is_url_safe: bool) -> Result<AddressWrapper, JsValue> {
-    unpack_std_smc_addr(packed_address, is_url_safe).map(|x| AddressWrapper { inner: x }).handle_error()
+    unpack_std_smc_addr(packed_address, is_url_safe)
+        .map(|x| AddressWrapper { inner: x })
+        .handle_error()
 }
