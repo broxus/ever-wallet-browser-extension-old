@@ -11,6 +11,7 @@ use js_sys::{Promise, Uint8Array};
 use libnekoton::core;
 use libnekoton::transport::{adnl, gql};
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::transport::adnl::AdnlConnection;
@@ -54,8 +55,8 @@ impl TonInterface {
     }
 
     #[wasm_bindgen(js_name = "overGraphQL")]
-    pub fn over_gql(connection: GqlConnection) -> TonInterface {
-        TonInterface::new(Box::new(gql::GqlTransport::new(Arc::new(connection))))
+    pub fn over_gql(connection: &GqlConnection) -> TonInterface {
+        TonInterface::new(Box::new(connection.make_transport()))
     }
 
     #[wasm_bindgen(js_name = "getAccountState")]

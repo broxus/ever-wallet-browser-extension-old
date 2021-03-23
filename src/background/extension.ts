@@ -24,27 +24,39 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
     await init('index_bg.wasm');
 
     // ADNL example
-    {
-        const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(Config.parse);
-        console.log("Config loaded:", config);
-
-        const socket = new AdnlSocket(LITECLIENT_EXTENSION_ID);
-        const connection = await socket.connect(config);
-
-        const core = TonInterface.overAdnl(connection);
-        console.log(await core.getAccountState());
-    }
+    // {
+    //     const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(Config.parse);
+    //     console.log("Config loaded:", config);
+    //
+    //     const socket = new AdnlSocket(LITECLIENT_EXTENSION_ID);
+    //     const connection = await socket.connect(config);
+    //
+    //     const core = TonInterface.overAdnl(connection);
+    //     console.log(await core.getAccountState());
+    // }
 
     // GraphQL example
     {
         const socket = new GqlSocket();
         const connection = await socket.connect({
-            endpoint: 'https://main.ton.dev',
+            endpoint: 'https://main.ton.dev/graphql',
             timeout: 60000, // 60s
         });
 
         const core = TonInterface.overGraphQL(connection);
         console.log(await core.getAccountState());
+
+        const subscription = connection.subscribe("-1:3333333333333333333333333333333333333333333333333333333333333333");
+        const latestBlock = await subscription.getLatestBlock();
+        console.log(latestBlock);
+
+        let currentBlockId = latestBlock.id;
+        for (let i = 0; i < 10; ++i) {
+            const nextBlockId = await subscription.waitForNextBlock(currentBlockId, 60);
+            console.log(nextBlockId, currentBlockId != nextBlockId);
+
+            currentBlockId = nextBlockId;
+        }
     }
 
     // Helper examples
@@ -62,18 +74,21 @@ class GqlSocket {
             }
 
             send(data: string, handler: GqlQuery) {
-                try {
-                    fetch(this.params.endpoint, {
-                        method: 'post',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: data,
-                    });
-                } catch (e) {
-                    console.log(e);
-                    handler.onError(e);
-                }
+                (async () => {
+                    try {
+                        const response = await fetch(this.params.endpoint, {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: data,
+                        }).then((response) => response.text());
+                        handler.onReceive(response);
+                    } catch (e) {
+                        console.log(e);
+                        handler.onError(e);
+                    }
+                })();
             }
         }
 

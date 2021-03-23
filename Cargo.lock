@@ -852,7 +852,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#9867c2e9dab250a7775d5c28f84bcfe7f2e0e1cb"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#052cb587a532acb06bb0259e6575a59eccc07ab9"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -882,6 +882,7 @@ dependencies = [
  "ton_api",
  "ton_block",
  "ton_types",
+ "ton_vm",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wee_alloc",
@@ -1527,6 +1528,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "ton_labs_assembler"
+version = "1.0.0"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#ce4499bf6df671cc8fbe00f689d7e678cc128866"
+dependencies = [
+ "failure",
+ "hex 0.4.3",
+ "log",
+ "num",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "ton_types",
+]
+
+[[package]]
 name = "ton_tl_codegen"
 version = "0.0.1"
 source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#362cf6ce03dc5216a86ab5a207f3a74c07da62d0"
@@ -1555,6 +1571,24 @@ dependencies = [
  "num-traits",
  "rand",
  "sha2 0.8.2",
+]
+
+[[package]]
+name = "ton_vm"
+version = "1.0.0"
+source = "git+https://github.com/tonlabs/ton-labs-vm.git#da3f209100966644f05db2bb6d568047b0906b15"
+dependencies = [
+ "ed25519",
+ "ed25519-dalek",
+ "failure",
+ "hex 0.4.3",
+ "log",
+ "num",
+ "num-traits",
+ "rand",
+ "sha2 0.8.2",
+ "ton_labs_assembler",
+ "ton_types",
 ]
 
 [[package]]

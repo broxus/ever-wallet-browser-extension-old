@@ -39,8 +39,8 @@
     // "alwaysStrict": true,                  /* Parse in strict mode and emit "use strict" for each source file. */
 
     /* Additional Checks */
-    "noUnusedLocals": true
-    /* Report errors on unused locals. */,
+    // "noUnusedLocals": true,
+    /* Report errors on unused locals. */
     "noUnusedParameters": true
     /* Report errors on unused parameters. */,
     "noImplicitReturns": true
