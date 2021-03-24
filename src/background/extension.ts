@@ -1,6 +1,6 @@
 import init, {
     AdnlConnection, StoredKey, GqlConnection, GqlQuery, AccountType, TcpReceiver,
-    TonInterface, unpackAddress,
+    TonInterface, unpackAddress, StorageQueryResultHandler, StorageQueryHandler, Storage, KeyStore,
 } from "../../nekoton/pkg";
 import {
     RequestConnect,
@@ -51,19 +51,30 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
     }
 
     // Crypto examples
-    createNewKey();
+    await createNewKey();
 
     // Helper examples
     let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
     console.log(addr.to_string());
 })();
 
-function createNewKey() {
+async function createNewKey() {
     const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0));
     console.log(phrase.phrase, phrase.accountType);
     const key = phrase.createKey("My new key"); // `phrase` moved here
     console.log(key);
     // Can't use `phrase` here
+
+    const publicKey = key.publicKey;
+
+    const storage = new Storage(new StorageConnector());
+    const keyStore = new KeyStore(storage);
+
+    await keyStore.addKey(key);
+    console.log("Added key to keystore");
+
+    const restoredKey = await keyStore.getKey(publicKey);
+    console.log("Restored key:", restoredKey);
 }
 
 function startListener(connection: GqlConnection, address: string) {
@@ -81,6 +92,36 @@ function startListener(connection: GqlConnection, address: string) {
             currentBlockId = nextBlockId;
         }
     })();
+}
+
+class StorageConnector {
+    get(key: string, handler: StorageQueryResultHandler) {
+        chrome.storage.sync.get(key, (items) => {
+            handler.onResult(items[key]);
+        });
+    }
+
+    set(key: string, value: string, handler: StorageQueryHandler) {
+        chrome.storage.sync.set({[key]: value}, () => {
+            handler.onResult();
+        })
+    }
+
+    setUnchecked(key: string, value: string) {
+        chrome.storage.sync.set({[key]: value}, () => {
+        });
+    }
+
+    remove(key: string, handler: StorageQueryHandler) {
+        chrome.storage.sync.set({[key]: undefined}, () => {
+            handler.onResult();
+        })
+    }
+
+    removeUnchecked(key: string) {
+        chrome.storage.sync.set({[key]: undefined}, () => {
+        });
+    }
 }
 
 class GqlSocket {

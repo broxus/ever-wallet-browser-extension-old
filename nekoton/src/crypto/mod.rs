@@ -62,6 +62,11 @@ impl StoredKey {
     pub fn to_json(&self) -> String {
         self.inner.as_json()
     }
+
+    #[wasm_bindgen(getter, js_name = "publicKey")]
+    pub fn public_key(&self) -> String {
+        hex::encode(self.inner.public_key())
+    }
 }
 
 #[wasm_bindgen]

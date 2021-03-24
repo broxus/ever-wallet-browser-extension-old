@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
-use crate::utils::HandleError;
+use crate::utils::{HandleError, PromiseVoid};
 
 #[wasm_bindgen]
 extern "C" {
@@ -233,7 +233,4 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<string>")]
     pub type PromiseNextBlock;
-
-    #[wasm_bindgen(typescript_type = "Promise<void>")]
-    pub type PromiseVoid;
 }
