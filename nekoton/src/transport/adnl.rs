@@ -1,4 +1,3 @@
-
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
@@ -117,7 +116,7 @@ impl TcpReceiver {
                 Err(QueryError::Uninitialized).handle_error()
             }
             AdnlConnectionState::WaitingInitialization(state) => {
-                let mut state = state.take().expect("Shouldn't fail");
+                let mut state = state.take().trust_me();
                 state.handle_init_response(data);
                 inner.state = AdnlConnectionState::Initialized(state);
                 Ok(())

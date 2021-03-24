@@ -20,12 +20,13 @@ impl StoredKey {
     /// * `mnemonic` - 12 or 24 words, depending on mnemonic type - [`LABS_MNEMONIC`] or [`LEGACY_MNEMONIC`] set in `mnemonic_type`
     #[wasm_bindgen(constructor)]
     pub fn new(
+        name: &str,
         mnemonic: &str,
         account_type: AccountType,
         password: &str,
     ) -> Result<StoredKey, JsValue> {
         Ok(StoredKey {
-            inner: storage::StoredKey::new(password.into(), account_type.into(), &mnemonic)
+            inner: storage::StoredKey::new(name, password.into(), account_type.into(), &mnemonic)
                 .handle_error()?,
         })
     }
@@ -80,9 +81,9 @@ pub struct GeneratedMnemonic {
 #[wasm_bindgen]
 impl GeneratedMnemonic {
     #[wasm_bindgen(js_name = "createKey")]
-    pub fn create_key(self, password: &str) -> Result<StoredKey, JsValue> {
+    pub fn create_key(self, name: &str, password: &str) -> Result<StoredKey, JsValue> {
         Ok(StoredKey {
-            inner: storage::StoredKey::new(password.into(), self.account_type, &self.phrase)
+            inner: storage::StoredKey::new(name, password.into(), self.account_type, &self.phrase)
                 .handle_error()?,
         })
     }
@@ -94,9 +95,7 @@ impl GeneratedMnemonic {
 
     #[wasm_bindgen(getter, js_name = "accountType")]
     pub fn account_type(&self) -> AccountType {
-        AccountType {
-            inner: self.account_type,
-        }
+        AccountType::new(self.account_type)
     }
 }
 
@@ -107,20 +106,24 @@ pub struct AccountType {
     pub inner: storage::AccountType,
 }
 
+impl AccountType {
+    pub fn new(account_type: storage::AccountType) -> Self {
+        Self {
+            inner: account_type,
+        }
+    }
+}
+
 #[wasm_bindgen]
 impl AccountType {
     #[wasm_bindgen(js_name = "makeLabs")]
     pub fn make_labs(id: u16) -> AccountType {
-        AccountType {
-            inner: storage::AccountType::Labs(id),
-        }
+        AccountType::new(storage::AccountType::Labs(id))
     }
 
     #[wasm_bindgen(js_name = "makeLegacy")]
     pub fn make_legacy() -> AccountType {
-        AccountType {
-            inner: storage::AccountType::Legacy,
-        }
+        AccountType::new(storage::AccountType::Legacy)
     }
 
     #[wasm_bindgen(getter, js_name = "wordCount")]
