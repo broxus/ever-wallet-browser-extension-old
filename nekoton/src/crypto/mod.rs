@@ -1,121 +1,142 @@
 use js_sys::Error;
 use wasm_bindgen::prelude::*;
 
+use libnekoton::storage;
 use libnekoton::storage::keystore::mnemonics;
-use libnekoton::storage::{AccountType, StoredKey};
 
 use crate::utils::*;
 
 #[wasm_bindgen]
 #[derive(Clone)]
-pub struct CryptoHandler {
+pub struct StoredKey {
     #[wasm_bindgen(skip)]
-    pub signer: StoredKey,
+    pub inner: storage::StoredKey,
 }
 
 #[wasm_bindgen]
-pub struct CreateOutput {
-    #[wasm_bindgen(skip)]
-    pub handler: CryptoHandler,
-    #[wasm_bindgen(skip)]
-    pub mnemonic: String,
-}
-
-#[wasm_bindgen]
-impl CreateOutput {
-    #[wasm_bindgen(getter)]
-    pub fn handler(&self) -> CryptoHandler {
-        self.handler.clone()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn mnemonic(&self) -> String {
-        self.mnemonic.clone()
-    }
-}
-
-#[wasm_bindgen]
-#[derive(Copy, Clone)]
-pub enum MnemonicEnum {
-    Legacy = "Legacy",
-    Labs = "Labs",
-}
-
-#[wasm_bindgen(constructor)]
-#[derive(Copy, Clone)]
-pub struct MnemonicType {
-    pub mtype: MnemonicEnum,
-    pub account_id: u16,
-}
-
-#[wasm_bindgen]
-impl MnemonicType {
-    #[wasm_bindgen(constructor)]
-    pub fn new(account_id: u16, mtype: MnemonicEnum) -> MnemonicType {
-        MnemonicType { mtype, account_id }
-    }
-}
-
-impl From<MnemonicType> for AccountType {
-    fn from(mt: MnemonicType) -> Self {
-        match mt.mtype {
-            MnemonicEnum::Legacy => Self::Legacy,
-            MnemonicEnum::Labs => Self::Labs(mt.account_id),
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[wasm_bindgen]
-impl CryptoHandler {
-    #[wasm_bindgen(js_name = fromEncryptedData)]
-    pub fn from_encrypted_data(data: &str) -> Result<CryptoHandler, JsValue> {
-        let data: String = data.into();
-        Ok(CryptoHandler {
-            signer: StoredKey::from_reader(data.as_bytes()).handle_error()?,
-        })
-    }
+impl StoredKey {
     /// Creates ['CryptoHandler'] from mnemonic
     /// # Arguments
     /// * `mnemonic` - 12 or 24 words, depending on mnemonic type - [`LABS_MNEMONIC`] or [`LEGACY_MNEMONIC`] set in `mnemonic_type`
-    #[wasm_bindgen(js_name = restoreFromMnemonic)]
-    pub fn restore_from_mnemonic(
+    #[wasm_bindgen(constructor)]
+    pub fn new(
         mnemonic: &str,
-        mnemonic_type: MnemonicType,
+        account_type: AccountType,
         password: &str,
-    ) -> Result<CryptoHandler, JsValue> {
-        let signer =
-            StoredKey::new(password.into(), mnemonic_type.into(), &mnemonic).handle_error()?;
-        Ok(CryptoHandler { signer })
-    }
-
-    #[wasm_bindgen(js_name = asJson)]
-    pub fn as_json(&self) -> String {
-        self.signer.as_json()
-    }
-
-    #[wasm_bindgen]
-    pub fn generate(mnemonic_type: MnemonicType, password: &str) -> Result<CreateOutput, JsValue> {
-        let data =
-            mnemonics::generate(mnemonic_type.into()).map_err(|e| Error::new(&e.to_string()))?;
-        let signer = StoredKey::new(password.into(), mnemonic_type.into(), &data.words.join(" "))
-            .handle_error()?;
-        let handler = CryptoHandler { signer };
-        Ok(CreateOutput {
-            handler,
-            mnemonic: data.words.join(" "),
+    ) -> Result<StoredKey, JsValue> {
+        Ok(StoredKey {
+            inner: storage::StoredKey::new(password.into(), account_type.into(), &mnemonic)
+                .handle_error()?,
         })
     }
 
-    #[wasm_bindgen(js_name = changePassword)]
+    #[wasm_bindgen(js_name = "generateMnemonic")]
+    pub fn generate_mnemonic(account_type: AccountType) -> Result<GeneratedMnemonic, JsValue> {
+        let key = mnemonics::generate(account_type.into()).handle_error()?;
+        Ok(GeneratedMnemonic {
+            phrase: key.words.join(" "),
+            account_type: account_type.inner,
+        })
+    }
+
+    #[wasm_bindgen(js_name = "changePassword")]
     pub fn change_password(
         &mut self,
         old_password: &str,
         new_password: &str,
     ) -> Result<(), JsValue> {
-        self.signer
+        self.inner
             .change_password(old_password.into(), new_password.into())
-            .map_err(|e| Error::new(&e.to_string()))?;
+            .handle_error()?;
         Ok(())
+    }
+
+    #[wasm_bindgen(js_name = "fromJSON")]
+    pub fn from_json(data: &str) -> Result<StoredKey, JsValue> {
+        Ok(StoredKey {
+            inner: storage::StoredKey::from_reader(data.as_bytes()).handle_error()?,
+        })
+    }
+
+    #[wasm_bindgen(js_name = "toJSON")]
+    pub fn to_json(&self) -> String {
+        self.inner.as_json()
+    }
+}
+
+#[wasm_bindgen]
+pub struct GeneratedMnemonic {
+    #[wasm_bindgen(skip)]
+    pub phrase: String,
+    #[wasm_bindgen(skip)]
+    pub account_type: storage::AccountType,
+}
+
+#[wasm_bindgen]
+impl GeneratedMnemonic {
+    #[wasm_bindgen(js_name = "createKey")]
+    pub fn create_key(self, password: &str) -> Result<StoredKey, JsValue> {
+        Ok(StoredKey {
+            inner: storage::StoredKey::new(password.into(), self.account_type, &self.phrase)
+                .handle_error()?,
+        })
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn phrase(&self) -> String {
+        self.phrase.clone()
+    }
+
+    #[wasm_bindgen(getter, js_name = "accountType")]
+    pub fn account_type(&self) -> AccountType {
+        AccountType {
+            inner: self.account_type,
+        }
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Copy, Clone)]
+pub struct AccountType {
+    #[wasm_bindgen(skip)]
+    pub inner: storage::AccountType,
+}
+
+#[wasm_bindgen]
+impl AccountType {
+    #[wasm_bindgen(js_name = "makeLabs")]
+    pub fn make_labs(id: u16) -> AccountType {
+        AccountType {
+            inner: storage::AccountType::Labs(id),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "makeLegacy")]
+    pub fn make_legacy() -> AccountType {
+        AccountType {
+            inner: storage::AccountType::Legacy,
+        }
+    }
+
+    #[wasm_bindgen(getter, js_name = "wordCount")]
+    pub fn word_count(&self) -> u32 {
+        match self.inner {
+            storage::AccountType::Labs(_) => 12,
+            storage::AccountType::Legacy => 24,
+        }
+    }
+
+    #[wasm_bindgen(getter, js_name = "accountId")]
+    pub fn account_id(&self) -> u16 {
+        match self.inner {
+            storage::AccountType::Labs(id) => id,
+            _ => 0,
+        }
+    }
+}
+
+impl From<AccountType> for storage::AccountType {
+    fn from(t: AccountType) -> Self {
+        t.inner
     }
 }

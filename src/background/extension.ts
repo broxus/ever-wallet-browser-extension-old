@@ -1,5 +1,5 @@
 import init, {
-    AdnlConnection, GqlConnection, GqlQuery, TcpReceiver,
+    AdnlConnection, StoredKey, GqlConnection, GqlQuery, AccountType, TcpReceiver,
     TonInterface, unpackAddress,
 } from "../../nekoton/pkg";
 import {
@@ -46,7 +46,29 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
         const core = TonInterface.overGraphQL(connection);
         console.log(await core.getAccountState());
 
-        const subscription = connection.subscribe("-1:3333333333333333333333333333333333333333333333333333333333333333");
+        startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
+        startListener(connection, "0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb");
+    }
+
+    // Crypto examples
+    createNewKey();
+
+    // Helper examples
+    let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
+    console.log(addr.to_string());
+})();
+
+function createNewKey() {
+    const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0));
+    console.log(phrase.phrase, phrase.accountType);
+    const key = phrase.createKey("My new key"); // `phrase` moved here
+    console.log(key);
+    // Can't use `phrase` here
+}
+
+function startListener(connection: GqlConnection, address: string) {
+    (async () => {
+        const subscription = connection.subscribe(address);
         const latestBlock = await subscription.getLatestBlock();
         console.log(latestBlock);
 
@@ -55,14 +77,11 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
             const nextBlockId = await subscription.waitForNextBlock(currentBlockId, 60);
             console.log(nextBlockId, currentBlockId != nextBlockId);
 
+            await subscription.handleBlock(nextBlockId);
             currentBlockId = nextBlockId;
         }
-    }
-
-    // Helper examples
-    let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
-    console.log(addr.to_string());
-})();
+    })();
+}
 
 class GqlSocket {
     public async connect(params: GqlSocketParams): Promise<GqlConnection> {

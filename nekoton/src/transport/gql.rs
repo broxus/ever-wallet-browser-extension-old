@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use std::sync::Arc;
+use std::time::Duration;
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -11,7 +12,6 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::future_to_promise;
 
 use crate::utils::HandleError;
-use std::time::Duration;
 
 #[wasm_bindgen]
 extern "C" {
@@ -74,15 +74,17 @@ impl AccountSubscription {
             Ok(JsValue::from(next_block))
         }))
     }
-}
 
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<LatestBlock>")]
-    pub type PromiseLatestBlock;
+    #[wasm_bindgen(js_name = "handleBlock")]
+    pub fn handle_block(&mut self, block_id: String) -> PromiseVoid {
+        let inner = self.inner.clone();
 
-    #[wasm_bindgen(typescript_type = "Promise<string>")]
-    pub type PromiseNextBlock;
+        JsCast::unchecked_into(future_to_promise(async move {
+            let block = inner.transport.get_block(&block_id).await.handle_error()?;
+            log(&format!("Got block with id: {}", block.global_id));
+            Ok(JsValue::undefined())
+        }))
+    }
 }
 
 #[wasm_bindgen]
@@ -119,6 +121,12 @@ pub struct AccountSubscriptionImpl {
 }
 
 impl AccountSubscriptionImpl {
+    // async fn subscribe(
+    //     connection: &GqlConnection,
+    //     address: ton_block::MsgAddressInt,
+    // ) -> Result<Self> {
+    // }
+
     fn new(connection: &GqlConnection, address: ton_block::MsgAddressInt) -> Self {
         Self {
             address,
@@ -213,4 +221,19 @@ pub enum QueryError {
     TimeoutReached,
     #[error("Request failed")]
     RequestFailed,
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<AccountSubscription>")]
+    pub type PromiseAccountSubscription;
+
+    #[wasm_bindgen(typescript_type = "Promise<LatestBlock>")]
+    pub type PromiseLatestBlock;
+
+    #[wasm_bindgen(typescript_type = "Promise<string>")]
+    pub type PromiseNextBlock;
+
+    #[wasm_bindgen(typescript_type = "Promise<void>")]
+    pub type PromiseVoid;
 }
