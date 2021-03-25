@@ -44,7 +44,7 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
         });
 
         const core = TonInterface.overGraphQL(connection);
-        console.log(await core.getAccountState());
+        // console.log(await core.getAccountState());
 
         startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
         startListener(connection, "0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb");
@@ -55,15 +55,15 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
 
     // Helper examples
     let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
-    console.log(addr.to_string());
+    // console.log(addr.to_string());
 })();
 
 async function createNewKey() {
     const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0));
-    console.log(phrase.phrase, phrase.accountType);
+    // console.log(phrase.phrase, phrase.accountType);
     //
     const key = phrase.createKey("Main key", "test"); // `phrase` moved here
-    console.log(key);
+    // console.log(key);
     // Can't use `phrase` here
 
     const publicKey = key.publicKey;
@@ -72,24 +72,24 @@ async function createNewKey() {
     const keyStore = await KeyStore.load(storage);
 
     await keyStore.addKey(key);
-    console.log("Added key to keystore");
+    // console.log("Added key to keystore");
 
     const restoredKey = await keyStore.getKey(publicKey);
-    console.log("Restored key:", restoredKey);
+    // console.log("Restored key:", restoredKey);
 
-    console.log(keyStore.storedKeys);
+    // console.log(keyStore.storedKeys);
 }
 
 function startListener(connection: GqlConnection, address: string) {
     (async () => {
         const subscription = connection.subscribe(address);
         const latestBlock = await subscription.getLatestBlock();
-        console.log(latestBlock);
+        // console.log(latestBlock);
 
         let currentBlockId = latestBlock.id;
         for (let i = 0; i < 10; ++i) {
             const nextBlockId = await subscription.waitForNextBlock(currentBlockId, 60);
-            console.log(nextBlockId, currentBlockId != nextBlockId);
+            // console.log(nextBlockId, currentBlockId != nextBlockId);
 
             await subscription.handleBlock(nextBlockId);
             currentBlockId = nextBlockId;

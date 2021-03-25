@@ -27,19 +27,24 @@ export const setLocale = (locale: any) => async (
     })
 }
 
-export const initConnection = async () => {
+export const initConnection = () => async () => {
     await init('index_bg.wasm')
 }
 
-export const generateSeedPhrase = (dispatch: AppDispatch) => {
+export const generateSeedPhrase = () => async (dispatch: AppDispatch) => {
     const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0))
+    console.log('phrase', phrase)
     dispatch({
         type: ActionTypes.GENERATE_SEED_SUCCESS,
-        payload: phrase,
+        payload: phrase.phrase,
     })
 }
 
-export const createKey = (dispatch: AppDispatch, phrase: GeneratedMnemonic, password: string) => {
+export const createKey = () => async (
+    dispatch: AppDispatch,
+    phrase: GeneratedMnemonic,
+    password: string
+) => {
     const key = phrase.createKey('Main key', password)
     dispatch({
         type: ActionTypes.GENERATE_KEY_SUCCESS,
@@ -47,7 +52,7 @@ export const createKey = (dispatch: AppDispatch, phrase: GeneratedMnemonic, pass
     })
 }
 
-export const addKey = async (dispatch: AppDispatch, key: StoredKey) => {
+export const addKey = () => async (dispatch: AppDispatch, key: StoredKey) => {
     const storage = new Storage(new StorageConnector())
     const keyStore = await KeyStore.load(storage)
     try {
@@ -62,7 +67,7 @@ export const addKey = async (dispatch: AppDispatch, key: StoredKey) => {
     }
 }
 
-export const restoreKey = async (dispatch: AppDispatch, publicKey: any) => {
+export const restoreKey = () => async (dispatch: AppDispatch, publicKey: any) => {
     const storage = new Storage(new StorageConnector())
     const keyStore = await KeyStore.load(storage)
     try {

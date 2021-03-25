@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
@@ -18,6 +18,16 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { makeLogger } from 'ts-loader/dist/logger'
+import { AppState } from '../../store/app/types'
+import {
+    addKey,
+    createKey,
+    generateSeedPhrase,
+    initConnection,
+    restoreKey,
+} from '../../store/app/actions'
+import store from '../../store'
+import init from '../../../nekoton/pkg'
 
 const AccountModal = () => {
     return (
@@ -319,9 +329,33 @@ const UserAssets = () => {
 
 interface IMainPageScreen {
     locale: any
+    seed: any
+    initConnection: any
+    generateSeedPhrase: any
 }
-const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
+const MainPageScreen: React.FC<IMainPageScreen> = ({
+    locale,
+    seed,
+    initConnection,
+    generateSeedPhrase,
+}) => {
     console.log(locale, 'locale')
+
+    const func = async () => {
+        await initConnection()
+        await generateSeedPhrase()
+    }
+    useEffect(() => {
+        func()
+        // createKey()
+        // addKey()
+        // restoreKey()
+    }, [])
+
+    useEffect(() => {
+        console.log('seed', seed)
+    }, [seed])
+
     return (
         <div style={{ overflowY: 'hidden', height: '100vh' }}>
             <AccountDetails />
@@ -330,8 +364,17 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
     )
 }
 
-const mapStateToProps = (store: { app: { locale: any } }) => ({
+const mapStateToProps = (store: { app: AppState }) => ({
     locale: store.app.locale,
+    seed: store.app.seed,
+    key: store.app.key,
+    publicKey: store.app.publicKey,
 })
 
-export default connect(mapStateToProps)(MainPageScreen)
+export default connect(mapStateToProps, {
+    initConnection,
+    generateSeedPhrase,
+    createKey,
+    addKey,
+    restoreKey,
+})(MainPageScreen)
