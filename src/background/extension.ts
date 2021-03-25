@@ -1,6 +1,6 @@
 import init, {
     AdnlConnection, StoredKey, GqlConnection, GqlQuery, AccountType, TcpReceiver,
-    TonInterface, unpackAddress, StorageQueryResultHandler, StorageQueryHandler, Storage, KeyStore,
+    TonInterface, unpackAddress, StorageQueryResultHandler, StorageQueryHandler, Storage, KeyStore, AccountState, Transaction,
 } from "../../nekoton/pkg";
 import {
     RequestConnect,
@@ -44,7 +44,6 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
         });
 
         const core = TonInterface.overGraphQL(connection);
-        console.log(await core.getAccountState());
 
         startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
         startListener(connection, "0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb");
@@ -81,18 +80,50 @@ async function createNewKey() {
 }
 
 function startListener(connection: GqlConnection, address: string) {
+    class MainWalletHandler {
+        onStateChanged(newState: AccountState) {
+            console.log(newState);
+        }
+
+        onTransactions(transactions: Array<Transaction>) {
+            for (let i = 0; i < transactions.length; ++i) {
+                console.log(transactions[i].id.lt);
+            }
+        }
+    }
+
     (async () => {
-        const subscription = connection.subscribe(address);
-        const latestBlock = await subscription.getLatestBlock();
-        console.log(latestBlock);
+        const handler = new MainWalletHandler();
 
-        let currentBlockId = latestBlock.id;
-        for (let i = 0; i < 10; ++i) {
-            const nextBlockId = await subscription.waitForNextBlock(currentBlockId, 60);
-            console.log(nextBlockId, currentBlockId != nextBlockId);
+        const subscription = await connection.subscribeToMainWallet(address, handler);
 
-            await subscription.handleBlock(nextBlockId);
-            currentBlockId = nextBlockId;
+        let currentBlockId: string | null = null;
+        let lastPollingMethod = subscription.pollingMethod;
+        while (true) {
+            switch (subscription.pollingMethod) {
+                case 'manual': {
+                    await new Promise<void>((resolve,) => {
+                        setTimeout(() => resolve(), 1000);
+                    });
+                    console.log("manual refresh");
+                    await subscription.refresh();
+                    break;
+                }
+                case 'reliable': {
+                    if (lastPollingMethod != 'reliable' || currentBlockId == null) {
+                        currentBlockId = (await subscription.getLatestBlock()).id;
+                    }
+
+                    const nextBlockId: string = await subscription.waitForNextBlock(currentBlockId, 60);
+                    console.log(nextBlockId, currentBlockId != nextBlockId);
+
+                    await subscription.handleBlock(nextBlockId);
+                    currentBlockId = nextBlockId;
+                    break;
+                }
+            }
+
+            lastPollingMethod = subscription.pollingMethod;
         }
     })();
 }

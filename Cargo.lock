@@ -72,6 +72,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81cddc5f91628367664cc7c69714ff08deee8a3efc54623011c772544d7b2767"
 
 [[package]]
+name = "api_derive"
+version = "1.11.1"
+source = "git+https://github.com/tonlabs/TON-SDK.git#f042a14d85cbd93560bc5d05d1a33f0bac7c62de"
+dependencies = [
+ "api_info",
+ "quote 1.0.9",
+ "serde_json",
+ "syn 1.0.64",
+]
+
+[[package]]
+name = "api_info"
+version = "1.11.1"
+source = "git+https://github.com/tonlabs/TON-SDK.git#f042a14d85cbd93560bc5d05d1a33f0bac7c62de"
+dependencies = [
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -318,6 +339,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "crc-any"
+version = "2.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3784befdf9469f4d51c69ef0b774f6a99de6bcc655285f746f16e0dd63d9007"
+dependencies = [
+ "debug-helper",
+]
+
+[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -364,6 +394,12 @@ dependencies = [
  "subtle 2.4.0",
  "zeroize",
 ]
+
+[[package]]
+name = "debug-helper"
+version = "0.3.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a8a5bb894f24f42c247f19b25928a88e31867c0f84552c05df41a9dd527435e"
 
 [[package]]
 name = "difference"
@@ -852,7 +888,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#1a70e69a7008774a0b865c360f980342dfdd01e9"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#dc5d9b6a0c120418a2db076dfe401022fb2a78d1"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -861,6 +897,7 @@ dependencies = [
  "chacha20poly1305",
  "curve25519-dalek",
  "ed25519-dalek",
+ "failure",
  "futures",
  "getrandom",
  "graphql_client",
@@ -881,6 +918,7 @@ dependencies = [
  "ton_abi",
  "ton_api",
  "ton_block",
+ "ton_sdk",
  "ton_types",
  "ton_vm",
  "wasm-bindgen",
@@ -1540,6 +1578,33 @@ dependencies = [
  "serde",
  "serde_json",
  "ton_types",
+]
+
+[[package]]
+name = "ton_sdk"
+version = "1.11.1"
+source = "git+https://github.com/tonlabs/TON-SDK.git#f042a14d85cbd93560bc5d05d1a33f0bac7c62de"
+dependencies = [
+ "api_derive",
+ "api_info",
+ "base64 0.10.1",
+ "chrono",
+ "crc-any",
+ "ed25519-dalek",
+ "failure",
+ "hex 0.3.2",
+ "lazy_static",
+ "log",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.8.2",
+ "ton_abi",
+ "ton_block",
+ "ton_types",
+ "ton_vm",
 ]
 
 [[package]]

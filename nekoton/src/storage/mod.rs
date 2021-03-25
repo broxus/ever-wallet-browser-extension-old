@@ -4,7 +4,6 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use js_sys::Function;
 use libnekoton::storage::{self, KvStorage};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

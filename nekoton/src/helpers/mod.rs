@@ -1,5 +1,5 @@
 use ed25519_dalek::PublicKey;
-use libnekoton::helpers::address::Wallet;
+use libnekoton::helpers::address;
 use libnekoton::helpers::address::{
     compute_address, msg_addr_from_str, pack_std_smc_addr, unpack_std_smc_addr,
 };
@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::*;
 use crate::utils::HandleError;
 
 #[wasm_bindgen]
-pub enum WalletType {
+pub enum ContractType {
     SafeMultisigWallet = "SafeMultisigWallet",
     SafeMultisigWallet24h = "SafeMultisigWallet24h",
     SetcodeMultisigWallet = "SetcodeMultisigWallet",
@@ -16,14 +16,14 @@ pub enum WalletType {
     WalletV3 = "WalletV3",
 }
 
-impl From<WalletType> for Wallet {
-    fn from(w: WalletType) -> Self {
+impl From<ContractType> for address::ContractType {
+    fn from(w: ContractType) -> Self {
         match w {
-            WalletType::SafeMultisigWallet => Wallet::SafeMultisigWallet,
-            WalletType::SafeMultisigWallet24h => Wallet::SafeMultisigWallet24h,
-            WalletType::SetcodeMultisigWallet => Wallet::SetcodeMultisigWallet,
-            WalletType::SurfWallet => Wallet::SurfWallet,
-            WalletType::WalletV3 => Wallet::WalletV3,
+            ContractType::SafeMultisigWallet => address::ContractType::SafeMultisigWallet,
+            ContractType::SafeMultisigWallet24h => address::ContractType::SafeMultisigWallet24h,
+            ContractType::SetcodeMultisigWallet => address::ContractType::SetcodeMultisigWallet,
+            ContractType::SurfWallet => address::ContractType::SurfWallet,
+            ContractType::WalletV3 => address::ContractType::WalletV3,
             _ => unreachable!(),
         }
     }
@@ -70,7 +70,7 @@ impl AddressWrapper {
 #[wasm_bindgen(js_name = computeAddressFromPubkey)]
 pub fn compute_address_from_key(
     key: Pubkey,
-    wallet_type: WalletType,
+    wallet_type: ContractType,
     workchain: i8,
 ) -> AddressWrapper {
     let ad = compute_address(&key.inner, wallet_type.into(), workchain);
