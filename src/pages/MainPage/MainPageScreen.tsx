@@ -16,6 +16,8 @@ import Send from '../../components/Send/Send'
 import './main-page.scss'
 import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
+import { connect } from 'react-redux'
+import { makeLogger } from 'ts-loader/dist/logger'
 
 const AccountModal = () => {
     return (
@@ -315,11 +317,21 @@ const UserAssets = () => {
     )
 }
 
-const MainPageScreen = () => (
-    <div style={{ overflowY: 'hidden', height: '100vh' }}>
-        <AccountDetails />
-        <UserAssets />
-    </div>
-)
+interface IMainPageScreen {
+    locale: any
+}
+const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
+    console.log(locale, 'locale')
+    return (
+        <div style={{ overflowY: 'hidden', height: '100vh' }}>
+            <AccountDetails />
+            <UserAssets />
+        </div>
+    )
+}
 
-export default MainPageScreen
+const mapStateToProps = (store: { app: { locale: any } }) => ({
+    locale: store.app.locale,
+})
+
+export default connect(mapStateToProps)(MainPageScreen)
