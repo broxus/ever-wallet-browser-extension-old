@@ -1,0 +1,40 @@
+.send-screen {
+    &__account_details {
+        display: flex;
+        align-items: center;
+        margin-bottom: 28px;
+        &-userpic {
+            margin-right: 16px;
+        }
+        &-title {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: #293166;
+            padding: 0 12px;
+        }
+    }
+    &__form {
+        &-title {
+            margin-bottom: 28px;
+        }
+        &-token-dropdown {
+            margin-bottom: 20px;
+        }
+        &-balance {
+            font-family: PT Root UI;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #96a1a7;
+            margin-bottom: 20px;
+        }
+        &-comment {
+            margin-bottom: 40px;
+        }
+    }
+}

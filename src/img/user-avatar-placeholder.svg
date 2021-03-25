@@ -1,0 +1,25 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clip-path="url(#clip0)">
+        <circle cx="3" cy="3" r="7" fill="#BE74E2"/>
+        <circle cx="3" cy="13" r="7" fill="#B839E6"/>
+        <circle cx="3" cy="23" r="7" fill="#BF70E6"/>
+        <circle cx="3" cy="33" r="7" fill="#D5FDE4"/>
+        <circle cx="13" cy="3" r="7" fill="#B145E7"/>
+        <circle cx="13" cy="13" r="7" fill="#B951E2"/>
+        <circle cx="13" cy="23" r="7" fill="#BB99E6"/>
+        <circle cx="13" cy="33" r="7" fill="#C495DF"/>
+        <circle cx="23" cy="3" r="7" fill="#CDF8E4"/>
+        <circle cx="23" cy="13" r="7" fill="#B72CE7"/>
+        <circle cx="23" cy="23" r="7" fill="#D1DEE4"/>
+        <circle cx="23" cy="33" r="7" fill="#B82EE2"/>
+        <circle cx="33" cy="3" r="7" fill="#BC71E8"/>
+        <circle cx="33" cy="13" r="7" fill="#B32AE4"/>
+        <circle cx="33" cy="23" r="7" fill="#B637DF"/>
+        <circle cx="33" cy="33" r="7" fill="#C4C5EB"/>
+    </g>
+    <defs>
+        <clipPath id="clip0">
+            <rect width="36" height="36" rx="18" fill="white"/>
+        </clipPath>
+    </defs>
+</svg>

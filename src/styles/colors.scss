@@ -8,7 +8,7 @@ $windowSubTextFg: #999999; // gray: fallback for additional text
 $windowSubTextFgOver: #919191; // darker gray: fallback for additional text with mouse over
 $windowBoldFg: #222222; // dark gray: fallback for bold text
 $windowBoldFgOver: #222222; // dark gray: fallback for bold text with mouse over
-$windowBgActive: #40a7e3; // bright blue: fallback for blue filled active areas
+$windowBgActive: #0088cc; // bright blue: fallback for blue filled active areas
 $windowFgActive: #ffffff; // white: fallback for text on active areas
 $windowActiveTextFg: #168acd; // online blue: fallback for active text like online status
 $windowShadowFg: #000000; // black: fallback for shadow
@@ -19,9 +19,16 @@ $shadowFg: #00000018; // most shadows (including opacity)
 $walletTitleBg: #121213; // wallet window title background when window is inactive
 $walletTopBg: #1e1f21; // wallet top part background
 
+$mainDarkBg: #293166;
+$mainHeader: $mainDarkBg;
+$mainDarkAccent: #182052;
+$mainLightAccent: #f7e3dc;
+
+$inactiveTab: #96a1a7;
+$iconGrey: #7d8b92;
 // widgets
 $activeButtonBg: $windowBgActive; // default active button background
-$activeButtonBgOver: #39a5db; // default active button background with mouse over
+$activeButtonBgOver: #027bb8; // default active button background with mouse over
 $activeButtonBgRipple: #2095d0; // default active button ripple effect
 $activeButtonFg: $windowFgActive; // default active button text
 $activeButtonFgOver: $activeButtonFg; // default active button text with mouse over
@@ -29,6 +36,16 @@ $activeButtonSecondaryFg: #cceeff; // default active button additional text (sel
 $activeButtonSecondaryFgOver: $activeButtonSecondaryFg; // default active button additional text with mouse over
 $activeLineFg: #37a1de; // default active line (like code input field bottom border when you log in and field is focused)
 $activeLineFgError: #e48383; // default active line for error state (like code input field bottom border when you log in and you've entered incorrect code)
+
+$illustrationBg: #fcf6f3;
+
+$whiteButtonBg: #ffffff;
+$whiteButtonFg: $windowBgActive;
+$whiteButtonFgOver: #027bb8;
+$whiteButtonBorder: rgba(0, 136, 204, 0.2);
+$whiteButtonBgRipple: $whiteButtonBorder;
+
+$disabledButtonBg: #c5e4f3;
 
 $lightButtonBg: $windowBg; // default light button background (like buttons in boxes)
 $lightButtonBgOver: #e3f1fa; // default light button background with mouse over

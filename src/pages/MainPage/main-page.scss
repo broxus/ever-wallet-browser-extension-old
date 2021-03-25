@@ -1,0 +1,256 @@
+@import '../../styles/colors';
+
+.main-page {
+    &__account-details {
+        background-color: $mainDarkBg;
+        height: 262px;
+        padding: 16px 20px 28px;
+
+        &-top-panel {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 30px;
+        }
+
+        &-network {
+            background: $mainDarkAccent;
+            border-radius: 91px;
+            color: $windowBg;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            height: 30px;
+            font-style: normal;
+            font-weight: 500;
+            font-size: 14px;
+            letter-spacing: 0.75px;
+            margin-right: 36px;
+            line-height: 20px;
+
+            padding: 5px 10px;
+            width: 188px;
+        }
+
+        &-acc {
+            margin-bottom: 8px;
+            &-account {
+                color: $mainLightAccent;
+                font-style: normal;
+                font-weight: 500;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                margin-right: 8px;
+            }
+
+            &-address {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 4px;
+                cursor: pointer;
+                padding: 4px 8px;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+
+                color: $windowFgActive;
+                margin-bottom: 8px;
+            }
+        }
+
+        &-balance {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 28px;
+            &-number {
+                color: $mainLightAccent;
+                font-style: normal;
+                font-weight: bold;
+                font-size: 24px;
+                line-height: 32px;
+            }
+            &-comment {
+                font-style: normal;
+                font-weight: 500;
+                font-size: 12px;
+                line-height: 16px;
+                letter-spacing: 0.4px;
+                color: $mainLightAccent;
+            }
+        }
+        &-buttons {
+            display: flex;
+        }
+        &-button {
+            display: flex;
+            background: rgba(197, 228, 243, 0.1);
+            flex-direction: row;
+            justify-content: center;
+            align-content: center;
+
+            position: relative;
+            overflow: hidden;
+
+            padding: 0.8em 1em;
+
+            width: 100%;
+            &:first-child {
+                margin-right: 12px;
+            }
+
+            &._blue {
+                &:hover {
+                    background-color: rgba(197, 228, 243, 0.2);
+                }
+                span.ripple {
+                    background-color: $activeButtonBgRipple;
+                }
+            }
+
+            &__content {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: PT Root UI;
+                font-style: normal;
+                font-weight: bold;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: $disabledButtonBg;
+                padding: 0 8px;
+            }
+        }
+    }
+
+    &__account-settings {
+        background: #ffffff;
+        border: 1px solid #ebedee;
+        box-shadow: 0px 4px 19px rgba(0, 0, 0, 0.25);
+        border-radius: 2px;
+        //height: 160px;
+        width: 208px;
+        padding: 16px;
+        position: absolute;
+        top: 60px;
+        z-index: 10;
+
+        &-section {
+            border-bottom: 1px solid #ebedee;
+            margin-bottom: 16px;
+
+            &-account {
+                font-style: normal;
+                font-weight: bold;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: #000000;
+            }
+            &-item {
+                color: #000000;
+                cursor: pointer;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                margin-bottom: 16px;
+                &:hover {
+                    color: $activeButtonBg;
+
+                    //background-color: #919191;
+                }
+                //&:not(:first-child) {
+                //    padding: 0 12px;
+                //}
+                &-value {
+                    margin-bottom: 16px;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 12px;
+                    line-height: 16px;
+                    letter-spacing: 0.4px;
+                    color: #96a1a7;
+                }
+            }
+        }
+    }
+
+    &__user-assets {
+        padding: 0 20px;
+        &-panel {
+            display: flex;
+            border-bottom: 1px solid #ebedee;
+            &-tab {
+                font-style: normal;
+                font-weight: 500;
+                font-size: 16px;
+                color: $inactiveTab;
+                cursor: pointer;
+                line-height: 20px;
+                text-align: center;
+                letter-spacing: 0.25px;
+                padding: 16px 24px;
+                width: 50%;
+                &._active {
+                    color: $windowBgActive;
+                    border-bottom: 2px solid $windowBgActive;
+                    margin-bottom: -1px;
+                }
+            }
+        }
+        &-asset {
+            align-items: center;
+            border-bottom: 1px solid #ebedee;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px 0;
+
+            &:last-child {
+                margin-bottom: 60px;
+            }
+            &-number {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                &-amount {
+                    font-style: normal;
+                    font-weight: bold;
+                    font-size: 18px;
+                    line-height: 24px;
+                    letter-spacing: 0.5px;
+                    color: #000000;
+                }
+                &-dollars {
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 14px;
+                    line-height: 20px;
+                    letter-spacing: 0.75px;
+                    color: $inactiveTab;
+                }
+                &-income {
+                    font-style: normal;
+                    font-weight: bold;
+                    font-size: 16px;
+                    line-height: 20px;
+                    text-align: right;
+                    letter-spacing: 0.25px;
+                    color: #00ac47;
+                }
+                &-expense {
+                    font-style: normal;
+                    font-weight: bold;
+                    font-size: 16px;
+                    line-height: 20px;
+                    text-align: right;
+                    letter-spacing: 0.25px;
+                    color: #000000;
+                }
+            }
+        }
+    }
+}

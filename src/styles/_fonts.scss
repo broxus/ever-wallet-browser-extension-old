@@ -1,18 +1,35 @@
-
 @font-face {
-  font-family: 'DAOpenSans';
-  font-weight: normal;
-  src: url('../fonts/DAOpenSansRegular.ttf');
+    font-family: 'DAOpenSans';
+    font-weight: normal;
+    src: url('../fonts/DAOpenSansRegular.ttf');
 }
 
 @font-face {
-  font-family: 'DAOpenSans';
-  font-weight: 600;
-  src: url('../fonts/DAOpenSansSemibold.ttf');
+    font-family: 'DAOpenSans';
+    font-weight: 600;
+    src: url('../fonts/DAOpenSansSemibold.ttf');
 }
 
 @font-face {
-  font-family: 'DAOpenSans';
-  font-weight: bold;
-  src: url('../fonts/DAOpenSansBold.ttf');
+    font-family: 'DAOpenSans';
+    font-weight: bold;
+    src: url('../fonts/DAOpenSansBold.ttf');
+}
+
+@font-face {
+    font-family: 'PT Root UI';
+    font-weight: normal;
+    src: url('../fonts/PT-Root-UI-Regular.ttf');
+}
+
+@font-face {
+    font-family: 'PT Root UI';
+    font-weight: 500;
+    src: url('../fonts/PT-Root-UI-Medium.ttf');
+}
+
+@font-face {
+    font-family: 'PT Root UI';
+    font-weight: bold;
+    src: url('../fonts/PT-Root-UI-Bold.ttf');
 }

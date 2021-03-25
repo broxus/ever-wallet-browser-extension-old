@@ -1,27 +1,39 @@
-import React from "react";
-import {createRipple, removeRipple} from "../../common/ripple";
+import React, { Dispatch, SetStateAction } from 'react'
+import cn from 'classnames'
+import { createRipple, removeRipple } from '../../common/ripple'
 
-import "./style.scss";
+import './style.scss'
 
 export type ButtonProps = {
-    text: string,
-    onClick?: () => void,
+    text: string
+    white?: boolean
+    onClick?: (() => void) | Dispatch<SetStateAction<boolean>> | any
+    disabled?: boolean
+    noBorder?: boolean
 }
 
 export class Button extends React.Component<ButtonProps, {}> {
     render() {
-        const {text, onClick} = this.props;
+        const { text, white, disabled, noBorder, onClick } = this.props
+        let className = cn('button', {
+            _white: white,
+            _blue: !white,
+            _disabled: disabled,
+            _noborder: noBorder,
+        })
 
         return (
-            <button className="button"
-                    onMouseDown={createRipple}
-                    onMouseLeave={removeRipple}
-                    onMouseUp={(event) => {
-                        removeRipple(event);
-                        onClick && onClick();
-                    }}>
+            <button
+                className={className}
+                onMouseDown={createRipple}
+                onMouseLeave={removeRipple}
+                onMouseUp={(event) => {
+                    removeRipple(event)
+                    onClick && onClick()
+                }}
+            >
                 <div className="button__content">{text}</div>
             </button>
-        );
+        )
     }
 }
