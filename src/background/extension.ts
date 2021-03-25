@@ -61,6 +61,7 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
 async function createNewKey() {
     const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0));
     console.log(phrase.phrase, phrase.accountType);
+    //
     const key = phrase.createKey("Main key", "test"); // `phrase` moved here
     console.log(key);
     // Can't use `phrase` here
