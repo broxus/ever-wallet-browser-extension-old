@@ -42,6 +42,7 @@ const App: React.FC = () => {
                 break
         }
     }
+
     useEffect(() => {
         document.addEventListener('keydown', navigate)
         // return () => document.removeEventListener('keydown', navigate, true) // Succeeds

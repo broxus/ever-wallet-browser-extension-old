@@ -73,10 +73,10 @@ const AccountDetails = () => {
             <div className="main-page__account-details">
                 <div className="main-page__account-details-top-panel">
                     <div className="main-page__account-details-network">Free TON main net</div>
-                    {/*// @ts-ignore*/}
                     <div
                         onClick={() => setModalVisible(true)}
-                        style={{ cursor: 'pointer', position: 'relevant' }}
+                        // style={{ cursor: 'pointer', position: 'relevant' }}
+                        style={{ cursor: 'pointer' }}
                     >
                         <UserPic />
                     </div>

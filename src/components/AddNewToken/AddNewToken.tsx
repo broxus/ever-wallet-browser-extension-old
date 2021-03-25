@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, {Dispatch, SetStateAction, useState} from 'react'
 import { Button } from '../button'
 import cn from 'classnames'
 import Input from '../Input/Input'
@@ -24,7 +24,7 @@ export const Token = () => {
     )
 }
 
-const SearchToken = ({ onReturn }) => {
+const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
     return (
         <>
             <Input label={'Enter new account name...'} className="add-new-token__search-form" />
@@ -44,7 +44,7 @@ const SearchToken = ({ onReturn }) => {
         </>
     )
 }
-const CustomToken = ({ onReturn }) => {
+const CustomToken: React.FC<IAddNewToken> = ({ onReturn }) => {
     return (
         <>
             <Input label={'Contract wallet address...'} />
@@ -63,7 +63,11 @@ const CustomToken = ({ onReturn }) => {
     )
 }
 
-const AddNewToken = ({ onReturn }) => {
+interface IAddNewToken {
+    onReturn: Dispatch<SetStateAction<boolean>>
+}
+
+const AddNewToken: React.FC<IAddNewToken> = ({ onReturn }) => {
     const [activeTab, setActiveTab] = useState(0)
     const content = [<SearchToken onReturn={onReturn} />, <CustomToken onReturn={onReturn} />]
     return (

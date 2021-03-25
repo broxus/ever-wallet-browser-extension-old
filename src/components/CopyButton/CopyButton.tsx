@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import './copy-button.scss'
 import ReactTooltip from 'react-tooltip'
@@ -8,13 +8,11 @@ interface ICopyButton {
     text: string
 }
 const CopyButton: React.FC<ICopyButton> = ({ children, text }) => {
-    const [copied, setCopied] = useState(false)
-
     return (
         <>
             <ReactTooltip type={'dark'} effect={'solid'} globalEventOff="click" />
             <div className="panel" data-tip="Copied!" data-event="click focus">
-                <CopyToClipboard text={text} onCopy={() => setCopied(true)}>
+                <CopyToClipboard text={text} onCopy={() => {}}>
                     {children}
                 </CopyToClipboard>
             </div>

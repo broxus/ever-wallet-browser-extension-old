@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { Dispatch, SetStateAction } from 'react'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import Input from '../Input/Input'
 import Select from 'react-select'
@@ -12,8 +12,14 @@ const options = [
     { value: '60', label: 'ETH' },
 ]
 
+interface IOptionParams {
+    data?: any
+    isDisabled?: boolean
+    isFocused?: boolean
+    isSelected?: boolean
+}
 const selectStyles = {
-    control: (styles) => ({
+    control: (styles: any) => ({
         ...styles,
         backgroundColor: '#ffffff',
         color: '#000000',
@@ -24,7 +30,7 @@ const selectStyles = {
         letterSpacing: '0.25px',
         minHeight: '48px',
     }),
-    option: (styles, { data, isDisabled, isFocused, isSelected }) => {
+    option: (styles: any, { isDisabled }: IOptionParams) => {
         const color = '#ffffff'
         return {
             ...styles,
@@ -39,15 +45,19 @@ const selectStyles = {
             },
         }
     },
-    indicatorsContainer: (styles) => ({ ...styles, cursor: 'pointer' }),
-    placeholder: (styles) => ({ ...styles, color: '#000000' }),
-    menu: (styles) => ({ ...styles, marginTop: 2, borderRadius: 0 }),
-    valueContainer: (styles) => ({ ...styles, paddingBottom: '12px' }),
-    singleValue: (styles) => ({ ...styles, color: '#0088cc' }),
+    indicatorsContainer: (styles: any) => ({ ...styles, cursor: 'pointer' }),
+    placeholder: (styles: any) => ({ ...styles, color: '#000000' }),
+    menu: (styles: any) => ({ ...styles, marginTop: 2, borderRadius: 0 }),
+    valueContainer: (styles: any) => ({ ...styles, paddingBottom: '12px' }),
+    singleValue: (styles: any) => ({ ...styles, color: '#0088cc' }),
 }
 
-const Send = ({ onReturn }) => {
-    const [token, setToken] = useState<{ value: string; label: string } | null>([])
+interface IAddNewToken {
+    onReturn: Dispatch<SetStateAction<boolean>>
+}
+
+const Send: React.FC<IAddNewToken> = ({ onReturn }) => {
+    // const [token, setToken] = useState<{ value: string; label: string } | null>([])
     return (
         <>
             <div className="send-screen__account_details">
