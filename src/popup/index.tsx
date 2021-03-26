@@ -12,14 +12,6 @@ import CreateAccountScreen from '../pages/CreateAccount/CreateAccountScreen'
 import store from '../store/index'
 import '../styles/main.scss'
 
-import init, {
-    Storage,
-    StoredKey,
-    KeyStore,
-    AccountType,
-    StorageQueryResultHandler,
-    StorageQueryHandler,
-} from '../../nekoton/pkg'
 import { Provider } from 'react-redux'
 
 const tempScreens = [
