@@ -28,7 +28,7 @@ import {
 
 const AccountModal = () => {
     return (
-        <div className="main-page__account-settings">
+        <div className="main-page__account-settings noselect">
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -44,6 +44,7 @@ const AccountModal = () => {
                     </div>
                 </div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -53,10 +54,12 @@ const AccountModal = () => {
                     <div style={{ padding: '0 12px' }}>Create account</div>
                 </div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section">
                 <div className="main-page__account-settings-section-item">Wallet settings</div>
                 <div className="main-page__account-settings-section-item">Information and help</div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section-item">Log out</div>
         </div>
     )
@@ -188,7 +191,7 @@ const Assets = () => {
                     bottom: 0,
                     position: 'absolute',
                 }}
-            ></div>
+            />
             <div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>
                 <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
             </div>
@@ -289,7 +292,7 @@ const Transactions = () => (
                 bottom: 0,
                 position: 'absolute',
             }}
-        ></div>
+        />
     </div>
 )
 
