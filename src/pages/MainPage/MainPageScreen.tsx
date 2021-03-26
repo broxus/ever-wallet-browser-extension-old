@@ -17,7 +17,6 @@ import './main-page.scss'
 import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
-import { makeLogger } from 'ts-loader/dist/logger'
 import { AppState } from '../../store/app/types'
 import {
     addKey,
@@ -26,8 +25,6 @@ import {
     initConnection,
     restoreKey,
 } from '../../store/app/actions'
-import store from '../../store'
-import init from '../../../nekoton/pkg'
 
 const AccountModal = () => {
     return (
@@ -432,9 +429,9 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
 
     return (
         <div style={{ overflowY: 'hidden', height: '100vh' }}>
-            <button className="js-push-button" disabled>
-                Enable Push Messages
-            </button>
+            {/*<button className="js-push-button" disabled>*/}
+            {/*    Enable Push Messages*/}
+            {/*</button>*/}
             <AccountDetails />
             <UserAssets />
         </div>
