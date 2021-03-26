@@ -1,5 +1,5 @@
 import init, * as nt from "../../nekoton/pkg";
-import {GqlSocket, mergeTransactions} from "./common";
+import {GqlSocket, mergeTransactions, StorageConnector} from "./common";
 
 const LITECLIENT_EXTENSION_ID = 'fakpmbkocblneahenciednepadenbdpb';
 
@@ -50,8 +50,15 @@ function startListener(connection: nt.GqlConnection, address: string) {
 
     const knownTransactions = new Array<nt.Transaction>();
 
+    const storage = new nt.Storage(new StorageConnector());
+    const accountStateCache = new nt.MainWalletStateCache(storage);
+
     class MainWalletHandler {
+        constructor(private address: string) {
+        }
+
         onStateChanged(newState: nt.AccountState) {
+            accountStateCache.store(address, newState);
             console.log(newState);
         }
 
@@ -64,7 +71,9 @@ function startListener(connection: nt.GqlConnection, address: string) {
     }
 
     (async () => {
-        const handler = new MainWalletHandler();
+        const handler = new MainWalletHandler(address);
+
+        console.log("Restored state: ", await accountStateCache.load(address));
 
         const subscription = await connection.subscribeToMainWallet(address, handler);
 
@@ -107,8 +116,8 @@ function startListener(connection: nt.GqlConnection, address: string) {
 }
 
 function checkTransactionsSorted(transactions: Array<nt.Transaction>) {
-    transactions.reduce(({sorted, previous}, current) => {
+    return transactions.reduce(({sorted, previous}, current) => {
         const result = previous ? sorted && previous.id.lt.localeCompare(current.id.lt) > 0 : true;
         return {sorted: result, previous: current};
-    }, <{ sorted: boolean, previous: nt.Transaction | null }>{sorted: true, previous: null}).sorted
+    }, <{ sorted: boolean, previous: nt.Transaction | null }>{sorted: true, previous: null}).sorted;
 }
