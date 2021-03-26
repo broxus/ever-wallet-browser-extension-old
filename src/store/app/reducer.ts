@@ -2,13 +2,16 @@ import { produce } from 'immer'
 import { ActionTypes } from './actions'
 import { Action, AppState } from './types'
 
+// @ts-ignore
 export const initialState = Object.freeze<AppState>({
     locale: 'en_US',
     seed: '',
+    phrase: {},
     key: '',
     publicKey: '',
 })
 
+// @ts-ignore
 export default (state: AppState = initialState, action: Action): AppState =>
     produce(state, (draft: AppState) => {
         switch (action.type) {
@@ -17,7 +20,8 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 return
             }
             case ActionTypes.GENERATE_SEED_SUCCESS: {
-                draft.seed = action.payload.split(' ')
+                draft.seed = action.payload.phrase.split(' ')
+                draft.phrase = action.payload
                 return
             }
             case ActionTypes.GENERATE_KEY_SUCCESS: {

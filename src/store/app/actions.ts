@@ -36,14 +36,12 @@ export const generateSeedPhrase = () => async (dispatch: AppDispatch) => {
     console.log('phrase', phrase)
     dispatch({
         type: ActionTypes.GENERATE_SEED_SUCCESS,
-        payload: phrase.phrase,
+        payload: phrase,
     })
 }
 
-export const createKey = () => async (
-    dispatch: AppDispatch,
-    phrase: GeneratedMnemonic,
-    password: string
+export const createKey = (phrase: GeneratedMnemonic, password: string) => async (
+    dispatch: AppDispatch
 ) => {
     const key = phrase.createKey('Main key', password)
     dispatch({

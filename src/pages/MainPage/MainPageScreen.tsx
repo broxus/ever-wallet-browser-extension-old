@@ -82,11 +82,6 @@ const AccountDetails = () => {
         setActiveContent(1)
     }
 
-    useEffect(() => {
-        setModalVisible(false)
-        console.log('activeContent', activeContent)
-    }, [activeContent])
-
     return (
         <>
             <div className="main-page__account-details">
