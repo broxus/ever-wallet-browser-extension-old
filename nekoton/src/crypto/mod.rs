@@ -1,4 +1,3 @@
-use js_sys::Error;
 use wasm_bindgen::prelude::*;
 
 use libnekoton::storage;
