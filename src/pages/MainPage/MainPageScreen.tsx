@@ -27,7 +27,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
         setActiveContent(2)
     }
     return (
-        <div className="main-page__account-settings">
+        <div className="main-page__account-settings noselect">
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -43,6 +43,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
                     </div>
                 </div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -52,6 +53,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
                     <div style={{ padding: '0 12px' }}>Create account</div>
                 </div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -62,6 +64,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
                 <div className="main-page__account-settings-section-item">Wallet settings</div>
                 <div className="main-page__account-settings-section-item">Information and help</div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section-item-log-out">Log out</div>
         </div>
     )
@@ -303,7 +306,7 @@ const Transactions = () => (
                 bottom: 0,
                 position: 'absolute',
             }}
-        ></div>
+        />
     </div>
 )
 
