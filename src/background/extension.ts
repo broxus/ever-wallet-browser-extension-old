@@ -1,6 +1,6 @@
 import init, {
     AdnlConnection, StoredKey, GqlConnection, GqlQuery, AccountType, TcpReceiver,
-    TonInterface, unpackAddress, StorageQueryResultHandler, StorageQueryHandler, Storage, KeyStore, AccountState, Transaction,
+    TonInterface, unpackAddress, StorageQueryResultHandler, StorageQueryHandler, Storage, KeyStore, AccountState, Transaction, BatchInfo,
 } from "../../nekoton/pkg";
 import {
     RequestConnect,
@@ -79,16 +79,52 @@ async function createNewKey() {
     console.log(keyStore.storedKeys);
 }
 
+// just for the example
+function mergeTransactions(knownTransactions: Array<Transaction>, newTransactions: Array<Transaction>, info: BatchInfo) {
+    if (info.batchType == 'old') {
+        knownTransactions.push(...newTransactions);
+        return;
+    }
+
+    if (knownTransactions.length === 0) {
+        knownTransactions.push(...newTransactions);
+        return;
+    }
+
+    // known lts: [N, N-1, N-2, N-3, (!) N-10,...]
+    // new lts: [N-4, N-5]
+    // batch info: { minLt: N-5, maxLt: N-4, batchType: 'new' }
+
+    // 1. Skip indices until known transaction lt is greater than the biggest in the batch
+    let i = 0;
+    while (i < knownTransactions.length && knownTransactions[i].id.lt.localeCompare(info.maxLt) >= 0) {
+        ++i;
+    }
+
+    // 2. Insert new transactions
+    knownTransactions.splice(i, 0, ...newTransactions);
+}
+
 function startListener(connection: GqlConnection, address: string) {
+    const POLLING_INTERVAL = 10000; // 10s
+
+    const knownTransactions = new Array<Transaction>();
+
     class MainWalletHandler {
         onStateChanged(newState: AccountState) {
             console.log(newState);
         }
 
-        onTransactionsFound(transactions: Array<Transaction>) {
-            for (let i = 0; i < transactions.length; ++i) {
-                console.log(transactions[i].id.lt);
-            }
+        onTransactionsFound(transactions: Array<Transaction>, info: BatchInfo) {
+            console.log("New transactions batch: ", info);
+            mergeTransactions(knownTransactions, transactions, info);
+
+            const sorted = knownTransactions.reduce(({sorted, previous}, current) => {
+                const result = previous ? sorted && previous.id.lt.localeCompare(current.id.lt) > 0 : true;
+                return {sorted: result, previous: current};
+            }, <{ sorted: boolean, previous: Transaction | null }>{sorted: true, previous: null}).sorted;
+
+            console.log("All sorted:", sorted);
         }
     }
 
@@ -97,13 +133,20 @@ function startListener(connection: GqlConnection, address: string) {
 
         const subscription = await connection.subscribeToMainWallet(address, handler);
 
+        if (knownTransactions.length !== 0) {
+            const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1];
+            if (oldestKnownTransaction.prevTransactionId != null) {
+                await subscription.preloadTransactions(oldestKnownTransaction.prevTransactionId);
+            }
+        }
+
         let currentBlockId: string | null = null;
         let lastPollingMethod = subscription.pollingMethod;
         while (true) {
             switch (lastPollingMethod) {
                 case 'manual': {
                     await new Promise<void>((resolve,) => {
-                        setTimeout(() => resolve(), 10000);
+                        setTimeout(() => resolve(), POLLING_INTERVAL);
                     });
                     console.log("manual refresh");
                     await subscription.refresh();
