@@ -73,8 +73,8 @@ checksum = "81cddc5f91628367664cc7c69714ff08deee8a3efc54623011c772544d7b2767"
 
 [[package]]
 name = "api_derive"
-version = "1.11.1"
-source = "git+https://github.com/tonlabs/TON-SDK.git#f042a14d85cbd93560bc5d05d1a33f0bac7c62de"
+version = "1.11.2"
+source = "git+https://github.com/tonlabs/TON-SDK.git#9ec6632899e813635583ec8bf96a4188eaa93da1"
 dependencies = [
  "api_info",
  "quote 1.0.9",
@@ -84,8 +84,8 @@ dependencies = [
 
 [[package]]
 name = "api_info"
-version = "1.11.1"
-source = "git+https://github.com/tonlabs/TON-SDK.git#f042a14d85cbd93560bc5d05d1a33f0bac7c62de"
+version = "1.11.2"
+source = "git+https://github.com/tonlabs/TON-SDK.git#9ec6632899e813635583ec8bf96a4188eaa93da1"
 dependencies = [
  "serde",
  "serde_derive",
@@ -888,7 +888,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#dc5d9b6a0c120418a2db076dfe401022fb2a78d1"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#5e3dfa41da713c87984330cab574f3b3ad0a930c"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1568,7 +1568,7 @@ dependencies = [
 [[package]]
 name = "ton_labs_assembler"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#ce4499bf6df671cc8fbe00f689d7e678cc128866"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#99df31bbe10f38888776f4ba73050ae6afaca84d"
 dependencies = [
  "failure",
  "hex 0.4.3",
@@ -1582,8 +1582,8 @@ dependencies = [
 
 [[package]]
 name = "ton_sdk"
-version = "1.11.1"
-source = "git+https://github.com/tonlabs/TON-SDK.git#f042a14d85cbd93560bc5d05d1a33f0bac7c62de"
+version = "1.11.2"
+source = "git+https://github.com/tonlabs/TON-SDK.git#9ec6632899e813635583ec8bf96a4188eaa93da1"
 dependencies = [
  "api_derive",
  "api_info",
@@ -1641,7 +1641,7 @@ dependencies = [
 [[package]]
 name = "ton_vm"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-vm.git#da3f209100966644f05db2bb6d568047b0906b15"
+source = "git+https://github.com/tonlabs/ton-labs-vm.git#3a2595cdf5e09d91567c03857649ab646e7a4f0f"
 dependencies = [
  "ed25519",
  "ed25519-dalek",

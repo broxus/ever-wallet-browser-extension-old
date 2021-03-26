@@ -1,7 +1,8 @@
-use libnekoton::core;
 use ton_types::UInt256;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+
+use libnekoton::core;
 
 #[wasm_bindgen]
 pub struct AccountState {
@@ -12,8 +13,8 @@ pub struct AccountState {
 #[wasm_bindgen]
 impl AccountState {
     #[wasm_bindgen(getter)]
-    pub fn balance(&self) -> u64 {
-        self.inner.balance
+    pub fn balance(&self) -> String {
+        self.inner.balance.to_string()
     }
 
     #[wasm_bindgen(getter, js_name = "genTimings")]
@@ -22,7 +23,7 @@ impl AccountState {
     }
 
     #[wasm_bindgen(getter, js_name = "lastTransactionId")]
-    pub fn last_transaction_id(&self) -> Option<TransactionId> {
+    pub fn last_transaction_id(&self) -> Option<LastTransactionId> {
         self.inner.last_transaction_id.map(|id| id.into())
     }
 
@@ -224,6 +225,44 @@ fn convert_account_status(account_status: core::models::AccountStatus) -> Accoun
         core::models::AccountStatus::Nonexist => "nonexist",
     })
     .unchecked_into()
+}
+
+#[wasm_bindgen]
+#[derive(Clone)]
+pub struct LastTransactionId {
+    #[wasm_bindgen(skip)]
+    pub inner: core::models::LastTransactionId,
+}
+
+#[wasm_bindgen]
+impl LastTransactionId {
+    #[wasm_bindgen(getter, js_name = "isExact")]
+    pub fn is_exact(&self) -> bool {
+        matches!(&self.inner, core::models::LastTransactionId::Exact(_))
+    }
+
+    #[wasm_bindgen(getter, js_name = "lt")]
+    pub fn lt(&self) -> String {
+        match self.inner {
+            core::models::LastTransactionId::Exact(id) => id.lt,
+            core::models::LastTransactionId::Inexact { latest_lt } => latest_lt,
+        }
+        .to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "hash")]
+    pub fn hash(&self) -> Option<String> {
+        match self.inner {
+            core::models::LastTransactionId::Exact(id) => Some(id.hash.to_hex_string()),
+            core::models::LastTransactionId::Inexact { .. } => None,
+        }
+    }
+}
+
+impl From<core::models::LastTransactionId> for LastTransactionId {
+    fn from(inner: core::models::LastTransactionId) -> Self {
+        Self { inner }
+    }
 }
 
 #[wasm_bindgen]

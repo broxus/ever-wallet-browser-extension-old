@@ -45,7 +45,7 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
 
         const core = TonInterface.overGraphQL(connection);
 
-        startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
+        //startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
         startListener(connection, "0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb");
     }
 
@@ -85,7 +85,7 @@ function startListener(connection: GqlConnection, address: string) {
             console.log(newState);
         }
 
-        onTransactions(transactions: Array<Transaction>) {
+        onTransactionsFound(transactions: Array<Transaction>) {
             for (let i = 0; i < transactions.length; ++i) {
                 console.log(transactions[i].id.lt);
             }
@@ -100,10 +100,10 @@ function startListener(connection: GqlConnection, address: string) {
         let currentBlockId: string | null = null;
         let lastPollingMethod = subscription.pollingMethod;
         while (true) {
-            switch (subscription.pollingMethod) {
+            switch (lastPollingMethod) {
                 case 'manual': {
                     await new Promise<void>((resolve,) => {
-                        setTimeout(() => resolve(), 1000);
+                        setTimeout(() => resolve(), 10000);
                     });
                     console.log("manual refresh");
                     await subscription.refresh();

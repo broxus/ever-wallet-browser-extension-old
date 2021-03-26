@@ -6,15 +6,17 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use libnekoton::core;
-use libnekoton::transport::{self, gql, Transport};
 use ton_block::{Deserializable, HashmapAugType};
 use ton_types::HashmapType;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use crate::utils::{HandleError, PromiseVoid, TrustMe};
+use libnekoton::core;
+use libnekoton::transport::{self, gql, Transport};
+use libnekoton::utils::*;
+
+use crate::utils::{HandleError, PromiseVoid};
 
 #[wasm_bindgen]
 extern "C" {
@@ -154,8 +156,11 @@ extern "C" {
         new_state: crate::core::AccountState,
     );
 
-    #[wasm_bindgen(method, js_name = "onTransactions")]
-    pub fn on_transactions(this: &MainWalletNotificationHandler, transaction: TransactionsList);
+    #[wasm_bindgen(method, js_name = "onTransactionsFound")]
+    pub fn on_transactions_found(
+        this: &MainWalletNotificationHandler,
+        transaction: TransactionsList,
+    );
 }
 
 unsafe impl Send for MainWalletNotificationHandler {}
@@ -246,7 +251,7 @@ impl MainWalletSubscriptionImpl {
             &new_state.last_transaction_id,
         ) {
             (None, Some(_)) => self.account_state = new_state,
-            (Some(current), Some(new)) if current.lt < new.lt => self.account_state = new_state,
+            (Some(current), Some(new)) if current < new => self.account_state = new_state,
             _ => return Ok(false),
         }
 
@@ -260,7 +265,7 @@ impl MainWalletSubscriptionImpl {
         const TRANSACTIONS_PER_FETCH: u8 = 16;
 
         let mut from = match self.account_state.last_transaction_id {
-            Some(id) => id,
+            Some(id) => id.to_transaction_id(),
             None => return Ok(()),
         };
 
@@ -292,7 +297,7 @@ impl MainWalletSubscriptionImpl {
             let last_prev_id = match new_transactions.last() {
                 Some(last) => {
                     let last_prev_id = last.prev_trans_id;
-                    self.handler.on_transactions(
+                    self.handler.on_transactions_found(
                         new_transactions
                             .into_iter()
                             .map(crate::core::Transaction::from)
@@ -327,7 +332,6 @@ impl MainWalletSubscriptionImpl {
                     }
                     _ => break,
                 },
-                _ => break,
             }
         }
 
@@ -360,12 +364,12 @@ impl core::AccountSubscription for MainWalletSubscriptionImpl {
             .read_struct()
             .map_err(|_| SubscriptionError::InvalidBlock)?;
 
-        let account_block = match block
+        let (account_block, balance) = match block
             .extra
             .read_struct()
             .and_then(|extra| extra.read_account_blocks())
             .and_then(|account_blocks| {
-                account_blocks.get(&self.address.address().get_bytestring(0).into())
+                account_blocks.get_with_aug(&self.address.address().get_bytestring(0).into())
             }) {
             Ok(Some(extra)) => extra,
             _ => return Ok(()),
@@ -373,20 +377,56 @@ impl core::AccountSubscription for MainWalletSubscriptionImpl {
 
         let mut new_transactions = Vec::new();
 
+        let mut latest_transaction_id: Option<core::models::TransactionId> = None;
+        let mut is_deployed = self.account_state.is_deployed;
+
         for item in account_block.transactions().iter() {
-            match item.and_then(|(_, value)| {
+            let (hash, transaction) = match item.and_then(|(_, value)| {
                 let cell = value.into_cell().reference(0)?;
                 let hash = cell.repr_hash();
 
                 ton_block::Transaction::construct_from_cell(cell)
                     .map(|transaction| (hash, transaction))
             }) {
-                Ok(transaction) => new_transactions.push(transaction),
+                Ok(transaction) => transaction,
                 Err(_) => continue,
             };
+
+            is_deployed = transaction.end_status == ton_block::AccountStatus::AccStateActive;
+
+            if matches!(&latest_transaction_id, Some(id) if transaction.lt > id.lt) {
+                latest_transaction_id = Some(core::models::TransactionId {
+                    lt: transaction.lt,
+                    hash,
+                })
+            }
+
+            new_transactions.extend(core::models::Transaction::try_from((hash, transaction)).ok())
         }
 
-        // TODO: handle account change
+        self.account_state = core::models::AccountState {
+            balance: balance.grams.0 as u64,
+            gen_timings: core::models::GenTimings::Known {
+                gen_lt: info.end_lt(),
+                gen_utime: info.gen_utime().0,
+            },
+            last_transaction_id: latest_transaction_id
+                .map(core::models::LastTransactionId::Exact)
+                .or(self.account_state.last_transaction_id),
+            is_deployed,
+        };
+
+        self.handler
+            .on_state_changed(self.account_state.clone().into());
+        self.handler.on_transactions_found(
+            new_transactions
+                .into_iter()
+                .rev()
+                .map(crate::core::Transaction::from)
+                .map(JsValue::from)
+                .collect::<js_sys::Array>()
+                .unchecked_into(),
+        );
 
         Ok(())
     }

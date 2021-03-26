@@ -3,9 +3,11 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use libnekoton::transport::adnl;
 use ton_api::ton;
 use wasm_bindgen::prelude::*;
+
+use libnekoton::transport::adnl;
+use libnekoton::utils::*;
 
 use crate::utils::*;
 

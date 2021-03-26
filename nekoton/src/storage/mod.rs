@@ -4,10 +4,12 @@ use std::sync::{Arc, Mutex};
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use libnekoton::storage::{self, KvStorage};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
+
+use libnekoton::storage::{self, KvStorage};
+use libnekoton::utils::*;
 
 use crate::crypto::{AccountType, StoredKey};
 use crate::utils::*;
