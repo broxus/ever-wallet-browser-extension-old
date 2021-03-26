@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 
 import WelcomeScreen from '../pages/WelcomeScreen/WelcomeScreen'
 import PolicySignScreen from '../pages/PolicySignScreen/PolicySignScreen'
-import GenerateSeedScreen, { CheckSeed } from '../pages/GenerateSeed/GenerateSeedScreen'
+import GenerateSeedScreen, {CheckSeed} from '../pages/GenerateSeed/GenerateSeedScreen'
 import CreatePasswordScreen, {
     ConfirmPasswordScreen,
 } from '../pages/CreatePassword/CreatePasswordScreen'
@@ -16,19 +16,18 @@ import init, {
     StoredKey,
     KeyStore,
     AccountType,
-    StorageQueryResultHandler,
-    StorageQueryHandler
 } from "../../nekoton/pkg";
+import {StorageConnector} from '../background/common';
 
 const tempScreens = [
-    <WelcomeScreen />,
-    <PolicySignScreen />,
-    <GenerateSeedScreen />,
-    <CheckSeed />,
-    <CreatePasswordScreen />,
-    <ConfirmPasswordScreen />,
-    <MainPageScreen />,
-    <CreateAccountScreen />,
+    <WelcomeScreen/>,
+    <PolicySignScreen/>,
+    <GenerateSeedScreen/>,
+    <CheckSeed/>,
+    <CreatePasswordScreen/>,
+    <ConfirmPasswordScreen/>,
+    <MainPageScreen/>,
+    <CreateAccountScreen/>,
 ]
 
 const App: React.FC = () => {
@@ -62,7 +61,7 @@ const App: React.FC = () => {
 
 ReactDOM.render(
     <React.StrictMode>
-        <App />
+        <App/>
     </React.StrictMode>,
     document.getElementById('root')
 );
@@ -90,34 +89,3 @@ ReactDOM.render(
 
     console.log(keyStore.storedKeys);
 })();
-
-
-class StorageConnector {
-    get(key: string, handler: StorageQueryResultHandler) {
-        chrome.storage.sync.get(key, (items) => {
-            handler.onResult(items[key]);
-        });
-    }
-
-    set(key: string, value: string, handler: StorageQueryHandler) {
-        chrome.storage.sync.set({[key]: value}, () => {
-            handler.onResult();
-        })
-    }
-
-    setUnchecked(key: string, value: string) {
-        chrome.storage.sync.set({[key]: value}, () => {
-        });
-    }
-
-    remove(key: string, handler: StorageQueryHandler) {
-        chrome.storage.sync.set({[key]: undefined}, () => {
-            handler.onResult();
-        })
-    }
-
-    removeUnchecked(key: string) {
-        chrome.storage.sync.set({[key]: undefined}, () => {
-        });
-    }
-}
