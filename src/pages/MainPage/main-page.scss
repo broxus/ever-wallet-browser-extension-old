@@ -162,6 +162,16 @@
 
                     //background-color: #919191;
                 }
+                &-log-out {
+                    cursor: pointer;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    letter-spacing: 0.25px;
+                    line-height: 20px;
+                    color: #cc0022;
+                    margin-bottom: 0;
+                }
                 //&:not(:first-child) {
                 //    padding: 0 12px;
                 //}
@@ -210,7 +220,7 @@
             padding: 20px 0;
 
             &:last-child {
-                margin-bottom: 60px;
+                margin-bottom: 20px;
             }
             &-number {
                 display: flex;

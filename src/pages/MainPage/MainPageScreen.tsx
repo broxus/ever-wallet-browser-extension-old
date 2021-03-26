@@ -18,15 +18,14 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import {
-    addKey,
-    createKey,
-    generateSeedPhrase,
-    initConnection,
-    restoreKey,
-} from '../../store/app/actions'
+import { addKey, createKey, initConnection, restoreKey } from '../../store/app/actions'
+import KeyStorage from '../../components/KeyStorage/KeyStorage'
 
-const AccountModal = () => {
+const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
+    const navigate = () => {
+        setPanelVisible(true)
+        setActiveContent(2)
+    }
     return (
         <div className="main-page__account-settings">
             <div className="main-page__account-settings-section">
@@ -54,10 +53,16 @@ const AccountModal = () => {
                 </div>
             </div>
             <div className="main-page__account-settings-section">
+                <div
+                    className="main-page__account-settings-section-item"
+                    onClick={() => navigate()}
+                >
+                    Key storage
+                </div>
                 <div className="main-page__account-settings-section-item">Wallet settings</div>
                 <div className="main-page__account-settings-section-item">Information and help</div>
             </div>
-            <div className="main-page__account-settings-section-item">Log out</div>
+            <div className="main-page__account-settings-section-item-log-out">Log out</div>
         </div>
     )
 }
@@ -77,6 +82,11 @@ const AccountDetails = () => {
         setActiveContent(1)
     }
 
+    useEffect(() => {
+        setModalVisible(false)
+        console.log('activeContent', activeContent)
+    }, [activeContent])
+
     return (
         <>
             <div className="main-page__account-details">
@@ -89,7 +99,12 @@ const AccountDetails = () => {
                     >
                         <UserPic />
                     </div>
-                    {modalVisible && <AccountModal />}
+                    {modalVisible && (
+                        <AccountModal
+                            setActiveContent={setActiveContent}
+                            setPanelVisible={setPanelVisible}
+                        />
+                    )}
                 </div>
                 <div className="main-page__account-details-acc">
                     <span className="main-page__account-details-acc-account"> Account 1</span>
@@ -140,6 +155,8 @@ const AccountDetails = () => {
                     <Receive onReturn={setPanelVisible} />
                 ) : activeContent === 1 ? (
                     <Send onReturn={setPanelVisible} />
+                ) : activeContent === 2 ? (
+                    <KeyStorage />
                 ) : (
                     <></>
                 )}
@@ -174,24 +191,26 @@ const Assets = () => {
                 position: 'relative',
             }}
         >
-            <div style={{ overflowY: 'scroll', maxHeight: '260px' }}>
+            <div>
                 <Asset />
                 <Asset />
                 <Asset />
             </div>
-            <div
-                style={{
-                    width: '100%',
-                    height: '70px',
-                    background:
-                        'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',
-                    bottom: 0,
-                    position: 'absolute',
-                }}
-            ></div>
-            <div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>
+            {/*<div*/}
+            {/*    style={{*/}
+            {/*        width: '100%',*/}
+            {/*        height: '70px',*/}
+            {/*        background:*/}
+            {/*            'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',*/}
+            {/*        bottom: 0,*/}
+            {/*        position: 'absolute',*/}
+            {/*    }}*/}
+            {/*></div>*/}
+            {/*<div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>*/}
+            <div style={{ marginBottom: '32px' }}>
                 <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
             </div>
+            {/*</div>*/}
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
                 <AddNewToken onReturn={setPanelVisible} />
             </SlidingPanel>
@@ -416,7 +435,7 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({ locale, initConnection }) =
     // }
 
     return (
-        <div style={{ overflowY: 'hidden', height: '100vh' }}>
+        <div>
             {/*<button className="js-push-button" disabled>*/}
             {/*    Enable Push Messages*/}
             {/*</button>*/}
