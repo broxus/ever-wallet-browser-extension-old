@@ -326,32 +326,20 @@ const UserAssets = () => {
 
 interface IMainPageScreen {
     locale: any
-    seed: any
     initConnection: any
-    generateSeedPhrase: any
 }
-const MainPageScreen: React.FC<IMainPageScreen> = ({
-    locale,
-    seed,
-    initConnection,
-    generateSeedPhrase,
-}) => {
+const MainPageScreen: React.FC<IMainPageScreen> = ({ locale, initConnection }) => {
     console.log(locale, 'locale')
 
-    const func = async () => {
+    const init = async () => {
         await initConnection()
-        await generateSeedPhrase()
     }
     useEffect(() => {
-        func()
+        init()
         // createKey()
         // addKey()
         // restoreKey()
     }, [])
-
-    useEffect(() => {
-        console.log('seed', seed)
-    }, [seed])
 
     // var isPushEnabled = false
     //
@@ -447,7 +435,6 @@ const mapStateToProps = (store: { app: AppState }) => ({
 
 export default connect(mapStateToProps, {
     initConnection,
-    generateSeedPhrase,
     createKey,
     addKey,
     restoreKey,
