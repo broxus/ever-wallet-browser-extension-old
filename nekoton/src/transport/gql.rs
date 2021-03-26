@@ -112,6 +112,22 @@ impl MainWalletSubscription {
         }))
     }
 
+    #[wasm_bindgen(js_name = "preloadTransactions")]
+    pub fn preload_transactions(&mut self, from: &crate::core::TransactionId) -> PromiseVoid {
+        let from = core::models::TransactionId {
+            lt: from.lt,
+            hash: from.hash,
+        };
+
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            let mut inner = inner.lock().trust_me();
+            inner.preload_transactions(&from).await.handle_error()?;
+            Ok(JsValue::undefined())
+        }))
+    }
+
     #[wasm_bindgen(getter, js_name = "pollingMethod")]
     pub fn polling_method(&self) -> PollingMethod {
         convert_polling_method(self.inner.lock().trust_me().polling_method)
@@ -135,12 +151,12 @@ impl LatestBlock {
         self.id.clone()
     }
 
-    #[wasm_bindgen(getter, js_name = "endLt")]
+    #[wasm_bindgen(getter, final, js_name = "endLt")]
     pub fn end_lt(&self) -> String {
         self.end_lt.to_string()
     }
 
-    #[wasm_bindgen(getter, js_name = "genUtime")]
+    #[wasm_bindgen(getter, final, js_name = "genUtime")]
     pub fn gen_utime(&self) -> u32 {
         self.gen_utime
     }
@@ -159,7 +175,8 @@ extern "C" {
     #[wasm_bindgen(method, js_name = "onTransactionsFound")]
     pub fn on_transactions_found(
         this: &MainWalletNotificationHandler,
-        transaction: TransactionsList,
+        transactions: TransactionsList,
+        batch_info: BatchInfo,
     );
 }
 
@@ -173,6 +190,9 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Array<Transaction>")]
     pub type TransactionsList;
+
+    #[wasm_bindgen(typescript_type = "'new' | 'old'")]
+    pub type BatchType;
 }
 
 fn convert_polling_method(s: core::PollingMethod) -> PollingMethod {
@@ -182,6 +202,39 @@ fn convert_polling_method(s: core::PollingMethod) -> PollingMethod {
     })
     .unchecked_into()
 }
+
+#[wasm_bindgen]
+pub struct BatchInfo {
+    /// The smallest lt in a group
+    #[wasm_bindgen(skip)]
+    pub min_lt: u64,
+    /// Maximum lt in a group
+    #[wasm_bindgen(skip)]
+    pub max_lt: u64,
+    /// Whether this batch was from the preload request
+    #[wasm_bindgen(skip)]
+    pub old: bool,
+}
+
+#[wasm_bindgen]
+impl BatchInfo {
+    #[wasm_bindgen(getter, js_name = "minLt")]
+    pub fn min_lt(&self) -> String {
+        self.min_lt.to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "maxLt")]
+    pub fn max_lt(&self) -> String {
+        self.max_lt.to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "batchType")]
+    pub fn batch_type(&self) -> BatchType {
+        JsValue::from_str(if self.old { "old" } else { "new" }).unchecked_into()
+    }
+}
+
+const TRANSACTIONS_PER_FETCH: u8 = 16;
 
 pub struct MainWalletSubscriptionImpl {
     pub handler: Arc<MainWalletNotificationHandler>,
@@ -262,8 +315,6 @@ impl MainWalletSubscriptionImpl {
     }
 
     pub async fn refresh_latest_transactions(&mut self, soft_limit: Option<usize>) -> Result<()> {
-        const TRANSACTIONS_PER_FETCH: u8 = 16;
-
         let mut from = match self.account_state.last_transaction_id {
             Some(id) => id.to_transaction_id(),
             None => return Ok(()),
@@ -294,8 +345,14 @@ impl MainWalletSubscriptionImpl {
                     new_transactions.first().map(|transaction| transaction.id);
             }
 
-            let last_prev_id = match new_transactions.last() {
-                Some(last) => {
+            let last_prev_id = match (new_transactions.first(), new_transactions.last()) {
+                (Some(first), Some(last)) => {
+                    let batch_info = BatchInfo {
+                        min_lt: last.id.lt, // transactions in response are in descending order
+                        max_lt: first.id.lt,
+                        old: false,
+                    };
+
                     let last_prev_id = last.prev_trans_id;
                     self.handler.on_transactions_found(
                         new_transactions
@@ -304,6 +361,7 @@ impl MainWalletSubscriptionImpl {
                             .map(JsValue::from)
                             .collect::<js_sys::Array>()
                             .unchecked_into(),
+                        batch_info,
                     );
                     last_prev_id
                 }
@@ -337,6 +395,38 @@ impl MainWalletSubscriptionImpl {
 
         if let Some(id) = new_latest_known_transaction {
             self.latest_known_transaction = Some(id);
+        }
+
+        Ok(())
+    }
+
+    pub async fn preload_transactions(&mut self, from: &core::models::TransactionId) -> Result<()> {
+        let transactions = self
+            .transport
+            .get_transactions(&self.address, &from, TRANSACTIONS_PER_FETCH)
+            .await?
+            .into_iter()
+            .filter_map(|transaction| {
+                core::models::Transaction::try_from((transaction.hash, transaction.data)).ok()
+            })
+            .map(crate::core::Transaction::from)
+            .collect::<Vec<_>>();
+
+        if let (Some(first), Some(last)) = (transactions.first(), transactions.last()) {
+            let batch_info = BatchInfo {
+                min_lt: last.inner.id.lt, // transactions in response are in descending order
+                max_lt: first.inner.id.lt,
+                old: true,
+            };
+
+            self.handler.on_transactions_found(
+                transactions
+                    .into_iter()
+                    .map(JsValue::from)
+                    .collect::<js_sys::Array>()
+                    .unchecked_into(),
+                batch_info,
+            );
         }
 
         Ok(())
@@ -418,15 +508,25 @@ impl core::AccountSubscription for MainWalletSubscriptionImpl {
 
         self.handler
             .on_state_changed(self.account_state.clone().into());
-        self.handler.on_transactions_found(
-            new_transactions
-                .into_iter()
-                .rev()
-                .map(crate::core::Transaction::from)
-                .map(JsValue::from)
-                .collect::<js_sys::Array>()
-                .unchecked_into(),
-        );
+
+        if let (Some(first), Some(last)) = (new_transactions.first(), new_transactions.last()) {
+            let batch_info = BatchInfo {
+                min_lt: first.id.lt, // transactions in block info are in ascending order
+                max_lt: last.id.lt,
+                old: false,
+            };
+
+            self.handler.on_transactions_found(
+                new_transactions
+                    .into_iter()
+                    .rev()
+                    .map(crate::core::Transaction::from)
+                    .map(JsValue::from)
+                    .collect::<js_sys::Array>()
+                    .unchecked_into(),
+                batch_info,
+            );
+        }
 
         Ok(())
     }
