@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, {useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 
 import WelcomeScreen from '../pages/WelcomeScreen/WelcomeScreen'
 import PolicySignScreen from '../pages/PolicySignScreen/PolicySignScreen'
-import GenerateSeedScreen, { CheckSeed } from '../pages/GenerateSeed/GenerateSeedScreen'
+import GenerateSeedScreen, {CheckSeed} from '../pages/GenerateSeed/GenerateSeedScreen'
 import CreatePasswordScreen, {
     ConfirmPasswordScreen,
 } from '../pages/CreatePassword/CreatePasswordScreen'
@@ -11,18 +11,19 @@ import MainPageScreen from '../pages/MainPage/MainPageScreen'
 import CreateAccountScreen from '../pages/CreateAccount/CreateAccountScreen'
 import store from '../store/index'
 import '../styles/main.scss'
+import init from "../../nekoton/pkg";
 
-import { Provider } from 'react-redux'
+import {Provider} from 'react-redux'
 
 const tempScreens = [
-    <WelcomeScreen />,
-    <PolicySignScreen />,
-    <GenerateSeedScreen />,
-    <CheckSeed />,
-    <CreatePasswordScreen />,
-    <ConfirmPasswordScreen />,
-    <MainPageScreen />,
-    <CreateAccountScreen />,
+    <WelcomeScreen/>,
+    <PolicySignScreen/>,
+    <GenerateSeedScreen/>,
+    <CheckSeed/>,
+    <CreatePasswordScreen/>,
+    <ConfirmPasswordScreen/>,
+    <MainPageScreen/>,
+    <CreateAccountScreen/>,
 ]
 
 const App: React.FC = () => {
@@ -54,11 +55,15 @@ const App: React.FC = () => {
     return tempScreens[step] || <div>failed</div>
 }
 
-ReactDOM.render(
-    <React.StrictMode>
-        <Provider store={store}>
-            <App />
-        </Provider>
-    </React.StrictMode>,
-    document.getElementById('root')
-)
+(async () => {
+    await init('index_bg.wasm');
+
+    ReactDOM.render(
+        <React.StrictMode>
+            <Provider store={store}>
+                <App/>
+            </Provider>
+        </React.StrictMode>,
+        document.getElementById('root')
+    )
+})();

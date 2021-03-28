@@ -27,10 +27,6 @@ export const setLocale = (locale: any) => async (
     })
 }
 
-export const initConnection = () => async () => {
-    await init('index_bg.wasm')
-}
-
 export const generateSeedPhrase = () => async (dispatch: AppDispatch) => {
     const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0))
     console.log('phrase', phrase)

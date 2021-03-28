@@ -18,7 +18,7 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import { addKey, createKey, initConnection, restoreKey } from '../../store/app/actions'
+import { addKey, createKey, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
@@ -343,16 +343,11 @@ const UserAssets = () => {
 
 interface IMainPageScreen {
     locale: any
-    initConnection: any
 }
-const MainPageScreen: React.FC<IMainPageScreen> = ({ locale, initConnection }) => {
+const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
     console.log(locale, 'locale')
 
-    const init = async () => {
-        await initConnection()
-    }
     useEffect(() => {
-        init()
         // createKey()
         // addKey()
         // restoreKey()
@@ -451,7 +446,6 @@ const mapStateToProps = (store: { app: AppState }) => ({
 })
 
 export default connect(mapStateToProps, {
-    initConnection,
     createKey,
     addKey,
     restoreKey,
