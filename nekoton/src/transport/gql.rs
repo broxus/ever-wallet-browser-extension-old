@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -6,14 +5,12 @@ use std::time::Duration;
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use ton_block::{Deserializable, HashmapAugType};
-use ton_types::HashmapType;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
 use libnekoton::core;
-use libnekoton::transport::{self, gql, Transport};
+use libnekoton::transport::{gql, Transport};
 use libnekoton::utils::*;
 
 use crate::utils::{HandleError, PromiseVoid};
@@ -52,7 +49,7 @@ impl MainWalletSubscription {
 
             let latest_block = inner
                 .transport
-                .get_latest_block(&inner.address)
+                .get_latest_block(&inner.subscription.address())
                 .await
                 .handle_error()?;
 
@@ -75,7 +72,7 @@ impl MainWalletSubscription {
                 .transport
                 .wait_for_next_block(
                     &current,
-                    &inner.address,
+                    &inner.subscription.address(),
                     Duration::from_secs(timeout as u64),
                 )
                 .await
@@ -92,7 +89,7 @@ impl MainWalletSubscription {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut inner = inner.lock().trust_me();
-            inner.refresh().await.handle_error()?;
+            inner.subscription.refresh().await.handle_error()?;
             Ok(JsValue::undefined())
         }))
     }
@@ -107,7 +104,11 @@ impl MainWalletSubscription {
             let mut inner = inner.lock().trust_me();
 
             let block = inner.transport.get_block(&block_id).await.handle_error()?;
-            inner.handle_block(&block).await.handle_error()?;
+            inner
+                .subscription
+                .handle_block(&block)
+                .await
+                .handle_error()?;
             Ok(JsValue::undefined())
         }))
     }
@@ -123,15 +124,27 @@ impl MainWalletSubscription {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut inner = inner.lock().trust_me();
-            inner.preload_transactions(&from).await.handle_error()?;
+            inner
+                .subscription
+                .preload_transactions(from)
+                .await
+                .handle_error()?;
             Ok(JsValue::undefined())
         }))
     }
 
     #[wasm_bindgen(getter, js_name = "pollingMethod")]
     pub fn polling_method(&self) -> PollingMethod {
-        convert_polling_method(self.inner.lock().trust_me().polling_method)
+        use libnekoton::core::AccountSubscription;
+
+        convert_polling_method(self.inner.lock().trust_me().subscription.polling_method())
     }
+}
+
+#[wasm_bindgen]
+pub struct MainWalletSubscriptionImpl {
+    transport: Arc<gql::GqlTransport>,
+    subscription: core::MainWalletSubscription,
 }
 
 #[wasm_bindgen]
@@ -164,24 +177,77 @@ impl LatestBlock {
 
 #[wasm_bindgen]
 extern "C" {
-    pub type MainWalletNotificationHandler;
+    #[wasm_bindgen(js_name = "MainWalletSubscriptionHandler")]
+    pub type MainWalletNotificationHandlerImpl;
+
+    #[wasm_bindgen(method, js_name = "onMessageSent")]
+    pub fn on_message_sent(
+        this: &MainWalletNotificationHandlerImpl,
+        pending_transaction: crate::core::PendingTransaction,
+        transaction: crate::core::Transaction,
+    );
+
+    #[wasm_bindgen(method, js_name = "onMessageExpired")]
+    pub fn on_message_expired(
+        this: &MainWalletNotificationHandlerImpl,
+        pending_transaction: crate::core::PendingTransaction,
+    );
 
     #[wasm_bindgen(method, js_name = "onStateChanged")]
     pub fn on_state_changed(
-        this: &MainWalletNotificationHandler,
+        this: &MainWalletNotificationHandlerImpl,
         new_state: crate::core::AccountState,
     );
 
     #[wasm_bindgen(method, js_name = "onTransactionsFound")]
     pub fn on_transactions_found(
-        this: &MainWalletNotificationHandler,
+        this: &MainWalletNotificationHandlerImpl,
         transactions: TransactionsList,
-        batch_info: BatchInfo,
+        batch_info: crate::core::TransactionsBatchInfo,
     );
 }
 
-unsafe impl Send for MainWalletNotificationHandler {}
-unsafe impl Sync for MainWalletNotificationHandler {}
+unsafe impl Send for MainWalletNotificationHandlerImpl {}
+unsafe impl Sync for MainWalletNotificationHandlerImpl {}
+
+pub struct MainWalletNotificationHandler {
+    inner: MainWalletNotificationHandlerImpl,
+}
+
+impl core::AccountSubscriptionHandler for MainWalletNotificationHandler {
+    fn on_message_sent(
+        &self,
+        pending_transaction: core::models::PendingTransaction,
+        transaction: core::models::Transaction,
+    ) {
+        self.inner
+            .on_message_sent(pending_transaction.into(), transaction.into());
+    }
+
+    fn on_message_expired(&self, pending_transaction: core::models::PendingTransaction) {
+        self.inner.on_message_expired(pending_transaction.into());
+    }
+
+    fn on_state_changed(&self, new_state: core::models::AccountState) {
+        self.inner.on_state_changed(new_state.into());
+    }
+
+    fn on_transactions_found(
+        &self,
+        transactions: Vec<core::models::Transaction>,
+        batch_info: core::models::TransactionsBatchInfo,
+    ) {
+        self.inner.on_transactions_found(
+            transactions
+                .into_iter()
+                .map(crate::core::Transaction::from)
+                .map(JsValue::from)
+                .collect::<js_sys::Array>()
+                .unchecked_into(),
+            batch_info.into(),
+        )
+    }
+}
 
 #[wasm_bindgen]
 extern "C" {
@@ -201,341 +267,6 @@ fn convert_polling_method(s: core::PollingMethod) -> PollingMethod {
         core::PollingMethod::Reliable => "reliable",
     })
     .unchecked_into()
-}
-
-#[wasm_bindgen]
-pub struct BatchInfo {
-    /// The smallest lt in a group
-    #[wasm_bindgen(skip)]
-    pub min_lt: u64,
-    /// Maximum lt in a group
-    #[wasm_bindgen(skip)]
-    pub max_lt: u64,
-    /// Whether this batch was from the preload request
-    #[wasm_bindgen(skip)]
-    pub old: bool,
-}
-
-#[wasm_bindgen]
-impl BatchInfo {
-    #[wasm_bindgen(getter, js_name = "minLt")]
-    pub fn min_lt(&self) -> String {
-        self.min_lt.to_string()
-    }
-
-    #[wasm_bindgen(getter, js_name = "maxLt")]
-    pub fn max_lt(&self) -> String {
-        self.max_lt.to_string()
-    }
-
-    #[wasm_bindgen(getter, js_name = "batchType")]
-    pub fn batch_type(&self) -> BatchType {
-        JsValue::from_str(if self.old { "old" } else { "new" }).unchecked_into()
-    }
-}
-
-const TRANSACTIONS_PER_FETCH: u8 = 16;
-
-pub struct MainWalletSubscriptionImpl {
-    pub handler: Arc<MainWalletNotificationHandler>,
-    pub address: ton_block::MsgAddressInt,
-    pub transport: gql::GqlTransport,
-    pub account_state: core::models::AccountState,
-    pub latest_known_transaction: Option<core::models::TransactionId>,
-    pub polling_method: core::PollingMethod,
-}
-
-impl MainWalletSubscriptionImpl {
-    pub async fn subscribe(
-        handler: Arc<MainWalletNotificationHandler>,
-        address: ton_block::MsgAddressInt,
-        transport: gql::GqlTransport,
-    ) -> Result<Self> {
-        const INITIAL_TRANSACTION_COUNT: usize = 16;
-
-        let mut result = Self {
-            handler,
-            address,
-            transport,
-            account_state: core::models::AccountState {
-                balance: 0,
-                gen_timings: core::models::GenTimings::Unknown,
-                last_transaction_id: None,
-                is_deployed: false,
-            },
-            latest_known_transaction: None,
-            polling_method: core::PollingMethod::Manual,
-        };
-
-        if result.refresh_account_state().await? {
-            result
-                .refresh_latest_transactions(Some(INITIAL_TRANSACTION_COUNT))
-                .await?;
-        }
-
-        Ok(result)
-    }
-
-    pub async fn refresh_account_state(&mut self) -> Result<bool> {
-        let new_state = match self.transport.get_account_state(&self.address).await? {
-            transport::models::ContractState::NotExists => core::models::AccountState {
-                balance: 0,
-                gen_timings: core::models::GenTimings::Unknown,
-                last_transaction_id: None,
-                is_deployed: false,
-            },
-            transport::models::ContractState::Exists {
-                account,
-                timings,
-                last_transaction_id,
-            } => core::models::AccountState {
-                balance: account.storage.balance.grams.0 as u64,
-                gen_timings: timings,
-                last_transaction_id: Some(last_transaction_id),
-                is_deployed: matches!(
-                    account.storage.state,
-                    ton_block::AccountState::AccountActive(_)
-                ),
-            },
-        };
-
-        match (
-            &self.account_state.last_transaction_id,
-            &new_state.last_transaction_id,
-        ) {
-            (None, Some(_)) => self.account_state = new_state,
-            (Some(current), Some(new)) if current < new => self.account_state = new_state,
-            _ => return Ok(false),
-        }
-
-        self.handler
-            .on_state_changed(self.account_state.clone().into());
-
-        Ok(true)
-    }
-
-    pub async fn refresh_latest_transactions(&mut self, soft_limit: Option<usize>) -> Result<()> {
-        let mut from = match self.account_state.last_transaction_id {
-            Some(id) => id.to_transaction_id(),
-            None => return Ok(()),
-        };
-
-        let mut new_latest_known_transaction = None;
-        let mut total_fetched = 0;
-
-        loop {
-            let new_transactions = self
-                .transport
-                .get_transactions(&self.address, &from, TRANSACTIONS_PER_FETCH)
-                .await?
-                .into_iter()
-                .filter(|transaction| match &self.latest_known_transaction {
-                    Some(id) => transaction.data.lt > id.lt,
-                    _ => true,
-                })
-                .filter_map(|transaction| {
-                    core::models::Transaction::try_from((transaction.hash, transaction.data)).ok()
-                })
-                .collect::<Vec<_>>();
-
-            total_fetched += new_transactions.len();
-
-            if new_latest_known_transaction.is_none() {
-                new_latest_known_transaction =
-                    new_transactions.first().map(|transaction| transaction.id);
-            }
-
-            let last_prev_id = match (new_transactions.first(), new_transactions.last()) {
-                (Some(first), Some(last)) => {
-                    let batch_info = BatchInfo {
-                        min_lt: last.id.lt, // transactions in response are in descending order
-                        max_lt: first.id.lt,
-                        old: false,
-                    };
-
-                    let last_prev_id = last.prev_trans_id;
-                    self.handler.on_transactions_found(
-                        new_transactions
-                            .into_iter()
-                            .map(crate::core::Transaction::from)
-                            .map(JsValue::from)
-                            .collect::<js_sys::Array>()
-                            .unchecked_into(),
-                        batch_info,
-                    );
-                    last_prev_id
-                }
-                _ => break,
-            };
-
-            if matches!(soft_limit, Some(limit) if total_fetched >= limit) {
-                break;
-            }
-
-            // Check new transactions tail with latest known transaction
-            match &self.latest_known_transaction {
-                // Account was in `Nonexist` state and got some messages
-                None => match last_prev_id {
-                    // If there are some unprocessed transactions left we should request remaining
-                    Some(id) => from = id,
-                    // If there are no unprocessed transactions left we should stop
-                    None => break,
-                },
-                // Account was in `Active` state and got some messages.
-                // The only case, when we should continue receiving, is when last transactions id is not the latest.
-                Some(latest) => match last_prev_id {
-                    // Check previous id of last transaction
-                    Some(previous) if previous.lt > latest.lt => {
-                        from = previous;
-                    }
-                    _ => break,
-                },
-            }
-        }
-
-        if let Some(id) = new_latest_known_transaction {
-            self.latest_known_transaction = Some(id);
-        }
-
-        Ok(())
-    }
-
-    pub async fn preload_transactions(&mut self, from: &core::models::TransactionId) -> Result<()> {
-        let transactions = self
-            .transport
-            .get_transactions(&self.address, &from, TRANSACTIONS_PER_FETCH)
-            .await?
-            .into_iter()
-            .filter_map(|transaction| {
-                core::models::Transaction::try_from((transaction.hash, transaction.data)).ok()
-            })
-            .map(crate::core::Transaction::from)
-            .collect::<Vec<_>>();
-
-        if let (Some(first), Some(last)) = (transactions.first(), transactions.last()) {
-            let batch_info = BatchInfo {
-                min_lt: last.inner.id.lt, // transactions in response are in descending order
-                max_lt: first.inner.id.lt,
-                old: true,
-            };
-
-            self.handler.on_transactions_found(
-                transactions
-                    .into_iter()
-                    .map(JsValue::from)
-                    .collect::<js_sys::Array>()
-                    .unchecked_into(),
-                batch_info,
-            );
-        }
-
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl core::AccountSubscription for MainWalletSubscriptionImpl {
-    async fn send(&mut self, message: &ton_block::Message) -> Result<()> {
-        self.polling_method = core::PollingMethod::Reliable;
-        self.transport.send_message(message).await?;
-        Ok(())
-    }
-
-    async fn refresh(&mut self) -> Result<()> {
-        if self.refresh_account_state().await? {
-            self.refresh_latest_transactions(None).await?;
-        }
-        Ok(())
-    }
-
-    async fn handle_block(&mut self, block: &ton_block::Block) -> Result<()> {
-        let info = block
-            .info
-            .read_struct()
-            .map_err(|_| SubscriptionError::InvalidBlock)?;
-
-        let (account_block, balance) = match block
-            .extra
-            .read_struct()
-            .and_then(|extra| extra.read_account_blocks())
-            .and_then(|account_blocks| {
-                account_blocks.get_with_aug(&self.address.address().get_bytestring(0).into())
-            }) {
-            Ok(Some(extra)) => extra,
-            _ => return Ok(()),
-        };
-
-        let mut new_transactions = Vec::new();
-
-        let mut latest_transaction_id: Option<core::models::TransactionId> = None;
-        let mut is_deployed = self.account_state.is_deployed;
-
-        for item in account_block.transactions().iter() {
-            let (hash, transaction) = match item.and_then(|(_, value)| {
-                let cell = value.into_cell().reference(0)?;
-                let hash = cell.repr_hash();
-
-                ton_block::Transaction::construct_from_cell(cell)
-                    .map(|transaction| (hash, transaction))
-            }) {
-                Ok(transaction) => transaction,
-                Err(_) => continue,
-            };
-
-            is_deployed = transaction.end_status == ton_block::AccountStatus::AccStateActive;
-
-            if matches!(&latest_transaction_id, Some(id) if transaction.lt > id.lt) {
-                latest_transaction_id = Some(core::models::TransactionId {
-                    lt: transaction.lt,
-                    hash,
-                })
-            }
-
-            new_transactions.extend(core::models::Transaction::try_from((hash, transaction)).ok())
-        }
-
-        self.account_state = core::models::AccountState {
-            balance: balance.grams.0 as u64,
-            gen_timings: core::models::GenTimings::Known {
-                gen_lt: info.end_lt(),
-                gen_utime: info.gen_utime().0,
-            },
-            last_transaction_id: latest_transaction_id
-                .map(core::models::LastTransactionId::Exact)
-                .or(self.account_state.last_transaction_id),
-            is_deployed,
-        };
-
-        self.handler
-            .on_state_changed(self.account_state.clone().into());
-
-        if let (Some(first), Some(last)) = (new_transactions.first(), new_transactions.last()) {
-            let batch_info = BatchInfo {
-                min_lt: first.id.lt, // transactions in block info are in ascending order
-                max_lt: last.id.lt,
-                old: false,
-            };
-
-            self.handler.on_transactions_found(
-                new_transactions
-                    .into_iter()
-                    .rev()
-                    .map(crate::core::Transaction::from)
-                    .map(JsValue::from)
-                    .collect::<js_sys::Array>()
-                    .unchecked_into(),
-                batch_info,
-            );
-        }
-
-        Ok(())
-    }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum SubscriptionError {
-    #[error("Invalid block structure")]
-    InvalidBlock,
 }
 
 #[wasm_bindgen]
@@ -560,17 +291,26 @@ impl GqlConnection {
     pub fn subscribe_main_wallet(
         &self,
         addr: &str,
-        handler: MainWalletNotificationHandler,
+        handler: MainWalletNotificationHandlerImpl,
     ) -> Result<PromiseMainWalletSubscription, JsValue> {
         let address = ton_block::MsgAddressInt::from_str(addr).handle_error()?;
-        let transport = self.make_transport();
+        let transport = Arc::new(self.make_transport());
+        let handler = Arc::new(MainWalletNotificationHandler { inner: handler });
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let inner = Arc::new(Mutex::new(
-                MainWalletSubscriptionImpl::subscribe(Arc::new(handler), address, transport)
-                    .await
-                    .handle_error()?,
-            ));
+            let subscription = core::MainWalletSubscription::subscribe(
+                transport.clone() as Arc<dyn Transport>,
+                address,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            let inner = Arc::new(Mutex::new(MainWalletSubscriptionImpl {
+                transport,
+                subscription,
+            }));
+
             Ok(JsValue::from(MainWalletSubscription { inner }))
         })))
     }

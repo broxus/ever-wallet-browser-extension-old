@@ -67,9 +67,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.39"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81cddc5f91628367664cc7c69714ff08deee8a3efc54623011c772544d7b2767"
+checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
 
 [[package]]
 name = "api_derive"
@@ -269,10 +269,12 @@ version = "0.4.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "670ad68c9088c2a963aaa298cb369688cf3f9465ce5e2d4ca10e6e0098a1ce73"
 dependencies = [
+ "js-sys",
  "libc",
  "num-integer",
  "num-traits",
  "time",
+ "wasm-bindgen",
  "winapi",
 ]
 
@@ -874,6 +876,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.9.3",
+ "syn 1.0.64",
  "thiserror",
  "ton_api",
  "ton_block",
@@ -888,13 +891,14 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#5e3dfa41da713c87984330cab574f3b3ad0a930c"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#a8e7dfb6645a62050f73336f66b8d52feb3ba389"
 dependencies = [
  "aes-ctr",
  "anyhow",
  "async-trait",
  "base64 0.13.0",
  "chacha20poly1305",
+ "chrono",
  "curve25519-dalek",
  "ed25519-dalek",
  "failure",
@@ -1641,7 +1645,7 @@ dependencies = [
 [[package]]
 name = "ton_vm"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-vm.git#3a2595cdf5e09d91567c03857649ab646e7a4f0f"
+source = "git+https://github.com/tonlabs/ton-labs-vm.git#8c0c51c9397eaeb1b387867e5872b0274571519a"
 dependencies = [
  "ed25519",
  "ed25519-dalek",

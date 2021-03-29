@@ -1,7 +1,7 @@
 import * as Base64 from 'base64-js';
 import * as nt from "../../nekoton/pkg";
 
-export function mergeTransactions(knownTransactions: Array<nt.Transaction>, newTransactions: Array<nt.Transaction>, info: nt.BatchInfo) {
+export function mergeTransactions(knownTransactions: Array<nt.Transaction>, newTransactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
     if (info.batchType == 'old') {
         knownTransactions.push(...newTransactions);
         return;

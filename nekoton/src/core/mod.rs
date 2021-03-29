@@ -82,6 +82,11 @@ pub struct PendingTransaction {
 
 #[wasm_bindgen]
 impl PendingTransaction {
+    #[wasm_bindgen(getter)]
+    pub fn src(&self) -> Option<String> {
+        self.inner.src.as_ref().map(|src| src.to_string())
+    }
+
     #[wasm_bindgen(getter, js_name = "bodyHash")]
     pub fn body_hash(&self) -> String {
         hex::encode(self.inner.body_hash.as_slice())
@@ -225,6 +230,42 @@ fn convert_account_status(account_status: core::models::AccountStatus) -> Accoun
         core::models::AccountStatus::Nonexist => "nonexist",
     })
     .unchecked_into()
+}
+
+#[wasm_bindgen]
+pub struct TransactionsBatchInfo {
+    #[wasm_bindgen(skip)]
+    pub inner: core::models::TransactionsBatchInfo,
+}
+
+#[wasm_bindgen]
+impl TransactionsBatchInfo {
+    #[wasm_bindgen(getter, js_name = "minLt")]
+    pub fn min_lt(&self) -> String {
+        self.inner.min_lt.to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "maxLt")]
+    pub fn max_lt(&self) -> String {
+        self.inner.max_lt.to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "batchType")]
+    pub fn batch_type(&self) -> TransactionsBatchType {
+        JsValue::from_str(if self.inner.old { "old" } else { "new" }).unchecked_into()
+    }
+}
+
+impl From<core::models::TransactionsBatchInfo> for TransactionsBatchInfo {
+    fn from(inner: core::models::TransactionsBatchInfo) -> Self {
+        Self { inner }
+    }
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "'old' | 'new'")]
+    pub type TransactionsBatchType;
 }
 
 #[wasm_bindgen]

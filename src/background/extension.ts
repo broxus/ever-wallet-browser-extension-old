@@ -57,12 +57,20 @@ function startListener(connection: nt.GqlConnection, address: string) {
         constructor(private address: string) {
         }
 
+        onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+            console.log(pendingTransaction, transaction);
+        }
+
+        onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+            console.log(pendingTransaction);
+        }
+
         onStateChanged(newState: nt.AccountState) {
             accountStateCache.store(address, newState);
             console.log(newState);
         }
 
-        onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.BatchInfo) {
+        onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
             console.log("New transactions batch: ", info);
             mergeTransactions(knownTransactions, transactions, info);
 
