@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
@@ -16,10 +16,18 @@ import Send from '../../components/Send/Send'
 import './main-page.scss'
 import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
+import { connect } from 'react-redux'
+import { AppState } from '../../store/app/types'
+import { addKey, createKey, restoreKey } from '../../store/app/actions'
+import KeyStorage from '../../components/KeyStorage/KeyStorage'
 
-const AccountModal = () => {
+const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
+    const navigate = () => {
+        setPanelVisible(true)
+        setActiveContent(2)
+    }
     return (
-        <div className="main-page__account-settings">
+        <div className="main-page__account-settings noselect">
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -35,6 +43,7 @@ const AccountModal = () => {
                     </div>
                 </div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -44,11 +53,19 @@ const AccountModal = () => {
                     <div style={{ padding: '0 12px' }}>Create account</div>
                 </div>
             </div>
+            <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section">
+                <div
+                    className="main-page__account-settings-section-item"
+                    onClick={() => navigate()}
+                >
+                    Key storage
+                </div>
                 <div className="main-page__account-settings-section-item">Wallet settings</div>
                 <div className="main-page__account-settings-section-item">Information and help</div>
             </div>
-            <div className="main-page__account-settings-section-item">Log out</div>
+            <div className="main-page__account-settings-separator" />
+            <div className="main-page__account-settings-section-item-log-out">Log out</div>
         </div>
     )
 }
@@ -80,7 +97,12 @@ const AccountDetails = () => {
                     >
                         <UserPic />
                     </div>
-                    {modalVisible && <AccountModal />}
+                    {modalVisible && (
+                        <AccountModal
+                            setActiveContent={setActiveContent}
+                            setPanelVisible={setPanelVisible}
+                        />
+                    )}
                 </div>
                 <div className="main-page__account-details-acc">
                     <span className="main-page__account-details-acc-account"> Account 1</span>
@@ -131,6 +153,8 @@ const AccountDetails = () => {
                     <Receive onReturn={setPanelVisible} />
                 ) : activeContent === 1 ? (
                     <Send onReturn={setPanelVisible} />
+                ) : activeContent === 2 ? (
+                    <KeyStorage />
                 ) : (
                     <></>
                 )}
@@ -165,24 +189,26 @@ const Assets = () => {
                 position: 'relative',
             }}
         >
-            <div style={{ overflowY: 'scroll', maxHeight: '260px' }}>
+            <div>
                 <Asset />
                 <Asset />
                 <Asset />
             </div>
-            <div
-                style={{
-                    width: '100%',
-                    height: '70px',
-                    background:
-                        'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',
-                    bottom: 0,
-                    position: 'absolute',
-                }}
-            ></div>
-            <div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>
+            {/*<div*/}
+            {/*    style={{*/}
+            {/*        width: '100%',*/}
+            {/*        height: '70px',*/}
+            {/*        background:*/}
+            {/*            'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',*/}
+            {/*        bottom: 0,*/}
+            {/*        position: 'absolute',*/}
+            {/*    }}*/}
+            {/*></div>*/}
+            {/*<div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>*/}
+            <div style={{ marginBottom: '32px' }}>
                 <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
             </div>
+            {/*</div>*/}
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
                 <AddNewToken onReturn={setPanelVisible} />
             </SlidingPanel>
@@ -280,7 +306,7 @@ const Transactions = () => (
                 bottom: 0,
                 position: 'absolute',
             }}
-        ></div>
+        />
     </div>
 )
 
@@ -315,11 +341,112 @@ const UserAssets = () => {
     )
 }
 
-const MainPageScreen = () => (
-    <div style={{ overflowY: 'hidden', height: '100vh' }}>
-        <AccountDetails />
-        <UserAssets />
-    </div>
-)
+interface IMainPageScreen {
+    locale: any
+}
+const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
+    console.log(locale, 'locale')
 
-export default MainPageScreen
+    useEffect(() => {
+        // createKey()
+        // addKey()
+        // restoreKey()
+    }, [])
+
+    // var isPushEnabled = false
+    //
+    // window.addEventListener('load', function () {
+    //     var pushButton = document.querySelector('.js-push-button')
+    //     // @ts-ignore
+    //     pushButton.addEventListener('click', function () {
+    //         if (isPushEnabled) {
+    //             // unsubscribe()
+    //         } else {
+    //             // subscribe()
+    //         }
+    //     })
+    //
+    //     // Check that service workers are supported, if so, progressively
+    //     // enhance and add push messaging support, otherwise continue without it.
+    //     if ('serviceWorker' in navigator) {
+    //         navigator.serviceWorker.register('/service-worker.js').then(initialiseState)
+    //     } else {
+    //         console.warn("Service workers aren't supported in this browser.")
+    //     }
+    // })
+    // // Once the service worker is registered set the initial state
+    // function initialiseState() {
+    //     // Are Notifications supported in the service worker?
+    //     if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
+    //         console.warn("Notifications aren't supported.")
+    //         return
+    //     }
+    //
+    //     // Check the current Notification permission.
+    //     // If its denied, it's a permanent block until the
+    //     // user changes the permission
+    //     if (Notification.permission === 'denied') {
+    //         console.warn('The user has blocked notifications.')
+    //         return
+    //     }
+    //
+    //     // Check if push messaging is supported
+    //     if (!('PushManager' in window)) {
+    //         console.warn("Push messaging isn't supported.")
+    //         return
+    //     }
+    //
+    //     // We need the service worker registration to check for a subscription
+    //     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
+    //         // Do we already have a push message subscription?
+    //         serviceWorkerRegistration.pushManager
+    //             .getSubscription()
+    //             .then(function (subscription) {
+    //                 // Enable any UI which subscribes / unsubscribes from
+    //                 // push messages.
+    //                 var pushButton = document.querySelector('.js-push-button')
+    //                 pushButton.disabled = false
+    //
+    //                 if (!subscription) {
+    //                     // We aren't subscribed to push, so set UI
+    //                     // to allow the user to enable push
+    //                     return
+    //                 }
+    //
+    //                 // Keep your server in sync with the latest subscriptionId
+    //                 // sendSubscriptionToServer(subscription)
+    //
+    //                 // Set your UI to show they have subscribed for
+    //                 // push messages
+    //                 pushButton.textContent = 'Disable Push Messages'
+    //                 isPushEnabled = true
+    //             })
+    //             .catch(function (err) {
+    //                 console.warn('Error during getSubscription()', err)
+    //             })
+    //     })
+    // }
+
+    return (
+        <div>
+            {/*<button className="js-push-button" disabled>*/}
+            {/*    Enable Push Messages*/}
+            {/*</button>*/}
+            <AccountDetails />
+            <UserAssets />
+        </div>
+    )
+}
+
+const mapStateToProps = (store: { app: AppState }) => ({
+    locale: store.app.locale,
+    seed: store.app.seed,
+    key: store.app.key,
+    publicKey: store.app.publicKey,
+})
+
+export default connect(mapStateToProps, {
+    createKey,
+    addKey,
+    restoreKey,
+})(MainPageScreen)

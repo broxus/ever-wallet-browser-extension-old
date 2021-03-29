@@ -136,10 +136,15 @@
         top: 60px;
         z-index: 10;
 
-        &-section {
-            border-bottom: 1px solid #ebedee;
+        &-separator {
+            margin-top: 16px;
             margin-bottom: 16px;
+            border-bottom: 1px solid #ebedee;
+            width: 100%;
+            display: block;
+        }
 
+        &-section {
             &-account {
                 font-style: normal;
                 font-weight: bold;
@@ -148,6 +153,7 @@
                 letter-spacing: 0.25px;
                 color: #000000;
             }
+
             &-item {
                 color: #000000;
                 cursor: pointer;
@@ -157,14 +163,31 @@
                 line-height: 20px;
                 letter-spacing: 0.25px;
                 margin-bottom: 16px;
+
                 &:hover {
                     color: $activeButtonBg;
 
                     //background-color: #919191;
                 }
+
+                &-log-out {
+                    cursor: pointer;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    letter-spacing: 0.25px;
+                    line-height: 20px;
+                    color: #cc0022;
+                    margin-bottom: 0;
+                }
                 //&:not(:first-child) {
                 //    padding: 0 12px;
                 //}
+
+                &:last-child {
+                    margin-bottom: 0;
+                }
+
                 &-value {
                     margin-bottom: 16px;
                     font-style: normal;
@@ -210,7 +233,7 @@
             padding: 20px 0;
 
             &:last-child {
-                margin-bottom: 60px;
+                margin-bottom: 20px;
             }
             &-number {
                 display: flex;

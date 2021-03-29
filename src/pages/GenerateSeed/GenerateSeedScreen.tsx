@@ -1,8 +1,12 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '../../components/button'
 import CopyButton from '../../components/CopyButton/CopyButton'
 import Input from '../../components/Input/Input'
 import './generate-seed.scss'
+import { AppState } from '../../store/app/types'
+import { connect } from 'react-redux'
+import { generateSeedPhrase } from '../../store/app/actions'
+import Loader from '../../components/Loader/Loader'
 
 const words = [
     'Secure',
@@ -49,30 +53,53 @@ export const CheckSeed = () => (
     </div>
 )
 
-const GenerateSeedScreen = () => {
-    const seed = generateMockSeed()
+const GenerateSeedScreen: React.FC<any> = ({ seed, generateSeedPhrase }) => {
+    const [seed24, setSeed24] = useState([''])
+
+    const generateSeed = async () => {
+        await generateSeedPhrase()
+    }
+
+    useEffect(() => {
+        generateSeed()
+    }, [])
+
+    // const mockSeed = generateMockSeed()
+
     return (
         <>
             <div className="generate-seed-page__bg"></div>
             <div className="generate-seed-page__content">
                 <h2>Save the seed phrase</h2>
-                <ol>
-                    {seed.map((item: string, i: number) => (
-                        <li key={i} className="generate-seed-page__content-word">
-                            {item.toLowerCase()}
-                        </li>
-                    ))}
-                </ol>
-                <div className="generate-seed-page__content-buttons">
-                    <Button text={'I wrote it down on paper'} />
-                    <CopyButton text={seed.join(',')}>
-                        <Button text={'Copy all words'} white />
-                    </CopyButton>
-                    <Button text={'Back'} white noBorder />
-                </div>
+                {seed.length > 0 ? (
+                    <>
+                        <ol>
+                            {seed?.map((item: string, i: number) => (
+                                <li key={i} className="generate-seed-page__content-word">
+                                    {item.toLowerCase()}
+                                </li>
+                            ))}
+                        </ol>
+                        <div className="generate-seed-page__content-buttons">
+                            <Button text={'I wrote it down on paper'} />
+                            <CopyButton text={seed?.join(',')}>
+                                <Button text={'Copy all words'} white />
+                            </CopyButton>
+                            <Button text={'Back'} white noBorder />
+                        </div>
+                    </>
+                ) : (
+                    <Loader />
+                )}
             </div>
         </>
     )
 }
 
-export default GenerateSeedScreen
+const mapStateToProps = (store: { app: AppState }) => ({
+    seed: store.app.seed,
+})
+
+export default connect(mapStateToProps, {
+    generateSeedPhrase,
+})(GenerateSeedScreen)
