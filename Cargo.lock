@@ -72,27 +72,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
 
 [[package]]
-name = "api_derive"
-version = "1.11.2"
-source = "git+https://github.com/tonlabs/TON-SDK.git#9ec6632899e813635583ec8bf96a4188eaa93da1"
-dependencies = [
- "api_info",
- "quote 1.0.9",
- "serde_json",
- "syn 1.0.64",
-]
-
-[[package]]
-name = "api_info"
-version = "1.11.2"
-source = "git+https://github.com/tonlabs/TON-SDK.git#9ec6632899e813635583ec8bf96a4188eaa93da1"
-dependencies = [
- "serde",
- "serde_derive",
- "serde_json",
-]
-
-[[package]]
 name = "arrayref"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -341,15 +320,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crc-any"
-version = "2.3.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3784befdf9469f4d51c69ef0b774f6a99de6bcc655285f746f16e0dd63d9007"
-dependencies = [
- "debug-helper",
-]
-
-[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -398,12 +368,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "debug-helper"
-version = "0.3.10"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a8a5bb894f24f42c247f19b25928a88e31867c0f84552c05df41a9dd527435e"
-
-[[package]]
 name = "difference"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -432,6 +396,12 @@ name = "doc-comment"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
+
+[[package]]
+name = "dyn-clone"
+version = "1.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
 
 [[package]]
 name = "ed25519"
@@ -783,9 +753,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.91"
+version = "0.2.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8916b1f6ca17130ec6568feccee27c156ad12037880833a3b842a823236502e7"
+checksum = "56d855069fafbb9b344c0f962150cd2c1187975cb1c22c1522c240d8c4986714"
 
 [[package]]
 name = "libsecp256k1"
@@ -891,7 +861,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#a8e7dfb6645a62050f73336f66b8d52feb3ba389"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#316cbbc1e9b2f68ee115e19c5be989bb798600b1"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -900,13 +870,16 @@ dependencies = [
  "chacha20poly1305",
  "chrono",
  "curve25519-dalek",
+ "dyn-clone",
  "ed25519-dalek",
  "failure",
  "futures",
  "getrandom",
  "graphql_client",
  "hex 0.4.3",
- "js-sys",
+ "num-bigint",
+ "num-traits",
+ "once_cell",
  "parking_lot",
  "pin-project-lite",
  "rand",
@@ -922,12 +895,9 @@ dependencies = [
  "ton_abi",
  "ton_api",
  "ton_block",
- "ton_sdk",
+ "ton_executor",
  "ton_types",
  "ton_vm",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wee_alloc",
  "x25519-dalek",
 ]
 
@@ -1570,6 +1540,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "ton_executor"
+version = "1.0.0"
+source = "git+https://github.com/tonlabs/ton-labs-executor.git#be7482d0b7a20ad45d89f84844ae3f69b819c7a9"
+dependencies = [
+ "base64 0.10.1",
+ "clear_on_drop",
+ "failure",
+ "lazy_static",
+ "log",
+ "num",
+ "num-traits",
+ "ton_block",
+ "ton_labs_assembler",
+ "ton_types",
+ "ton_vm",
+]
+
+[[package]]
 name = "ton_labs_assembler"
 version = "1.0.0"
 source = "git+https://github.com/tonlabs/ton-labs-assembler.git#99df31bbe10f38888776f4ba73050ae6afaca84d"
@@ -1582,33 +1570,6 @@ dependencies = [
  "serde",
  "serde_json",
  "ton_types",
-]
-
-[[package]]
-name = "ton_sdk"
-version = "1.11.2"
-source = "git+https://github.com/tonlabs/TON-SDK.git#9ec6632899e813635583ec8bf96a4188eaa93da1"
-dependencies = [
- "api_derive",
- "api_info",
- "base64 0.10.1",
- "chrono",
- "crc-any",
- "ed25519-dalek",
- "failure",
- "hex 0.3.2",
- "lazy_static",
- "log",
- "num-bigint",
- "num-traits",
- "serde",
- "serde_derive",
- "serde_json",
- "sha2 0.8.2",
- "ton_abi",
- "ton_block",
- "ton_types",
- "ton_vm",
 ]
 
 [[package]]

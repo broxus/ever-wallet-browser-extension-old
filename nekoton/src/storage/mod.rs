@@ -20,12 +20,12 @@ const STORAGE_KEYSTORE: &str = "keystore";
 const STORAGE_MAIN_WALLET_STATE_CACHE: &str = "mwsc";
 
 #[wasm_bindgen]
-pub struct MainWalletStateCache {
+pub struct TonWalletStateCache {
     #[wasm_bindgen(skip)]
     pub storage: Arc<StorageImpl>,
 }
 
-impl MainWalletStateCache {
+impl TonWalletStateCache {
     fn make_key(address: &str) -> Result<String, JsValue> {
         let address = ton_block::MsgAddressInt::from_str(address).handle_error()?;
         let key = format!("{}{}", STORAGE_MAIN_WALLET_STATE_CACHE, address);
@@ -34,9 +34,9 @@ impl MainWalletStateCache {
 }
 
 #[wasm_bindgen]
-impl MainWalletStateCache {
+impl TonWalletStateCache {
     #[wasm_bindgen(constructor)]
-    pub fn new(storage: &Storage) -> MainWalletStateCache {
+    pub fn new(storage: &Storage) -> TonWalletStateCache {
         Self {
             storage: storage.inner.clone(),
         }

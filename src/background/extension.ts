@@ -51,9 +51,9 @@ function startListener(connection: nt.GqlConnection, address: string) {
     const knownTransactions = new Array<nt.Transaction>();
 
     const storage = new nt.Storage(new StorageConnector());
-    const accountStateCache = new nt.MainWalletStateCache(storage);
+    const accountStateCache = new nt.TonWalletStateCache(storage);
 
-    class MainWalletHandler {
+    class TonWalletHandler {
         constructor(private address: string) {
         }
 
@@ -79,11 +79,11 @@ function startListener(connection: nt.GqlConnection, address: string) {
     }
 
     (async () => {
-        const handler = new MainWalletHandler(address);
+        const handler = new TonWalletHandler(address);
 
         console.log("Restored state: ", await accountStateCache.load(address));
 
-        const subscription = await connection.subscribeToMainWallet(address, handler);
+        const subscription = await connection.subscribeToTonWallet(address, handler);
 
         if (knownTransactions.length !== 0) {
             const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1];
