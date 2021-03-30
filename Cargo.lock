@@ -835,6 +835,7 @@ dependencies = [
  "async-trait",
  "base64 0.13.0",
  "console_error_panic_hook",
+ "dyn-clone",
  "ed25519-dalek",
  "futures",
  "getrandom",
@@ -861,7 +862,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#316cbbc1e9b2f68ee115e19c5be989bb798600b1"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#b8337c12f6420dd2898078f55dad9a71e04f483a"
 dependencies = [
  "aes-ctr",
  "anyhow",

@@ -36,8 +36,10 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
 
         const core = nt.TonInterface.overGraphQL(connection);
 
-        //startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
-        startListener(connection, "0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb");
+        startListener(connection, {
+            publicKey: "1161f67ca580dd2b9935967b04109e0e988601fc0894e145f7cd56534e817257",
+            contractType: 'WalletV3'
+        });
     }
 
     // Helper examples
@@ -45,13 +47,16 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
     console.log(addr.to_string());
 })();
 
-function startListener(connection: nt.GqlConnection, address: string) {
+function startListener(connection: nt.GqlConnection, {publicKey, contractType}: { publicKey: string, contractType: nt.ContractType }) {
     const POLLING_INTERVAL = 10000; // 10s
 
     const knownTransactions = new Array<nt.Transaction>();
 
     const storage = new nt.Storage(new StorageConnector());
     const accountStateCache = new nt.TonWalletStateCache(storage);
+
+    const wallet = new nt.TonWallet(publicKey, contractType);
+    const address = wallet.address;
 
     class TonWalletHandler {
         constructor(private address: string) {
@@ -94,7 +99,7 @@ function startListener(connection: nt.GqlConnection, address: string) {
 
         let currentBlockId: string | null = null;
         let lastPollingMethod = subscription.pollingMethod;
-        while (true) {
+        for (let i = 0; i < 10; ++i) {
             switch (lastPollingMethod) {
                 case 'manual': {
                     await new Promise<void>((resolve,) => {
@@ -119,6 +124,30 @@ function startListener(connection: nt.GqlConnection, address: string) {
             }
 
             lastPollingMethod = subscription.pollingMethod;
+
+            if (i == 3) {
+                console.log("Preparing message");
+                const contractState = await subscription.getContractState();
+                if (contractState == null) {
+                    console.log("Contract state is empty");
+                    continue;
+                }
+
+                const dest = "-1:3333333333333333333333333333333333333333333333333333333333333333";
+                const amount = "1000000000"; // 1 TON
+                const bounce = false;
+                const expireAt = new Date().getTime() + 60; // expire in 60 seconds
+
+                const unsignedMessage = wallet.prepareTransfer(contractState, dest, amount, bounce, expireAt);
+                if (unsignedMessage == null) {
+                    console.log("Contract must be deployed first");
+                    continue;
+                }
+
+                const signedMessage = unsignedMessage.signFake();
+                const totalFees = await subscription.estimateFees(signedMessage);
+                console.log("Fees:", totalFees);
+            }
         }
     })();
 }

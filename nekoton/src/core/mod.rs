@@ -1,8 +1,50 @@
+pub mod wallet;
+
+use std::convert::TryFrom;
+use std::str::FromStr;
+
 use ton_types::UInt256;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
+use libnekoton::contracts;
 use libnekoton::core;
+
+use crate::utils::*;
+
+#[wasm_bindgen(typescript_custom_section)]
+const CONTRACT_TYPE: &'static str = r#"
+export type ContractType = 
+    | 'SafeMultisigWallet'
+    | 'SafeMultisigWallet24h'
+    | 'SetcodeMultisigWallet'
+    | 'SurfWallet'
+    | 'WalletV3';
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "ContractType")]
+    pub type ContractType;
+}
+
+impl TryFrom<ContractType> for contracts::wallet::ContractType {
+    type Error = JsValue;
+
+    fn try_from(value: ContractType) -> Result<Self, Self::Error> {
+        let contract_type = JsValue::from(value)
+            .as_string()
+            .ok_or_else(|| JsValue::from_str("String with contract type name expected"))?;
+
+        contracts::wallet::ContractType::from_str(&contract_type).handle_error()
+    }
+}
+
+impl From<contracts::wallet::ContractType> for ContractType {
+    fn from(c: contracts::wallet::ContractType) -> Self {
+        JsValue::from(c.to_string()).unchecked_into()
+    }
+}
 
 #[wasm_bindgen]
 pub struct AccountState {
@@ -335,4 +377,21 @@ impl From<core::models::TransactionId> for TransactionId {
             hash: t.hash,
         }
     }
+}
+
+pub fn convert_polling_method(s: core::models::PollingMethod) -> PollingMethod {
+    JsValue::from(match s {
+        core::models::PollingMethod::Manual => "manual",
+        core::models::PollingMethod::Reliable => "reliable",
+    })
+    .unchecked_into()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "'manual' | 'reliable'")]
+    pub type PollingMethod;
+
+    #[wasm_bindgen(typescript_type = "'new' | 'old'")]
+    pub type BatchType;
 }
