@@ -7,16 +7,20 @@ import { addKey, createKey, generateSeedPhrase, restoreKey } from '../../store/a
 import { GeneratedMnemonic } from '../../../nekoton/pkg'
 
 interface IKeyStorage {
-    createKey: (arg0: GeneratedMnemonic, arg1: string) => Promise<void>
-    key: any
-    publicKey: any
+    createKey?: (arg0: GeneratedMnemonic, arg1: string) => Promise<void>
+    key?: any
+    seed?: any
+    accountType?: any
+    publicKey?: any
     phrase: GeneratedMnemonic
-    generateSeedPhrase: any
+    generateSeedPhrase?: any
 }
 
-const KeyStorage: React.FC<IKeyStorage> = ({ createKey, key, publicKey, phrase }) => {
+const KeyStorage: React.FC<IKeyStorage> = ({ createKey, phrase, seed, accountType }) => {
     const createKeyLocal = async () => {
-        await createKey(phrase, 'testpwd')
+        if (createKey) {
+            await createKey(phrase, 'testpwd')
+        }
     }
 
     let counter = 0
@@ -28,6 +32,12 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createKey, key, publicKey, phrase }
             counter = 1
         }
     }, [phrase])
+
+    useEffect(() => {
+        console.log('tt')
+        console.log('accountType.data', accountType.data)
+        console.log('seed', seed)
+    }, [seed, accountType])
 
     return (
         <>
@@ -41,6 +51,8 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createKey, key, publicKey, phrase }
 const mapStateToProps = (store: { app: AppState }) => ({
     key: store.app.key,
     phrase: store.app.phrase,
+    seed: store.app.seed,
+    accountType: store.app.accountType,
     // publicKey: store.app.publicKey,
 })
 

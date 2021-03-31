@@ -80,7 +80,7 @@ pub struct GeneratedMnemonic {
 #[wasm_bindgen]
 impl GeneratedMnemonic {
     #[wasm_bindgen(js_name = "createKey")]
-    pub fn create_key(self, name: &str, password: &str) -> Result<StoredKey, JsValue> {
+    pub fn create_key(&self, name: &str, password: &str) -> Result<StoredKey, JsValue> {
         Ok(StoredKey {
             inner: storage::StoredKey::new(name, password.into(), self.account_type, &self.phrase)
                 .handle_error()?,

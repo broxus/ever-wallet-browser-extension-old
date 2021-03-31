@@ -1,6 +1,7 @@
 import { produce } from 'immer'
 import { ActionTypes } from './actions'
 import { Action, AppState } from './types'
+import * as nt from '../../../nekoton/pkg'
 
 // @ts-ignore
 export const initialState = Object.freeze<AppState>({
@@ -10,6 +11,13 @@ export const initialState = Object.freeze<AppState>({
     key: '',
     publicKey: '',
 })
+
+class Wrapper {
+    constructor(public data: nt.AccountType) {
+        Wrapper.stored = data
+    }
+    static stored: nt.AccountType
+}
 
 // @ts-ignore
 export default (state: AppState = initialState, action: Action): AppState =>
@@ -21,7 +29,7 @@ export default (state: AppState = initialState, action: Action): AppState =>
             }
             case ActionTypes.GENERATE_SEED_SUCCESS: {
                 draft.seed = action.payload.phrase.split(' ')
-                draft.phrase = action.payload
+                draft.accountType = new Wrapper(nt.AccountType.makeLabs(0))
                 return
             }
             case ActionTypes.GENERATE_KEY_SUCCESS: {

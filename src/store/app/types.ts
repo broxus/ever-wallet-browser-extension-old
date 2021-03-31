@@ -10,6 +10,7 @@ export type Locale = 'en_US' | 'ru_RU'
 export type AppState = {
     locale: Locale
     seed: string
+    accountType: any
     phrase: GeneratedMnemonic
     publicKey: string
     key: string
