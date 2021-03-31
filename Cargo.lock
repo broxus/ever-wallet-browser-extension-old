@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#b8337c12f6420dd2898078f55dad9a71e04f483a"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#5a5f4f41d4b396ccf3038064baee63b7042b5c6f"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1543,7 +1543,7 @@ dependencies = [
 [[package]]
 name = "ton_executor"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-executor.git#be7482d0b7a20ad45d89f84844ae3f69b819c7a9"
+source = "git+https://github.com/broxus/ton-labs-executor.git#8aaf9c32f06e4017aec115a6fdb06d02487ae8e6"
 dependencies = [
  "base64 0.10.1",
  "clear_on_drop",
@@ -1607,7 +1607,7 @@ dependencies = [
 [[package]]
 name = "ton_vm"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-vm.git#8c0c51c9397eaeb1b387867e5872b0274571519a"
+source = "git+https://github.com/broxus/ton-labs-vm.git#82094e2a5a5fcdd69a791b2c91b26c0c9001390b"
 dependencies = [
  "ed25519",
  "ed25519-dalek",
