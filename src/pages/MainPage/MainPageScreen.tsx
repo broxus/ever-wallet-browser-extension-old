@@ -13,18 +13,19 @@ import { Button } from '../../components/button'
 import { createRipple, removeRipple } from '../../common/ripple'
 import SlidingPanel from '../../components/SlidingPanel/SlidingPanel'
 import Send from '../../components/Send/Send'
-import './main-page.scss'
 import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
 import { addKey, createKey, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
+import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
+import './main-page.scss'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
-    const navigate = () => {
+    const navigate = (step: number) => {
         setPanelVisible(true)
-        setActiveContent(2)
+        setActiveContent(step)
     }
     return (
         <div className="main-page__account-settings noselect">
@@ -48,6 +49,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
                 <div
                     className="main-page__account-settings-section-item"
                     style={{ display: 'flex' }}
+                    onClick={() => navigate(3)}
                 >
                     <Plus />
                     <div style={{ padding: '0 12px' }}>Create account</div>
@@ -57,7 +59,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
-                    onClick={() => navigate()}
+                    onClick={() => navigate(2)}
                 >
                     Key storage
                 </div>
@@ -155,6 +157,8 @@ const AccountDetails = () => {
                     <Send onReturn={setPanelVisible} />
                 ) : activeContent === 2 ? (
                     <KeyStorage />
+                ) : activeContent === 3 ? (
+                    <CreateAccountScreen />
                 ) : (
                     <></>
                 )}

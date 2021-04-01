@@ -18,18 +18,20 @@ interface IOptionParams {
     isFocused?: boolean
     isSelected?: boolean
 }
-const selectStyles = {
-    control: (styles: any) => ({
-        ...styles,
-        backgroundColor: '#ffffff',
-        color: '#000000',
-        border: '1px solid #DDE1E2',
-        borderRadius: 0,
-        fontSize: '16px',
-        lineHeight: '20px',
-        letterSpacing: '0.25px',
-        minHeight: '48px',
-    }),
+export const selectStyles = {
+    control: (styles: any, { isFocused }: any) => {
+        return {
+            ...styles,
+            backgroundColor: '#ffffff',
+            color: '#000000',
+            border: !isFocused ? '1px solid #DDE1E2' : '1px solid #0088CC ',
+            borderRadius: 0,
+            fontSize: '16px',
+            lineHeight: '20px',
+            letterSpacing: '0.25px',
+            minHeight: '48px',
+        }
+    },
     option: (styles: any, { isDisabled }: IOptionParams) => {
         const color = '#ffffff'
         return {
