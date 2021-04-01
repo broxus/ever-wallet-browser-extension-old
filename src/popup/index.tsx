@@ -54,7 +54,6 @@ const App: React.FC = () => {
 
     return tempScreens[step] || <div>failed</div>
 }
-
 (async () => {
     await init('index_bg.wasm');
 

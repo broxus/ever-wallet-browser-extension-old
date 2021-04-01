@@ -1,14 +1,5 @@
-import init, {
-    AdnlConnection, StoredKey, GqlConnection, GqlQuery, AccountType, TcpReceiver,
-    TonInterface, unpackAddress, StorageQueryResultHandler, StorageQueryHandler, Storage, KeyStore, AccountState, Transaction, BatchInfo,
-} from "../../nekoton/pkg";
-import {
-    RequestConnect,
-    ResponseClosed,
-    Response,
-    ResponseObject,
-    ResponseType, RequestSend, Config, unpackData
-} from "./common";
+import init, * as nt from "../../nekoton/pkg";
+import {GqlSocket, mergeTransactions, StorageConnector} from "./common";
 
 const LITECLIENT_EXTENSION_ID = 'fakpmbkocblneahenciednepadenbdpb';
 
@@ -43,95 +34,61 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
             timeout: 60000, // 60s
         });
 
-        const core = TonInterface.overGraphQL(connection);
+        const core = nt.TonInterface.overGraphQL(connection);
 
-        //startListener(connection, "-1:3333333333333333333333333333333333333333333333333333333333333333");
-        startListener(connection, "0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb");
+        startListener(connection, {
+            publicKey: "1161f67ca580dd2b9935967b04109e0e988601fc0894e145f7cd56534e817257",
+            contractType: 'WalletV3'
+        });
     }
 
-    // Crypto examples
-    await createNewKey();
-
     // Helper examples
-    let addr = unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
+    let addr = nt.unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
     console.log(addr.to_string());
 })();
 
-async function createNewKey() {
-    const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0));
-    console.log(phrase.phrase, phrase.accountType);
-    //
-    const key = phrase.createKey("Main key", "test"); // `phrase` moved here
-    console.log(key);
-    // Can't use `phrase` here
-
-    const publicKey = key.publicKey;
-
-    const storage = new Storage(new StorageConnector());
-    const keyStore = await KeyStore.load(storage);
-
-    await keyStore.addKey(key);
-    console.log("Added key to keystore");
-
-    const restoredKey = await keyStore.getKey(publicKey);
-    console.log("Restored key:", restoredKey);
-
-    console.log(keyStore.storedKeys);
-}
-
-// just for the example
-function mergeTransactions(knownTransactions: Array<Transaction>, newTransactions: Array<Transaction>, info: BatchInfo) {
-    if (info.batchType == 'old') {
-        knownTransactions.push(...newTransactions);
-        return;
-    }
-
-    if (knownTransactions.length === 0) {
-        knownTransactions.push(...newTransactions);
-        return;
-    }
-
-    // known lts: [N, N-1, N-2, N-3, (!) N-10,...]
-    // new lts: [N-4, N-5]
-    // batch info: { minLt: N-5, maxLt: N-4, batchType: 'new' }
-
-    // 1. Skip indices until known transaction lt is greater than the biggest in the batch
-    let i = 0;
-    while (i < knownTransactions.length && knownTransactions[i].id.lt.localeCompare(info.maxLt) >= 0) {
-        ++i;
-    }
-
-    // 2. Insert new transactions
-    knownTransactions.splice(i, 0, ...newTransactions);
-}
-
-function startListener(connection: GqlConnection, address: string) {
+function startListener(connection: nt.GqlConnection, {publicKey, contractType}: { publicKey: string, contractType: nt.ContractType }) {
     const POLLING_INTERVAL = 10000; // 10s
 
-    const knownTransactions = new Array<Transaction>();
+    const knownTransactions = new Array<nt.Transaction>();
 
-    class MainWalletHandler {
-        onStateChanged(newState: AccountState) {
+    const storage = new nt.Storage(new StorageConnector());
+    const accountStateCache = new nt.TonWalletStateCache(storage);
+
+    const wallet = new nt.TonWallet(publicKey, contractType);
+    const address = wallet.address;
+
+    class TonWalletHandler {
+        constructor(private address: string) {
+        }
+
+        onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+            console.log(pendingTransaction, transaction);
+        }
+
+        onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+            console.log(pendingTransaction);
+        }
+
+        onStateChanged(newState: nt.AccountState) {
+            accountStateCache.store(address, newState);
             console.log(newState);
         }
 
-        onTransactionsFound(transactions: Array<Transaction>, info: BatchInfo) {
-            console.log("New transactions batch: ", info);
+        onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
+            console.log("New transactions batch: ", inxfo);
             mergeTransactions(knownTransactions, transactions, info);
 
-            const sorted = knownTransactions.reduce(({sorted, previous}, current) => {
-                const result = previous ? sorted && previous.id.lt.localeCompare(current.id.lt) > 0 : true;
-                return {sorted: result, previous: current};
-            }, <{ sorted: boolean, previous: Transaction | null }>{sorted: true, previous: null}).sorted;
-
-            console.log("All sorted:", sorted);
+            console.log("All sorted:", checkTransactionsSorted(knownTransactions));
         }
     }
 
     (async () => {
-        const handler = new MainWalletHandler();
+        const handler = new TonWalletHandler(address);
 
-        const subscription = await connection.subscribeToMainWallet(address, handler);
+        console.log("Restored state: ", await accountStateCache.load(address));
+
+        const subscription = await connection.subscribeToTonWallet(address, handler);
 
         if (knownTransactions.length !== 0) {
             const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1];
@@ -142,7 +99,7 @@ function startListener(connection: GqlConnection, address: string) {
 
         let currentBlockId: string | null = null;
         let lastPollingMethod = subscription.pollingMethod;
-        while (true) {
+        for (let i = 0; i < 10; ++i) {
             switch (lastPollingMethod) {
                 case 'manual': {
                     await new Promise<void>((resolve,) => {
@@ -167,163 +124,37 @@ function startListener(connection: GqlConnection, address: string) {
             }
 
             lastPollingMethod = subscription.pollingMethod;
+
+            if (i == 3) {
+                console.log("Preparing message");
+                const contractState = await subscription.getContractState();
+                if (contractState == null) {
+                    console.log("Contract state is empty");
+                    continue;
+                }
+
+                const dest = "-1:3333333333333333333333333333333333333333333333333333333333333333";
+                const amount = "1000000000"; // 1 TON
+                const bounce = false;
+                const expireAt = new Date().getTime() + 60; // expire in 60 seconds
+
+                const unsignedMessage = wallet.prepareTransfer(contractState, dest, amount, bounce, expireAt);
+                if (unsignedMessage == null) {
+                    console.log("Contract must be deployed first");
+                    continue;
+                }
+
+                const signedMessage = unsignedMessage.signFake();
+                const totalFees = await subscription.estimateFees(signedMessage);
+                console.log("Fees:", totalFees);
+            }
         }
     })();
 }
 
-class StorageConnector {
-    get(key: string, handler: StorageQueryResultHandler) {
-        chrome.storage.sync.get(key, (items) => {
-            handler.onResult(items[key]);
-        });
-    }
-
-    set(key: string, value: string, handler: StorageQueryHandler) {
-        chrome.storage.sync.set({[key]: value}, () => {
-            handler.onResult();
-        })
-    }
-
-    setUnchecked(key: string, value: string) {
-        chrome.storage.sync.set({[key]: value}, () => {
-        });
-    }
-
-    remove(key: string, handler: StorageQueryHandler) {
-        chrome.storage.sync.set({[key]: undefined}, () => {
-            handler.onResult();
-        })
-    }
-
-    removeUnchecked(key: string) {
-        chrome.storage.sync.set({[key]: undefined}, () => {
-        });
-    }
-}
-
-class GqlSocket {
-    public async connect(params: GqlSocketParams): Promise<GqlConnection> {
-        class GqlSender {
-            private readonly params: GqlSocketParams;
-
-            constructor(params: GqlSocketParams) {
-                this.params = params;
-            }
-
-            send(data: string, handler: GqlQuery) {
-                (async () => {
-                    try {
-                        const response = await fetch(this.params.endpoint, {
-                            method: 'post',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: data,
-                        }).then((response) => response.text());
-                        handler.onReceive(response);
-                    } catch (e) {
-                        console.log(e);
-                        handler.onError(e);
-                    }
-                })();
-            }
-        }
-
-        return new GqlConnection(new GqlSender(params));
-    }
-}
-
-type GqlSocketParams = {
-    // Path to graphql qpi endpoint, e.g. `https://main.ton.dev`
-    endpoint: string,
-    // Request timeout in milliseconds
-    timeout: number
-}
-
-class AdnlSocket {
-    private readonly port: chrome.runtime.Port;
-    private receiver: TcpReceiver | null = null;
-
-    private onConnected: (() => void) | null = null;
-    private onClosed: (() => void) | null = null;
-    private onReceived: ((data: ArrayBuffer) => void) | null = null;
-
-    constructor(id: string) {
-        this.port = chrome.runtime.connect(id);
-
-        const dispatch: { [K in ResponseType]: (message: ResponseObject<K>) => void; } = {
-            'connected': (_message) => {
-                this.onConnected?.();
-            },
-            'received': (message) => {
-                this.onReceived?.(unpackData(message.data));
-            },
-            'closed': (_message) => {
-                this.onClosed?.();
-            }
-        };
-
-        this.port.onMessage.addListener((message: Response,) => {
-            const handler = dispatch[message.type];
-            if (handler != null) {
-                handler(message as any);
-            }
-        });
-    }
-
-    public async connect(config: Config): Promise<AdnlConnection> {
-        class TcpSender {
-            constructor(private f: (data: Uint8Array) => void) {
-            }
-
-            send(data: Uint8Array) {
-                this.f(data);
-            }
-        }
-
-        const connect = new Promise<void>((resolve,) => {
-            this.onConnected = () => resolve();
-        });
-        this.port.postMessage(new RequestConnect(config));
-        await connect;
-        this.onConnected = null;
-
-        const connection = new AdnlConnection(new TcpSender((data) => {
-            this.port.postMessage(new RequestSend(data));
-        }));
-
-        let initData!: ArrayBuffer;
-        let resolveInitialization!: (data: ArrayBuffer) => void;
-        const initialized = new Promise<void>((resolve,) => {
-            resolveInitialization = (data) => {
-                initData = data;
-                resolve();
-            }
-        });
-
-        this.onReceived = resolveInitialization;
-        this.receiver = connection.init(config.key);
-        await initialized;
-
-        this.receiver.onReceive(new Uint8Array(initData));
-
-        this.onReceived = this.onReceive;
-
-        return connection;
-    }
-
-    public async close() {
-        const close = new Promise<void>((resolve,) => {
-            this.onClosed = () => resolve();
-        });
-        this.port.postMessage(new ResponseClosed());
-        await close;
-        this.onClosed = null;
-    }
-
-    private onReceive = (data: ArrayBuffer) => {
-        if (this.receiver != null) {
-            this.receiver.onReceive(new Uint8Array(data));
-        }
-    }
+function checkTransactionsSorted(transactions: Array<nt.Transaction>) {
+    return transactions.reduce(({sorted, previous}, current) => {
+        const result = previous ? sorted && previous.id.lt.localeCompare(current.id.lt) > 0 : true;
+        return {sorted: result, previous: current};
+    }, <{ sorted: boolean, previous: nt.Transaction | null }>{sorted: true, previous: null}).sorted;
 }

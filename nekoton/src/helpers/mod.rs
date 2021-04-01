@@ -1,62 +1,25 @@
-use ed25519_dalek::PublicKey;
+use std::convert::TryFrom;
+use std::str::FromStr;
+
 use wasm_bindgen::prelude::*;
 
+use libnekoton::contracts::wallet;
 use libnekoton::helpers::address;
 
 use crate::utils::HandleError;
 
 #[wasm_bindgen]
-pub enum ContractType {
-    SafeMultisigWallet = "SafeMultisigWallet",
-    SafeMultisigWallet24h = "SafeMultisigWallet24h",
-    SetcodeMultisigWallet = "SetcodeMultisigWallet",
-    SurfWallet = "SurfWallet",
-    WalletV3 = "WalletV3",
-}
-
-impl From<ContractType> for address::ContractType {
-    fn from(w: ContractType) -> Self {
-        match w {
-            ContractType::SafeMultisigWallet => address::ContractType::SafeMultisigWallet,
-            ContractType::SafeMultisigWallet24h => address::ContractType::SafeMultisigWallet24h,
-            ContractType::SetcodeMultisigWallet => address::ContractType::SetcodeMultisigWallet,
-            ContractType::SurfWallet => address::ContractType::SurfWallet,
-            ContractType::WalletV3 => address::ContractType::WalletV3,
-            _ => unreachable!(),
-        }
-    }
-}
-
-#[wasm_bindgen]
-pub struct Pubkey {
-    #[wasm_bindgen(skip)]
-    pub inner: ed25519_dalek::PublicKey,
-}
-
-#[wasm_bindgen]
-impl Pubkey {
-    /// hex str
-    #[wasm_bindgen(constructor)]
-    pub fn new(key: &str) -> Result<Pubkey, JsValue> {
-        Ok(Pubkey {
-            inner: PublicKey::from_bytes(&*hex::decode(&key).handle_error()?).handle_error()?,
-        })
-    }
-}
-
-#[wasm_bindgen]
 pub struct AddressWrapper {
     #[wasm_bindgen(skip)]
-    pub inner: ton_block::MsgAddrStd,
+    pub inner: ton_block::MsgAddressInt,
 }
 
 #[wasm_bindgen]
 impl AddressWrapper {
     #[wasm_bindgen(constructor)]
     pub fn new(addr: &str) -> Result<AddressWrapper, JsValue> {
-        Ok(AddressWrapper {
-            inner: address::msg_addr_from_str(addr).handle_error()?,
-        })
+        let inner = ton_block::MsgAddressInt::from_str(addr).handle_error()?;
+        Ok(AddressWrapper { inner })
     }
 
     #[wasm_bindgen]
@@ -65,24 +28,33 @@ impl AddressWrapper {
     }
 }
 
-#[wasm_bindgen(js_name = "computeAddressFromPubkey")]
-pub fn compute_address_from_key(
-    key: Pubkey,
-    wallet_type: ContractType,
+#[wasm_bindgen(js_name = "computeTonWalletAddress")]
+pub fn compute_ton_wallet_address(
+    public_key: &str,
+    wallet_type: crate::core::ContractType,
     workchain: i8,
-) -> AddressWrapper {
-    let ad = address::compute_address(&key.inner, wallet_type.into(), workchain);
-    AddressWrapper { inner: ad }
+) -> Result<AddressWrapper, JsValue> {
+    let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(public_key).handle_error()?)
+        .handle_error()?;
+
+    let wallet_type = wallet::ContractType::try_from(wallet_type)?;
+    Ok(AddressWrapper {
+        inner: wallet::compute_address(&public_key, wallet_type, workchain),
+    })
 }
 
 #[wasm_bindgen(js_name = "packAddress")]
-pub fn pack_address(addr: AddressWrapper, is_url_safe: bool, bouncable: bool) -> String {
-    address::pack_std_smc_addr(is_url_safe, &addr.inner, bouncable)
+pub fn pack_address(
+    addr: AddressWrapper,
+    is_url_safe: bool,
+    bounceable: bool,
+) -> Result<String, JsValue> {
+    address::pack_std_smc_addr(is_url_safe, &addr.inner, bounceable).handle_error()
 }
 
 #[wasm_bindgen(js_name = "unpackAddress")]
 pub fn unpack_address(packed_address: &str, is_url_safe: bool) -> Result<AddressWrapper, JsValue> {
     address::unpack_std_smc_addr(packed_address, is_url_safe)
-        .map(|x| AddressWrapper { inner: x })
+        .map(|inner| AddressWrapper { inner })
         .handle_error()
 }
