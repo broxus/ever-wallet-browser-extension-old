@@ -1,6 +1,5 @@
-use std::collections::hash_map::{self, HashMap};
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -10,13 +9,12 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
 use libnekoton::core;
-use libnekoton::storage::{self, KvStorage};
+use libnekoton::storage;
 use libnekoton::utils::*;
 
 use crate::crypto::{AccountType, StoredKey};
 use crate::utils::*;
 
-const STORAGE_KEYSTORE: &str = "keystore";
 const STORAGE_MAIN_WALLET_STATE_CACHE: &str = "mwsc";
 
 #[wasm_bindgen]
@@ -44,6 +42,8 @@ impl TonWalletStateCache {
 
     #[wasm_bindgen]
     pub fn load(&self, address: &str) -> Result<PromiseOptionAccountState, JsValue> {
+        use storage::Storage;
+
         let key = Self::make_key(address)?;
         let storage = self.storage.clone();
 
@@ -61,6 +61,8 @@ impl TonWalletStateCache {
 
     #[wasm_bindgen]
     pub fn store(&self, address: &str, state: &crate::core::AccountState) -> Result<(), JsValue> {
+        use storage::Storage;
+
         let key = Self::make_key(address)?;
         let data = serde_json::to_string(&state.inner).trust_me();
         self.storage.set_unchecked(&key, &data);
@@ -77,122 +79,101 @@ extern "C" {
 #[wasm_bindgen]
 pub struct KeyStore {
     #[wasm_bindgen(skip)]
-    pub storage: Arc<StorageImpl>,
-    #[wasm_bindgen(skip)]
-    pub keys: Arc<Mutex<HashMap<String, storage::StoredKey>>>,
+    pub inner: Arc<storage::keystore::KeyStore>,
 }
 
 #[wasm_bindgen]
 impl KeyStore {
     #[wasm_bindgen]
     pub fn load(storage: &Storage) -> PromiseKeyStore {
-        struct KeysMap(HashMap<String, storage::StoredKey>);
-
-        impl<'de> serde::Deserialize<'de> for KeysMap {
-            fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-            where
-                D: serde::Deserializer<'de>,
-            {
-                use serde::de::Error;
-
-                let keys = HashMap::<String, String>::deserialize(deserializer)?;
-                let keys = keys
-                    .into_iter()
-                    .map(|(public_key, stored)| {
-                        let stored =
-                            storage::StoredKey::from_reader(&mut std::io::Cursor::new(stored))
-                                .map_err(|_| D::Error::custom("Failed to deserialize StoredKey"))?;
-                        Ok((public_key, stored))
-                    })
-                    .collect::<Result<_, _>>()?;
-                Ok(KeysMap(keys))
-            }
-        }
-
         let storage = storage.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let data = match storage.get(STORAGE_KEYSTORE).await.handle_error()? {
-                Some(data) => serde_json::from_str::<KeysMap>(&data).handle_error()?.0,
-                None => HashMap::new(),
-            };
+            let inner = Arc::new(
+                storage::keystore::KeyStore::load(storage as Arc<dyn storage::Storage>)
+                    .await
+                    .handle_error()?,
+            );
 
-            Ok(JsValue::from(Self {
-                storage,
-                keys: Arc::new(Mutex::new(data)),
-            }))
+            Ok(JsValue::from(Self { inner }))
         }))
     }
 
     #[wasm_bindgen(js_name = "addKey")]
     pub fn add_key(&self, key: StoredKey) -> Result<PromiseString, JsValue> {
-        struct KeysMap<'a>(&'a HashMap<String, storage::StoredKey>);
+        let inner = self.inner.clone();
 
-        impl<'a> serde::Serialize for KeysMap<'a> {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: serde::Serializer,
-            {
-                use serde::ser::SerializeMap;
-                let mut map = serializer.serialize_map(Some(self.0.len()))?;
-                for (key, value) in self.0.iter() {
-                    map.serialize_entry(key, &value.as_json())?;
-                }
-                map.end()
-            }
-        }
-
-        let public_key = hex::encode(key.inner.public_key());
-
-        let new_data = {
-            let mut keys = self.keys.lock().trust_me();
-            match keys.entry(public_key.clone()) {
-                hash_map::Entry::Occupied(_) => {
-                    return Err(KeyStoreError::KeyNotFound).handle_error()
-                }
-                hash_map::Entry::Vacant(entry) => {
-                    entry.insert(key.inner);
-                }
-            }
-            serde_json::to_string(&KeysMap(&*keys)).trust_me()
-        };
-
-        let inner = self.storage.clone();
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            inner
-                .set(STORAGE_KEYSTORE, &new_data)
-                .await
-                .handle_error()?;
+            let public_key = inner.add_key(key.inner).await.handle_error()?;
             Ok(JsValue::from(public_key))
         })))
     }
 
+    #[wasm_bindgen(js_name = "removeKey")]
+    pub fn remove_key(&self, public_key: String) -> PromiseVoid {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            inner.remove_key(&public_key).await.handle_error()?;
+            Ok(JsValue::undefined())
+        }))
+    }
+
+    #[wasm_bindgen(js_name = "clear")]
+    pub fn clear(&self) -> PromiseVoid {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            inner.clear().await.handle_error()?;
+            Ok(JsValue::undefined())
+        }))
+    }
+
     #[wasm_bindgen(js_name = "getKey")]
-    pub fn get_key(&self, public_key: &str) -> Option<StoredKey> {
-        let keys = self.keys.lock().trust_me();
-        keys.get(public_key)
-            .map(|key| StoredKey { inner: key.clone() })
+    pub fn get_key(&self, public_key: String) -> PromiseOptionStoredKey {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            let keys = inner.stored_keys().await;
+            Ok(JsValue::from(
+                keys.get(&public_key)
+                    .cloned()
+                    .map(|inner| StoredKey { inner }),
+            ))
+        }))
     }
 
     #[wasm_bindgen(getter, js_name = "storedKeys")]
-    pub fn stored_keys(&self) -> KeyStoreEntries {
-        let keys = self.keys.lock().trust_me();
-        keys.iter()
-            .map(|(public_key, stored)| {
-                JsValue::from(KeyStoreEntry {
-                    public_key: public_key.clone(),
-                    account_type: stored.account_type(),
+    pub fn stored_keys(&self) -> PromiseKeyStoreEntries {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            let keys = inner.stored_keys().await;
+
+            Ok(keys
+                .iter()
+                .map(|(public_key, stored)| {
+                    JsValue::from(KeyStoreEntry {
+                        public_key: public_key.clone(),
+                        account_type: stored.account_type(),
+                    })
                 })
-            })
-            .collect::<js_sys::Array>()
-            .unchecked_into()
+                .collect::<js_sys::Array>()
+                .unchecked_into())
+        }))
     }
 }
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "Array<KeyStoreEntry>")]
-    pub type KeyStoreEntries;
+    #[wasm_bindgen(typescript_type = "Promise<Array<KeyStoreEntry>>")]
+    pub type PromiseKeyStoreEntries;
+
+    #[wasm_bindgen(typescript_type = "Promise<StoredKey>")]
+    pub type PromiseStoredKey;
+
+    #[wasm_bindgen(typescript_type = "Promise<StoredKey | undefined>")]
+    pub type PromiseOptionStoredKey;
 
     #[wasm_bindgen(typescript_type = "Promise<KeyStore>")]
     pub type PromiseKeyStore;
@@ -319,7 +300,7 @@ impl StorageImpl {
 }
 
 #[async_trait]
-impl KvStorage for StorageImpl {
+impl storage::Storage for StorageImpl {
     async fn get(&self, key: &str) -> Result<Option<String>> {
         let (tx, rx) = oneshot::channel();
         self.connector.get(

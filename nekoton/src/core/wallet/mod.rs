@@ -9,6 +9,7 @@ use wasm_bindgen_futures::*;
 
 use libnekoton::contracts::wallet;
 use libnekoton::core;
+use libnekoton::storage::keystore;
 use libnekoton::transport::gql;
 use libnekoton::utils::*;
 
@@ -86,7 +87,7 @@ impl TonWallet {
 #[wasm_bindgen]
 pub struct UnsignedMessage {
     #[wasm_bindgen(skip)]
-    pub inner: Box<dyn wallet::UnsignedMessage>,
+    pub inner: Box<dyn keystore::UnsignedMessage>,
 }
 
 #[wasm_bindgen]
@@ -106,7 +107,7 @@ impl UnsignedMessage {
 #[wasm_bindgen]
 pub struct SignedMessage {
     #[wasm_bindgen(skip)]
-    pub inner: wallet::SignedMessage,
+    pub inner: keystore::SignedMessage,
 }
 
 #[wasm_bindgen]
@@ -179,7 +180,7 @@ impl TonWalletSubscription {
         use libnekoton::core::AccountSubscription;
 
         let inner = self.inner.clone();
-        let wallet::SignedMessage { message, expire_at } = message.inner.clone();
+        let keystore::SignedMessage { message, expire_at } = message.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut inner = inner.lock().trust_me();
