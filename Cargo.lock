@@ -702,6 +702,7 @@ dependencies = [
 [[package]]
 name = "nekoton-crypto"
 version = "0.1.0"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#5a5f4f41d4b396ccf3038064baee63b7042b5c6f"
 dependencies = [
  "anyhow",
  "base64 0.13.0",
@@ -1354,7 +1355,7 @@ dependencies = [
 [[package]]
 name = "ton_labs_assembler"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#8dea5c6ad9afd1f47d4f597330d06e604780ea49"
+source = "git+https://github.com/broxus/ton-labs-executor.git#8aaf9c32f06e4017aec115a6fdb06d02487ae8e6"
 dependencies = [
  "failure",
  "hex 0.4.3",
@@ -1425,7 +1426,7 @@ dependencies = [
 [[package]]
 name = "ton_vm"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-vm.git#c817670f6e17d73dc8f05a5fd4af00302e8e12bb"
+source = "git+https://github.com/broxus/ton-labs-vm.git#82094e2a5a5fcdd69a791b2c91b26c0c9001390b"
 dependencies = [
  "ed25519",
  "ed25519-dalek",
