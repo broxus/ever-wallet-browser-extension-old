@@ -76,7 +76,7 @@ function startListener(connection: nt.GqlConnection, {publicKey, contractType}: 
         }
 
         onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
-            console.log("New transactions batch: ", inxfo);
+            console.log("New transactions batch: ", info);
             mergeTransactions(knownTransactions, transactions, info);
 
             console.log("All sorted:", checkTransactionsSorted(knownTransactions));
