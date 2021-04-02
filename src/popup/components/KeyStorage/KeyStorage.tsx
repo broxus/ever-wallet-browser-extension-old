@@ -27,7 +27,7 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey, setActiveCon
     const savePrivateKey = () => {
         const element = document.createElement('a')
         // @ts-ignore
-        const file = new Blob(['your private key here'], {
+        const file = new Blob([publicKey], {
             type: 'text/plain;charset=utf-8',
         })
         element.href = URL.createObjectURL(file)

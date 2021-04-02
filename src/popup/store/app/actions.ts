@@ -7,7 +7,7 @@ import init, {
     StoredKey,
 } from '../../../../nekoton/pkg'
 import { AppDispatch } from '../index'
-import { StorageConnector } from './storageConnector'
+import {StorageConnector} from "../../../background/common";
 
 export const ActionTypes = {
     SETLOCALE: 'app/set-locale',

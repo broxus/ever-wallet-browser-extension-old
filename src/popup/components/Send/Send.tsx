@@ -104,12 +104,18 @@ const EnterAddress: React.FC<any> = ({ setStep, onReturn, setFormData }) => {
                     register={register({
                         required: true,
                     })}
+                    type="text"
                     name="address"
                 />
                 {errors.address && (
                     <div className="send-screen__form-error">This field is required</div>
                 )}
-                <Input className="send-screen__form-comment" name="comment" label={'Comment...'} />
+                <Input
+                    className="send-screen__form-comment"
+                    name="comment"
+                    label={'Comment...'}
+                    type="text"
+                />
             </form>
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>

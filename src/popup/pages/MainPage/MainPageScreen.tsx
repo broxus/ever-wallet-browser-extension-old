@@ -165,7 +165,7 @@ const AccountDetails: React.FC<any> = ({ parentStep, account }) => {
                             {`${account.slice(0, 6)}...${account.slice(-4)}`}
                         </span>
                     </CopyToClipboard>
-                    <ReactTooltip type="dark" effect="solid" place="bottom"/>
+                    <ReactTooltip type="dark" effect="solid" place="bottom" />
                 </div>
                 <div className="main-page__account-details-balance">
                     <span className="main-page__account-details-balance-number"> $1,200.00</span>
@@ -446,7 +446,7 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
     }, [phrase])
 
     useEffect(() => {
-        if (publicKey) {
+        if (publicKey && !account) {
             getCurrentAccount(publicKey)
         }
         // createKey()

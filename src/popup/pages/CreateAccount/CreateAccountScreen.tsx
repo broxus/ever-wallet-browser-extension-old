@@ -19,6 +19,41 @@ interface IAccountSelectKey {
     setStep: Dispatch<SetStateAction<number>>
 }
 
+const groupStyles = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+}
+
+const groupBadgeStyles = {
+    backgroundColor: '#EBECF0',
+    borderRadius: '2em',
+    color: '#172B4D',
+    display: 'inline-block',
+    fontSize: 12,
+    fontWeight: 'normal',
+    lineHeight: '1',
+    minWidth: 1,
+    padding: '0.16666666666667em 0.5em',
+    textAlign: 'center',
+}
+
+const formatGroupLabel = (data) => (
+    <div style={groupStyles}>
+        <span>{data.label}</span>
+        <span style={groupBadgeStyles}>{data.options.length}</span>
+    </div>
+)
+
+export const groupedOptions = [
+    {
+        label: 'Key1',
+        options: [{ value: '1', label: 'Key 1' }],
+    },
+    { value: '60', label: 'Generate new key' },
+    { value: '60', label: 'Import key' },
+]
+
 const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
     return (
         <div className="create-account-page__content">
@@ -29,6 +64,7 @@ const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
                     options={options}
                     placeholder={'Select the key...'}
                     styles={selectStyles}
+                    formatGroupLabel={formatGroupLabel}
 
                     // onChange={(token) => {
                     //     setToken(token)

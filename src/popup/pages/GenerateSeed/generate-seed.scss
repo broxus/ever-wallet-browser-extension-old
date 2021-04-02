@@ -18,6 +18,10 @@
         height: 100%;
         width: 100%;
 
+        &-title {
+            margin-bottom: 28px;
+        }
+
         & ol {
             list-style: none;
             counter-reset: my-counter;

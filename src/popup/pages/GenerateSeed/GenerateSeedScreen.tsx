@@ -68,27 +68,29 @@ const GenerateSeedScreen: React.FC<any> = ({ seed, generateSeedPhrase }) => {
         <>
             <div className="generate-seed-page__bg"></div>
             <div className="generate-seed-page__content">
-                <h2>Save the seed phrase</h2>
-                {seed.length > 0 ? (
-                    <>
-                        <ol>
-                            {seed?.map((item: string, i: number) => (
-                                <li key={i} className="generate-seed-page__content-word">
-                                    {item.toLowerCase()}
-                                </li>
-                            ))}
-                        </ol>
-                        <div className="generate-seed-page__content-buttons">
-                            <Button text={'I wrote it down on paper'} />
-                            <CopyButton text={seed?.join(',')}>
-                                <Button text={'Copy all words'} white />
-                            </CopyButton>
-                            <Button text={'Back'} white noBorder />
-                        </div>
-                    </>
-                ) : (
-                    <Loader />
-                )}
+                <div>
+                    <h2 className="generate-seed-page__content-title">Save the seed phrase</h2>
+                    {seed.length > 0 ? (
+                        <>
+                            <ol>
+                                {seed?.map((item: string, i: number) => (
+                                    <li key={i} className="generate-seed-page__content-word">
+                                        {item.toLowerCase()}
+                                    </li>
+                                ))}
+                            </ol>
+                        </>
+                    ) : (
+                        <Loader />
+                    )}
+                </div>
+                <div className="generate-seed-page__content-buttons">
+                    <Button text={'I wrote it down on paper'} />
+                    <CopyButton text={seed?.join(',')}>
+                        <Button text={'Copy all words'} white />
+                    </CopyButton>
+                    <Button text={'Back'} white noBorder />
+                </div>
             </div>
         </>
     )
