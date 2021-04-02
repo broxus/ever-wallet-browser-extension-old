@@ -80,6 +80,8 @@ const EnterAddress: React.FC<any> = ({ account, setStep, onReturn, setFormData, 
         console.log(data)
         setFormData(data)
 
+        console.log('Address:', account);
+
         calculateFee(account, {
             amount: data.amount,
             recipient: data.address,
@@ -149,7 +151,7 @@ interface IAddNewToken {
     onReturn: Dispatch<SetStateAction<boolean>>
 }
 
-const Send: React.FC<IAddNewToken> = ({ onReturn }) => {
+const Send: React.FC<IAddNewToken> = ({ onReturn, account, calculateFee, currentFee }) => {
     const [step, setStep] = useState(0)
     // TODO replace with globale state
     const [formData, setFormData] = useState({})
@@ -159,8 +161,10 @@ const Send: React.FC<IAddNewToken> = ({ onReturn }) => {
             setStep={setStep}
             onReturn={() => onReturn(false)}
             setFormData={setFormData}
+            account={account}
+            calculateFee={calculateFee}
         />,
-        <EnterPassword setStep={setStep} onReturn={() => setStep(0)} data={formData} />,
+        <EnterPassword setStep={setStep} currentFee={currentFee} onReturn={() => setStep(0)} data={formData} />,
         <TransactionSending />,
     ]
     // const [token, setToken] = useState<{ value: string; label: string } | null>([])
