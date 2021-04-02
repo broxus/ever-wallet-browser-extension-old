@@ -10,6 +10,7 @@ export const initialState = Object.freeze<AppState>({
     phrase: {},
     createdKey: '',
     publicKey: '',
+    account: ''
 })
 
 class Wrapper {
@@ -38,6 +39,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 return
             }
             case ActionTypes.ADD_KEY_SUCCESS: {
+                return
+            }
+            case ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS {
+                draft.account = action.payload
                 return
             }
             case ActionTypes.RESTORE_KEY_SUCCESS: {

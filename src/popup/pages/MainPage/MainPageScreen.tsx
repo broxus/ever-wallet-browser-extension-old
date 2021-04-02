@@ -17,13 +17,14 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import { addKey, createKey, restoreKey } from '../../store/app/actions'
+import { addKey, createKey, getCurrentAccount, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import './main-page.scss'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import AssetFull from '../../components/AssetFull/AssetFull'
+import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
@@ -399,17 +400,46 @@ const UserAssets = ({ setActiveContent }) => {
 
 interface IMainPageScreen {
     locale: any
+    getCurrentAccount: (arg0: string) => void
+    publicKey: string
+    phrase: GeneratedMnemonic
+    createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
 }
-const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
+
+const MainPageScreen: React.FC<IMainPageScreen> = ({
+    locale,
+    getCurrentAccount,
+    publicKey,
+    phrase,
+    createKey,
+}) => {
     const [activeContent, setActiveContent] = useState(0)
 
     console.log(locale, 'locale')
 
+    const createKeyLocal = async () => {
+        if (createKey) {
+            await createKey(phrase, 'testpwd')
+        }
+    }
+
+    let counter = 0
     useEffect(() => {
+        console.log(phrase, 'phrase')
+        if (phrase && counter == 0) {
+            createKeyLocal()
+            counter = 1
+        }
+    }, [phrase])
+
+    useEffect(() => {
+        if (publicKey) {
+            getCurrentAccount(publicKey)
+        }
         // createKey()
         // addKey()
         // restoreKey()
-    }, [])
+    }, [publicKey])
 
     // var isPushEnabled = false
     //
@@ -499,12 +529,13 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
 const mapStateToProps = (store: { app: AppState }) => ({
     locale: store.app.locale,
     seed: store.app.seed,
-    key: store.app.key,
     publicKey: store.app.publicKey,
+    phrase: store.app.phrase,
 })
 
 export default connect(mapStateToProps, {
     createKey,
     addKey,
     restoreKey,
+    getCurrentAccount,
 })(MainPageScreen)

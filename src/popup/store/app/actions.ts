@@ -1,4 +1,5 @@
 import init, {
+    AccountsStorage,
     AccountType,
     GeneratedMnemonic,
     KeyStore,
@@ -16,6 +17,8 @@ export const ActionTypes = {
     ADD_KEY_FAILURE: 'ADD_KEY_FAILURE',
     RESTORE_KEY_SUCCESS: 'RESTORE_KEY_SUCCESS',
     RESTORE_KEY_FAILURE: 'RESTORE_KEY_FAILURE',
+    SET_CURRENT_ACCOUNT_SUCCESS: 'SET_CURRENT_ACCOUNT_SUCCESS',
+    SET_CURRENT_ACCOUNT_FAILURE: 'SET_CURRENT_ACCOUNT_FAILURE',
 }
 
 export const setLocale = (locale: any) => async (
@@ -47,7 +50,7 @@ export const createKey = (phrase: GeneratedMnemonic, password: string) => async 
     })
 }
 
-export const addKey = () => async (dispatch: AppDispatch, key: StoredKey) => {
+export const addKey = (key: StoredKey) => async (dispatch: AppDispatch) => {
     const storage = new Storage(new StorageConnector())
     const keyStore = await KeyStore.load(storage)
     try {
@@ -62,7 +65,7 @@ export const addKey = () => async (dispatch: AppDispatch, key: StoredKey) => {
     }
 }
 
-export const restoreKey = () => async (dispatch: AppDispatch, publicKey: any) => {
+export const restoreKey = (publicKey: any) => async (dispatch: AppDispatch) => {
     const storage = new Storage(new StorageConnector())
     const keyStore = await KeyStore.load(storage)
     try {
@@ -75,6 +78,27 @@ export const restoreKey = () => async (dispatch: AppDispatch, publicKey: any) =>
     } catch {
         dispatch({
             type: ActionTypes.RESTORE_KEY_FAILURE,
+        })
+    }
+}
+
+export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDispatch, getState) => {
+    const storage = new Storage(new StorageConnector())
+    try {
+        const accountsStorage = await AccountsStorage.load(storage)
+        console.log('accountsStorage', accountsStorage)
+        const address = await accountsStorage.addAccount('Account 1', publicKey, 'SurfWallet', true)
+        console.log('address', address)
+        const currentAccount = await accountsStorage.getCurrentAccount()
+        console.log('currentAccount', currentAccount)
+        dispatch({
+            type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
+            payload: address,
+        })
+    } catch (error) {
+        console.log(error)
+        dispatch({
+            type: ActionTypes.SET_CURRENT_ACCOUNT_FAILURE,
         })
     }
 }

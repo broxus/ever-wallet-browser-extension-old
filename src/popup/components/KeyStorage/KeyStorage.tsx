@@ -4,39 +4,20 @@ import { Button } from '../button'
 import { AppState } from '../../store/app/types'
 import { addKey, createKey, generateSeedPhrase, restoreKey } from '../../store/app/actions'
 import ThreeDots from '../../img/three-dots.svg'
-import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
 import Modal from '../Modal/Modal'
 import './key-storage.scss'
 
 interface IKeyStorage {
-    createKey?: (arg0: GeneratedMnemonic, arg1: string) => Promise<void>
     createdKey?: any
     publicKey?: any
-    phrase: GeneratedMnemonic
     generateSeedPhrase?: any
     setActiveContent?: any
 }
 
-const KeyStorage: React.FC<IKeyStorage> = ({
-    createKey,
-    phrase,
-    createdKey,
-    publicKey,
-    setActiveContent,
-}) => {
+const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey, setActiveContent }) => {
     const [modalOpen, setModalOpen] = useState(false)
     const [panelOpen, setPanelOpen] = useState(false)
-
-    const createKeyLocal = async () => {
-        if (createKey) {
-            await createKey(phrase, 'testpwd')
-        }
-    }
-
-    useEffect(() => {
-        console.log(createdKey, 'createdKey')
-    }, [createKey])
 
     const exportSeedPhrase = () => {
         setPanelOpen(true)
@@ -55,15 +36,6 @@ const KeyStorage: React.FC<IKeyStorage> = ({
         element.click()
         setModalOpen(false)
     }
-
-    let counter = 0
-    useEffect(() => {
-        console.log(phrase, 'phrase')
-        if (phrase && counter == 0) {
-            createKeyLocal()
-            counter = 1
-        }
-    }, [phrase])
 
     return (
         <>
@@ -134,7 +106,6 @@ const mapStateToProps = (store: { app: AppState }) => ({
 })
 
 export default connect(mapStateToProps, {
-    createKey,
     addKey,
     restoreKey,
     generateSeedPhrase,
