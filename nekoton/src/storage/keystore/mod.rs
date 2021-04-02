@@ -77,7 +77,7 @@ impl KeyStore {
         }))
     }
 
-    #[wasm_bindgen(getter, js_name = "getStoredKeys")]
+    #[wasm_bindgen(js_name = "getStoredKeys")]
     pub fn get_stored_keys(&self) -> PromiseKeyStoreEntries {
         let inner = self.inner.clone();
 

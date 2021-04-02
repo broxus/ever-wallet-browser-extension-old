@@ -70,7 +70,7 @@ export const restoreKey = () => async (dispatch: AppDispatch, publicKey: any) =>
             type: ActionTypes.RESTORE_KEY_SUCCESS,
             payload: restoredKey,
         })
-        console.log(keyStore.storedKeys, 'storedKeys')
+        console.log(await keyStore.getStoredKeys(), 'storedKeys')
     } catch {
         dispatch({
             type: ActionTypes.RESTORE_KEY_FAILURE,
