@@ -12,6 +12,31 @@ use libnekoton::core;
 
 use crate::utils::*;
 
+#[wasm_bindgen]
+pub struct Symbol {
+    #[wasm_bindgen(skip)]
+    pub inner: core::models::Symbol,
+}
+
+#[wasm_bindgen]
+impl Symbol {
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        self.inner.name.clone()
+    }
+
+    #[wasm_bindgen(getter, js_name = "rootTokenContract")]
+    pub fn root_token_contract(&self) -> String {
+        self.inner.root_token_contract.to_string()
+    }
+}
+
+impl From<core::models::Symbol> for Symbol {
+    fn from(inner: core::models::Symbol) -> Self {
+        Self { inner }
+    }
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const CONTRACT_TYPE: &'static str = r#"
 export type ContractType = 
