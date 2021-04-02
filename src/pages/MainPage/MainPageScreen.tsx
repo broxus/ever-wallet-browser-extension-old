@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
@@ -22,13 +22,40 @@ import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import './main-page.scss'
 
-const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
+const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
+    const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
+        const handleClickOutside = (event: { target: any }) => {
+            // @ts-ignore
+            if (ref.current && !ref.current.contains(event.target)) {
+                setModalVisible(false)
+            }
+        }
+        useEffect(() => {
+            document.addEventListener('mousedown', handleClickOutside)
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside)
+            }
+        })
+    }
+
+    const Wrapper = (props: any) => {
+        const wrapperRef = useRef(null)
+        hideModalOnClick(wrapperRef)
+        return (
+            <div ref={wrapperRef} className="main-page__account-settings noselect">
+                {props.children}
+            </div>
+        )
+    }
+
     const navigate = (step: number) => {
         setPanelVisible(true)
+        setModalVisible(false)
         setActiveContent(step)
     }
+
     return (
-        <div className="main-page__account-settings noselect">
+        <Wrapper>
             <div className="main-page__account-settings-section">
                 <div
                     className="main-page__account-settings-section-item"
@@ -68,7 +95,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible }) => {
             </div>
             <div className="main-page__account-settings-separator" />
             <div className="main-page__account-settings-section-item-log-out">Log out</div>
-        </div>
+        </Wrapper>
     )
 }
 
@@ -103,6 +130,7 @@ const AccountDetails = () => {
                         <AccountModal
                             setActiveContent={setActiveContent}
                             setPanelVisible={setPanelVisible}
+                            setModalVisible={setModalVisible}
                         />
                     )}
                 </div>
