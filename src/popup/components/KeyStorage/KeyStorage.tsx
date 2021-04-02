@@ -12,8 +12,6 @@ import './key-storage.scss'
 interface IKeyStorage {
     createKey?: (arg0: GeneratedMnemonic, arg1: string) => Promise<void>
     key?: any
-    seed?: any
-    accountType?: any
     publicKey?: any
     phrase: GeneratedMnemonic
     generateSeedPhrase?: any
@@ -23,21 +21,22 @@ interface IKeyStorage {
 const KeyStorage: React.FC<IKeyStorage> = ({
     createKey,
     phrase,
-    seed,
-    accountType,
+    key,
+    publicKey,
     setActiveContent,
 }) => {
     const [modalOpen, setModalOpen] = useState(false)
     const [panelOpen, setPanelOpen] = useState(false)
+
+    useEffect(() => {
+        console.log('key', key)
+        console.log('public key', publicKey)
+    })
     const createKeyLocal = async () => {
         if (createKey) {
             await createKey(phrase, 'testpwd')
         }
     }
-
-    useEffect(() => {
-        console.log(panelOpen, 'panelOpen')
-    }, [panelOpen])
 
     const exportSeedPhrase = () => {
         setPanelOpen(true)
@@ -133,9 +132,7 @@ const KeyStorage: React.FC<IKeyStorage> = ({
 const mapStateToProps = (store: { app: AppState }) => ({
     key: store.app.key,
     phrase: store.app.phrase,
-    seed: store.app.seed,
-    accountType: store.app.accountType,
-    // publicKey: store.app.publicKey,
+    publicKey: store.app.publicKey,
 })
 
 export default connect(mapStateToProps, {

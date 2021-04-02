@@ -12,7 +12,7 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
 });
 
 (async () => {
-    await init('index_bg.wasm');
+    await init( 'index_bg.wasm');
 
     // ADNL example
     // {
