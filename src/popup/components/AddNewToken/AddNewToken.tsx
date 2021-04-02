@@ -28,7 +28,7 @@ const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
     return (
         <>
             <Input label={'Enter new account name...'} className="add-new-token__search-form" />
-            <div style={{ overflowY: 'scroll', maxHeight: '320px' }}>
+            <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
                 <Token />
                 <Token />
                 <Token />
