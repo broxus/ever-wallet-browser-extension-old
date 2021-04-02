@@ -48,7 +48,9 @@ const EnterPassword: React.FC<any> = ({ setStep, onReturn, data }) => {
                     <span className="send-screen__form-tx-details-param-desc">
                         Recipient address
                     </span>
-                    <span className="send-screen__form-tx-details-param-value">{data.address}</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {`${data.address.slice(0, 6)}...${data.address.slice(-4)}`}
+                    </span>
                 </div>
             </div>
             <Input className="send-screen__form-comment" label={'Password...'} type="password" />
