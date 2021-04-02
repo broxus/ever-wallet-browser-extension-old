@@ -58,3 +58,8 @@ pub fn unpack_address(packed_address: &str, is_url_safe: bool) -> Result<Address
         .map(|inner| AddressWrapper { inner })
         .handle_error()
 }
+
+#[wasm_bindgen(js_name = "checkAddress")]
+pub fn check_address(address: &str) ->bool{
+    address::validate_address(address)
+}
