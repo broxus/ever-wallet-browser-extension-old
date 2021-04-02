@@ -5,9 +5,9 @@ import { AppState } from '../../store/app/types'
 import { addKey, createKey, generateSeedPhrase, restoreKey } from '../../store/app/actions'
 import ThreeDots from '../../img/three-dots.svg'
 import { GeneratedMnemonic } from '../../../../nekoton/pkg'
-import './key-storage.scss'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
-import { makeLogger } from 'ts-loader/dist/logger'
+import './key-storage.scss'
+import Modal from '../Modal/Modal'
 
 interface IKeyStorage {
     createKey?: (arg0: GeneratedMnemonic, arg1: string) => Promise<void>
@@ -67,7 +67,14 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createKey, phrase, seed, accountTyp
                     </div>
                     <div className="key-storage__key-ellipsis" onClick={() => setModalOpen(true)}>
                         <ThreeDots />
+                        {modalOpen && (
+                            <Modal>
+                                <div>Export seed phrase</div>
+                                <div>Export private key</div>
+                            </Modal>
+                        )}
                     </div>
+
                 </div>
             </div>
             <Button text={'Add key'} />
