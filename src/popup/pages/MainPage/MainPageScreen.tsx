@@ -25,6 +25,8 @@ import EnterPassword from '../../components/EnterPassword/EnterPassword'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import AssetFull from '../../components/AssetFull/AssetFull'
 import { GeneratedMnemonic } from '../../../../nekoton/pkg'
+import CopyToClipboard from 'react-copy-to-clipboard'
+import ReactTooltip from 'react-tooltip'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
@@ -103,10 +105,11 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setMod
     )
 }
 
-const AccountDetails = ({ parentStep }) => {
+const AccountDetails: React.FC<any> = ({ parentStep, account }) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [panelVisible, setPanelVisible] = useState(false)
     const [activeContent, setActiveContent] = useState(0)
+    const [copied, setCopied] = useState(false)
 
     // TODO temp hack, remove later
     const [step, setStep] = useState(0)
@@ -154,7 +157,15 @@ const AccountDetails = ({ parentStep }) => {
                 </div>
                 <div className="main-page__account-details-acc">
                     <span className="main-page__account-details-acc-account"> Account 1</span>
-                    <span className="main-page__account-details-acc-address">0:B5d3...cDdB</span>
+                    <CopyToClipboard text={account} onCopy={() => setCopied(true)}>
+                        <span
+                            className="main-page__account-details-acc-address"
+                            data-tip="Click to copy"
+                        >
+                            {`${account.slice(0, 6)}...${account.slice(-4)}`}
+                        </span>
+                    </CopyToClipboard>
+                    <ReactTooltip type="dark" effect="solid" place="bottom"/>
                 </div>
                 <div className="main-page__account-details-balance">
                     <span className="main-page__account-details-balance-number"> $1,200.00</span>
@@ -404,6 +415,7 @@ interface IMainPageScreen {
     publicKey: string
     phrase: GeneratedMnemonic
     createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
+    account: string
 }
 
 const MainPageScreen: React.FC<IMainPageScreen> = ({
@@ -412,6 +424,7 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
     publicKey,
     phrase,
     createKey,
+    account,
 }) => {
     const [activeContent, setActiveContent] = useState(0)
 
@@ -520,7 +533,7 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
             {/*<button className="js-push-button" disabled>*/}
             {/*    Enable Push Messages*/}
             {/*</button>*/}
-            <AccountDetails parentStep={activeContent} />
+            <AccountDetails parentStep={activeContent} account={account} />
             <UserAssets setActiveContent={setActiveContent} />
         </>
     )
@@ -531,6 +544,7 @@ const mapStateToProps = (store: { app: AppState }) => ({
     seed: store.app.seed,
     publicKey: store.app.publicKey,
     phrase: store.app.phrase,
+    account: store.app.account,
 })
 
 export default connect(mapStateToProps, {
