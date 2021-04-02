@@ -21,6 +21,8 @@ import { addKey, createKey, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import './main-page.scss'
+import EnterPassword from '../../components/EnterPassword/EnterPassword'
+import SaveSeed from '../../components/SaveSeed/SaveSeed'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
@@ -104,6 +106,12 @@ const AccountDetails = () => {
     const [panelVisible, setPanelVisible] = useState(false)
     const [activeContent, setActiveContent] = useState(0)
 
+    // TODO temp hack, remove later
+    const [step, setStep] = useState(0)
+    useEffect(() => {
+        setActiveContent(5)
+    }, [step])
+
     const handleReceiveClick = () => {
         setPanelVisible(true)
         setActiveContent(0)
@@ -184,9 +192,13 @@ const AccountDetails = () => {
                 ) : activeContent === 1 ? (
                     <Send onReturn={setPanelVisible} />
                 ) : activeContent === 2 ? (
-                    <KeyStorage />
+                    <KeyStorage setActiveContent={setActiveContent} />
                 ) : activeContent === 3 ? (
                     <CreateAccountScreen />
+                ) : activeContent === 4 ? (
+                    <EnterPassword setStep={setStep} minHeight={'170px'} />
+                ) : activeContent === 5 ? (
+                    <SaveSeed setStep={setStep} />
                 ) : (
                     <></>
                 )}

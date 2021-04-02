@@ -4,15 +4,16 @@ import { Button } from '../button'
 import './enter-password.scss'
 
 interface IEnterPassword {
+    minHeight: string
     setStep: Dispatch<SetStateAction<number>>
 }
 
-const EnterPassword: React.FC<IEnterPassword> = ({ setStep }) => {
+const EnterPassword: React.FC<IEnterPassword> = ({ setStep, minHeight }) => {
     return (
         <div className="enter-password">
-            <div className="enter-password__content">
+            <div className="enter-password__content" style={{ minHeight }}>
                 <div className="enter-password__content-pwd-form">
-                    <h2>Enter your password</h2>
+                    <h2 className="enter-password__content-pwd-form-title">Enter your password</h2>
                     <Input label={'Password...'} autoFocus type={'password'} />
                 </div>
             </div>

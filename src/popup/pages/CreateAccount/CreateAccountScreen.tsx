@@ -73,11 +73,11 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
 }
 
 const CreateAccountScreen = () => {
-    const [step, setStep] = useState<number>(3)
+    const [step, setStep] = useState<number>(0)
     const createAccountContent = [
         <AccountName setStep={setStep} />,
         <AccountSelectKey setStep={setStep} />,
-        <EnterPassword setStep={setStep} />,
+        <EnterPassword setStep={setStep} minHeight={'448px'} />,
         <SaveSeed setStep={setStep} />,
         <CheckSeed setStep={setStep} />,
     ]
