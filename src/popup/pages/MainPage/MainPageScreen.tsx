@@ -23,6 +23,7 @@ import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import './main-page.scss'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
+import AssetFull from '../../components/AssetFull/AssetFull'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
@@ -101,7 +102,7 @@ const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setMod
     )
 }
 
-const AccountDetails = () => {
+const AccountDetails = ({ parentStep }) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [panelVisible, setPanelVisible] = useState(false)
     const [activeContent, setActiveContent] = useState(0)
@@ -111,6 +112,18 @@ const AccountDetails = () => {
     useEffect(() => {
         setActiveContent(5)
     }, [step])
+
+    useEffect(() => {
+        if (parentStep === 6) {
+            setPanelVisible(true)
+            setActiveContent(6)
+        }
+    }, [parentStep])
+    // TODO temp hack, remove later
+
+    useEffect(() => {
+        console.log(activeContent, 'localActiveContent')
+    }, [activeContent])
 
     const handleReceiveClick = () => {
         setPanelVisible(true)
@@ -199,6 +212,8 @@ const AccountDetails = () => {
                     <EnterPassword setStep={setStep} minHeight={'170px'} />
                 ) : activeContent === 5 ? (
                     <SaveSeed setStep={setStep} />
+                ) : activeContent === 6 ? (
+                    <AssetFull />
                 ) : (
                     <></>
                 )}
@@ -221,9 +236,12 @@ export const Asset = () => (
     </div>
 )
 
-const Assets = () => {
+const Assets = ({ setActiveContent }) => {
     const [panelVisible, setPanelVisible] = useState(false)
 
+    useEffect(() => {
+        console.log(setActiveContent, 'setActiveCont')
+    }, [setActiveContent])
     return (
         <div
             style={{
@@ -233,7 +251,8 @@ const Assets = () => {
                 position: 'relative',
             }}
         >
-            <div>
+            {/*TODO remove later*/}
+            <div onClick={() => setActiveContent(6)}>
                 <Asset />
                 <Asset />
                 <Asset />
@@ -354,9 +373,9 @@ const Transactions = () => (
     </div>
 )
 
-const UserAssets = () => {
+const UserAssets = ({ setActiveContent }) => {
     const [activeTab, setActiveTab] = useState(0)
-    const content = [<Assets />, <Transactions />]
+    const content = [<Assets setActiveContent={setActiveContent} />, <Transactions />]
 
     return (
         <>
@@ -389,13 +408,16 @@ interface IMainPageScreen {
     locale: any
 }
 const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
+    const [activeContent, setActiveContent] = useState(0)
+
     console.log(locale, 'locale')
 
     useEffect(() => {
+        console.log('activeContent', activeContent)
         // createKey()
         // addKey()
         // restoreKey()
-    }, [])
+    }, [activeContent])
 
     // var isPushEnabled = false
     //
@@ -472,13 +494,13 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
     // }
 
     return (
-        <div>
+        <>
             {/*<button className="js-push-button" disabled>*/}
             {/*    Enable Push Messages*/}
             {/*</button>*/}
-            <AccountDetails />
-            <UserAssets />
-        </div>
+            <AccountDetails parentStep={activeContent} />
+            <UserAssets setActiveContent={setActiveContent} />
+        </>
     )
 }
 

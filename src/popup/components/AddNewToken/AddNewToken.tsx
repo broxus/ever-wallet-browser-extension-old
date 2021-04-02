@@ -1,4 +1,4 @@
-import React, {Dispatch, SetStateAction, useState} from 'react'
+import React, { Dispatch, SetStateAction, useState } from 'react'
 import { Button } from '../button'
 import cn from 'classnames'
 import Input from '../Input/Input'

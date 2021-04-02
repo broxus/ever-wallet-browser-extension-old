@@ -1,20 +1,20 @@
-@import "../../styles/colors";
+@import '../../styles/colors';
 
 $walletTopBarHeight: 62px;
 
 .top-bar {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
 
-  height: $walletTopBarHeight;
+    height: $walletTopBarHeight;
 
-  background-color: $walletTitleBg;
-  color: $windowBg;
+    background-color: $walletTitleBg;
+    color: $windowBg;
 
-  &__refresh {
-    width: 30px;
-    height: 30px;
-  }
+    &__refresh {
+        width: 30px;
+        height: 30px;
+    }
 }

@@ -1,56 +1,56 @@
-@import "../../styles/colors";
+@import '../../styles/colors';
 
 $symbolIconSize: 44px;
 
 .assets-list-item {
-  display: flex;
+    display: flex;
 
-  width: 100%;
-  height: 46px;
-  border-radius: 3px;
+    width: 100%;
+    height: 46px;
+    border-radius: 3px;
 
-  background-color: $windowBg;
+    background-color: $windowBg;
 
-  margin-top: 1em;
-  padding: 1em;
+    margin-top: 1em;
+    padding: 1em;
 
-  position: relative;
-  overflow: hidden;
-
-  &__content {
-    color: $windowSubTextFg;
-    font-weight: 600;
-    z-index: 2;
-
-    &__symbol {
-      &__img-wrapper {
-        display: block;
-        background-color: $windowSubTextFgOver;
-        width: $symbolIconSize;
-        height: $symbolIconSize;
-      }
-      img {
-        display: block;
-        background-color: $windowSubTextFgOver;
-        width: $symbolIconSize;
-        height: $symbolIconSize;
-      }
-
-      span {
-        font-size: 1.2em;
-      }
-    }
-  }
-
-  &:hover {
-    background-color: $windowBgOver;
+    position: relative;
+    overflow: hidden;
 
     &__content {
-      color: $windowSubTextFgOver;
-    }
-  }
+        color: $windowSubTextFg;
+        font-weight: 600;
+        z-index: 2;
 
-  span.ripple {
-    background-color: $windowBgRipple;
-  }
+        &__symbol {
+            &__img-wrapper {
+                display: block;
+                background-color: $windowSubTextFgOver;
+                width: $symbolIconSize;
+                height: $symbolIconSize;
+            }
+            img {
+                display: block;
+                background-color: $windowSubTextFgOver;
+                width: $symbolIconSize;
+                height: $symbolIconSize;
+            }
+
+            span {
+                font-size: 1.2em;
+            }
+        }
+    }
+
+    &:hover {
+        background-color: $windowBgOver;
+
+        &__content {
+            color: $windowSubTextFgOver;
+        }
+    }
+
+    span.ripple {
+        background-color: $windowBgRipple;
+    }
 }

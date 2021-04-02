@@ -4,7 +4,7 @@ import Input from '../Input/Input'
 import Select from 'react-select'
 import './send.scss'
 import { Button } from '../button'
-import {selectStyles} from "../../constants/selectStyle";
+import { selectStyles } from '../../constants/selectStyle'
 
 const options = [
     { value: '1', label: 'USDT' },
