@@ -11,6 +11,14 @@
         &-title {
             margin-bottom: 28px;
         }
+        &-error {
+            display: block;
+            width: 100%;
+            font-size: 12px;
+            line-height: 16px;
+            letter-spacing: 0.4px;
+            color: darkred;
+        }
     }
     &__buttons {
         display: flex;

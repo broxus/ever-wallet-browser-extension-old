@@ -6,6 +6,8 @@ import './style.scss'
 
 export type ButtonProps = {
     text: string
+    type?: 'button' | 'submit' | 'reset' | undefined
+    form?: string
     white?: boolean
     onClick?: (() => void) | Dispatch<SetStateAction<boolean>> | any
     disabled?: boolean
@@ -14,7 +16,7 @@ export type ButtonProps = {
 
 export class Button extends React.Component<ButtonProps, {}> {
     render() {
-        const { text, white, disabled, noBorder, onClick } = this.props
+        const { text, white, disabled, noBorder, onClick, type, form } = this.props
         let className = cn('button', {
             _white: white,
             _blue: !white,
@@ -24,6 +26,8 @@ export class Button extends React.Component<ButtonProps, {}> {
 
         return (
             <button
+                type={type}
+                form={form}
                 className={className}
                 onMouseDown={createRipple}
                 onMouseLeave={removeRipple}
