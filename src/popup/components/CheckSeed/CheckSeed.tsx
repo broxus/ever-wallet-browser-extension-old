@@ -7,7 +7,7 @@ import { connect } from 'react-redux'
 import './check-seed.scss'
 
 interface ICheckSeed {
-    setStep: Dispatch<SetStateAction<number>>
+    setStep: SetStateAction<number>
     seed: string[]
 }
 

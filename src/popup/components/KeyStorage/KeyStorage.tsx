@@ -6,8 +6,8 @@ import { addKey, createKey, generateSeedPhrase, restoreKey } from '../../store/a
 import ThreeDots from '../../img/three-dots.svg'
 import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
-import './key-storage.scss'
 import Modal from '../Modal/Modal'
+import './key-storage.scss'
 
 interface IKeyStorage {
     createKey?: (arg0: GeneratedMnemonic, arg1: string) => Promise<void>
