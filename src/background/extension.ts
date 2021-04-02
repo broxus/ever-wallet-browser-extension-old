@@ -47,6 +47,41 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
     console.log(addr.to_string());
 })();
 
+async function testKeystore() {
+    const storage = new nt.Storage(new StorageConnector());
+
+    // keystore
+    const keystore = await nt.KeyStore.load(storage);
+
+    const mnemonic = nt.StoredKey.generateMnemonic(nt.AccountType.makeLabs(0));
+    const newStoredKey = mnemonic.createKey("Name", "123");
+
+    const restoredKey = new nt.StoredKey('Name2', mnemonic.phrase, mnemonic.accountType, "123123123");
+
+    const newPublicKey = await keystore.addKey(newStoredKey);
+    const newRestoredPublicKeyKey = await keystore.addKey(restoredKey);
+
+    await keystore.removeKey(newPublicKey);
+    const tempGetKey = await keystore.getKey(newRestoredPublicKeyKey);
+    if (!tempGetKey) {
+        return;
+    }
+
+    const accountsStorage = await nt.AccountsStorage.load(storage);
+    const currentAccount = await accountsStorage.getCurrentAccount();
+    console.log("Current account:", currentAccount);
+
+    // accounts
+    const address = await accountsStorage.addAccount("Account 1", tempGetKey.publicKey, 'SurfWallet', true);
+
+    const assets = await accountsStorage.getAccount(address);
+    if (assets == null) {
+        return;
+    }
+
+    //await keystore.clear();
+}
+
 function startListener(connection: nt.GqlConnection, {publicKey, contractType}: { publicKey: string, contractType: nt.ContractType }) {
     const POLLING_INTERVAL = 10000; // 10s
 

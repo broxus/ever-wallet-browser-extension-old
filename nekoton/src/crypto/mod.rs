@@ -67,6 +67,18 @@ impl StoredKey {
     pub fn public_key(&self) -> String {
         hex::encode(self.inner.public_key())
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        self.inner.name().to_owned()
+    }
+
+    #[wasm_bindgen(getter, js_name = "accountType")]
+    pub fn account_type(&self) -> AccountType {
+        AccountType {
+            inner: self.inner.account_type().clone(),
+        }
+    }
 }
 
 #[wasm_bindgen]

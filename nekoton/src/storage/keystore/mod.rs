@@ -33,11 +33,12 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "addKey")]
-    pub fn add_key(&self, key: StoredKey) -> PromiseString {
+    pub fn add_key(&self, key: &StoredKey) -> PromiseString {
         let inner = self.inner.clone();
+        let key = key.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let public_key = inner.add_key(key.inner).await.handle_error()?;
+            let public_key = inner.add_key(key).await.handle_error()?;
             Ok(JsValue::from(public_key))
         }))
     }

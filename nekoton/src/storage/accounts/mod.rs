@@ -114,6 +114,20 @@ impl AccountsStorage {
                 .unchecked_into())
         }))
     }
+
+    #[wasm_bindgen(js_name = "getCurrentAccount")]
+    pub fn get_current_account(&self) -> PromiseOptionString {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            let stored_data = inner.stored_data().await;
+            Ok(stored_data
+                .current_account()
+                .clone()
+                .map(JsValue::from)
+                .unwrap_or_else(JsValue::undefined))
+        }))
+    }
 }
 
 #[wasm_bindgen]

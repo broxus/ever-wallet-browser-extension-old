@@ -102,6 +102,13 @@ impl UnsignedMessage {
         let inner = self.inner.sign(&[0; 64]).handle_error()?;
         Ok(SignedMessage { inner })
     }
+
+    #[wasm_bindgen]
+    pub fn sign(&self, key: &crate::crypto::StoredKey, password: &str) -> Result<SignedMessage, JsValue> {
+        let signature = key.inner.sign(self.inner.hash(), password.into()).handle_error()?;
+        let inner = self.inner.sign(&signature).handle_error()?;
+        Ok(SignedMessage { inner })
+    }
 }
 
 #[wasm_bindgen]
@@ -378,6 +385,7 @@ extern "C" {
 }
 
 unsafe impl Send for TonWalletNotificationHandlerImpl {}
+
 unsafe impl Sync for TonWalletNotificationHandlerImpl {}
 
 pub struct TonWalletNotificationHandler {
