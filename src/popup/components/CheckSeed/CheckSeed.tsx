@@ -23,6 +23,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
 
     const onSubmit = (data) => {
         console.log('correct')
+        console.log('data', data)
     }
 
     return (
@@ -38,7 +39,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
                         // @ts-ignore
                         register={register({
                             required: true,
-                            validate: (word: string, position: number) => validateWord(word, 4),
+                            validate: (word: string) => validateWord(word, 4),
                         })}
                     />
                     <Input
@@ -48,7 +49,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
                         // @ts-ignore
                         register={register({
                             required: true,
-                            validate: (word: string, position: number) => validateWord(word, 6),
+                            validate: (word: string) => validateWord(word, 6),
                         })}
                     />
                     <Input
@@ -58,7 +59,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
                         // @ts-ignore
                         register={register({
                             required: true,
-                            validate: (word: string, position: number) => validateWord(word, 9),
+                            validate: (word: string) => validateWord(word, 9),
                         })}
                     />
                     <Input
@@ -68,7 +69,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
                         // @ts-ignore
                         register={register({
                             required: true,
-                            validate: (word: string, position: number) => validateWord(word, 11),
+                            validate: (word: string) => validateWord(word, 11),
                         })}
                     />
                     {(errors.word4 || errors.word6 || errors.word9 || errors.word11) && (
