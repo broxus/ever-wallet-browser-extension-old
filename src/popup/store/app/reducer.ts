@@ -1,7 +1,9 @@
-import { produce } from 'immer'
-import { ActionTypes } from './actions'
-import { Action, AppState } from './types'
+import {produce} from 'immer'
+import {ActionTypes} from './actions'
+import {Action, AppState} from './types'
 import * as nt from '../../../../nekoton/pkg'
+import {AccountState, Transaction} from "../../../../nekoton/pkg";
+import {mergeTransactions} from "../../../background/common";
 
 // @ts-ignore
 export const initialState = Object.freeze<AppState>({
@@ -10,13 +12,17 @@ export const initialState = Object.freeze<AppState>({
     phrase: {},
     createdKey: '',
     publicKey: '',
-    account: ''
+    account: '',
+    tonWalletState: null,
+    transactions: new Array<Transaction>(),
+    currentFee: '',
 })
 
 class Wrapper {
     constructor(public data: nt.AccountType) {
         Wrapper.stored = data
     }
+
     static stored: nt.AccountType
 }
 
@@ -41,12 +47,25 @@ export default (state: AppState = initialState, action: Action): AppState =>
             case ActionTypes.ADD_KEY_SUCCESS: {
                 return
             }
-            case ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS {
+            case ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS: {
                 draft.account = action.payload
+                return
+            }
+            case ActionTypes.SET_TON_WALLET_STATE: {
+                draft.tonWalletState = action.payload
+                return
+            }
+            case ActionTypes.ADD_NEW_TRANSACTIONS: {
+                mergeTransactions(draft.transactions, action.payload.transactions, action.payload.info);
                 return
             }
             case ActionTypes.RESTORE_KEY_SUCCESS: {
                 draft.publicKey = action.payload
+                return
+            }
+            case ActionTypes.SET_FEE_CALCULATION_SUCCESS: {
+                draft.currentFee = action.payload;
+                return
             }
         }
     })

@@ -1,17 +1,20 @@
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React, {Dispatch, SetStateAction, useState} from 'react'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import Input from '../Input/Input'
 import Select from 'react-select'
 import './send.scss'
-import { Button } from '../button'
-import { selectStyles } from '../../constants/selectStyle'
-import { useForm } from 'react-hook-form'
+import {Button} from '../button'
+import {selectStyles} from '../../constants/selectStyle'
+import {useForm} from 'react-hook-form'
+import {AppState} from "../../store/app/types";
+import {connect} from "react-redux";
+import {addKey, calculateFee, createKey, getCurrentAccount, restoreKey} from "../../store/app/actions";
 
 const options = [
-    { value: '1', label: 'USDT' },
-    { value: '60', label: 'TON' },
-    { value: '60', label: 'BTC' },
-    { value: '60', label: 'ETH' },
+    {value: '60', label: 'TON'},
+    {value: '1', label: 'USDT'},
+    {value: '60', label: 'BTC'},
+    {value: '60', label: 'ETH'},
 ]
 
 interface IOptionParams {
@@ -26,12 +29,12 @@ const TransactionSending = () => {
         <>
             <h2 className="send-screen__form-title">Transaction is sending</h2>
             <div className="send-screen__tx-sending"></div>
-            <Button text={'OK'} type={'button'} />
+            <Button text={'OK'} type={'button'}/>
         </>
     )
 }
 
-const EnterPassword: React.FC<any> = ({ setStep, onReturn, data }) => {
+const EnterPassword: React.FC<any> = ({currentFee, setStep, onReturn, data}) => {
     return (
         <>
             <h2 className="send-screen__form-title">Enter your password to confirm transaction</h2>
@@ -42,7 +45,7 @@ const EnterPassword: React.FC<any> = ({ setStep, onReturn, data }) => {
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
-                    <span className="send-screen__form-tx-details-param-value">Blockchain fee</span>
+                    <span className="send-screen__form-tx-details-param-value">{currentFee}</span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">
@@ -53,29 +56,36 @@ const EnterPassword: React.FC<any> = ({ setStep, onReturn, data }) => {
                     </span>
                 </div>
             </div>
-            <Input className="send-screen__form-comment" label={'Password...'} type="password" />
-            <div style={{ display: 'flex' }}>
-                <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onReturn} white />
+            <Input className="send-screen__form-comment" label={'Password...'} type="password"/>
+            <div style={{display: 'flex'}}>
+                <div style={{width: '50%', marginRight: '12px'}}>
+                    <Button text={'Back'} onClick={onReturn} white/>
                 </div>
-                <Button text={'Confirm transaction'} onClick={() => setStep(2)} />
+                <Button text={'Confirm transaction'} onClick={() => setStep(2)}/>
             </div>
         </>
     )
 }
 
-const EnterAddress: React.FC<any> = ({ setStep, onReturn, setFormData }) => {
-    const { register, handleSubmit, errors, watch } = useForm()
+const EnterAddress: React.FC<any> = ({account, setStep, onReturn, setFormData}) => {
+    const {register, handleSubmit, errors, watch} = useForm()
 
     const onSubmit = (data) => {
+        console.log(data);
         setFormData(data)
+
+        calculateFee(account, {
+            amount: data.amount,
+            recipient: data.address,
+        });
+
         setStep(1)
     }
 
     return (
         <>
             <div className="send-screen__account_details">
-                <UserPic /> <span className="send-screen__account_details-title">Account 1</span>
+                <UserPic/> <span className="send-screen__account_details-title">Account 1</span>
             </div>
 
             <h2 className="send-screen__form-title">Enter receiver address</h2>
@@ -83,7 +93,7 @@ const EnterAddress: React.FC<any> = ({ setStep, onReturn, setFormData }) => {
                 <Select
                     className="send-screen__form-token-dropdown"
                     options={options}
-                    placeholder={'USDT'}
+                    placeholder={'Select currency'}
                     styles={selectStyles}
                     w
                     // onChange={(token) => {
@@ -119,11 +129,11 @@ const EnterAddress: React.FC<any> = ({ setStep, onReturn, setFormData }) => {
                     type="text"
                 />
             </form>
-            <div style={{ display: 'flex' }}>
-                <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onReturn} white />
+            <div style={{display: 'flex'}}>
+                <div style={{width: '50%', marginRight: '12px'}}>
+                    <Button text={'Back'} onClick={onReturn} white/>
                 </div>
-                <Button text={'Send'} type={'submit'} form="send" />
+                <Button text={'Send'} type={'submit'} form="send"/>
             </div>
         </>
     )
@@ -133,7 +143,7 @@ interface IAddNewToken {
     onReturn: Dispatch<SetStateAction<boolean>>
 }
 
-const Send: React.FC<IAddNewToken> = ({ onReturn }) => {
+const Send: React.FC<IAddNewToken> = ({onReturn}) => {
     const [step, setStep] = useState(0)
     // TODO replace with globale state
     const [formData, setFormData] = useState({})
@@ -144,11 +154,25 @@ const Send: React.FC<IAddNewToken> = ({ onReturn }) => {
             onReturn={() => onReturn(false)}
             setFormData={setFormData}
         />,
-        <EnterPassword setStep={setStep} onReturn={() => setStep(0)} data={formData} />,
-        <TransactionSending />,
+        <EnterPassword setStep={setStep} onReturn={() => setStep(0)} data={formData}/>,
+        <TransactionSending/>,
     ]
     // const [token, setToken] = useState<{ value: string; label: string } | null>([])
     return content[step]
 }
 
-export default Send
+
+const mapStateToProps = (store: { app: AppState }) => ({
+    locale: store.app.locale,
+    account: store.app.account,
+    tonWalletState: store.app.tonWalletState,
+    currentFee: store.app.currentFee,
+})
+
+export default connect(mapStateToProps, {
+    createKey,
+    addKey,
+    restoreKey,
+    getCurrentAccount,
+    calculateFee
+})(Send)
