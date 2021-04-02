@@ -1,4 +1,4 @@
-import { StorageQueryHandler, StorageQueryResultHandler } from '../../../nekoton/pkg'
+import { StorageQueryHandler, StorageQueryResultHandler } from '../../../../nekoton/pkg'
 
 export class StorageConnector {
     get(key: string, handler: StorageQueryResultHandler) {

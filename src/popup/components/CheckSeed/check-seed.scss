@@ -1,0 +1,22 @@
+@import '../../styles/colors';
+
+.check-seed {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        min-height: 448px;
+        height: 100%;
+        width: 100%;
+
+        &-title {
+            margin-bottom: 28px;
+        }
+    }
+    &__buttons {
+        display: flex;
+        &-back-btn {
+            width: 50%;
+            margin-right: 12px;
+        }
+    }
+}

@@ -4,6 +4,7 @@ import Input from '../Input/Input'
 import Select from 'react-select'
 import './send.scss'
 import { Button } from '../button'
+import {selectStyles} from "../../constants/selectStyle";
 
 const options = [
     { value: '1', label: 'USDT' },
@@ -11,48 +12,6 @@ const options = [
     { value: '60', label: 'BTC' },
     { value: '60', label: 'ETH' },
 ]
-
-interface IOptionParams {
-    data?: any
-    isDisabled?: boolean
-    isFocused?: boolean
-    isSelected?: boolean
-}
-export const selectStyles = {
-    control: (styles: any, { isFocused }: any) => {
-        return {
-            ...styles,
-            backgroundColor: '#ffffff',
-            color: '#000000',
-            border: !isFocused ? '1px solid #DDE1E2' : '1px solid #0088CC ',
-            borderRadius: 0,
-            fontSize: '16px',
-            lineHeight: '20px',
-            letterSpacing: '0.25px',
-            minHeight: '48px',
-        }
-    },
-    option: (styles: any, { isDisabled }: IOptionParams) => {
-        const color = '#ffffff'
-        return {
-            ...styles,
-            'backgroundColor': isDisabled ? 'red' : color,
-            'color': '#000000',
-            'fontSize': '16px',
-            'lineHeight': '20px',
-            'letterSpacing': '0.25px',
-            'cursor': isDisabled ? 'not-allowed' : 'pointer',
-            '&:hover': {
-                color: '#0088cc',
-            },
-        }
-    },
-    indicatorsContainer: (styles: any) => ({ ...styles, cursor: 'pointer' }),
-    placeholder: (styles: any) => ({ ...styles, color: '#000000' }),
-    menu: (styles: any) => ({ ...styles, marginTop: 2, borderRadius: 0 }),
-    valueContainer: (styles: any) => ({ ...styles, paddingBottom: '12px' }),
-    singleValue: (styles: any) => ({ ...styles, color: '#0088cc' }),
-}
 
 interface IAddNewToken {
     onReturn: Dispatch<SetStateAction<boolean>>

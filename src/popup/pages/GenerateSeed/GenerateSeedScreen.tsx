@@ -54,8 +54,6 @@ export const CheckSeed = () => (
 )
 
 const GenerateSeedScreen: React.FC<any> = ({ seed, generateSeedPhrase }) => {
-    const [seed24, setSeed24] = useState([''])
-
     const generateSeed = async () => {
         await generateSeedPhrase()
     }

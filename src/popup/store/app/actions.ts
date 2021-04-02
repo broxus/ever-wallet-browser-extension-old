@@ -4,7 +4,7 @@ import init, {
     KeyStore,
     Storage,
     StoredKey,
-} from '../../../nekoton/pkg'
+} from '../../../../nekoton/pkg'
 import { AppDispatch } from '../index'
 import { StorageConnector } from './storageConnector'
 

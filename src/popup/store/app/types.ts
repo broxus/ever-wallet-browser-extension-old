@@ -1,4 +1,4 @@
-import { GeneratedMnemonic } from '../../../nekoton/pkg'
+import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 
 export type Locale = 'en_US' | 'ru_RU'
 
@@ -9,7 +9,7 @@ export type Locale = 'en_US' | 'ru_RU'
 
 export type AppState = {
     locale: Locale
-    seed: string
+    seed: string[]
     accountType: any
     phrase: GeneratedMnemonic
     publicKey: string

@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from 'react'
 import ReactDOM from 'react-dom'
 
-import WelcomeScreen from '../pages/WelcomeScreen/WelcomeScreen'
-import PolicySignScreen from '../pages/PolicySignScreen/PolicySignScreen'
-import GenerateSeedScreen, {CheckSeed} from '../pages/GenerateSeed/GenerateSeedScreen'
+import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen'
+import PolicySignScreen from './pages/PolicySignScreen/PolicySignScreen'
+import GenerateSeedScreen, {CheckSeed} from './pages/GenerateSeed/GenerateSeedScreen'
 import CreatePasswordScreen, {
     ConfirmPasswordScreen,
-} from '../pages/CreatePassword/CreatePasswordScreen'
-import MainPageScreen from '../pages/MainPage/MainPageScreen'
-import CreateAccountScreen from '../pages/CreateAccount/CreateAccountScreen'
-import store from '../store/index'
-import '../styles/main.scss'
+} from './pages/CreatePassword/CreatePasswordScreen'
+import MainPageScreen from './pages/MainPage/MainPageScreen'
+import CreateAccountScreen from './pages/CreateAccount/CreateAccountScreen'
+import store from './store/index'
+import './styles/main.scss'
 import init from "../../nekoton/pkg";
 
 import {Provider} from 'react-redux'
