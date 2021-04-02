@@ -1,5 +1,6 @@
 import init, * as nt from "../../nekoton/pkg";
 import {GqlSocket, mergeTransactions, StorageConnector} from "./common";
+import ItemType = chrome.contextMenus.ItemType;
 
 const LITECLIENT_EXTENSION_ID = 'fakpmbkocblneahenciednepadenbdpb';
 
