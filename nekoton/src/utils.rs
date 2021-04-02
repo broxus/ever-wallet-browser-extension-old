@@ -44,6 +44,9 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<string>")]
     pub type PromiseString;
 
+    #[wasm_bindgen(typescript_type = "Promise<string | undefined>")]
+    pub type PromiseOptionString;
+
     #[wasm_bindgen(typescript_type = "Array<Transaction>")]
     pub type TransactionsList;
 }
