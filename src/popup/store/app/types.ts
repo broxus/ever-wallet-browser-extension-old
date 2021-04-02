@@ -13,7 +13,7 @@ export type AppState = {
     accountType: any
     phrase: GeneratedMnemonic
     publicKey: string
-    key: string
+    createdKey: string
 }
 
 export type Action = {

@@ -40,6 +40,7 @@ export const createKey = (phrase: GeneratedMnemonic, password: string) => async 
     dispatch: AppDispatch
 ) => {
     const key = phrase.createKey('Main key', password)
+    console.log('created key', key)
     dispatch({
         type: ActionTypes.GENERATE_KEY_SUCCESS,
         payload: key,

@@ -121,10 +121,6 @@ const AccountDetails = ({ parentStep }) => {
     }, [parentStep])
     // TODO temp hack, remove later
 
-    useEffect(() => {
-        console.log(activeContent, 'localActiveContent')
-    }, [activeContent])
-
     const handleReceiveClick = () => {
         setPanelVisible(true)
         setActiveContent(0)
@@ -239,9 +235,6 @@ export const Asset = () => (
 const Assets = ({ setActiveContent }) => {
     const [panelVisible, setPanelVisible] = useState(false)
 
-    useEffect(() => {
-        console.log(setActiveContent, 'setActiveCont')
-    }, [setActiveContent])
     return (
         <div
             style={{
@@ -413,11 +406,10 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({ locale }) => {
     console.log(locale, 'locale')
 
     useEffect(() => {
-        console.log('activeContent', activeContent)
         // createKey()
         // addKey()
         // restoreKey()
-    }, [activeContent])
+    }, [])
 
     // var isPushEnabled = false
     //

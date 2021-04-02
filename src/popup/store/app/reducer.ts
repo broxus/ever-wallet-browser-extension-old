@@ -8,7 +8,7 @@ export const initialState = Object.freeze<AppState>({
     locale: 'en_US',
     seed: '',
     phrase: {},
-    key: '',
+    createdKey: '',
     publicKey: '',
 })
 
@@ -29,11 +29,11 @@ export default (state: AppState = initialState, action: Action): AppState =>
             }
             case ActionTypes.GENERATE_SEED_SUCCESS: {
                 draft.seed = action.payload.phrase.split(' ')
-                draft.accountType = new Wrapper(nt.AccountType.makeLabs(0))
+                draft.phrase = action.payload
                 return
             }
             case ActionTypes.GENERATE_KEY_SUCCESS: {
-                draft.key = action.payload
+                draft.createdKey = action.payload
                 draft.publicKey = action.payload.publicKey
                 return
             }
