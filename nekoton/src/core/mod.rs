@@ -7,8 +7,7 @@ use ton_types::UInt256;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use libnekoton::contracts;
-use libnekoton::core;
+use libnekoton::core::{self, ton_wallet};
 
 use crate::utils::*;
 
@@ -53,7 +52,7 @@ extern "C" {
     pub type ContractType;
 }
 
-impl TryFrom<ContractType> for contracts::wallet::ContractType {
+impl TryFrom<ContractType> for ton_wallet::ContractType {
     type Error = JsValue;
 
     fn try_from(value: ContractType) -> Result<Self, Self::Error> {
@@ -61,12 +60,12 @@ impl TryFrom<ContractType> for contracts::wallet::ContractType {
             .as_string()
             .ok_or_else(|| JsValue::from_str("String with contract type name expected"))?;
 
-        contracts::wallet::ContractType::from_str(&contract_type).handle_error()
+        ton_wallet::ContractType::from_str(&contract_type).handle_error()
     }
 }
 
-impl From<contracts::wallet::ContractType> for ContractType {
-    fn from(c: contracts::wallet::ContractType) -> Self {
+impl From<ton_wallet::ContractType> for ContractType {
+    fn from(c: ton_wallet::ContractType) -> Self {
         JsValue::from(c.to_string()).unchecked_into()
     }
 }

@@ -12,7 +12,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
 use libnekoton::core;
-use libnekoton::storage;
+use libnekoton::external;
 use libnekoton::utils::*;
 
 use crate::utils::*;
@@ -44,7 +44,7 @@ impl TonWalletStateCache {
 
     #[wasm_bindgen]
     pub fn load(&self, address: &str) -> Result<PromiseOptionAccountState, JsValue> {
-        use storage::Storage;
+        use external::Storage;
 
         let key = Self::make_key(address)?;
         let storage = self.storage.clone();
@@ -63,7 +63,7 @@ impl TonWalletStateCache {
 
     #[wasm_bindgen]
     pub fn store(&self, address: &str, state: &crate::core::AccountState) -> Result<(), JsValue> {
-        use storage::Storage;
+        use external::Storage;
 
         let key = Self::make_key(address)?;
         let data = serde_json::to_string(&state.inner).trust_me();
@@ -168,7 +168,7 @@ impl StorageImpl {
 }
 
 #[async_trait]
-impl storage::Storage for StorageImpl {
+impl external::Storage for StorageImpl {
     async fn get(&self, key: &str) -> Result<Option<String>> {
         let (tx, rx) = oneshot::channel();
         self.connector.get(

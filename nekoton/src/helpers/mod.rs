@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use wasm_bindgen::prelude::*;
 
-use libnekoton::contracts::wallet;
+use libnekoton::core::ton_wallet;
 use libnekoton::helpers::address;
 
 use crate::utils::HandleError;
@@ -37,9 +37,9 @@ pub fn compute_ton_wallet_address(
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(public_key).handle_error()?)
         .handle_error()?;
 
-    let wallet_type = wallet::ContractType::try_from(wallet_type)?;
+    let wallet_type = ton_wallet::ContractType::try_from(wallet_type)?;
     Ok(AddressWrapper {
-        inner: wallet::compute_address(&public_key, wallet_type, workchain),
+        inner: ton_wallet::compute_address(&public_key, wallet_type, workchain),
     })
 }
 
@@ -60,6 +60,6 @@ pub fn unpack_address(packed_address: &str, is_url_safe: bool) -> Result<Address
 }
 
 #[wasm_bindgen(js_name = "checkAddress")]
-pub fn check_address(address: &str) ->bool{
+pub fn check_address(address: &str) -> bool {
     address::validate_address(address)
 }

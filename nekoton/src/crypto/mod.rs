@@ -1,7 +1,6 @@
 use wasm_bindgen::prelude::*;
 
-use libnekoton::storage;
-use libnekoton::storage::keystore::mnemonics;
+use libnekoton::crypto;
 
 use crate::utils::*;
 
@@ -9,7 +8,7 @@ use crate::utils::*;
 #[derive(Clone)]
 pub struct StoredKey {
     #[wasm_bindgen(skip)]
-    pub inner: storage::StoredKey,
+    pub inner: crypto::EncryptedKey,
 }
 
 #[wasm_bindgen]
@@ -25,14 +24,14 @@ impl StoredKey {
         password: &str,
     ) -> Result<StoredKey, JsValue> {
         Ok(StoredKey {
-            inner: storage::StoredKey::new(name, password.into(), account_type.into(), &mnemonic)
+            inner: crypto::EncryptedKey::new(name, password.into(), account_type.into(), &mnemonic)
                 .handle_error()?,
         })
     }
 
     #[wasm_bindgen(js_name = "generateMnemonic")]
     pub fn generate_mnemonic(account_type: AccountType) -> Result<GeneratedMnemonic, JsValue> {
-        let key = mnemonics::generate(account_type.into()).handle_error()?;
+        let key = crypto::generate_key(account_type.into()).handle_error()?;
         Ok(GeneratedMnemonic {
             phrase: key.words.join(" "),
             account_type: account_type.inner,
@@ -54,7 +53,7 @@ impl StoredKey {
     #[wasm_bindgen(js_name = "fromJSON")]
     pub fn from_json(data: &str) -> Result<StoredKey, JsValue> {
         Ok(StoredKey {
-            inner: storage::StoredKey::from_reader(data.as_bytes()).handle_error()?,
+            inner: crypto::EncryptedKey::from_reader(data.as_bytes()).handle_error()?,
         })
     }
 
@@ -86,7 +85,7 @@ pub struct GeneratedMnemonic {
     #[wasm_bindgen(skip)]
     pub phrase: String,
     #[wasm_bindgen(skip)]
-    pub account_type: storage::AccountType,
+    pub account_type: crypto::MnemonicType,
 }
 
 #[wasm_bindgen]
@@ -94,8 +93,13 @@ impl GeneratedMnemonic {
     #[wasm_bindgen(js_name = "createKey")]
     pub fn create_key(self, name: &str, password: &str) -> Result<StoredKey, JsValue> {
         Ok(StoredKey {
-            inner: storage::StoredKey::new(name, password.into(), self.account_type, &self.phrase)
-                .handle_error()?,
+            inner: crypto::EncryptedKey::new(
+                name,
+                password.into(),
+                self.account_type,
+                &self.phrase,
+            )
+            .handle_error()?,
         })
     }
 
@@ -114,11 +118,11 @@ impl GeneratedMnemonic {
 #[derive(Copy, Clone)]
 pub struct AccountType {
     #[wasm_bindgen(skip)]
-    pub inner: storage::AccountType,
+    pub inner: crypto::MnemonicType,
 }
 
 impl AccountType {
-    pub fn new(account_type: storage::AccountType) -> Self {
+    pub fn new(account_type: crypto::MnemonicType) -> Self {
         Self {
             inner: account_type,
         }
@@ -129,32 +133,32 @@ impl AccountType {
 impl AccountType {
     #[wasm_bindgen(js_name = "makeLabs")]
     pub fn make_labs(id: u16) -> AccountType {
-        AccountType::new(storage::AccountType::Labs(id))
+        AccountType::new(crypto::MnemonicType::Labs(id))
     }
 
     #[wasm_bindgen(js_name = "makeLegacy")]
     pub fn make_legacy() -> AccountType {
-        AccountType::new(storage::AccountType::Legacy)
+        AccountType::new(crypto::MnemonicType::Legacy)
     }
 
     #[wasm_bindgen(getter, js_name = "wordCount")]
     pub fn word_count(&self) -> u32 {
         match self.inner {
-            storage::AccountType::Labs(_) => 12,
-            storage::AccountType::Legacy => 24,
+            crypto::MnemonicType::Labs(_) => 12,
+            crypto::MnemonicType::Legacy => 24,
         }
     }
 
     #[wasm_bindgen(getter, js_name = "accountId")]
     pub fn account_id(&self) -> u16 {
         match self.inner {
-            storage::AccountType::Labs(id) => id,
+            crypto::MnemonicType::Labs(id) => id,
             _ => 0,
         }
     }
 }
 
-impl From<AccountType> for storage::AccountType {
+impl From<AccountType> for crypto::MnemonicType {
     fn from(t: AccountType) -> Self {
         t.inner
     }

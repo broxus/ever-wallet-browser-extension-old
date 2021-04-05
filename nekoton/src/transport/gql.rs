@@ -9,6 +9,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
 use libnekoton::core;
+use libnekoton::external;
 use libnekoton::transport::{gql, Transport};
 
 use crate::utils::{HandleError, PromiseVoid};
@@ -103,7 +104,7 @@ pub struct GqlConnectionImpl {
 }
 
 #[async_trait]
-impl gql::GqlConnection for GqlConnectionImpl {
+impl external::GqlConnection for GqlConnectionImpl {
     async fn post(&self, data: &str) -> Result<String> {
         let (tx, rx) = oneshot::channel();
 

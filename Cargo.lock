@@ -775,9 +775,9 @@ dependencies = [
 
 [[package]]
 name = "lock_api"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd96ffd135b2fd7b973ac026d28085defbe8983df057ced3eb4f2130b0831312"
+checksum = "5a3c91c24eae6777794bb1997ad98bbb87daf92890acab859f7eaa4320333176"
 dependencies = [
  "scopeguard",
 ]
@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#0f787f12058dda4911509345ca5eca67c692a386"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#92403f481a775268d7815afaab47a4177efd169f"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1454,9 +1454,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.1.1"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "317cca572a0e89c3ce0ca1f1bdc9369547fe318a683418e42ac8f59d14701023"
+checksum = "5b5220f05bb7de7f3f53c7c065e1199b3172696fe2db9f9c4d8ad9b4ee74c342"
 dependencies = [
  "tinyvec_macros",
 ]
@@ -1523,7 +1523,7 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-block.git#4f5bc11f0bf2c48f867fb1ea7b1f9f33134aff51"
+source = "git+https://github.com/tonlabs/ton-labs-block.git#6a5ac8a2d6dcafc06e0ec60263c18d9e122ebe77"
 dependencies = [
  "base64 0.10.1",
  "clear_on_drop",
@@ -1561,7 +1561,7 @@ dependencies = [
 [[package]]
 name = "ton_labs_assembler"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#99df31bbe10f38888776f4ba73050ae6afaca84d"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#6b21de2a52ae9f98b4445e8b3211885c83f15aa6"
 dependencies = [
  "failure",
  "hex 0.4.3",
