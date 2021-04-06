@@ -7,9 +7,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use libnekoton::contracts::wallet;
-use libnekoton::core;
-use libnekoton::storage::keystore;
+use libnekoton::core::{self, ton_wallet};
+use libnekoton::crypto;
 use libnekoton::transport::gql;
 use libnekoton::utils::*;
 
@@ -18,7 +17,7 @@ use crate::utils::*;
 #[wasm_bindgen]
 pub struct TonWallet {
     #[wasm_bindgen(skip)]
-    pub inner: wallet::Wallet,
+    pub inner: ton_wallet::TonWallet,
 }
 
 #[wasm_bindgen]
@@ -31,10 +30,10 @@ impl TonWallet {
         let public_key =
             ed25519_dalek::PublicKey::from_bytes(&hex::decode(public_key).handle_error()?)
                 .handle_error()?;
-        let contract_type = wallet::ContractType::try_from(contract_type)?;
+        let contract_type = ton_wallet::ContractType::try_from(contract_type)?;
 
         Ok(TonWallet {
-            inner: wallet::Wallet::new(public_key, contract_type),
+            inner: ton_wallet::TonWallet::new(public_key, contract_type),
         })
     }
 
@@ -77,8 +76,8 @@ impl TonWallet {
                 .prepare_transfer(&current_state.inner, dest, amount, bounce, None, expire_at)
                 .handle_error()?
             {
-                wallet::TransferAction::Sign(inner) => Some(UnsignedMessage { inner }),
-                wallet::TransferAction::DeployFirst => None,
+                ton_wallet::TransferAction::Sign(inner) => Some(UnsignedMessage { inner }),
+                ton_wallet::TransferAction::DeployFirst => None,
             },
         )
     }
@@ -87,14 +86,14 @@ impl TonWallet {
 #[wasm_bindgen]
 pub struct UnsignedMessage {
     #[wasm_bindgen(skip)]
-    pub inner: Box<dyn keystore::UnsignedMessage>,
+    pub inner: Box<dyn crypto::UnsignedMessage>,
 }
 
 #[wasm_bindgen]
 impl UnsignedMessage {
     #[wasm_bindgen(getter)]
     pub fn hash(&self) -> String {
-        hex::encode(self.inner.hash())
+        hex::encode(crypto::UnsignedMessage::hash(self.inner.as_ref()))
     }
 
     #[wasm_bindgen(js_name = "signFake")]
@@ -104,8 +103,18 @@ impl UnsignedMessage {
     }
 
     #[wasm_bindgen]
-    pub fn sign(&self, key: &crate::crypto::StoredKey, password: &str) -> Result<SignedMessage, JsValue> {
-        let signature = key.inner.sign(self.inner.hash(), password.into()).handle_error()?;
+    pub fn sign(
+        &self,
+        key: &crate::crypto::StoredKey,
+        password: &str,
+    ) -> Result<SignedMessage, JsValue> {
+        let signature = key
+            .inner
+            .sign(
+                crypto::UnsignedMessage::hash(self.inner.as_ref()),
+                password.into(),
+            )
+            .handle_error()?;
         let inner = self.inner.sign(&signature).handle_error()?;
         Ok(SignedMessage { inner })
     }
@@ -114,7 +123,7 @@ impl UnsignedMessage {
 #[wasm_bindgen]
 pub struct SignedMessage {
     #[wasm_bindgen(skip)]
-    pub inner: keystore::SignedMessage,
+    pub inner: crypto::SignedMessage,
 }
 
 #[wasm_bindgen]
@@ -187,7 +196,7 @@ impl TonWalletSubscription {
         use libnekoton::core::AccountSubscription;
 
         let inner = self.inner.clone();
-        let keystore::SignedMessage { message, expire_at } = message.inner.clone();
+        let crypto::SignedMessage { message, expire_at } = message.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut inner = inner.lock().trust_me();

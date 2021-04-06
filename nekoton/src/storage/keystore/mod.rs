@@ -4,6 +4,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
+use libnekoton::crypto;
+use libnekoton::external;
 use libnekoton::storage;
 
 use crate::crypto::{AccountType, StoredKey};
@@ -12,7 +14,7 @@ use crate::utils::*;
 #[wasm_bindgen]
 pub struct KeyStore {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<storage::keystore::KeyStore>,
+    pub inner: Arc<storage::KeyStore>,
 }
 
 #[wasm_bindgen]
@@ -23,7 +25,7 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                storage::keystore::KeyStore::load(storage as Arc<dyn storage::Storage>)
+                storage::KeyStore::load(storage as Arc<dyn external::Storage>)
                     .await
                     .handle_error()?,
             );
@@ -77,7 +79,7 @@ impl KeyStore {
         }))
     }
 
-    #[wasm_bindgen(getter, js_name = "getStoredKeys")]
+    #[wasm_bindgen(js_name = "getStoredKeys")]
     pub fn get_stored_keys(&self) -> PromiseKeyStoreEntries {
         let inner = self.inner.clone();
 
@@ -118,7 +120,7 @@ pub struct KeyStoreEntry {
     #[wasm_bindgen(skip)]
     pub public_key: String,
     #[wasm_bindgen(skip)]
-    pub account_type: storage::AccountType,
+    pub account_type: crypto::MnemonicType,
 }
 
 #[wasm_bindgen]

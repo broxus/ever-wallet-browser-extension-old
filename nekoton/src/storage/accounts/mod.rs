@@ -6,15 +6,16 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use libnekoton::contracts::wallet;
-use libnekoton::storage::{self, accounts};
+use libnekoton::core::ton_wallet;
+use libnekoton::external;
+use libnekoton::storage;
 
 use crate::utils::*;
 
 #[wasm_bindgen]
 pub struct AccountsStorage {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<accounts::AccountsStorage>,
+    pub inner: Arc<storage::AccountsStorage>,
 }
 
 #[wasm_bindgen]
@@ -25,7 +26,7 @@ impl AccountsStorage {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                accounts::AccountsStorage::load(storage as Arc<dyn storage::Storage>)
+                storage::AccountsStorage::load(storage as Arc<dyn external::Storage>)
                     .await
                     .handle_error()?,
             );
@@ -115,6 +116,16 @@ impl AccountsStorage {
         }))
     }
 
+    #[wasm_bindgen(js_name = "setCurrentAccount")]
+    pub fn set_current_account(&self, address: String) -> PromiseVoid {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            inner.set_current_account(&address).await.handle_error()?;
+            Ok(JsValue::undefined())
+        }))
+    }
+
     #[wasm_bindgen(js_name = "getCurrentAccount")]
     pub fn get_current_account(&self) -> PromiseOptionString {
         let inner = self.inner.clone();
@@ -139,7 +150,7 @@ pub struct AccountsStorageEntry {
     #[wasm_bindgen(skip)]
     pub public_key: String,
     #[wasm_bindgen(skip)]
-    pub contract_type: wallet::ContractType,
+    pub contract_type: ton_wallet::ContractType,
 }
 
 #[wasm_bindgen]
@@ -168,7 +179,7 @@ impl AccountsStorageEntry {
 #[wasm_bindgen]
 pub struct AssetsList {
     #[wasm_bindgen(skip)]
-    pub inner: accounts::AssetsList,
+    pub inner: storage::AssetsList,
 }
 
 #[wasm_bindgen]
@@ -211,7 +222,7 @@ impl AssetsList {
 #[wasm_bindgen]
 pub struct TonWalletAsset {
     #[wasm_bindgen(skip)]
-    pub inner: accounts::TonWalletAsset,
+    pub inner: storage::TonWalletAsset,
 }
 
 #[wasm_bindgen]
@@ -232,8 +243,8 @@ impl TonWalletAsset {
     }
 }
 
-impl From<accounts::TonWalletAsset> for TonWalletAsset {
-    fn from(inner: accounts::TonWalletAsset) -> Self {
+impl From<storage::TonWalletAsset> for TonWalletAsset {
+    fn from(inner: storage::TonWalletAsset) -> Self {
         Self { inner }
     }
 }
@@ -241,7 +252,7 @@ impl From<accounts::TonWalletAsset> for TonWalletAsset {
 #[wasm_bindgen]
 pub struct TokenWalletAsset {
     #[wasm_bindgen(skip)]
-    pub inner: accounts::TokenWalletAsset,
+    pub inner: storage::TokenWalletAsset,
 }
 
 #[wasm_bindgen]
@@ -252,8 +263,8 @@ impl TokenWalletAsset {
     }
 }
 
-impl From<accounts::TokenWalletAsset> for TokenWalletAsset {
-    fn from(inner: accounts::TokenWalletAsset) -> Self {
+impl From<storage::TokenWalletAsset> for TokenWalletAsset {
+    fn from(inner: storage::TokenWalletAsset) -> Self {
         Self { inner }
     }
 }
@@ -261,7 +272,7 @@ impl From<accounts::TokenWalletAsset> for TokenWalletAsset {
 #[wasm_bindgen]
 pub struct DePoolAsset {
     #[wasm_bindgen(skip)]
-    pub inner: accounts::DePoolAsset,
+    pub inner: storage::DePoolAsset,
 }
 
 #[wasm_bindgen]
@@ -272,8 +283,8 @@ impl DePoolAsset {
     }
 }
 
-impl From<accounts::DePoolAsset> for DePoolAsset {
-    fn from(inner: accounts::DePoolAsset) -> Self {
+impl From<storage::DePoolAsset> for DePoolAsset {
+    fn from(inner: storage::DePoolAsset) -> Self {
         Self { inner }
     }
 }
