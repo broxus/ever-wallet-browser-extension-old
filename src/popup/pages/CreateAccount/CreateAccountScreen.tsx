@@ -38,9 +38,10 @@ const groupBadgeStyles = {
     textAlign: 'center',
 }
 
-const formatGroupLabel = (data) => (
+const formatGroupLabel = (data: any) => (
     <div style={groupStyles}>
         <span>{data.label}</span>
+        {/*@ts-ignore*/}
         <span style={groupBadgeStyles}>{data.options.length}</span>
     </div>
 )
@@ -115,6 +116,7 @@ const CreateAccountScreen = () => {
         <AccountSelectKey setStep={setStep} />,
         <EnterPassword setStep={setStep} minHeight={'448px'} />,
         <SaveSeed setStep={setStep} />,
+        // @ts-ignore
         <CheckSeed setStep={setStep} />,
     ]
     return createAccountContent[step]

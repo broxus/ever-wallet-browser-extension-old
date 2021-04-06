@@ -1,19 +1,22 @@
 import init, {
     AccountsStorage,
     AccountType,
-    GeneratedMnemonic, GqlConnection,
+    GeneratedMnemonic,
+    GqlConnection,
     KeyStore,
     Storage,
-    StoredKey, TonWallet, TonWalletSubscription,
+    StoredKey,
+    TonWallet,
+    TonWalletSubscription,
 } from '../../../../nekoton/pkg'
-import {AppDispatch} from '../index'
-import {GqlSocket, mergeTransactions, StorageConnector} from "../../../background/common";
-import {MessageToPrepare} from "./types";
-import Decimal from 'decimal.js';
+import { AppDispatch } from '../index'
+import { GqlSocket, mergeTransactions, StorageConnector } from '../../../background/common'
+import { MessageToPrepare } from './types'
+import Decimal from 'decimal.js'
 
-Decimal.set({maxE: 500, minE: -500});
+Decimal.set({ maxE: 500, minE: -500 })
 
-import * as nt from "../../../../nekoton/pkg";
+import * as nt from '../../../../nekoton/pkg'
 
 export const ActionTypes = {
     SETLOCALE: 'app/set-locale',
@@ -31,70 +34,69 @@ export const ActionTypes = {
     SET_FEE_CALCULATION_FAILURE: 'SET_FEE_CALCULATION_FAILURE',
 }
 
-let __storage: Storage | null = null;
+let __storage: Storage | null = null
 const loadStorage = () => {
     if (__storage == null) {
-        __storage = new Storage(new StorageConnector());
+        __storage = new Storage(new StorageConnector())
     }
-    return __storage;
-};
-
-let __accountsStorage: AccountsStorage | null = null;
-const loadAccountsStorage = async () => {
-    if (__accountsStorage == null) {
-        __accountsStorage = await AccountsStorage.load(loadStorage());
-    }
-    return __accountsStorage;
+    return __storage
 }
 
-let __keystore: KeyStore | null = null;
+let __accountsStorage: AccountsStorage | null = null
+const loadAccountsStorage = async () => {
+    if (__accountsStorage == null) {
+        __accountsStorage = await AccountsStorage.load(loadStorage())
+    }
+    return __accountsStorage
+}
+
+let __keystore: KeyStore | null = null
 const loadKeyStore = async () => {
     if (__keystore == null) {
-        __keystore = await KeyStore.load(loadStorage());
+        __keystore = await KeyStore.load(loadStorage())
     }
-    return __keystore;
+    return __keystore
 }
 
 type ConnectionState = {
-    socket: GqlSocket,
-    connection: GqlConnection,
+    socket: GqlSocket
+    connection: GqlConnection
 }
 
 let __connection: ConnectionState | null = null
 const loadConnection = async () => {
     if (__connection == null) {
-        const socket = new GqlSocket();
+        const socket = new GqlSocket()
         const connection = await socket.connect({
             endpoint: 'https://main.ton.dev/graphql',
             timeout: 60000, // 60s
-        });
+        })
 
         __connection = <ConnectionState>{
             socket,
             connection,
-        };
+        }
     }
-    return __connection;
+    return __connection
 }
 
 class TonWalletHandler {
-    constructor(private dispatch: AppDispatch, private address: string) {
-    }
+    constructor(private dispatch: AppDispatch, private address: string) {}
 
     onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
-        console.log(pendingTransaction, transaction);
+        console.log(pendingTransaction, transaction)
     }
 
     onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-        console.log(pendingTransaction);
+        console.log(pendingTransaction)
     }
 
     onStateChanged(newState: nt.AccountState) {
         this.dispatch({
             type: ActionTypes.SET_TON_WALLET_STATE,
             payload: newState,
-        });
-        console.log(newState);
+        })
+        console.log(newState)
     }
 
     onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
@@ -103,21 +105,23 @@ class TonWalletHandler {
             payload: {
                 transactions,
                 info,
-            }
-        });
+            },
+        })
     }
 }
 
-const __subscriptions = new Map<string, TonWalletSubscription>();
+const __subscriptions = new Map<string, TonWalletSubscription>()
 const loadSubscription = async (address: string, dispatch: AppDispatch) => {
-    let subscription = __subscriptions.get(address);
+    let subscription = __subscriptions.get(address)
     if (subscription == null) {
-        const ctx = await loadConnection();
-        subscription = await ctx.connection.subscribeToTonWallet(address, new TonWalletHandler(dispatch, address));
+        const ctx = await loadConnection()
+        subscription = await ctx.connection.subscribeToTonWallet(
+            address,
+            new TonWalletHandler(dispatch, address)
+        )
     }
-    return subscription;
-};
-
+    return subscription
+}
 
 export const setLocale = (locale: any) => async (
     dispatch: (arg0: { type: string; payload: any }) => void
@@ -150,7 +154,7 @@ export const createKey = (phrase: GeneratedMnemonic, password: string) => async 
 
 export const addKey = (key: StoredKey) => async (dispatch: AppDispatch) => {
     try {
-        await loadKeyStore().then(keystore => keystore.addKey(key))
+        await loadKeyStore().then((keystore) => keystore.addKey(key))
         dispatch({
             type: ActionTypes.ADD_KEY_SUCCESS,
         })
@@ -163,7 +167,7 @@ export const addKey = (key: StoredKey) => async (dispatch: AppDispatch) => {
 
 export const restoreKey = (publicKey: any) => async (dispatch: AppDispatch) => {
     try {
-        const restoredKey = await loadKeyStore().then(keystore => keystore.getKey(publicKey));
+        const restoredKey = await loadKeyStore().then((keystore) => keystore.getKey(publicKey))
         dispatch({
             type: ActionTypes.RESTORE_KEY_SUCCESS,
             payload: restoredKey,
@@ -177,7 +181,7 @@ export const restoreKey = (publicKey: any) => async (dispatch: AppDispatch) => {
 
 export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDispatch) => {
     try {
-        const accountsStorage = await loadAccountsStorage();
+        const accountsStorage = await loadAccountsStorage()
 
         console.log('accountsStorage', accountsStorage)
         const address = await accountsStorage.addAccount('Account 1', publicKey, 'SurfWallet', true)
@@ -196,47 +200,55 @@ export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDisp
     }
 }
 
-export const calculateFee = (address: string, messageToPrepare: MessageToPrepare) => async (dispatch: AppDispatch) => {
+export const calculateFee = (address: string, messageToPrepare: MessageToPrepare) => async (
+    dispatch: AppDispatch
+) => {
     try {
-        const accountsStorage = await loadAccountsStorage();
+        const accountsStorage = await loadAccountsStorage()
 
-        const account = await accountsStorage.getAccount(address);
+        const account = await accountsStorage.getAccount(address)
         if (account == null) {
-            throw new Error("Selected account doesn't exist");
+            throw new Error("Selected account doesn't exist")
         }
 
-        const subscription = await loadSubscription(address, dispatch);
+        const subscription = await loadSubscription(address, dispatch)
 
-        const contractState = await subscription.getContractState();
+        const contractState = await subscription.getContractState()
         if (contractState == null) {
-            throw new Error("Contract state is empty");
+            throw new Error('Contract state is empty')
         }
 
-        const amount = new Decimal(messageToPrepare.amount).mul('1000000000'); // TODO: get multiplier from precision table
-        const bounce = false;
-        const expireAt = new Date().getTime() + 60; // expire in 60 seconds
+        const amount = new Decimal(messageToPrepare.amount).mul('1000000000') // TODO: get multiplier from precision table
+        const bounce = false
+        const expireAt = new Date().getTime() + 60 // expire in 60 seconds
 
-        const wallet = new TonWallet(account.tonWallet.publicKey, account.tonWallet.contractType);
+        const wallet = new TonWallet(account.tonWallet.publicKey, account.tonWallet.contractType)
 
-        console.log(amount.ceil());
+        console.log(amount.ceil())
 
-        const unsignedMessage = wallet.prepareTransfer(contractState, messageToPrepare.recipient, amount.ceil().toFixed(0), bounce, expireAt);
+        const unsignedMessage = wallet.prepareTransfer(
+            contractState,
+            messageToPrepare.recipient,
+            amount.ceil().toFixed(0),
+            bounce,
+            expireAt
+        )
         if (unsignedMessage == null) {
             // TODO: show notification with deployment
-            throw new Error("Contract must be deployed first");
+            throw new Error('Contract must be deployed first')
         }
 
-        const signedMessage = unsignedMessage.signFake();
-        const totalFees = await subscription.estimateFees(signedMessage);
+        const signedMessage = unsignedMessage.signFake()
+        const totalFees = await subscription.estimateFees(signedMessage)
 
-        console.log("Calculated fees:", totalFees);
+        console.log('Calculated fees:', totalFees)
 
         dispatch({
             type: ActionTypes.SET_FEE_CALCULATION_SUCCESS,
             payload: totalFees,
         })
     } catch (error) {
-        console.log(error);
+        console.log(error)
         dispatch({
             type: ActionTypes.SET_FEE_CALCULATION_FAILURE,
         })

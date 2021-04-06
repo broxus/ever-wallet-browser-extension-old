@@ -1,4 +1,4 @@
-import {AccountState, GeneratedMnemonic, Transaction} from '../../../../nekoton/pkg'
+import { AccountState, GeneratedMnemonic, Transaction } from '../../../../nekoton/pkg'
 
 export type Locale = 'en_US' | 'ru_RU'
 
@@ -8,16 +8,16 @@ export type Locale = 'en_US' | 'ru_RU'
 // }>
 
 export type AppState = {
+    accountType: any
     locale: Locale
     seed: string[]
-    accountType: any
     phrase: GeneratedMnemonic
     publicKey: string
     createdKey: string
-    account: string,
-    tonWalletState: AccountState | null,
-    transactions: Transaction[],
-    currentFee: string,
+    account: string
+    tonWalletState: AccountState | null
+    transactions: Transaction[]
+    currentFee: string
 }
 
 export type Action = {
@@ -26,7 +26,7 @@ export type Action = {
 }
 
 export type MessageToPrepare = {
-    amount: string,
-    recipient: string,
-    comment?: string,
-};
+    amount: string
+    recipient: string
+    comment?: string
+}

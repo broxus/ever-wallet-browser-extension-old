@@ -244,7 +244,7 @@ export const Asset = () => (
     </div>
 )
 
-const Assets = ({ setActiveContent }) => {
+const Assets:React.FC<any> = ({ setActiveContent }) => {
     const [panelVisible, setPanelVisible] = useState(false)
 
     return (
@@ -378,7 +378,7 @@ const Transactions = () => (
     </div>
 )
 
-const UserAssets = ({ setActiveContent }) => {
+const UserAssets:React.FC<any> = ({ setActiveContent }) => {
     const [activeTab, setActiveTab] = useState(0)
     const content = [<Assets setActiveContent={setActiveContent} />, <Transactions />]
 

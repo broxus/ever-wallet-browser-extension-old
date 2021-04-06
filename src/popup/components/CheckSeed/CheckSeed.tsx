@@ -7,11 +7,11 @@ import { connect } from 'react-redux'
 import './check-seed.scss'
 
 interface ICheckSeed {
-    setStep: SetStateAction<number>
+    setStep: any
     seed: string[]
 }
 
-const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
+const CheckSeed: React.FC<any> = ({ setStep, seed }) => {
     const { register, handleSubmit, errors } = useForm()
 
     const validateWord = (word: string, position: number) => {
@@ -21,7 +21,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
         return true
     }
 
-    const onSubmit = (data) => {
+    const onSubmit = (data: any) => {
         console.log('correct')
         console.log('data', data)
     }

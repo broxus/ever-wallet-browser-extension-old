@@ -76,7 +76,7 @@ const EnterPassword: React.FC<any> = ({ currentFee, setStep, onReturn, data }) =
 const EnterAddress: React.FC<any> = ({ account, setStep, onReturn, setFormData, calculateFee }) => {
     const { register, handleSubmit, errors, watch } = useForm()
 
-    const onSubmit = (data) => {
+    const onSubmit = (data: any) => {
         console.log(data)
         setFormData(data)
 
@@ -149,6 +149,9 @@ const EnterAddress: React.FC<any> = ({ account, setStep, onReturn, setFormData, 
 
 interface IAddNewToken {
     onReturn: Dispatch<SetStateAction<boolean>>
+    account: any
+    calculateFee: any
+    currentFee: any
 }
 
 const Send: React.FC<IAddNewToken> = ({ onReturn, account, calculateFee, currentFee }) => {

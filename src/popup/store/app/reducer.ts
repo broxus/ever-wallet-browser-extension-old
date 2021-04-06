@@ -1,12 +1,13 @@
-import {produce} from 'immer'
-import {ActionTypes} from './actions'
-import {Action, AppState} from './types'
+import { produce } from 'immer'
+import { ActionTypes } from './actions'
+import { Action, AppState } from './types'
 import * as nt from '../../../../nekoton/pkg'
-import {AccountState, Transaction} from "../../../../nekoton/pkg";
-import {mergeTransactions} from "../../../background/common";
+import { AccountState, Transaction } from '../../../../nekoton/pkg'
+import { mergeTransactions } from '../../../background/common'
 
-// @ts-ignore
 export const initialState = Object.freeze<AppState>({
+    // @ts-ignore
+    accountType: null,
     locale: 'en_US',
     seed: '',
     phrase: {},
@@ -56,7 +57,11 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 return
             }
             case ActionTypes.ADD_NEW_TRANSACTIONS: {
-                mergeTransactions(draft.transactions, action.payload.transactions, action.payload.info);
+                mergeTransactions(
+                    draft.transactions,
+                    action.payload.transactions,
+                    action.payload.info
+                )
                 return
             }
             case ActionTypes.RESTORE_KEY_SUCCESS: {
@@ -64,7 +69,7 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 return
             }
             case ActionTypes.SET_FEE_CALCULATION_SUCCESS: {
-                draft.currentFee = action.payload;
+                draft.currentFee = action.payload
                 return
             }
         }

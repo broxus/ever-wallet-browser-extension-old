@@ -58,17 +58,17 @@ module.exports = {
         }),
         new CopyWebpackPlugin({
             patterns: [
-                {from: path.resolve(__dirname, "nekoton/pkg/index_bg.wasm")},
+                { from: path.resolve(__dirname, 'nekoton/pkg/index_bg.wasm') },
                 { from: './src/extension_manifest.json', to: 'manifest.json' },
-                { from: './src/icons/icon16.png' },
-                { from: './src/icons/icon48.png' },
-                { from: './src/icons/icon128.png' },
+                // { from: './src/icons/icon16.png' },
+                // { from: './src/icons/icon48.png' },
+                // { from: './src/icons/icon128.png' },
             ],
         }),
     ],
     output: {
         filename: '[name].js',
-        path: path.resolve(__dirname, 'dist/extension')
+        path: path.resolve(__dirname, 'dist/extension'),
     },
     experiments: {
         asyncWebAssembly: true,
