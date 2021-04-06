@@ -862,7 +862,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#92403f481a775268d7815afaab47a4177efd169f"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#bb3b1926e73141be2a32ea17ee229d1a255a3b19"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1561,7 +1561,7 @@ dependencies = [
 [[package]]
 name = "ton_labs_assembler"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#6b21de2a52ae9f98b4445e8b3211885c83f15aa6"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#4e2a9974f8cf5306cb5d9933696c6500bb26a38f"
 dependencies = [
  "failure",
  "hex 0.4.3",

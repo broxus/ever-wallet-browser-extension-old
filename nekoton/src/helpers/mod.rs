@@ -1,10 +1,9 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use wasm_bindgen::prelude::*;
-
 use libnekoton::core::ton_wallet;
 use libnekoton::helpers::address;
+use wasm_bindgen::prelude::*;
 
 use crate::utils::HandleError;
 
@@ -43,6 +42,12 @@ pub fn compute_ton_wallet_address(
     })
 }
 
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type StringArray;
+}
+
 #[wasm_bindgen(js_name = "packAddress")]
 pub fn pack_address(
     addr: AddressWrapper,
@@ -62,4 +67,11 @@ pub fn unpack_address(packed_address: &str, is_url_safe: bool) -> Result<Address
 #[wasm_bindgen(js_name = "checkAddress")]
 pub fn check_address(address: &str) -> bool {
     address::validate_address(address)
+}
+
+#[wasm_bindgen(js_name = "getHints")]
+pub fn get_hints(word: &str) -> StringArray {
+    use wasm_bindgen::JsCast;
+    let ar: js_sys::Array = libnekoton::crypto::get_hints(word).into_iter().map(|x| JsValue::from(x)).collect();
+    ar.unchecked_into::<StringArray>()
 }
