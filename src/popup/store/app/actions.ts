@@ -216,6 +216,8 @@ export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDisp
     }
 }
 
+// export const createAccount = (name, publicKey, contractType)
+
 export const calculateFee = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch
 ) => {
