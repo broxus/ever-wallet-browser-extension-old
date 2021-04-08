@@ -1,33 +1,31 @@
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
-
 import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen'
 import PolicySignScreen from './pages/PolicySignScreen/PolicySignScreen'
-import GenerateSeedScreen, { CheckSeed } from './pages/GenerateSeed/GenerateSeedScreen'
-import CreatePasswordScreen, {
-    ConfirmPasswordScreen,
-} from './pages/CreatePassword/CreatePasswordScreen'
+import GenerateSeedScreen from './pages/GenerateSeed/GenerateSeedScreen'
+import CreatePasswordScreen from './pages/CreatePassword/CreatePasswordScreen'
 import MainPageScreen from './pages/MainPage/MainPageScreen'
 import CreateAccountScreen from './pages/CreateAccount/CreateAccountScreen'
 import store from './store/index'
 import init from '../../nekoton/pkg'
 import { Provider } from 'react-redux'
 import SelectWallet from './pages/SelectWallet/SelectWallet'
+import CheckSeedScreen from './pages/GenerateSeed/CheckSeedScreen'
 import './styles/main.scss'
 
-const tempScreens = [
-    <WelcomeScreen />,
-    <PolicySignScreen />,
-    <GenerateSeedScreen />,
-    <CheckSeed />,
-    <CreatePasswordScreen />,
-    <SelectWallet />,
-    <MainPageScreen />,
-    <CreateAccountScreen />,
-]
-
 const App: React.FC = () => {
-    const [step, setStep] = useState(7)
+    const [step, setStep] = useState<number>(7)
+
+    const tempScreens = [
+        <WelcomeScreen />,
+        <PolicySignScreen />,
+        <GenerateSeedScreen setStep={setStep} />,
+        <CheckSeedScreen setStep={setStep} />,
+        <CreatePasswordScreen setStep={setStep} />,
+        <SelectWallet />,
+        <MainPageScreen />,
+        <CreateAccountScreen />,
+    ]
 
     const navigate = (event: { key: any }) => {
         const key = event.key // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
