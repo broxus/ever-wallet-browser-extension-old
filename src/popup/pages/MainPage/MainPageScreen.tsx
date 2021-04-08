@@ -157,7 +157,12 @@ const AccountDetails: React.FC<any> = ({ parentStep, account }) => {
                 </div>
                 <div className="main-page__account-details-acc">
                     <span className="main-page__account-details-acc-account"> Account 1</span>
-                    <CopyToClipboard text={account} onCopy={() => setCopied(true)}>
+                    <CopyToClipboard
+                        text={account}
+                        onCopy={() => {
+                            ReactTooltip.hide()
+                        }}
+                    >
                         <span
                             className="main-page__account-details-acc-address"
                             data-tip="Click to copy"
@@ -244,7 +249,7 @@ export const Asset = () => (
     </div>
 )
 
-const Assets:React.FC<any> = ({ setActiveContent }) => {
+const Assets: React.FC<any> = ({ setActiveContent }) => {
     const [panelVisible, setPanelVisible] = useState(false)
 
     return (
@@ -378,7 +383,7 @@ const Transactions = () => (
     </div>
 )
 
-const UserAssets:React.FC<any> = ({ setActiveContent }) => {
+const UserAssets: React.FC<any> = ({ setActiveContent }) => {
     const [activeTab, setActiveTab] = useState(0)
     const content = [<Assets setActiveContent={setActiveContent} />, <Transactions />]
 
