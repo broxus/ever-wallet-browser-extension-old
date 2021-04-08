@@ -21,7 +21,6 @@ const tempScreens = [
     <GenerateSeedScreen />,
     <CheckSeed />,
     <CreatePasswordScreen />,
-    <ConfirmPasswordScreen />,
     <SelectWallet />,
     <MainPageScreen />,
     <CreateAccountScreen />,
