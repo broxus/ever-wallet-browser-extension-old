@@ -33,8 +33,16 @@
 
                 &::before {
                     content: counter(my-counter) '. ';
-                    color: black;
-                    font-weight: bold;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    line-height: 20px;
+                    letter-spacing: 0.25px;
+                    color: #96a1a7;
+                    flex: none;
+                    order: 0;
+                    flex-grow: 0;
+                    margin: 0px 0px;
                     width: 3em;
                     box-sizing: border-box;
                     display: inline-block;
