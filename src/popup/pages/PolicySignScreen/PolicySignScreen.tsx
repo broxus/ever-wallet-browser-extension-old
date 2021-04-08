@@ -4,7 +4,11 @@ import { Button } from '../../components/button'
 import './policy-sign.scss'
 import Checkbox from '../../components/Checkbox/Checkbox'
 
-const PolicySignScreen = () => {
+interface IPolicySignScreen {
+    setStep: (arg0: number) => void
+}
+
+const PolicySignScreen: React.FC<IPolicySignScreen> = ({ setStep }) => {
     const [checked, setChecked] = useState(false)
     return (
         <>
@@ -29,9 +33,13 @@ const PolicySignScreen = () => {
                 </div>
                 <div>
                     <div className="policy-sign-page__content-button">
-                        <Button text="Submit" disabled={!checked} />
+                        <Button
+                            text="Submit"
+                            disabled={!checked}
+                            onClick={() => (checked ? setStep(2) : null)}
+                        />
                     </div>
-                    <Button text="Back" white />
+                    <Button text="Back" white onClick={() => setStep(0)} />
                 </div>
             </div>
         </>

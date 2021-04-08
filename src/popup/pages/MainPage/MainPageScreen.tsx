@@ -415,16 +415,15 @@ const UserAssets: React.FC<any> = ({ setActiveContent }) => {
 }
 
 interface IMainPageScreen {
-    locale: any
     getCurrentAccount: (arg0: string) => void
     publicKey: string
     phrase: GeneratedMnemonic
     createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
     account: string
+    store: any
 }
 
 const MainPageScreen: React.FC<IMainPageScreen> = ({
-    locale,
     getCurrentAccount,
     publicKey,
     phrase,
@@ -546,7 +545,6 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({
-    locale: store.app.locale,
     seed: store.app.seed,
     publicKey: store.app.publicKey,
     phrase: store.app.phrase,

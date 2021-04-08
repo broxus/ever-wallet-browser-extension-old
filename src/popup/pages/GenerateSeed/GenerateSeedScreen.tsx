@@ -82,7 +82,7 @@ const GenerateSeedScreen: React.FC<IGenerateSeedScreen> = ({
                     <CopyButton text={seed.length ? seed?.join(',') : ''}>
                         <Button text={'Copy all words'} white />
                     </CopyButton>
-                    <Button text={'Back'} white noBorder />
+                    <Button text={'Back'} white noBorder onClick={() => setStep(1)} />
                 </div>
             </div>
         </>

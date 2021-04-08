@@ -1,18 +1,21 @@
 import React, { useMemo } from 'react'
 import Input from '../../components/Input/Input'
 import { Button } from '../../components/button'
-import './create-password.scss'
 import { useForm } from 'react-hook-form'
-import CheckSeedInput from '../../components/CheckSeedInput/CheckSeedInput'
+import { connect } from 'react-redux'
+import { setPassword } from '../../store/app/actions'
+import './create-password.scss'
 
 interface ICreatePasswordScreen {
     setStep: (arg0: number) => void
+    setPassword: (arg0: string) => void
 }
 
-const CreatePasswordScreen: React.FC<ICreatePasswordScreen> = ({ setStep }) => {
+const CreatePasswordScreen: React.FC<ICreatePasswordScreen> = ({ setStep, setPassword }) => {
     const { register, handleSubmit, errors, watch } = useForm()
 
     const onSubmit = () => {
+        setPassword(watch('password'))
         setStep(5)
     }
 
@@ -62,4 +65,6 @@ const CreatePasswordScreen: React.FC<ICreatePasswordScreen> = ({ setStep }) => {
     )
 }
 
-export default CreatePasswordScreen
+export default connect(null, {
+    setPassword,
+})(CreatePasswordScreen)

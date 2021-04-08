@@ -17,14 +17,13 @@ const App: React.FC = () => {
     const [step, setStep] = useState<number>(0)
 
     const tempScreens = [
-        <WelcomeScreen />,
-        <PolicySignScreen />,
+        <WelcomeScreen setStep={setStep} />,
+        <PolicySignScreen setStep={setStep} />,
         <GenerateSeedScreen setStep={setStep} />,
         <CheckSeedScreen setStep={setStep} />,
         <CreatePasswordScreen setStep={setStep} />,
         <SelectWallet setStep={setStep} />,
         <MainPageScreen />,
-        <CreateAccountScreen />,
     ]
 
     const navigate = (event: { key: any }) => {

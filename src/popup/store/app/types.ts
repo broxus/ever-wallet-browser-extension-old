@@ -9,6 +9,8 @@ export type Locale = 'en_US' | 'ru_RU'
 
 export type AppState = {
     accountType: any
+    walletType: 'SafeMultisig (default)' | 'SafeMultisig24' | 'Setcode Multisig' | 'Surf' | ''
+    pwd: string
     locale: Locale
     seed: string[]
     phrase: GeneratedMnemonic

@@ -11,6 +11,7 @@ export const initialState = Object.freeze<AppState>({
     locale: 'en_US',
     seed: '',
     walletType: '',
+    pwd: '',
     phrase: {},
     createdKey: '',
     publicKey: '',
@@ -43,6 +44,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
             }
             case ActionTypes.SET_WALLET_TYPE: {
                 draft.walletType = action.payload
+                return
+            }
+            case ActionTypes.SET_PASSWORD: {
+                draft.pwd = action.payload
                 return
             }
             case ActionTypes.GENERATE_KEY_SUCCESS: {

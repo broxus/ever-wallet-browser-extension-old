@@ -33,6 +33,7 @@ export const ActionTypes = {
     ADD_NEW_TRANSACTIONS: 'ADD_NEW_TRANSACTIONS',
     SET_FEE_CALCULATION_SUCCESS: 'SET_FEE_CALCULATION_SUCCESS',
     SET_FEE_CALCULATION_FAILURE: 'SET_FEE_CALCULATION_FAILURE',
+    SET_PASSWORD: 'SET_PASSWORD',
 }
 
 let __storage: Storage | null = null
@@ -147,6 +148,12 @@ export const setWalletType = (type: string) => (dispatch: AppDispatch) => {
     dispatch({
         type: ActionTypes.SET_WALLET_TYPE,
         payload: type,
+    })
+}
+export const setPassword = (pwd: string) => (dispatch: AppDispatch) => {
+    dispatch({
+        type: ActionTypes.SET_PASSWORD,
+        payload: pwd,
     })
 }
 

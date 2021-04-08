@@ -3,7 +3,11 @@ import SittingMan from '../../img/welcome.svg'
 import { Button } from '../../components/button'
 import './welcome-page.scss'
 
-const WelcomeScreen = () => (
+interface IWelcomeScreen {
+    setStep: (arg0: number) => void
+}
+
+const WelcomeScreen: React.FC<IWelcomeScreen> = ({ setStep }) => (
     <>
         <div className="welcome-page__bg"></div>
         <div className="welcome-page__content">
@@ -14,7 +18,7 @@ const WelcomeScreen = () => (
             </div>
             <div>
                 <div className="welcome-page__content-button">
-                    <Button text="Create a new wallet" />
+                    <Button text="Create a new wallet" onClick={() => setStep(1)} />
                 </div>
                 <Button text="Sign in with seed phrase or private key" white />
             </div>

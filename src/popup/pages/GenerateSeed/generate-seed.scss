@@ -18,6 +18,10 @@
         height: 100%;
         width: 100%;
 
+        &-form {
+            min-height: 304px;
+        }
+
         &-title {
             margin-bottom: 28px;
         }

@@ -42,7 +42,11 @@ const CheckSeedScreen: React.FC<ICheckSeed> = ({ setStep, seed }) => {
     return (
         <div className="generate-seed-page__content">
             <h2>Let’s check the seed phrase</h2>
-            <form id="words" onSubmit={handleSubmit(onSubmit)}>
+            <form
+                id="words"
+                onSubmit={handleSubmit(onSubmit)}
+                className="generate-seed-page__content-form"
+            >
                 {numbers.map((item: number, i: number) => (
                     <CheckSeedInput
                         key={i}
@@ -61,7 +65,7 @@ const CheckSeedScreen: React.FC<ICheckSeed> = ({ setStep, seed }) => {
             </form>
             <div className="generate-seed-page__content-check-seed-buttons">
                 <Button text={'Confirm'} type="submit" form="words" />
-                <Button text={'Back'} white />
+                <Button text={'Back'} white onClick={() => setStep(2)} />
             </div>
         </div>
     )
