@@ -1,4 +1,4 @@
-import init, {
+import {
     AccountsStorage,
     AccountType,
     GeneratedMnemonic,
@@ -145,20 +145,15 @@ export const checkAccounts = () => async (dispatch: AppDispatch) => {
     if (accounts.length === 0) {
         dispatch({
             type: ActionTypes.SET_ACCOUNT_LOADED,
-            payload: false,
+            payload: { loaded: false },
         })
     } else {
         const currentAccount = await accountsStorage.getCurrentAccount()
         console.log('currentAccount', currentAccount)
         dispatch({
             type: ActionTypes.SET_ACCOUNT_LOADED,
-            payload: true,
+            payload: { loaded: true, currentAccount },
         })
-        //
-        // dispatch({
-        //     type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
-        //     payload: address,
-        // })
     }
 }
 
@@ -186,6 +181,7 @@ export const setWalletType = (type: string) => (dispatch: AppDispatch) => {
         payload: type,
     })
 }
+
 export const setPassword = (pwd: string) => (dispatch: AppDispatch) => {
     dispatch({
         type: ActionTypes.SET_PASSWORD,
@@ -231,15 +227,47 @@ export const restoreKey = (publicKey: any) => async (dispatch: AppDispatch) => {
     }
 }
 
-export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDispatch) => {
+// export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDispatch) => {
+//     try {
+//         const accountsStorage = await loadAccountsStorage()
+//
+//         console.log('accountsStorage', accountsStorage)
+//         const address = await accountsStorage.addAccount('Account 1', publicKey, 'SurfWallet', true)
+//         console.log('address', address)
+//         const currentAccount = await accountsStorage.getCurrentAccount()
+//         console.log('currentAccount', currentAccount)
+//         dispatch({
+//             type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
+//             payload: address,
+//         })
+//     } catch (error) {
+//         console.log(error)
+//         dispatch({
+//             type: ActionTypes.SET_CURRENT_ACCOUNT_FAILURE,
+//         })
+//     }
+// }
+
+const WalletTypeMap = {
+    'SafeMultisig (default)': 'SafeMultisigWallet',
+    'SafeMultisig24': 'SetcodeMultisigWallet',
+    'Setcode Multisig': 'SetcodeMultisigWallet',
+    'Surf': 'SurfWallet',
+}
+
+export const createAccount = (name: string, publicKey: string, contractType: string) => async (
+    dispatch: AppDispatch
+) => {
     try {
         const accountsStorage = await loadAccountsStorage()
-
         console.log('accountsStorage', accountsStorage)
-        const address = await accountsStorage.addAccount('Account 1', publicKey, 'SurfWallet', true)
+        const address = await accountsStorage.addAccount(
+            name,
+            publicKey, // @ts-ignore
+            WalletTypeMap[contractType],
+            true
+        )
         console.log('address', address)
-        const currentAccount = await accountsStorage.getCurrentAccount()
-        console.log('currentAccount', currentAccount)
         dispatch({
             type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
             payload: address,
@@ -251,8 +279,6 @@ export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDisp
         })
     }
 }
-
-// export const createAccount = (name, publicKey, contractType)
 
 export const calculateFee = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch

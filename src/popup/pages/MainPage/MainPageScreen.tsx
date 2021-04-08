@@ -15,7 +15,7 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import { addKey, createKey, getCurrentAccount, restoreKey } from '../../store/app/actions'
+import { addKey, createKey, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
@@ -338,7 +338,6 @@ const UserAssets: React.FC<any> = ({ setActiveContent }) => {
 }
 
 interface IMainPageScreen {
-    getCurrentAccount: (arg0: string) => void
     publicKey: string
     phrase: GeneratedMnemonic
     createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
@@ -348,7 +347,6 @@ interface IMainPageScreen {
 }
 
 const MainPageScreen: React.FC<IMainPageScreen> = ({
-    getCurrentAccount,
     publicKey,
     phrase,
     createKey,
@@ -374,11 +372,11 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
         }
     }, [phrase])
 
-    useEffect(() => {
-        if (publicKey && !account) {
-            getCurrentAccount(publicKey)
-        }
-    }, [publicKey])
+    // useEffect(() => {
+    //     if (publicKey && !account) {
+    //         getCurrentAccount(publicKey)
+    //     }
+    // }, [publicKey])
 
     return (
         <>
@@ -400,5 +398,4 @@ export default connect(mapStateToProps, {
     createKey,
     addKey,
     restoreKey,
-    getCurrentAccount,
 })(MainPageScreen)

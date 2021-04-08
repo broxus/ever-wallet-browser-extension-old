@@ -2,15 +2,23 @@ import React, { useState } from 'react'
 import RadioButton from '../../components/RadioButton/RadioButton'
 import { Button } from '../../components/button'
 import { connect } from 'react-redux'
-import { setWalletType } from '../../store/app/actions'
+import { createAccount, setWalletType } from '../../store/app/actions'
 import './select-wallet.scss'
+import { AppState } from '../../store/app/types'
 
 interface ISelectWallet {
+    publicKey: string
     setStep: (arg0: number) => void
     setWalletType: (arg0: string) => void
+    createAccount: any
 }
 
-const SelectWallet: React.FC<ISelectWallet> = ({ setStep, setWalletType }) => {
+const SelectWallet: React.FC<ISelectWallet> = ({
+    publicKey,
+    setStep,
+    setWalletType,
+    createAccount,
+}) => {
     const [walletType, updateWalletType] = useState('SafeMultisig (default)')
 
     const radioChangeHandler = (event: { target: { value: React.SetStateAction<string> } }) => {
@@ -57,6 +65,7 @@ const SelectWallet: React.FC<ISelectWallet> = ({ setStep, setWalletType }) => {
                     text={'Next'}
                     onClick={() => {
                         setWalletType(walletType)
+                        createAccount('Account 1', publicKey, walletType)
                         setStep(6)
                     }}
                 />
@@ -66,6 +75,11 @@ const SelectWallet: React.FC<ISelectWallet> = ({ setStep, setWalletType }) => {
     )
 }
 
-export default connect(null, {
+const mapStateToProps = (store: { app: AppState }) => ({
+    publicKey: store.app.publicKey,
+})
+
+export default connect(mapStateToProps, {
     setWalletType,
+    createAccount,
 })(SelectWallet)

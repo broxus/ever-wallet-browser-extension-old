@@ -2,7 +2,7 @@ import { produce } from 'immer'
 import { ActionTypes } from './actions'
 import { Action, AppState } from './types'
 import * as nt from '../../../../nekoton/pkg'
-import { AccountState, Transaction } from '../../../../nekoton/pkg'
+import { Transaction } from '../../../../nekoton/pkg'
 import { mergeTransactions } from '../../../background/common'
 
 export const initialState = Object.freeze<AppState>({
@@ -39,7 +39,8 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 return
             }
             case ActionTypes.SET_ACCOUNT_LOADED: {
-                draft.accountLoaded = action.payload
+                draft.accountLoaded = action.payload.loaded
+                draft.account = action.payload.currentAccount
                 return
             }
             case ActionTypes.GENERATE_SEED_SUCCESS: {
