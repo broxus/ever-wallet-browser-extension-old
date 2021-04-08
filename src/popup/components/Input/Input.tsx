@@ -53,7 +53,7 @@ const Input: React.FC<ISimpleInput> = ({
 }) => {
     return (
         <input
-            className={`${'simple-input'} ${className}`}
+            className={`${'simple-input'} ${className || ''}`}
             readOnly={readOnly}
             name={name}
             id={id}

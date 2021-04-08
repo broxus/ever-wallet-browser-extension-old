@@ -7,6 +7,7 @@ import { connect } from 'react-redux'
 import { generateSeedPhrase } from '../../store/app/actions'
 import Loader from '../../components/Loader/Loader'
 import './generate-seed.scss'
+import CheckSeedInput from '../../components/CheckSeedInput/CheckSeedInput'
 
 const words = [
     'Secure',
@@ -41,10 +42,10 @@ export const CheckSeed = () => (
     <div className="generate-seed-page__content">
         <h2>Let’s check the seed phrase</h2>
         <div>
-            <Input label={'4.  Enter the word'} autoFocus type={'text'} />
-            <Input label={'7.  Enter the word'} type={'text'} />
-            <Input label={'13.  Enter the word'} type={'text'} />
-            <Input label={'16.  Enter the word'} type={'text'} />
+            <CheckSeedInput number={4} autoFocus={true}/>
+            <CheckSeedInput number={7} />
+            <CheckSeedInput number={13} />
+            <CheckSeedInput number={16} />
         </div>
         <div className="generate-seed-page__content-check-seed-buttons">
             <Button text={'Confirm'} />
