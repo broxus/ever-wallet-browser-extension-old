@@ -1,8 +1,8 @@
 import React from 'react'
-import './asset-full.scss'
 import { createRipple, removeRipple } from '../../common/ripple'
-import ReceiveIcon from '../../img/receive.svg'
-import SendIcon from '../../img/send.svg'
+import ReceiveIcon from '../../img/receive-dark-blue.svg'
+import SendIcon from '../../img/send-dark-blue.svg'
+import './asset-full.scss'
 
 const AssetFull = () => {
     const handleReceiveClick = () => {}
@@ -10,10 +10,10 @@ const AssetFull = () => {
     const handleSendClick = () => {}
     return (
         <>
-            <div className="main-page__account-details">
-                <div className="main-page__account-details-buttons">
+            <div className="asset-full">
+                <div className="asset-full__buttons">
                     <button
-                        className="asset__buttons-button"
+                        className="asset-full__buttons-button"
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
@@ -21,15 +21,15 @@ const AssetFull = () => {
                             handleReceiveClick && handleReceiveClick()
                         }}
                     >
-                        <div className="main-page__account-details-button__content">
+                        <span className="asset-full__buttons-button__content">
                             {/*@ts-ignore*/}
                             <ReceiveIcon style={{ marginRight: '8px' }} />
                             Receive
-                        </div>
+                        </span>
                     </button>
 
                     <button
-                        className="asset__buttons-button"
+                        className="asset-full__buttons-button"
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
@@ -37,11 +37,11 @@ const AssetFull = () => {
                             handleSendClick && handleSendClick()
                         }}
                     >
-                        <div className="main-page__account-details-button__content">
+                        <span className="asset-full__buttons-button__content">
                             {/*@ts-ignore*/}
                             <SendIcon style={{ marginRight: '8px' }} />
                             Send
-                        </div>
+                        </span>
                     </button>
                 </div>
             </div>

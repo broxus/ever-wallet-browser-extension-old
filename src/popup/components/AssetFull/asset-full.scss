@@ -1,7 +1,45 @@
-.asset {
+@import '../../styles/colors';
+
+.asset-full {
+    background-color: #fcf6f3;
+    height: 262px;
+    padding: 16px 20px 28px;
     &__buttons {
+        display: flex;
         &-button {
+            display: flex;
             background: #c5e4f3;
+            flex-direction: row;
+            justify-content: center;
+            align-content: center;
+
+            position: relative;
+            overflow: hidden;
+            padding: 0.8em 1em;
+            width: 100%;
+
+            &:first-child {
+                margin-right: 12px;
+            }
+            &:hover {
+                background-color: #B6E4FA;
+            }
+            span.ripple {
+                background-color: #7484D8;
+            }
+
+            &__content {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-style: normal;
+                font-weight: bold;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: #293166;
+                padding: 0 8px;
+            }
         }
     }
 }

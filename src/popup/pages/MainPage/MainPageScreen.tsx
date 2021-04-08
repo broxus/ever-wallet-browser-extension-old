@@ -20,13 +20,13 @@ import { AppState } from '../../store/app/types'
 import { addKey, createKey, getCurrentAccount, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
-import './main-page.scss'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import AssetFull from '../../components/AssetFull/AssetFull'
 import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import ReactTooltip from 'react-tooltip'
+import './main-page.scss'
 
 const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {

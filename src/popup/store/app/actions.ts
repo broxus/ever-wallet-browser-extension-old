@@ -94,7 +94,7 @@ class TonWalletHandler {
     onStateChanged(newState: nt.AccountState) {
         this.dispatch({
             type: ActionTypes.SET_TON_WALLET_STATE,
-            payload: newState,
+            payload: { newState, address: this.address },
         })
         console.log(newState)
     }
@@ -105,6 +105,7 @@ class TonWalletHandler {
             payload: {
                 transactions,
                 info,
+                address: this.address,
             },
         })
     }
@@ -204,6 +205,7 @@ export const calculateFee = (address: string, messageToPrepare: MessageToPrepare
     dispatch: AppDispatch
 ) => {
     try {
+        // ключи - адреса, значения - assets list
         const accountsStorage = await loadAccountsStorage()
 
         const account = await accountsStorage.getAccount(address)
@@ -217,6 +219,15 @@ export const calculateFee = (address: string, messageToPrepare: MessageToPrepare
         if (contractState == null) {
             throw new Error('Contract state is empty')
         }
+
+        // при старте приложения, тут получаем адрес
+        const myAcc = await accountsStorage.getCurrentAccount()
+
+        //сменить аккаунт
+        const newAcc = await accountsStorage.setCurrentAccount('address')
+
+        // создаем аккаунт, и на него сразу можно переключиться
+        // const acc = await accountsStorage.addAccount()
 
         const amount = new Decimal(messageToPrepare.amount).mul('1000000000') // TODO: get multiplier from precision table
         const bounce = false
