@@ -3,14 +3,15 @@ import RadioButton from '../../components/RadioButton/RadioButton'
 import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { createAccount, setWalletType } from '../../store/app/actions'
-import './select-wallet.scss'
 import { AppState } from '../../store/app/types'
+import './select-wallet.scss'
 
 interface ISelectWallet {
-    publicKey: string
+    publicKey?: string
     setStep: (arg0: number) => void
     setWalletType: (arg0: string) => void
-    createAccount: any
+    createAccount?: any
+    restore: boolean
 }
 
 const SelectWallet: React.FC<ISelectWallet> = ({
@@ -18,11 +19,20 @@ const SelectWallet: React.FC<ISelectWallet> = ({
     setStep,
     setWalletType,
     createAccount,
+    restore,
 }) => {
     const [walletType, updateWalletType] = useState('SafeMultisig (default)')
 
     const radioChangeHandler = (event: { target: { value: React.SetStateAction<string> } }) => {
         updateWalletType(event.target.value)
+    }
+
+    const handleClick = () => {
+        setWalletType(walletType)
+        setStep(!restore ? 6 : 8)
+        if (!restore) {
+            createAccount('Account 1', publicKey, walletType)
+        }
     }
 
     return (
@@ -61,15 +71,8 @@ const SelectWallet: React.FC<ISelectWallet> = ({
                 />
             </div>
             <div className="select-wallet__content-buttons">
-                <Button
-                    text={'Next'}
-                    onClick={() => {
-                        setWalletType(walletType)
-                        createAccount('Account 1', publicKey, walletType)
-                        setStep(6)
-                    }}
-                />
-                <Button text={'Skip'} white />
+                <Button text={'Next'} onClick={() => handleClick()} />
+                <Button text={restore ? 'Back' : 'Skip'} white />
             </div>
         </div>
     )

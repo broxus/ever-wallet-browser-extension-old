@@ -10,6 +10,7 @@ import CheckSeedScreen from './pages/GenerateSeed/CheckSeedScreen'
 import { AppState } from './store/app/types'
 import { checkAccounts } from './store/app/actions'
 import './styles/main.scss'
+import RestoreWalletScreen, { EnterSeedScreen } from './pages/RestoreWallet/RestoreWalletScreen'
 
 interface IApp {
     accountLoaded: boolean
@@ -24,8 +25,10 @@ const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
         <GenerateSeedScreen setStep={setStep} />,
         <CheckSeedScreen setStep={setStep} />,
         <CreatePasswordScreen setStep={setStep} />,
-        <SelectWallet setStep={setStep} />,
+        <SelectWallet setStep={setStep} restore={false} />,
         <MainPageScreen setStep={setStep} />,
+        <RestoreWalletScreen setStep={setStep} />,
+        <EnterSeedScreen />,
     ]
 
     const navigate = (event: { key: any }) => {

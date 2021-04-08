@@ -64,6 +64,7 @@
     "react-redux": "^7.2.3",
     "react-ripples": "^2.2.1",
     "react-select": "^4.2.1",
+    "react-textarea-autosize": "^8.3.2",
     "react-tooltip": "^4.2.17",
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0"
