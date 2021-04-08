@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react'
 import { Button } from '../../components/button'
 import CopyButton from '../../components/CopyButton/CopyButton'
 import Input from '../../components/Input/Input'
-import './generate-seed.scss'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'
 import { generateSeedPhrase } from '../../store/app/actions'
 import Loader from '../../components/Loader/Loader'
+import './generate-seed.scss'
 
 const words = [
     'Secure',

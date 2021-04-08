@@ -22,9 +22,9 @@ const tempScreens = [
     <CheckSeed />,
     <CreatePasswordScreen />,
     <ConfirmPasswordScreen />,
+    <SelectWallet />,
     <MainPageScreen />,
     <CreateAccountScreen />,
-    <SelectWallet />,
 ]
 
 const App: React.FC = () => {

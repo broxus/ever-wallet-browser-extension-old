@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import RadioButton from '../../components/RadioButton/RadioButton'
+import { Button } from '../../components/button'
+import './select-wallet.scss'
 
 const SelectWallet: React.FC = () => {
     const [walletType, setWalletType] = useState('SafeMultisig (default)')
@@ -12,11 +14,9 @@ const SelectWallet: React.FC = () => {
         walletType === 'QuickPay' ? <input type="text" placeholder="Enter transaction id" /> : null
 
     return (
-        <div className="Apps">
-            <div
-                className="radio-btn-container"
-                style={{ display: 'flex', flexDirection: 'column' }}
-            >
+        <div className="select-wallet__content">
+            <div className="select-wallet__content-options">
+                <h2 className="select-wallet__content-options-title">Select wallet type</h2>
                 <RadioButton
                     changed={radioChangeHandler}
                     id="1"
@@ -48,12 +48,10 @@ const SelectWallet: React.FC = () => {
                     value="Surf"
                 />
             </div>
-
-            {quickpay}
-
-            <h2 style={{ marginTop: '50px' }}>
-                {`The selected radio button value is => ${walletType}`}
-            </h2>
+            <div className="select-wallet__content-buttons">
+                <Button text={'Next'} />
+                <Button text={'Skip'} white />
+            </div>
         </div>
     )
 }
