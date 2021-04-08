@@ -1,33 +1,34 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom'
 
 import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen'
 import PolicySignScreen from './pages/PolicySignScreen/PolicySignScreen'
-import GenerateSeedScreen, {CheckSeed} from './pages/GenerateSeed/GenerateSeedScreen'
+import GenerateSeedScreen, { CheckSeed } from './pages/GenerateSeed/GenerateSeedScreen'
 import CreatePasswordScreen, {
     ConfirmPasswordScreen,
 } from './pages/CreatePassword/CreatePasswordScreen'
 import MainPageScreen from './pages/MainPage/MainPageScreen'
 import CreateAccountScreen from './pages/CreateAccount/CreateAccountScreen'
 import store from './store/index'
+import init from '../../nekoton/pkg'
+import { Provider } from 'react-redux'
+import SelectWallet from './pages/SelectWallet/SelectWallet'
 import './styles/main.scss'
-import init from "../../nekoton/pkg";
-
-import {Provider} from 'react-redux'
 
 const tempScreens = [
-    <WelcomeScreen/>,
-    <PolicySignScreen/>,
-    <GenerateSeedScreen/>,
-    <CheckSeed/>,
-    <CreatePasswordScreen/>,
-    <ConfirmPasswordScreen/>,
-    <MainPageScreen/>,
-    <CreateAccountScreen/>,
+    <WelcomeScreen />,
+    <PolicySignScreen />,
+    <GenerateSeedScreen />,
+    <CheckSeed />,
+    <CreatePasswordScreen />,
+    <ConfirmPasswordScreen />,
+    <MainPageScreen />,
+    <CreateAccountScreen />,
+    <SelectWallet />,
 ]
 
 const App: React.FC = () => {
-    const [step, setStep] = useState(6)
+    const [step, setStep] = useState(8)
 
     const navigate = (event: { key: any }) => {
         const key = event.key // "ArrowRight", "ArrowLeft", "ArrowUp", or "ArrowDown"
@@ -54,15 +55,15 @@ const App: React.FC = () => {
 
     return tempScreens[step] || <div>failed</div>
 }
-(async () => {
-    await init('index_bg.wasm');
+;(async () => {
+    await init('index_bg.wasm')
 
     ReactDOM.render(
         <React.StrictMode>
             <Provider store={store}>
-                <App/>
+                <App />
             </Provider>
         </React.StrictMode>,
         document.getElementById('root')
     )
-})();
+})()
