@@ -22,6 +22,7 @@ export const ActionTypes = {
     SETLOCALE: 'app/set-locale',
     GENERATE_SEED_SUCCESS: 'GENERATE_SEED_SUCCESS',
     GENERATE_KEY_SUCCESS: 'GENERATE_KEY_SUCCESS',
+    SET_WALLET_TYPE: 'SET_WALLET_TYPE',
     ADD_KEY_SUCCESS: 'ADD_KEY_SUCCESS',
     ADD_KEY_FAILURE: 'ADD_KEY_FAILURE',
     RESTORE_KEY_SUCCESS: 'RESTORE_KEY_SUCCESS',
@@ -139,6 +140,13 @@ export const generateSeedPhrase = () => async (dispatch: AppDispatch) => {
     dispatch({
         type: ActionTypes.GENERATE_SEED_SUCCESS,
         payload: phrase,
+    })
+}
+
+export const setWalletType = (type: string) => (dispatch: AppDispatch) => {
+    dispatch({
+        type: ActionTypes.SET_WALLET_TYPE,
+        payload: type,
     })
 }
 

@@ -10,6 +10,7 @@ export const initialState = Object.freeze<AppState>({
     accountType: null,
     locale: 'en_US',
     seed: '',
+    walletType: '',
     phrase: {},
     createdKey: '',
     publicKey: '',
@@ -38,6 +39,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
             case ActionTypes.GENERATE_SEED_SUCCESS: {
                 draft.seed = action.payload.phrase.split(' ')
                 draft.phrase = action.payload
+                return
+            }
+            case ActionTypes.SET_WALLET_TYPE: {
+                draft.walletType = action.payload
                 return
             }
             case ActionTypes.GENERATE_KEY_SUCCESS: {

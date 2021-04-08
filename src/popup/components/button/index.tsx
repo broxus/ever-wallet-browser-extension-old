@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import cn from 'classnames'
+import Ripple from 'react-ripples'
 import { createRipple, removeRipple } from '../../common/ripple'
 
 import './style.scss'
@@ -36,7 +37,9 @@ export class Button extends React.Component<ButtonProps, {}> {
                     onClick && onClick()
                 }}
             >
+                {/*<Ripple>*/}
                 <div className="button__content">{text}</div>
+                {/*</Ripple>*/}
             </button>
         )
     }

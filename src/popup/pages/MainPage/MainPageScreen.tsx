@@ -430,10 +430,11 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
     phrase,
     createKey,
     account,
+    store,
 }) => {
     const [activeContent, setActiveContent] = useState(0)
 
-    console.log(locale, 'locale')
+    console.log(store, 'store')
 
     const createKeyLocal = async () => {
         if (createKey) {
@@ -550,6 +551,7 @@ const mapStateToProps = (store: { app: AppState }) => ({
     publicKey: store.app.publicKey,
     phrase: store.app.phrase,
     account: store.app.account,
+    store: store.app,
 })
 
 export default connect(mapStateToProps, {

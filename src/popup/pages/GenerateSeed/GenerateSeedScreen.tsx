@@ -36,7 +36,17 @@ const words = [
 
 const generateMockSeed = () => Array.from(words.sort(() => 0.5 - Math.random()))
 
-const GenerateSeedScreen: React.FC<any> = ({ seed, generateSeedPhrase }) => {
+interface IGenerateSeedScreen {
+    seed: string[]
+    generateSeedPhrase: () => void
+    setStep: (arg0: number) => void
+}
+
+const GenerateSeedScreen: React.FC<IGenerateSeedScreen> = ({
+    seed,
+    generateSeedPhrase,
+    setStep,
+}) => {
     const generateSeed = async () => {
         await generateSeedPhrase()
     }
@@ -53,7 +63,7 @@ const GenerateSeedScreen: React.FC<any> = ({ seed, generateSeedPhrase }) => {
             <div className="generate-seed-page__content">
                 <div>
                     <h2 className="generate-seed-page__content-title">Save the seed phrase</h2>
-                    {seed.length > 0 ? (
+                    {seed?.length > 0 ? (
                         <>
                             <ol>
                                 {seed?.map((item: string, i: number) => (
@@ -68,8 +78,8 @@ const GenerateSeedScreen: React.FC<any> = ({ seed, generateSeedPhrase }) => {
                     )}
                 </div>
                 <div className="generate-seed-page__content-buttons">
-                    <Button text={'I wrote it down on paper'} />
-                    <CopyButton text={seed?.join(',')}>
+                    <Button text={'I wrote it down on paper'} onClick={() => setStep(3)} />
+                    <CopyButton text={seed.length ? seed?.join(',') : ''}>
                         <Button text={'Copy all words'} white />
                     </CopyButton>
                     <Button text={'Back'} white noBorder />

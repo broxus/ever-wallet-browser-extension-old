@@ -2,16 +2,20 @@ import React, { useState } from 'react'
 import RadioButton from '../../components/RadioButton/RadioButton'
 import { Button } from '../../components/button'
 import './select-wallet.scss'
+import { connect } from 'react-redux'
+import { setWalletType } from '../../store/app/actions'
 
-const SelectWallet: React.FC = () => {
-    const [walletType, setWalletType] = useState('SafeMultisig (default)')
+interface ISelectWallet {
+    setStep: (arg0: number) => void
+    setWalletType: (arg0: string) => void
+}
+
+const SelectWallet: React.FC<ISelectWallet> = ({ setStep, setWalletType }) => {
+    const [walletType, updateWalletType] = useState('SafeMultisig (default)')
 
     const radioChangeHandler = (event: { target: { value: React.SetStateAction<string> } }) => {
-        setWalletType(event.target.value)
+        updateWalletType(event.target.value)
     }
-
-    const quickpay =
-        walletType === 'QuickPay' ? <input type="text" placeholder="Enter transaction id" /> : null
 
     return (
         <div className="select-wallet__content">
@@ -49,11 +53,19 @@ const SelectWallet: React.FC = () => {
                 />
             </div>
             <div className="select-wallet__content-buttons">
-                <Button text={'Next'} />
+                <Button
+                    text={'Next'}
+                    onClick={() => {
+                        setWalletType(walletType)
+                        setStep(6)
+                    }}
+                />
                 <Button text={'Skip'} white />
             </div>
         </div>
     )
 }
 
-export default SelectWallet
+export default connect(null, {
+    setWalletType,
+})(SelectWallet)

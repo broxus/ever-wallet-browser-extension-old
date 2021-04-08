@@ -45,6 +45,7 @@ const CheckSeedScreen: React.FC<ICheckSeed> = ({ setStep, seed }) => {
             <form id="words" onSubmit={handleSubmit(onSubmit)}>
                 {numbers.map((item: number, i: number) => (
                     <CheckSeedInput
+                        key={i}
                         number={item}
                         autoFocus={i === 0}
                         name={`word${i}`}

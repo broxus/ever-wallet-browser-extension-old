@@ -14,7 +14,7 @@ import CheckSeedScreen from './pages/GenerateSeed/CheckSeedScreen'
 import './styles/main.scss'
 
 const App: React.FC = () => {
-    const [step, setStep] = useState<number>(7)
+    const [step, setStep] = useState<number>(0)
 
     const tempScreens = [
         <WelcomeScreen />,
@@ -22,7 +22,7 @@ const App: React.FC = () => {
         <GenerateSeedScreen setStep={setStep} />,
         <CheckSeedScreen setStep={setStep} />,
         <CreatePasswordScreen setStep={setStep} />,
-        <SelectWallet />,
+        <SelectWallet setStep={setStep} />,
         <MainPageScreen />,
         <CreateAccountScreen />,
     ]
