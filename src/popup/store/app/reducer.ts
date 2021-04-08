@@ -7,6 +7,7 @@ import { mergeTransactions } from '../../../background/common'
 
 export const initialState = Object.freeze<AppState>({
     // @ts-ignore
+    accountLoaded: false,
     accountType: null,
     locale: 'en_US',
     seed: '',
@@ -35,6 +36,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
         switch (action.type) {
             case ActionTypes.SETLOCALE: {
                 draft.locale = action.payload
+                return
+            }
+            case ActionTypes.SET_ACCOUNT_LOADED: {
+                draft.accountLoaded = action.payload
                 return
             }
             case ActionTypes.GENERATE_SEED_SUCCESS: {

@@ -20,6 +20,7 @@ import * as nt from '../../../../nekoton/pkg'
 
 export const ActionTypes = {
     SETLOCALE: 'app/set-locale',
+    SET_ACCOUNT_LOADED: 'SET_ACCOUNT_LOADED',
     GENERATE_SEED_SUCCESS: 'GENERATE_SEED_SUCCESS',
     GENERATE_KEY_SUCCESS: 'GENERATE_KEY_SUCCESS',
     SET_WALLET_TYPE: 'SET_WALLET_TYPE',
@@ -133,6 +134,41 @@ export const setLocale = (locale: any) => async (
         type: ActionTypes.SETLOCALE,
         payload: locale,
     })
+}
+
+export const checkAccounts = () => async (dispatch: AppDispatch) => {
+    const accountsStorage = await loadAccountsStorage()
+    console.log(accountsStorage, 'accountsStorage')
+    const accounts = await accountsStorage.getStoredAccounts()
+    console.log(accounts, 'account')
+
+    if (accounts.length === 0) {
+        dispatch({
+            type: ActionTypes.SET_ACCOUNT_LOADED,
+            payload: false,
+        })
+    } else {
+        const currentAccount = await accountsStorage.getCurrentAccount()
+        console.log('currentAccount', currentAccount)
+        dispatch({
+            type: ActionTypes.SET_ACCOUNT_LOADED,
+            payload: true,
+        })
+        //
+        // dispatch({
+        //     type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
+        //     payload: address,
+        // })
+    }
+}
+
+export const resetAccounts = () => async (dispatch: AppDispatch) => {
+    const accountsStorage = await loadAccountsStorage()
+    console.log(accountsStorage, 'accountsStorage')
+    const clear = await accountsStorage.clear()
+    console.log(clear, 'clear')
+    const accounts = await accountsStorage.getStoredAccounts()
+    console.log(accounts, 'accounts')
 }
 
 export const generateSeedPhrase = () => async (dispatch: AppDispatch) => {

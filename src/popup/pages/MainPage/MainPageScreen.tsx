@@ -1,13 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
 import cn from 'classnames'
 import UserPic from '../../img/user-avatar-placeholder.svg'
-import UserPicS from '../../img/user-avatar-placeholder-s.svg'
 import ReceiveIcon from '../../img/receive.svg'
 import SendIcon from '../../img/send.svg'
 import TonLogo from '../../img/ton-logo.svg'
 import TonLogoS from '../../img/ton-logo-s.svg'
 import USDTLogoS from '../../img/usdt-logo-s.svg'
-import Plus from '../../img/plus.svg'
 import Arrow from '../../img/arrow.svg'
 import { Button } from '../../components/button'
 import { createRipple, removeRipple } from '../../common/ripple'
@@ -17,7 +15,12 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import { addKey, createKey, getCurrentAccount, restoreKey } from '../../store/app/actions'
+import {
+    addKey,
+    createKey,
+    getCurrentAccount,
+    restoreKey,
+} from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
@@ -27,83 +30,7 @@ import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import ReactTooltip from 'react-tooltip'
 import './main-page.scss'
-
-const AccountModal: React.FC<any> = ({ setActiveContent, setPanelVisible, setModalVisible }) => {
-    const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
-        const handleClickOutside = (event: { target: any }) => {
-            // @ts-ignore
-            if (ref.current && !ref.current.contains(event.target)) {
-                setModalVisible(false)
-            }
-        }
-        useEffect(() => {
-            document.addEventListener('mousedown', handleClickOutside)
-            return () => {
-                document.removeEventListener('mousedown', handleClickOutside)
-            }
-        })
-    }
-
-    const Wrapper = (props: any) => {
-        const wrapperRef = useRef(null)
-        hideModalOnClick(wrapperRef)
-        return (
-            <div ref={wrapperRef} className="main-page__account-settings noselect">
-                {props.children}
-            </div>
-        )
-    }
-
-    const navigate = (step: number) => {
-        setPanelVisible(true)
-        setModalVisible(false)
-        setActiveContent(step)
-    }
-
-    return (
-        <Wrapper>
-            <div className="main-page__account-settings-section">
-                <div
-                    className="main-page__account-settings-section-item"
-                    style={{ display: 'flex' }}
-                >
-                    <UserPicS />
-                    <div style={{ padding: '0 12px' }}>
-                        <div className="main-page__account-settings-section-account">Account 1</div>
-                        <div className="main-page__account-settings-section-item-value">
-                            $1,200.00
-                        </div>
-                        <div>Connected sites</div>
-                    </div>
-                </div>
-            </div>
-            <div className="main-page__account-settings-separator" />
-            <div className="main-page__account-settings-section">
-                <div
-                    className="main-page__account-settings-section-item"
-                    style={{ display: 'flex' }}
-                    onClick={() => navigate(3)}
-                >
-                    <Plus />
-                    <div style={{ padding: '0 12px' }}>Create account</div>
-                </div>
-            </div>
-            <div className="main-page__account-settings-separator" />
-            <div className="main-page__account-settings-section">
-                <div
-                    className="main-page__account-settings-section-item"
-                    onClick={() => navigate(2)}
-                >
-                    Key storage
-                </div>
-                <div className="main-page__account-settings-section-item">Wallet settings</div>
-                <div className="main-page__account-settings-section-item">Information and help</div>
-            </div>
-            <div className="main-page__account-settings-separator" />
-            <div className="main-page__account-settings-section-item-log-out">Log out</div>
-        </Wrapper>
-    )
-}
+import AccountModal from '../../components/AccountModal/AccountModal'
 
 const AccountDetails: React.FC<any> = ({ parentStep, account }) => {
     const [modalVisible, setModalVisible] = useState(false)
