@@ -140,7 +140,7 @@ export const checkAccounts = () => async (dispatch: AppDispatch) => {
     const accountsStorage = await loadAccountsStorage()
     console.log(accountsStorage, 'accountsStorage')
     const accounts = await accountsStorage.getStoredAccounts()
-    console.log(accounts, 'account')
+    console.log(accounts, 'accounts')
 
     if (accounts.length === 0) {
         dispatch({

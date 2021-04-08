@@ -15,12 +15,7 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import {
-    addKey,
-    createKey,
-    getCurrentAccount,
-    restoreKey,
-} from '../../store/app/actions'
+import { addKey, createKey, getCurrentAccount, restoreKey } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
@@ -32,7 +27,7 @@ import ReactTooltip from 'react-tooltip'
 import './main-page.scss'
 import AccountModal from '../../components/AccountModal/AccountModal'
 
-const AccountDetails: React.FC<any> = ({ parentStep, account }) => {
+const AccountDetails: React.FC<any> = ({ parentStep, account, setGlobalStep }) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [panelVisible, setPanelVisible] = useState(false)
     const [activeContent, setActiveContent] = useState(0)
@@ -79,6 +74,7 @@ const AccountDetails: React.FC<any> = ({ parentStep, account }) => {
                             setActiveContent={setActiveContent}
                             setPanelVisible={setPanelVisible}
                             setModalVisible={setModalVisible}
+                            setStep={setGlobalStep}
                         />
                     )}
                 </div>
@@ -348,6 +344,7 @@ interface IMainPageScreen {
     createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
     account: string
     store: any
+    setStep: (arg0: number) => void
 }
 
 const MainPageScreen: React.FC<IMainPageScreen> = ({
@@ -357,6 +354,7 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
     createKey,
     account,
     store,
+    setStep,
 }) => {
     const [activeContent, setActiveContent] = useState(0)
 
@@ -370,7 +368,6 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
 
     let counter = 0
     useEffect(() => {
-        console.log(phrase, 'phrase')
         if (phrase && counter == 0) {
             createKeyLocal()
             counter = 1
@@ -381,91 +378,11 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
         if (publicKey && !account) {
             getCurrentAccount(publicKey)
         }
-        // createKey()
-        // addKey()
-        // restoreKey()
     }, [publicKey])
-
-    // var isPushEnabled = false
-    //
-    // window.addEventListener('load', function () {
-    //     var pushButton = document.querySelector('.js-push-button')
-    //     // @ts-ignore
-    //     pushButton.addEventListener('click', function () {
-    //         if (isPushEnabled) {
-    //             // unsubscribe()
-    //         } else {
-    //             // subscribe()
-    //         }
-    //     })
-    //
-    //     // Check that service workers are supported, if so, progressively
-    //     // enhance and add push messaging support, otherwise continue without it.
-    //     if ('serviceWorker' in navigator) {
-    //         navigator.serviceWorker.register('/service-worker.js').then(initialiseState)
-    //     } else {
-    //         console.warn("Service workers aren't supported in this browser.")
-    //     }
-    // })
-    // // Once the service worker is registered set the initial state
-    // function initialiseState() {
-    //     // Are Notifications supported in the service worker?
-    //     if (!('showNotification' in ServiceWorkerRegistration.prototype)) {
-    //         console.warn("Notifications aren't supported.")
-    //         return
-    //     }
-    //
-    //     // Check the current Notification permission.
-    //     // If its denied, it's a permanent block until the
-    //     // user changes the permission
-    //     if (Notification.permission === 'denied') {
-    //         console.warn('The user has blocked notifications.')
-    //         return
-    //     }
-    //
-    //     // Check if push messaging is supported
-    //     if (!('PushManager' in window)) {
-    //         console.warn("Push messaging isn't supported.")
-    //         return
-    //     }
-    //
-    //     // We need the service worker registration to check for a subscription
-    //     navigator.serviceWorker.ready.then(function (serviceWorkerRegistration) {
-    //         // Do we already have a push message subscription?
-    //         serviceWorkerRegistration.pushManager
-    //             .getSubscription()
-    //             .then(function (subscription) {
-    //                 // Enable any UI which subscribes / unsubscribes from
-    //                 // push messages.
-    //                 var pushButton = document.querySelector('.js-push-button')
-    //                 pushButton.disabled = false
-    //
-    //                 if (!subscription) {
-    //                     // We aren't subscribed to push, so set UI
-    //                     // to allow the user to enable push
-    //                     return
-    //                 }
-    //
-    //                 // Keep your server in sync with the latest subscriptionId
-    //                 // sendSubscriptionToServer(subscription)
-    //
-    //                 // Set your UI to show they have subscribed for
-    //                 // push messages
-    //                 pushButton.textContent = 'Disable Push Messages'
-    //                 isPushEnabled = true
-    //             })
-    //             .catch(function (err) {
-    //                 console.warn('Error during getSubscription()', err)
-    //             })
-    //     })
-    // }
 
     return (
         <>
-            {/*<button className="js-push-button" disabled>*/}
-            {/*    Enable Push Messages*/}
-            {/*</button>*/}
-            <AccountDetails parentStep={activeContent} account={account} />
+            <AccountDetails parentStep={activeContent} account={account} setGlobalStep={setStep} />
             <UserAssets setActiveContent={setActiveContent} />
         </>
     )

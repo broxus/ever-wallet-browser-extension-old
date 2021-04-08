@@ -9,6 +9,7 @@ const AccountModal: React.FC<any> = ({
     setPanelVisible,
     setModalVisible,
     resetAccounts,
+    setStep,
 }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
         const handleClickOutside = (event: { target: any }) => {
@@ -83,7 +84,11 @@ const AccountModal: React.FC<any> = ({
             <div className="main-page__account-settings-separator" />
             <div
                 className="main-page__account-settings-section-item-log-out"
-                onClick={() => resetAccounts()}
+                onClick={() => {
+                    resetAccounts()
+                    setModalVisible(false)
+                    setStep(0)
+                }}
             >
                 Log out
             </div>

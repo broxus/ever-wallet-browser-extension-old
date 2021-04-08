@@ -25,7 +25,7 @@ const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
         <CheckSeedScreen setStep={setStep} />,
         <CreatePasswordScreen setStep={setStep} />,
         <SelectWallet setStep={setStep} />,
-        <MainPageScreen />,
+        <MainPageScreen setStep={setStep} />,
     ]
 
     const navigate = (event: { key: any }) => {
