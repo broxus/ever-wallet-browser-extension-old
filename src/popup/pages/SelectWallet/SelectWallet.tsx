@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import RadioButton from '../../components/RadioButton/RadioButton'
 import { Button } from '../../components/button'
-import './select-wallet.scss'
 import { connect } from 'react-redux'
 import { setWalletType } from '../../store/app/actions'
+import './select-wallet.scss'
 
 interface ISelectWallet {
     setStep: (arg0: number) => void

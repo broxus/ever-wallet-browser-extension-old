@@ -9,6 +9,10 @@ span.ripple {
     animation-iteration-count: 1;
 }
 
+.wrapper {
+    width: 100%;
+}
+
 .button {
     display: flex;
     flex-direction: row;
@@ -19,7 +23,6 @@ span.ripple {
     overflow: hidden;
 
     padding: 0.8em 1em;
-
     width: 100%;
 
     &._blue {

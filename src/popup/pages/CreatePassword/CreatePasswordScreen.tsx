@@ -12,18 +12,18 @@ interface ICreatePasswordScreen {
 }
 
 const CreatePasswordScreen: React.FC<ICreatePasswordScreen> = ({ setStep, setPassword }) => {
-    const { register, handleSubmit, errors, watch } = useForm()
+    const { register, handleSubmit, errors, watch, getValues } = useForm()
 
     const onSubmit = () => {
-        setPassword(watch('password'))
+        setPassword(getValues('pwd'))
         setStep(5)
     }
 
     return (
         <div className="create-password-page__content">
             <div className="create-password-page__content-pwd-form">
-                <h2>Create a password</h2>
-                <h3 className="create-password-page__content-pwd-title">
+                <h2 className="create-password-page__content-pwd-form-header">Create a password</h2>
+                <h3 className="create-password-page__content-pwd-form-comment">
                     We will ask for it at each transaction. If you forget it, you will need to
                     restore the wallet from the seed phrase
                 </h3>

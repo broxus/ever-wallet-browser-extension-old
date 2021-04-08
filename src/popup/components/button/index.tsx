@@ -26,21 +26,21 @@ export class Button extends React.Component<ButtonProps, {}> {
         })
 
         return (
-            <button
-                type={type}
-                form={form}
-                className={className}
-                onMouseDown={createRipple}
-                onMouseLeave={removeRipple}
-                onMouseUp={(event) => {
-                    removeRipple(event)
-                    onClick && onClick()
-                }}
-            >
-                {/*<Ripple>*/}
-                <div className="button__content">{text}</div>
-                {/*</Ripple>*/}
-            </button>
+            <Ripple className="wrapper">
+                <button
+                    type={type}
+                    form={form}
+                    className={className}
+                    onMouseDown={createRipple}
+                    onMouseLeave={removeRipple}
+                    onMouseUp={(event) => {
+                        removeRipple(event)
+                        onClick && onClick()
+                    }}
+                >
+                    <div className="button__content">{text}</div>
+                </button>
+            </Ripple>
         )
     }
 }
