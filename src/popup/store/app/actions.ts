@@ -167,14 +167,14 @@ export const resetAccounts = () => async (dispatch: AppDispatch) => {
     console.log(accountsStorage, 'accountsStorage')
     try {
         const clear = await accountsStorage.clear()
+        console.log('cleared successfully')
         dispatch({
             type: ActionTypes.RESET_ACCOUNTS,
         })
     } catch (e) {
-        console.log(e)
+        console.log(e, 'clearing failed')
     }
 
-    console.log(clear, 'clear')
     const accounts = await accountsStorage.getStoredAccounts()
     console.log(accounts, 'accounts')
 }
@@ -202,14 +202,8 @@ export const restoreAccountFromSeed = (
     contractType: string,
     password: string
 ) => async (dispatch: AppDispatch) => {
-    console.log('restoring account')
     try {
         // @ts-ignore
-        console.log(name, 'name')
-        console.log(seed, 'seed')
-        console.log(contractType, 'contractTyoe')
-        console.log(password, 'password')
-
         const accountType =
             contractType === 'WalletV3' ? AccountType.makeLegacy() : AccountType.makeLabs(0)
 
@@ -228,6 +222,7 @@ export const restoreAccountFromSeed = (
         console.log(e, 'error at restore Account from seed')
         dispatch({
             type: ActionTypes.RESTORE_ACCOUNT_FAILURE,
+            payload: e,
         })
     }
 }

@@ -37,7 +37,6 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
                             setWords(event.target.value)
                         }
                     />
-
                     {/*<Input*/}
                     {/*    label={'Separate words with comma or space'}*/}
                     {/*    autoFocus*/}

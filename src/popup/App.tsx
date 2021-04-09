@@ -12,13 +12,14 @@ import { checkAccounts } from './store/app/actions'
 import './styles/main.scss'
 import RestoreWalletScreen from './pages/RestoreWallet/RestoreWalletScreen'
 import EnterPasswordScreen from './pages/EnterPasswordScreen/EnterPasswordScreen'
-import EnterSeedScreen from "./pages/RestoreWallet/EnterSeedScreen";
+import EnterSeedScreen from './pages/RestoreWallet/EnterSeedScreen'
 
 interface IApp {
     accountLoaded: boolean
     checkAccounts: () => void
+    store: AppState
 }
-const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
+const App: React.FC<IApp> = ({ accountLoaded, checkAccounts, store }) => {
     const [step, setStep] = useState<number>(0)
 
     const tempScreens = [
@@ -53,6 +54,10 @@ const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
     }
 
     useEffect(() => {
+        console.log(store, 'store')
+    }, [store])
+
+    useEffect(() => {
         checkAccounts()
         document.addEventListener('keydown', navigate)
         // return () => document.removeEventListener('keydown', navigate, true) // Succeeds
@@ -69,6 +74,7 @@ const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
 
 const mapStateToProps = (store: { app: AppState }) => ({
     accountLoaded: store.app.accountLoaded,
+    store: store.app
 })
 
 export default connect(mapStateToProps, { checkAccounts })(App)

@@ -35,9 +35,6 @@ const AccountDetails: React.FC<any> = ({ parentStep, account, setGlobalStep }) =
 
     // TODO temp hack, remove later
     const [step, setStep] = useState(0)
-    useEffect(() => {
-        setActiveContent(5)
-    }, [step])
 
     useEffect(() => {
         if (parentStep === 6) {
@@ -338,25 +335,14 @@ const UserAssets: React.FC<any> = ({ setActiveContent }) => {
 }
 
 interface IMainPageScreen {
-    publicKey: string
     phrase: GeneratedMnemonic
     createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
     account: string
-    store: any
     setStep: (arg0: number) => void
 }
 
-const MainPageScreen: React.FC<IMainPageScreen> = ({
-    publicKey,
-    phrase,
-    createKey,
-    account,
-    store,
-    setStep,
-}) => {
+const MainPageScreen: React.FC<IMainPageScreen> = ({ phrase, createKey, account, setStep }) => {
     const [activeContent, setActiveContent] = useState(0)
-
-    console.log(store, 'store')
 
     const createKeyLocal = async () => {
         if (createKey) {
@@ -388,10 +374,8 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
 
 const mapStateToProps = (store: { app: AppState }) => ({
     seed: store.app.seed,
-    publicKey: store.app.publicKey,
     phrase: store.app.phrase,
     account: store.app.account,
-    store: store.app,
 })
 
 export default connect(mapStateToProps, {

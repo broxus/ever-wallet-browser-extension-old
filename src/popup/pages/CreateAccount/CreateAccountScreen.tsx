@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import Input from '../../components/Input/Input'
 import { Button } from '../../components/button'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
@@ -6,8 +6,8 @@ import Select from 'react-select'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import { selectStyles } from '../../constants/selectStyle'
 import walletOptions from '../../constants/walletTypes'
-import './create-account.scss'
 import CheckSeed from '../../components/CheckSeed/CheckSeed'
+import './create-account.scss'
 
 const options = [
     { value: '1', label: 'Key 1' },
@@ -111,6 +111,7 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
 
 const CreateAccountScreen = () => {
     const [step, setStep] = useState<number>(0)
+
     const createAccountContent = [
         <AccountName setStep={setStep} />,
         <AccountSelectKey setStep={setStep} />,

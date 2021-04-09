@@ -4,7 +4,6 @@ import CheckSeedInput from '../../components/CheckSeedInput/CheckSeedInput'
 import { Button } from '../../components/button'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'
-import { generateSeedPhrase } from '../../store/app/actions'
 
 interface ICheckSeed {
     setStep: (arg0: number) => void
@@ -75,6 +74,4 @@ const mapStateToProps = (store: { app: AppState }) => ({
     seed: store.app.seed,
 })
 
-export default connect(mapStateToProps, {
-    generateSeedPhrase,
-})(CheckSeedScreen)
+export default connect(mapStateToProps)(CheckSeedScreen)

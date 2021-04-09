@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { Button } from '../button'
 import { AppState } from '../../store/app/types'
-import { addKey, createKey, generateSeedPhrase, restoreKey } from '../../store/app/actions'
+import { addKey, restoreKey } from '../../store/app/actions'
 import ThreeDots from '../../img/three-dots.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
 import Modal from '../Modal/Modal'
@@ -11,7 +11,6 @@ import './key-storage.scss'
 interface IKeyStorage {
     createdKey?: any
     publicKey?: any
-    generateSeedPhrase?: any
     setActiveContent?: any
 }
 
@@ -108,5 +107,4 @@ const mapStateToProps = (store: { app: AppState }) => ({
 export default connect(mapStateToProps, {
     addKey,
     restoreKey,
-    generateSeedPhrase,
 })(KeyStorage)
