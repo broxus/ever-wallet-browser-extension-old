@@ -69,6 +69,13 @@ const SelectWallet: React.FC<ISelectWallet> = ({
                     label="Surf"
                     value="Surf"
                 />
+                {restore && <RadioButton
+                    changed={radioChangeHandler}
+                    id="5"
+                    isSelected={walletType === 'WalletV3'}
+                    label="WalletV3"
+                    value="WalletV3"
+                />}
             </div>
             <div className="select-wallet__content-buttons">
                 <Button text={'Next'} onClick={() => handleClick()} />

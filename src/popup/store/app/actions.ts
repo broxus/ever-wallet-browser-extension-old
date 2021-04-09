@@ -281,6 +281,7 @@ const WalletTypeMap = {
     'SafeMultisig24': 'SetcodeMultisigWallet',
     'Setcode Multisig': 'SetcodeMultisigWallet',
     'Surf': 'SurfWallet',
+    'WalletV3': 'WalletV3',
 }
 
 export const createAccount = (name: string, publicKey: string, contractType: string) => async (
