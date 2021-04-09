@@ -80,6 +80,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 )
                 return
             }
+            case ActionTypes.RESTORE_ACCOUNT_SUCCESS {
+                draft.account = action.payload
+                return;
+            }
             case ActionTypes.RESTORE_KEY_SUCCESS: {
                 draft.publicKey = action.payload
                 return

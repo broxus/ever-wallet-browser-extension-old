@@ -9,7 +9,7 @@ interface IRestoreWalletScreen {
     setStep: (arg0: number) => void
 }
 
-export const EnterSeedScreen: React.FC<any> = () => {
+export const EnterSeedScreen: React.FC<any> = ({ setStep }) => {
     const [words, setWords] = useState('')
     const [seed, setSeed] = useState<string[]>([])
 
@@ -20,7 +20,7 @@ export const EnterSeedScreen: React.FC<any> = () => {
     }, [words])
 
     const onSubmit = () => {
-        console.log('submitted')
+        setStep(9)
     }
 
     return (
@@ -62,7 +62,7 @@ export const EnterSeedScreen: React.FC<any> = () => {
                     type="submit"
                     form="password"
                 />
-                <Button text={'Back'} white />
+                <Button text={'Back'} white onClick={() => setStep(7)} />
             </div>
         </div>
     )

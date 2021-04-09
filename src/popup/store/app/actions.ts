@@ -28,6 +28,8 @@ export const ActionTypes = {
     ADD_KEY_FAILURE: 'ADD_KEY_FAILURE',
     RESTORE_KEY_SUCCESS: 'RESTORE_KEY_SUCCESS',
     RESTORE_KEY_FAILURE: 'RESTORE_KEY_FAILURE',
+    RESTORE_ACCOUNT_SUCCESS: 'RESTORE_ACCOUNT_SUCCESS',
+    RESTORE_ACCOUNT_FAILURE: 'RESTORE_ACCOUNT_FAILURE',
     SET_CURRENT_ACCOUNT_SUCCESS: 'SET_CURRENT_ACCOUNT_SUCCESS',
     SET_CURRENT_ACCOUNT_FAILURE: 'SET_CURRENT_ACCOUNT_FAILURE',
     SET_TON_WALLET_STATE: 'SET_TON_WALLET_STATE',
@@ -173,6 +175,32 @@ export const generateSeedPhrase = () => async (dispatch: AppDispatch) => {
         type: ActionTypes.GENERATE_SEED_SUCCESS,
         payload: phrase,
     })
+}
+
+export const restoreAccountFromSeed = (
+    name: string,
+    seed: string,
+    contractType: string,
+    password: string
+) => async (dispatch: AppDispatch) => {
+    try {
+        // @ts-ignore
+        const address = new nt.StoredKey(name, seed, WalletTypeMap[contractType], password)
+
+        console.log(address, 'address')
+        const accountsStorage = await loadAccountsStorage()
+        console.log('accountsStorage', accountsStorage)
+        const account = await accountsStorage.getAccount(address)
+        console.log('account', account)
+
+        dispatch({
+            type: ActionTypes.RESTORE_ACCOUNT_SUCCESS,
+        })
+    } catch {
+        dispatch({
+            type: ActionTypes.RESTORE_ACCOUNT_FAILURE,
+        })
+    }
 }
 
 export const setWalletType = (type: string) => (dispatch: AppDispatch) => {
