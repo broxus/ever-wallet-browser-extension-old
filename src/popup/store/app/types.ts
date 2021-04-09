@@ -1,4 +1,5 @@
 import { AccountState, GeneratedMnemonic, Transaction } from '../../../../nekoton/pkg'
+import { Immutable } from 'immer'
 
 export type Locale = 'en_US' | 'ru_RU'
 
@@ -15,7 +16,7 @@ export type AppState = {
     pwd: string
     locale: Locale
     seed: string[]
-    phrase: GeneratedMnemonic
+    phrase: GeneratedMnemonic | {}
     publicKey: string
     createdKey: string
     account: string

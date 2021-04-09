@@ -1,16 +1,15 @@
-import { produce } from 'immer'
+import {castDraft, produce} from 'immer'
 import { ActionTypes } from './actions'
 import { Action, AppState } from './types'
 import * as nt from '../../../../nekoton/pkg'
 import { Transaction } from '../../../../nekoton/pkg'
 import { mergeTransactions } from '../../../background/common'
 
-export const initialState = Object.freeze<AppState>({
-    // @ts-ignore
-    accountLoaded: false,
+export const initialState: AppState = {
     accountType: null,
+    accountLoaded: false,
     locale: 'en_US',
-    seed: '',
+    seed: [],
     error: '',
     walletType: '',
     pwd: '',
@@ -21,7 +20,7 @@ export const initialState = Object.freeze<AppState>({
     tonWalletState: null,
     transactions: new Array<Transaction>(),
     currentFee: '',
-})
+}
 
 class Wrapper {
     constructor(public data: nt.AccountType) {
@@ -31,8 +30,8 @@ class Wrapper {
     static stored: nt.AccountType
 }
 
-// @ts-ignore
 export default (state: AppState = initialState, action: Action): AppState =>
+    // @ts-ignore
     produce(state, (draft: AppState) => {
         switch (action.type) {
             case ActionTypes.SETLOCALE: {
