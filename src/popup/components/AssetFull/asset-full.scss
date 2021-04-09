@@ -1,11 +1,56 @@
 @import '../../styles/colors';
 
 .asset-full {
-    background-color: #fcf6f3;
-    height: 262px;
-    padding: 16px 20px 28px;
+    position: relative;
+    height: 500px;
+
+    &__top {
+        background-color: #fcf6f3;
+        position: absolute;
+        top: -40px;
+        left: -20px;
+        width: 360px;
+        height: 180px;
+        z-index: 0;
+    }
+
+    &__info {
+        align-items: center;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        z-index: 1;
+        margin-bottom: 28px;
+
+        &-token {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            z-index: 1;
+
+            &-amount {
+                font-style: normal;
+                font-weight: bold;
+                font-size: 18px;
+                line-height: 24px;
+                letter-spacing: 0.5px;
+                color: #000000;
+            }
+
+            &-comment {
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                color: $inactiveTab;
+            }
+        }
+    }
     &__buttons {
         display: flex;
+        margin-bottom: 48px;
+
         &-button {
             display: flex;
             background: #c5e4f3;
@@ -21,11 +66,13 @@
             &:first-child {
                 margin-right: 12px;
             }
+
             &:hover {
-                background-color: #B6E4FA;
+                background-color: #b6e4fa;
             }
+
             span.ripple {
-                background-color: #7484D8;
+                background-color: #7484d8;
             }
 
             &__content {
@@ -40,6 +87,21 @@
                 color: #293166;
                 padding: 0 8px;
             }
+        }
+    }
+
+    &__history {
+        overflow-y: scroll;
+        height: 340px;
+        &-title {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 24px;
+            letter-spacing: 0.5px;
+            color: #000000;
+            border-bottom: 1px solid #ebedee;
+            padding-bottom: 20px;
         }
     }
 }

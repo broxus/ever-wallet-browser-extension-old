@@ -42,6 +42,11 @@ const AccountDetails: React.FC<any> = ({ parentStep, account, setGlobalStep }) =
     }, [parentStep])
     // TODO temp hack, remove later
 
+    const handleSendReceive = (action: 'send' | 'receive') => {
+        setPanelVisible(true)
+        setActiveContent(+!(action === 'receive'))
+    }
+
     const handleReceiveClick = () => {
         setPanelVisible(true)
         setActiveContent(0)
@@ -144,7 +149,7 @@ const AccountDetails: React.FC<any> = ({ parentStep, account, setGlobalStep }) =
                 ) : activeContent === 5 ? (
                     <SaveSeed setStep={setStep} />
                 ) : activeContent === 6 ? (
-                    <AssetFull />
+                    <AssetFull handleSendReceive={handleSendReceive} />
                 ) : (
                     <></>
                 )}
@@ -207,7 +212,7 @@ const Assets: React.FC<any> = ({ setActiveContent }) => {
     )
 }
 
-const Transaction = () => {
+export const Transaction = () => {
     return (
         <>
             <div className="main-page__user-assets-asset">
@@ -274,7 +279,7 @@ const Transaction = () => {
     )
 }
 
-const Transactions = () => (
+export const Transactions = () => (
     <div
         style={{
             display: 'flex',

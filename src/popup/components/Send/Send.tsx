@@ -2,19 +2,13 @@ import React, { Dispatch, SetStateAction, useState } from 'react'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import Input from '../Input/Input'
 import Select from 'react-select'
-import './send.scss'
 import { Button } from '../button'
 import { selectStyles } from '../../constants/selectStyle'
 import { useForm } from 'react-hook-form'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'
-import {
-    addKey,
-    calculateFee,
-    createKey,
-    getCurrentAccount,
-    restoreKey,
-} from '../../store/app/actions'
+import { addKey, calculateFee, createKey, restoreKey } from '../../store/app/actions'
+import './send.scss'
 
 const options = [
     { value: '60', label: 'TON' },
@@ -101,6 +95,7 @@ const EnterAddress: React.FC<any> = ({ account, setStep, onReturn, setFormData, 
                 <Select
                     className="send-screen__form-token-dropdown"
                     options={options}
+                    defaultValue={options?.[0]}
                     placeholder={'Select currency'}
                     styles={selectStyles}
                     w
@@ -190,6 +185,5 @@ export default connect(mapStateToProps, {
     createKey,
     addKey,
     restoreKey,
-    getCurrentAccount,
     calculateFee,
 })(Send)
