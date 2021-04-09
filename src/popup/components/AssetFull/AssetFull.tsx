@@ -3,7 +3,7 @@ import { createRipple, removeRipple } from '../../common/ripple'
 import ReceiveIcon from '../../img/receive-dark-blue.svg'
 import SendIcon from '../../img/send-dark-blue.svg'
 import Ripple from 'react-ripples'
-import { Transactions } from '../../pages/MainPage/MainPageScreen'
+import { TransactionsList } from '../../pages/MainPage/MainPageScreen'
 import TonLogo from '../../img/ton-logo.svg'
 import './asset-full.scss'
 
@@ -59,7 +59,7 @@ const AssetFull: React.FC<any> = ({ handleSendReceive }) => {
                 </div>
                 <div className="asset-full__history">
                     <h2 className="asset-full__history-title">History</h2>
-                    <Transactions />
+                    <TransactionsList />
                 </div>
             </div>
         </>

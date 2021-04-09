@@ -9,12 +9,12 @@ import {
     TonWallet,
     TonWalletSubscription,
 } from '../../../../nekoton/pkg'
-import { AppDispatch } from '../index'
-import { GqlSocket, mergeTransactions, StorageConnector } from '../../../background/common'
-import { MessageToPrepare } from './types'
+import {AppDispatch} from '../index'
+import {GqlSocket, mergeTransactions, StorageConnector} from '../../../background/common'
+import {MessageToPrepare} from './types'
 import Decimal from 'decimal.js'
 
-Decimal.set({ maxE: 500, minE: -500 })
+Decimal.set({maxE: 500, minE: -500})
 
 import * as nt from '../../../../nekoton/pkg'
 
@@ -89,7 +89,8 @@ const loadConnection = async () => {
 }
 
 class TonWalletHandler {
-    constructor(private dispatch: AppDispatch, private address: string) {}
+    constructor(private dispatch: AppDispatch, private address: string) {
+    }
 
     onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
         console.log(pendingTransaction, transaction)
@@ -102,7 +103,7 @@ class TonWalletHandler {
     onStateChanged(newState: nt.AccountState) {
         this.dispatch({
             type: ActionTypes.SET_TON_WALLET_STATE,
-            payload: { newState, address: this.address },
+            payload: {newState, address: this.address},
         })
         console.log(newState)
     }
@@ -127,7 +128,43 @@ const loadSubscription = async (address: string, dispatch: AppDispatch) => {
         subscription = await ctx.connection.subscribeToTonWallet(
             address,
             new TonWalletHandler(dispatch, address)
-        )
+        );
+        if (subscription == null) {
+            throw Error("Failed to subscribe");
+        }
+
+        const POLLING_INTERVAL = 10000; // 10s
+
+        (async () => {
+            let currentBlockId: string | null = null;
+            let lastPollingMethod = subscription.pollingMethod;
+            for (let i = 0; i < 10; ++i) {
+                switch (lastPollingMethod) {
+                    case 'manual': {
+                        await new Promise<void>((resolve,) => {
+                            setTimeout(() => resolve(), POLLING_INTERVAL);
+                        });
+                        console.log("manual refresh");
+                        await subscription.refresh();
+                        break;
+                    }
+                    case 'reliable': {
+                        if (lastPollingMethod != 'reliable' || currentBlockId == null) {
+                            currentBlockId = (await subscription.getLatestBlock()).id;
+                        }
+
+                        const nextBlockId: string = await subscription.waitForNextBlock(currentBlockId, 60);
+                        console.log(nextBlockId, currentBlockId != nextBlockId);
+
+                        await subscription.handleBlock(nextBlockId);
+                        currentBlockId = nextBlockId;
+                        break;
+                    }
+                }
+
+                lastPollingMethod = subscription.pollingMethod;
+            }
+        })();
     }
     return subscription
 }
@@ -150,14 +187,14 @@ export const checkAccounts = () => async (dispatch: AppDispatch) => {
     if (accounts.length === 0) {
         dispatch({
             type: ActionTypes.SET_ACCOUNT_LOADED,
-            payload: { loaded: false },
+            payload: {loaded: false},
         })
     } else {
         const currentAccount = await accountsStorage.getCurrentAccount()
         console.log('currentAccount', currentAccount)
         dispatch({
             type: ActionTypes.SET_ACCOUNT_LOADED,
-            payload: { loaded: true, currentAccount },
+            payload: {loaded: true, currentAccount},
         })
     }
 }
@@ -350,7 +387,7 @@ export const createAccount = (
     }
 }
 
-export const checkBalance = (address: string) => async (dispatch: AppDispatch) => {
+export const startSubscription = (address: string) => async (dispatch: AppDispatch) => {
     try {
         // ключи - адреса, значения - assets list
         const accountsStorage = await loadAccountsStorage()
@@ -360,16 +397,7 @@ export const checkBalance = (address: string) => async (dispatch: AppDispatch) =
         if (account == null) {
             throw new Error("Selected account doesn't exist")
         }
-        const subscription = await loadSubscription(address, dispatch)
-        console.log(subscription, 'subscription')
-
-        const contractState = await subscription.getContractState()
-        console.log(contractState, 'contractState')
-        if (contractState == null) {
-            throw new Error('Contract state is empty')
-        }
-        const wallet = new TonWallet(account.tonWallet.publicKey, account.tonWallet.contractType)
-        console.log('wallet', wallet)
+        await loadSubscription(address, dispatch)
     } catch (e) {
         console.log(e)
     }

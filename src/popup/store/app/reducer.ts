@@ -73,7 +73,7 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 return
             }
             case ActionTypes.SET_TON_WALLET_STATE: {
-                draft.tonWalletState = action.payload
+                draft.tonWalletState = action.payload.newState
                 return
             }
             case ActionTypes.ADD_NEW_TRANSACTIONS: {
