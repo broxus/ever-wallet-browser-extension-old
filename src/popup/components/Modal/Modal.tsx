@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 import './modal.scss'
 
-const Modal: React.FC<any> = ({ setModalVisible, children }) => {
+const Modal: React.FC<any> = ({ setModalVisible, className, children }) => {
     const hideModalOnClick = (ref: React.MutableRefObject<null>) => {
         const handleClickOutside = (event: { target: any }) => {
             // @ts-ignore
@@ -21,7 +21,7 @@ const Modal: React.FC<any> = ({ setModalVisible, children }) => {
         const wrapperRef = useRef(null)
         hideModalOnClick(wrapperRef)
         return (
-            <div ref={wrapperRef} className="modal">
+            <div ref={wrapperRef} className={`modal ${className || ''}`}>
                 {props.children}
             </div>
         )

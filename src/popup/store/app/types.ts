@@ -10,6 +10,7 @@ export type Locale = 'en_US' | 'ru_RU'
 export type AppState = {
     accountType: any
     accountLoaded: boolean
+    error: string
     walletType: 'SafeMultisig (default)' | 'SafeMultisig24' | 'Setcode Multisig' | 'Surf' | ''
     pwd: string
     locale: Locale

@@ -11,6 +11,7 @@ export const initialState = Object.freeze<AppState>({
     accountType: null,
     locale: 'en_US',
     seed: '',
+    error: '',
     walletType: '',
     pwd: '',
     phrase: {},
@@ -86,6 +87,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
             }
             case ActionTypes.RESTORE_ACCOUNT_SUCCESS: {
                 draft.account = action.payload
+                return
+            }
+            case ActionTypes.RESTORE_ACCOUNT_FAILURE: {
+                draft.error = action.payload
                 return
             }
             case ActionTypes.RESTORE_KEY_SUCCESS: {

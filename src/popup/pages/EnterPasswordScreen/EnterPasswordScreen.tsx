@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Input from '../../components/Input/Input'
 import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { restoreAccountFromSeed, setPassword } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
+import Modal from '../../components/Modal/Modal'
+import './enter-password.scss'
 
 const EnterPasswordScreen: React.FC<any> = ({
     setStep,
@@ -12,18 +14,25 @@ const EnterPasswordScreen: React.FC<any> = ({
     seed,
     walletType,
     restoreAccountFromSeed,
+    account,
+    error,
 }) => {
     const { register, handleSubmit, errors, watch, getValues } = useForm()
+    const [modalOpen, setModalOpen] = useState(false)
+
+    const onSubmit = async () => {
+        setPassword(getValues('pwd'))
+        await restoreAccountFromSeed('Account 1', seed.join(' '), walletType, getValues('pwd'))
+    }
 
     useEffect(() => {
-        console.log(walletType, 'walletType')
-    }, [walletType])
-
-    const onSubmit = () => {
-        setPassword(getValues('pwd'))
-        restoreAccountFromSeed('Account 1', seed.join(' '), walletType, getValues('pwd'))
-        setStep(6)
-    }
+        if (account.length > 0) {
+            setStep(6)
+        } else if (error) {
+            console.log(error)
+            setModalOpen(true)
+        }
+    }, [account, error])
 
     return (
         <div className="create-password-page__content">
@@ -34,7 +43,11 @@ const EnterPasswordScreen: React.FC<any> = ({
                 <h3 className="create-password-page__content-pwd-form-comment">
                     So no one else but you can unlock your wallet.
                 </h3>
-                <form id="password" onSubmit={handleSubmit(onSubmit)}>
+                <form
+                    id="password"
+                    onSubmit={handleSubmit(onSubmit)}
+                    style={{ position: 'relative' }}
+                >
                     <Input
                         label={'Your password'}
                         autoFocus
@@ -62,6 +75,15 @@ const EnterPasswordScreen: React.FC<any> = ({
                     {errors.pwdConfirm && (
                         <div className="check-seed__content-error">Your password doesn't match</div>
                     )}
+                    {modalOpen && (
+                        <Modal
+                            setModalVisible={setModalOpen}
+                            className="enter-password-screen__modal"
+                        >
+                            <h3 style={{color: 'black', marginBottom: '18px'}}>Could not restore your wallet</h3>
+                            <div className="check-seed__content-error">{error.message}</div>
+                        </Modal>
+                    )}
                 </form>
             </div>
             <div className="create-password-page__content-buttons">
@@ -75,6 +97,8 @@ const EnterPasswordScreen: React.FC<any> = ({
 const mapStateToProps = (store: { app: AppState }) => ({
     seed: store.app.seed,
     walletType: store.app.walletType,
+    account: store.app.account,
+    error: store.app.error,
 })
 
 export default connect(mapStateToProps, {
