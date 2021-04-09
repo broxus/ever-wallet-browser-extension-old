@@ -59,7 +59,7 @@ const CreatePasswordScreen: React.FC<ICreatePasswordScreen> = ({ setStep, setPas
             </div>
             <div className="create-password-page__content-buttons">
                 <Button text={'Next'} type="submit" form="password" />
-                <Button text={'Back'} white />
+                <Button text={'Back'} white onClick={() => setStep(3)} />
             </div>
         </div>
     )

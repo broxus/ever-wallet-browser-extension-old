@@ -1,7 +1,6 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import SelectWallet from '../SelectWallet/SelectWallet'
 import TextareaAutosize from 'react-textarea-autosize'
-import Input from '../../components/Input/Input'
 import { Button } from '../../components/button'
 import { useForm } from 'react-hook-form'
 import './restore-wallet-screen.scss'
@@ -12,8 +11,14 @@ interface IRestoreWalletScreen {
 
 export const EnterSeedScreen: React.FC<any> = () => {
     const [words, setWords] = useState('')
+    const [seed, setSeed] = useState<string[]>([])
 
     const { register, handleSubmit, errors, getValues } = useForm()
+
+    useEffect(() => {
+        setSeed(words?.split(/[ ,]+/).filter((el) => el !== ''))
+    }, [words])
+
     const onSubmit = () => {
         console.log('submitted')
     }
@@ -41,9 +46,7 @@ export const EnterSeedScreen: React.FC<any> = () => {
                     {/*        minLength: 6,*/}
                     {/*    })}*/}
                     {/*/>*/}
-                    <div className="check-seed__content-error">
-                        {`${words?.split(' ').length - 1}/12 words`}
-                    </div>
+                    <div className="words-count">{`${seed.length}/12 words`}</div>
                     {errors.pwd && (
                         <div className="check-seed__content-error">
                             The seed is required and must be minimum 6 characters long
@@ -55,7 +58,7 @@ export const EnterSeedScreen: React.FC<any> = () => {
                 {/*TODO update number depending on the wallet type*/}
                 <Button
                     text={'Confirm'}
-                    disabled={getValues('seed')?.split(' ').length < 12}
+                    disabled={seed.length < 12}
                     type="submit"
                     form="password"
                 />

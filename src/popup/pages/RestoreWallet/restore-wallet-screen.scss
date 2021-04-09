@@ -20,3 +20,12 @@ textarea {
     -moz-appearance: textfield; /* Firefox */
     -webkit-appearance: none;
 }
+
+.words-count {
+    font-style: normal;
+    font-weight: normal;
+    font-size: 14px;
+    line-height: 20px;
+    letter-spacing: 0.75px;
+    color: $inactiveTab;
+}
