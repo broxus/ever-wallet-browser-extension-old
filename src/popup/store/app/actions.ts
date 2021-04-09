@@ -342,6 +342,31 @@ export const createAccount = (
     }
 }
 
+export const checkBalance = (address: string) => async (dispatch: AppDispatch) => {
+    try {
+        // ключи - адреса, значения - assets list
+        const accountsStorage = await loadAccountsStorage()
+
+        const account = await accountsStorage.getAccount(address)
+        console.log('account', account)
+        if (account == null) {
+            throw new Error("Selected account doesn't exist")
+        }
+        const subscription = await loadSubscription(address, dispatch)
+        console.log(subscription, 'subscription')
+
+        const contractState = await subscription.getContractState()
+        console.log(contractState, 'contractState')
+        if (contractState == null) {
+            throw new Error('Contract state is empty')
+        }
+        const wallet = new TonWallet(account.tonWallet.publicKey, account.tonWallet.contractType)
+        console.log('wallet', wallet)
+    } catch (e) {
+        console.log(e)
+    }
+}
+
 export const calculateFee = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch
 ) => {

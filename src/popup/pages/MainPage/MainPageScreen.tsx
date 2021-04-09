@@ -15,23 +15,21 @@ import Receive from '../../components/Receive/Receive'
 import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
-import { addKey, createKey, restoreKey } from '../../store/app/actions'
+import { checkBalance } from '../../store/app/actions'
 import KeyStorage from '../../components/KeyStorage/KeyStorage'
 import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import AssetFull from '../../components/AssetFull/AssetFull'
-import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import ReactTooltip from 'react-tooltip'
-import './main-page.scss'
 import AccountModal from '../../components/AccountModal/AccountModal'
+import './main-page.scss'
 
 const AccountDetails: React.FC<any> = ({ parentStep, account, setGlobalStep }) => {
     const [modalVisible, setModalVisible] = useState(false)
     const [panelVisible, setPanelVisible] = useState(false)
     const [activeContent, setActiveContent] = useState(0)
-    const [copied, setCopied] = useState(false)
 
     // TODO temp hack, remove later
     const [step, setStep] = useState(0)
@@ -285,21 +283,21 @@ const Transactions = () => (
             position: 'relative',
         }}
     >
-        <div style={{ overflowY: 'scroll', maxHeight: '260px' }}>
-            <Transaction />
-            <Transaction />
-            <Transaction />
-        </div>
-        <div
-            style={{
-                width: '100%',
-                height: '70px',
-                background:
-                    'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',
-                bottom: 0,
-                position: 'absolute',
-            }}
-        />
+        {/*<div style={{ overflowY: 'scroll', maxHeight: '260px' }}>*/}
+        <Transaction />
+        <Transaction />
+        <Transaction />
+        {/*</div>*/}
+        {/*<div*/}
+        {/*    style={{*/}
+        {/*        width: '100%',*/}
+        {/*        height: '70px',*/}
+        {/*        background:*/}
+        {/*            'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',*/}
+        {/*        bottom: 0,*/}
+        {/*        position: 'absolute',*/}
+        {/*    }}*/}
+        {/*/>*/}
     </div>
 )
 
@@ -335,34 +333,17 @@ const UserAssets: React.FC<any> = ({ setActiveContent }) => {
 }
 
 interface IMainPageScreen {
-    phrase: GeneratedMnemonic
-    createKey: (phrase: GeneratedMnemonic, password: string) => Promise<void>
     account: string
     setStep: (arg0: number) => void
+    checkBalance: (arg0: string) => void
 }
 
-const MainPageScreen: React.FC<IMainPageScreen> = ({ phrase, createKey, account, setStep }) => {
+const MainPageScreen: React.FC<IMainPageScreen> = ({ account, setStep, checkBalance }) => {
     const [activeContent, setActiveContent] = useState(0)
 
-    const createKeyLocal = async () => {
-        if (createKey) {
-            await createKey(phrase, 'testpwd')
-        }
-    }
-
-    let counter = 0
     useEffect(() => {
-        if (phrase && counter == 0) {
-            createKeyLocal()
-            counter = 1
-        }
-    }, [phrase])
-
-    // useEffect(() => {
-    //     if (publicKey && !account) {
-    //         getCurrentAccount(publicKey)
-    //     }
-    // }, [publicKey])
+        checkBalance(account)
+    }, [])
 
     return (
         <>
@@ -373,13 +354,9 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({ phrase, createKey, account,
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({
-    seed: store.app.seed,
-    phrase: store.app.phrase,
     account: store.app.account,
 })
 
 export default connect(mapStateToProps, {
-    createKey,
-    addKey,
-    restoreKey,
+    checkBalance,
 })(MainPageScreen)
