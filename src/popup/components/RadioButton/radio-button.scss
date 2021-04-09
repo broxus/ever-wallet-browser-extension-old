@@ -33,6 +33,10 @@ $md-radio-ripple-size: 15px;
     border: 1px solid #dde1e2;
     margin-bottom: 10px;
 
+    &-selected {
+        background: #f9f9f9;
+        border: 1px solid #f9f9f9;
+    }
     &:hover {
         border: 1px solid #abb4b8;
     }

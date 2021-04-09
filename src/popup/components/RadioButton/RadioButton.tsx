@@ -11,7 +11,7 @@ interface IRadioButton {
 
 const RadioButton: React.FC<IRadioButton> = (props) => {
     return (
-        <div className="radio-button">
+        <div className={`radio-button ${props.isSelected ? 'radio-button-selected' : ''}`}>
             <input
                 id={props.id}
                 onChange={props.changed}

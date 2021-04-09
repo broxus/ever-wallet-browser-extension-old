@@ -26,7 +26,9 @@ const EnterPasswordScreen: React.FC<any> = ({
     }
 
     useEffect(() => {
-        if (account.length > 0) {
+        console.log('account', account)
+        console.log('error', error)
+        if (account?.length > 0) {
             setStep(6)
         } else if (error) {
             console.log(error)
@@ -80,7 +82,9 @@ const EnterPasswordScreen: React.FC<any> = ({
                             setModalVisible={setModalOpen}
                             className="enter-password-screen__modal"
                         >
-                            <h3 style={{color: 'black', marginBottom: '18px'}}>Could not restore your wallet</h3>
+                            <h3 style={{ color: 'black', marginBottom: '18px' }}>
+                                Could not restore your wallet
+                            </h3>
                             <div className="check-seed__content-error">{error.message}</div>
                         </Modal>
                     )}

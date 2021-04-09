@@ -203,20 +203,28 @@ export const restoreAccountFromSeed = (
     password: string
 ) => async (dispatch: AppDispatch) => {
     try {
-        // @ts-ignore
         const accountType =
             contractType === 'WalletV3' ? AccountType.makeLegacy() : AccountType.makeLabs(0)
 
-        const address = new nt.StoredKey(name, seed, accountType, password)
+        const key = new nt.StoredKey(name, seed, accountType, password)
+        console.log(key, 'key')
+        const accountsStorage = await loadAccountsStorage()
+        const address = await accountsStorage.addAccount(
+            key.name,
+            key.publicKey,
+            // @ts-ignore
+            WalletTypeMap[contractType],
+            true
+        )
 
         console.log(address, 'address')
         // const accountsStorage = await loadAccountsStorage()
         // console.log('accountsStorage', accountsStorage)
         // const account = await accountsStorage.getAccount(address)
         // console.log('account', account)
-
         dispatch({
             type: ActionTypes.RESTORE_ACCOUNT_SUCCESS,
+            payload: address,
         })
     } catch (e) {
         console.log(e, 'error at restore Account from seed')
