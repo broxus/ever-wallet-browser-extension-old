@@ -48,6 +48,10 @@ export default (state: AppState = initialState, action: Action): AppState =>
                 draft.phrase = action.payload
                 return
             }
+            case ActionTypes.SET_SEED: {
+                draft.seed = action.payload
+                return
+            }
             case ActionTypes.SET_WALLET_TYPE: {
                 draft.walletType = action.payload
                 return
@@ -90,6 +94,11 @@ export default (state: AppState = initialState, action: Action): AppState =>
             }
             case ActionTypes.SET_FEE_CALCULATION_SUCCESS: {
                 draft.currentFee = action.payload
+                return
+            }
+            case ActionTypes.RESET_ACCOUNTS: {
+                // @ts-ignore
+                draft = initialState
                 return
             }
         }

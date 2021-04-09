@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import Input from '../../components/Input/Input'
 import { Button } from '../../components/button'
@@ -6,12 +6,22 @@ import { connect } from 'react-redux'
 import { restoreAccountFromSeed, setPassword } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
 
-const EnterPasswordScreen: React.FC<any> = ({ setStep, setPassword, seed, accountType }) => {
+const EnterPasswordScreen: React.FC<any> = ({
+    setStep,
+    setPassword,
+    seed,
+    walletType,
+    restoreAccountFromSeed,
+}) => {
     const { register, handleSubmit, errors, watch, getValues } = useForm()
+
+    useEffect(() => {
+        console.log(walletType, 'walletType')
+    }, [walletType])
 
     const onSubmit = () => {
         setPassword(getValues('pwd'))
-        restoreAccountFromSeed('Account 1', seed, accountType, getValues('pwd'))
+        restoreAccountFromSeed('Account 1', seed.join(' '), walletType, getValues('pwd'))
         setStep(6)
     }
 
@@ -64,9 +74,10 @@ const EnterPasswordScreen: React.FC<any> = ({ setStep, setPassword, seed, accoun
 
 const mapStateToProps = (store: { app: AppState }) => ({
     seed: store.app.seed,
-    accountType: store.app.accountType,
+    walletType: store.app.walletType,
 })
 
 export default connect(mapStateToProps, {
     setPassword,
+    restoreAccountFromSeed,
 })(EnterPasswordScreen)

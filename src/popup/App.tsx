@@ -3,15 +3,16 @@ import { connect } from 'react-redux'
 import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen'
 import PolicySignScreen from './pages/PolicySignScreen/PolicySignScreen'
 import GenerateSeedScreen from './pages/GenerateSeed/GenerateSeedScreen'
-import CreatePasswordScreen from './pages/CreatePassword/CreatePasswordScreen'
+import CreatePasswordScreen from './pages/CreatePasswordScreen/CreatePasswordScreen'
 import MainPageScreen from './pages/MainPage/MainPageScreen'
 import SelectWallet from './pages/SelectWallet/SelectWallet'
 import CheckSeedScreen from './pages/GenerateSeed/CheckSeedScreen'
 import { AppState } from './store/app/types'
 import { checkAccounts } from './store/app/actions'
 import './styles/main.scss'
-import RestoreWalletScreen, { EnterSeedScreen } from './pages/RestoreWallet/RestoreWalletScreen'
-import EnterPasswordScreen from './pages/EnterPassword/EnterPasswordScreen'
+import RestoreWalletScreen from './pages/RestoreWallet/RestoreWalletScreen'
+import EnterPasswordScreen from './pages/EnterPasswordScreen/EnterPasswordScreen'
+import EnterSeedScreen from "./pages/RestoreWallet/EnterSeedScreen";
 
 interface IApp {
     accountLoaded: boolean
