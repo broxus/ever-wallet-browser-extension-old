@@ -35,6 +35,8 @@ Decimal.config({
     toExpPos: 500,
 })
 
+const convertTons = (amount: string) => new Decimal(amount).div(1000000000).toString()
+
 type AccountDetailsParams = {
     parentStep: number
     tonWalletState: nt.AccountState | null
@@ -118,12 +120,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                 </div>
                 <div className="main-page__account-details-balance">
                     <span className="main-page__account-details-balance-number">
-                        {' '}
-                        {new Decimal(tonWalletState?.balance || 0)
-                            .div(1000000000)
-                            .toString()
-                            .toLocaleString()}{' '}
-                        TON
+                        {convertTons(tonWalletState?.balance || '0').toLocaleString()} TON
                     </span>
                     <span className="main-page__account-details-balance-comment">
                         Total portfolio value
@@ -186,13 +183,19 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     )
 }
 
-export const Asset = () => (
+type AssetProps = {
+    tonWalletState: nt.AccountState
+}
+
+export const Asset: React.FC<AssetProps> = ({ tonWalletState }) => (
     <div className="main-page__user-assets-asset">
         <div style={{ display: 'flex' }}>
             {/*// @ts-ignore*/}
             <TonLogo style={{ marginRight: '16px', minWidth: '40px' }} />
             <div className="main-page__user-assets-asset-number">
-                <span className="main-page__user-assets-asset-number-amount">204.00 TON</span>
+                <span className="main-page__user-assets-asset-number-amount">
+                    {convertTons(tonWalletState.balance)} TON
+                </span>
                 <span className="main-page__user-assets-asset-number-dollars">$100.00</span>
             </div>
         </div>
@@ -200,7 +203,12 @@ export const Asset = () => (
     </div>
 )
 
-const Assets: React.FC<any> = ({ setActiveContent }) => {
+type AssetsListProps = {
+    tonWalletState: nt.AccountState | null
+    setActiveContent: (arg0: number) => void
+}
+
+const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveContent }) => {
     const [panelVisible, setPanelVisible] = useState(false)
 
     return (
@@ -213,11 +221,11 @@ const Assets: React.FC<any> = ({ setActiveContent }) => {
             }}
         >
             {/*TODO remove later*/}
-            <div onClick={() => setActiveContent(6)}>
-                <Asset />
-                <Asset />
-                <Asset />
-            </div>
+            {tonWalletState && (
+                <div onClick={() => setActiveContent(6)}>
+                    <Asset tonWalletState={tonWalletState} />
+                </div>
+            )}
             {/*<div*/}
             {/*    style={{*/}
             {/*        width: '100%',*/}
@@ -267,17 +275,12 @@ export const Transaction: React.FC<TransactionProps> = ({ transaction }) => {
                                     convertAddress(transaction.inMessage.src)}
                             </span>
                             <span className="main-page__user-assets-asset-number-income">
-                                +{' '}
-                                {new Decimal(transaction.inMessage.value)
-                                    .div(1000000000)
-                                    .toString()}{' '}
-                                TON
+                                + {convertTons(transaction.inMessage.value)} TON
                             </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span className="main-page__user-assets-asset-number-dollars">
-                                Fees:{' '}
-                                {new Decimal(transaction.totalFees).div(1000000000).toString()} TON
+                                Fees: {convertTons(transaction.totalFees)} TON
                             </span>
                         </div>
                         <span
@@ -307,7 +310,7 @@ export const TransactionsList: React.FC<TransactionListProps> = ({ transactions 
                 position: 'relative',
             }}
         >
-            {transactions.map((transaction) => {
+            {transactions?.map((transaction) => {
                 return <Transaction transaction={transaction} />
             })}
         </div>
@@ -315,14 +318,19 @@ export const TransactionsList: React.FC<TransactionListProps> = ({ transactions 
 }
 
 type UserAssetsProps = {
+    tonWalletState: nt.AccountState | null
     transactions: nt.Transaction[]
     setActiveContent: (arg0: number) => void
 }
 
-const UserAssets: React.FC<UserAssetsProps> = ({ transactions, setActiveContent }) => {
+const UserAssets: React.FC<UserAssetsProps> = ({
+    tonWalletState,
+    transactions,
+    setActiveContent,
+}) => {
     const [activeTab, setActiveTab] = useState(0)
     const content = [
-        <Assets setActiveContent={setActiveContent} />,
+        <AssetsList tonWalletState={tonWalletState} setActiveContent={setActiveContent} />,
         <TransactionsList transactions={transactions} />,
     ]
 
@@ -382,7 +390,11 @@ const MainPageScreen: React.FC<IMainPageScreen> = ({
                 account={account}
                 setGlobalStep={setStep}
             />
-            <UserAssets setActiveContent={setActiveContent} transactions={transactions} />
+            <UserAssets
+                tonWalletState={tonWalletState}
+                setActiveContent={setActiveContent}
+                transactions={transactions}
+            />
         </>
     )
 }
