@@ -1,4 +1,5 @@
 import React, { Dispatch, SetStateAction, useState } from 'react'
+import _ from 'lodash'
 import { Button } from '../button'
 import cn from 'classnames'
 import Input from '../Input/Input'
@@ -6,9 +7,14 @@ import Input from '../Input/Input'
 import TonLogo from '../../img/ton-logo.svg'
 import Tumbler from '../Tumbler/Tumbler'
 import './add-new-token.scss'
+import { useForm } from 'react-hook-form'
 
-export const Token = () => {
-    const [checked, setChecked] = useState(false)
+interface IToken {
+    checked: boolean
+    handleChange: (id: any) => void
+    id: any
+}
+export const Token: React.FC<IToken> = ({ checked, handleChange, id }) => {
     return (
         <div className="main-page__user-assets-asset">
             <div style={{ display: 'flex' }}>
@@ -19,29 +25,51 @@ export const Token = () => {
                     <span className="main-page__user-assets-asset-number-dollars">USDC</span>
                 </div>
             </div>
-            <Tumbler checked={checked} onChange={() => setChecked(!checked)} />
+            <Tumbler checked={checked} onChange={() => handleChange(id)} />
         </div>
     )
 }
 
 const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
+    const [checked, setChecked] = useState({ 1: false, 2: false, 3: false, 4: false, 5: false })
+    const { register, handleSubmit, errors, watch, getValues } = useForm()
+
+    const onSubmit = async () => {
+        console.log('submitted')
+    }
+
+    const handleChange = (id: number) => {
+        const copy = _.cloneDeep(checked)
+        copy[id] = !checked[id]
+        setChecked(copy)
+    }
+
     return (
-        <>
-            <Input label={'Enter new account name...'} className="add-new-token__search-form" />
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <Input
+                label={'Enter new account name...'}
+                className="add-new-token__search-form"
+                type="text"
+                name="name"
+                register={register({
+                    required: true,
+                })}
+            />
+            {errors.name && <div className="check-seed__content-error">This field is required</div>}
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                <Token />
-                <Token />
-                <Token />
-                <Token />
-                <Token />
+                <Token checked={checked['1']} handleChange={handleChange} id={1} />
+                <Token checked={checked['2']} handleChange={handleChange} id={2} />
+                <Token checked={checked['3']} handleChange={handleChange} id={3} />
+                <Token checked={checked['4']} handleChange={handleChange} id={4} />
+                <Token checked={checked['5']} handleChange={handleChange} id={5} />
             </div>
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
                     <Button text={'Back'} onClick={onReturn} white />
                 </div>
-                <Button text={'Select assets'} />
+                <Button text={'Select assets'} type="submit" />
             </div>
-        </>
+        </form>
     )
 }
 const CustomToken: React.FC<IAddNewToken> = ({ onReturn }) => {
