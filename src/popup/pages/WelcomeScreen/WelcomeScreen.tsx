@@ -21,7 +21,7 @@ const WelcomeScreen: React.FC<IWelcomeScreen> = ({ setStep }) => (
                     <Button text="Create a new wallet" onClick={() => setStep(1)} />
                 </div>
                 <Button
-                    text="Sign in with seed phrase or private key"
+                    text="Sign in with seed phrase"
                     white
                     onClick={() => setStep(7)}
                 />
