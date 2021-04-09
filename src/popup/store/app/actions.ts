@@ -308,15 +308,24 @@ const WalletTypeMap = {
     'WalletV3': 'WalletV3',
 }
 
-export const createAccount = (name: string, publicKey: string, contractType: string) => async (
-    dispatch: AppDispatch
-) => {
+export const createAccount = (
+    name: string,
+    contractType: string,
+    phrase: GeneratedMnemonic,
+    pwd: string
+) => async (dispatch: AppDispatch) => {
     try {
+        const key = phrase.createKey('Main key', pwd)
+        dispatch({
+            type: ActionTypes.GENERATE_KEY_SUCCESS,
+            payload: key,
+        })
+
         const accountsStorage = await loadAccountsStorage()
         console.log('accountsStorage', accountsStorage)
         const address = await accountsStorage.addAccount(
             name,
-            publicKey, // @ts-ignore
+            key.publicKey, // @ts-ignore
             WalletTypeMap[contractType],
             true
         )

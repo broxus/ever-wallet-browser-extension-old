@@ -53,7 +53,6 @@ const GenerateSeedScreen: React.FC<IGenerateSeedScreen> = ({
 
     useEffect(() => {
         generateSeed()
-        console.log('I was called from GenerateSeedScreen')
     }, [])
 
     // const mockSeed = generateMockSeed()

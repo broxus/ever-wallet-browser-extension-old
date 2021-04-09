@@ -5,6 +5,7 @@ import { connect } from 'react-redux'
 import { createAccount, setWalletType } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
 import './select-wallet.scss'
+import { GeneratedMnemonic } from '../../../../nekoton/pkg'
 
 interface ISelectWallet {
     publicKey?: string
@@ -12,14 +13,17 @@ interface ISelectWallet {
     setWalletType: (arg0: string) => void
     createAccount?: any
     restore: boolean
+    phrase: GeneratedMnemonic
+    pwd: string
 }
 
 const SelectWallet: React.FC<ISelectWallet> = ({
-    publicKey,
     setStep,
     setWalletType,
     createAccount,
     restore,
+    phrase,
+    pwd,
 }) => {
     const [walletType, updateWalletType] = useState('SafeMultisig (default)')
 
@@ -31,7 +35,7 @@ const SelectWallet: React.FC<ISelectWallet> = ({
         setWalletType(walletType)
         setStep(!restore ? 6 : 8)
         if (!restore) {
-            createAccount('Account 1', publicKey, walletType)
+            createAccount('Account 1', walletType, phrase, pwd)
         }
     }
 
@@ -92,7 +96,8 @@ const SelectWallet: React.FC<ISelectWallet> = ({
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({
-    publicKey: store.app.publicKey,
+    phrase: store.app.phrase,
+    pwd: store.app.pwd,
 })
 
 export default connect(mapStateToProps, {
