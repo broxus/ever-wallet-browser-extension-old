@@ -4,12 +4,15 @@ import { useForm } from 'react-hook-form'
 import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { setSeed } from '../../store/app/actions'
+import { AppState } from '../../store/app/types'
 
-const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed }) => {
+const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
     const [words, setWords] = useState('')
     const [localSeed, setLocalSeed] = useState<string[]>([])
 
     const { handleSubmit, errors } = useForm()
+
+    const seedLength = walletType === 'WalletV3' ? 24 : 12
 
     useEffect(() => {
         setLocalSeed(words?.split(/[ ,]+/).filter((el) => el !== ''))
@@ -45,7 +48,7 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed }) => {
                     {/*        minLength: 6,*/}
                     {/*    })}*/}
                     {/*/>*/}
-                    <div className="words-count">{`${localSeed.length}/12 words`}</div>
+                    <div className="words-count">{`${localSeed.length}/${seedLength} words`}</div>
                     {errors.pwd && (
                         <div className="check-seed__content-error">
                             The seed is required and must be minimum 6 characters long
@@ -54,10 +57,9 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed }) => {
                 </form>
             </div>
             <div className="create-password-page__content-buttons">
-                {/*TODO update number depending on the wallet type*/}
                 <Button
                     text={'Confirm'}
-                    disabled={localSeed.length < 12}
+                    disabled={localSeed.length < seedLength}
                     type="submit"
                     form="password"
                 />
@@ -67,6 +69,10 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed }) => {
     )
 }
 
-export default connect(null, {
+const mapStateToProps = (store: { app: AppState }) => ({
+    walletType: store.app.walletType,
+})
+
+export default connect(mapStateToProps, {
     setSeed,
 })(EnterSeedScreen)
