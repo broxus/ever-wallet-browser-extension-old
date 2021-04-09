@@ -13,7 +13,7 @@ interface ISelectWallet {
     setWalletType: (arg0: string) => void
     createAccount?: any
     restore: boolean
-    phrase: GeneratedMnemonic
+    phrase: GeneratedMnemonic | {}
     pwd: string
 }
 
