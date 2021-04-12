@@ -3,15 +3,14 @@ use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::*;
-
-use libnekoton::core::models::Expiration;
 use libnekoton::core::{self, ton_wallet};
+use libnekoton::core::models::Expiration;
 use libnekoton::crypto;
 use libnekoton::transport::gql;
 use libnekoton::utils::*;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::*;
 
 use crate::utils::*;
 
@@ -19,79 +18,6 @@ use crate::utils::*;
 pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub inner: ton_wallet::TonWallet,
-}
-
-#[wasm_bindgen]
-impl TonWallet {
-    #[wasm_bindgen(constructor)]
-    pub fn new(
-        public_key: &str,
-        contract_type: crate::core::ContractType,
-    ) -> Result<TonWallet, JsValue> {
-        let public_key =
-            ed25519_dalek::PublicKey::from_bytes(&hex::decode(public_key).handle_error()?)
-                .handle_error()?;
-        let contract_type = ton_wallet::ContractType::try_from(contract_type)?;
-
-        Ok(TonWallet {
-            inner: ton_wallet::TonWallet::new(public_key, contract_type),
-        })
-    }
-
-    #[wasm_bindgen(getter, js_name = "address")]
-    pub fn address(&self) -> String {
-        self.inner.compute_address().to_string()
-    }
-
-    #[wasm_bindgen(getter, js_name = "publicKey")]
-    pub fn public_key(&self) -> String {
-        hex::encode(self.inner.public_key().as_bytes())
-    }
-
-    #[wasm_bindgen(getter, js_name = "contractType")]
-    pub fn contract_type(&self) -> crate::core::ContractType {
-        self.inner.contract_type().into()
-    }
-
-    #[wasm_bindgen(js_name = "prepareDeploy")]
-    pub fn prepare_deploy(&self, timeout: u32) -> Result<UnsignedMessage, JsValue> {
-        let inner = self
-            .inner
-            .prepare_deploy(Expiration::Timeout(timeout))
-            .handle_error()?;
-        Ok(UnsignedMessage { inner })
-    }
-
-    #[wasm_bindgen(js_name = "prepareTransfer")]
-    pub fn prepare_transfer(
-        &self,
-        current_state: &ContractState,
-        dest: &str,
-        amount: &str,
-        bounce: bool,
-        timeout: u32,
-    ) -> Result<Option<UnsignedMessage>, JsValue> {
-        let dest = ton_block::MsgAddressInt::from_str(dest).handle_error()?;
-        let amount = u64::from_str(amount).handle_error()?;
-
-        Ok(
-            match self
-                .inner
-                .prepare_transfer(
-                    &current_state.inner,
-                    dest,
-                    amount,
-                    bounce,
-                    None,
-                    Expiration::Timeout(timeout),
-                )
-                .handle_error()?
-            {
-                ton_wallet::TransferAction::Sign(inner) => Some(UnsignedMessage { inner }),
-                ton_wallet::TransferAction::DeployFirst => None,
-            },
-        )
-    }
 }
 
 #[wasm_bindgen]
@@ -158,72 +84,55 @@ impl SignedMessage {
 #[wasm_bindgen]
 pub struct TonWalletSubscription {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<Mutex<TonWalletSubscriptionImpl>>,
+    pub inner: TonWalletSubscriptionImpl,
 }
 
 #[wasm_bindgen]
 impl TonWalletSubscription {
     #[wasm_bindgen(js_name = "accountState")]
     pub fn account_state(&self) -> crate::core::AccountState {
-        let inner = self.inner.lock().trust_me();
-        inner.subscription.account_state().clone().into()
+        crate::core::AccountState { inner: self.inner.subscription.account_state().clone() }
     }
 
+    #[wasm_bindgen(getter, js_name = "address")]
+    pub fn address(&self) -> String {
+        self.inner.subscription.address().to_string()
+    }
+
+    #[wasm_bindgen(getter, js_name = "publicKey")]
+    pub fn public_key(&self) -> String {
+        hex::encode( self.inner.subscription.public_key().as_bytes())
+    }
+
+    #[wasm_bindgen(getter, js_name = "contractType")]
+    pub fn contract_type(&self) -> crate::core::ContractType {
+        self.inner.subscription.contract_type().into()
+    }
+
+
     #[wasm_bindgen(js_name = "getContractState")]
-    pub fn get_contract_state(&self) -> PromiseOptionContractState {
-        use libnekoton::transport::Transport;
-
-        let inner = self.inner.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let inner = inner.lock().trust_me();
-
-            Ok(
-                match inner
-                    .transport
-                    .get_contract_state(inner.subscription.address())
-                    .await
-                    .handle_error()?
-                {
-                    libnekoton::transport::models::ContractState::Exists(state) => {
-                        JsValue::from(ContractState {
-                            inner: state.account,
-                        })
-                    }
-                    _ => JsValue::undefined(),
-                },
-            )
-        }))
+    pub fn get_contract_state(&self) -> bool {
+        self.inner.subscription.account_state().is_deployed //todo checkme
     }
 
     #[wasm_bindgen(js_name = "estimateFees")]
     pub fn estimate_fees(&self, signed_message: &SignedMessage) -> PromiseString {
-        let inner = self.inner.clone();
+        let mut inner =  self.inner.subscription.clone();
         let message = signed_message.inner.message.clone();
-
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut inner = inner.lock().trust_me();
-
-            let fees = inner
-                .subscription
-                .estimate_fees(&message)
-                .await
-                .handle_error()?;
-
-            Ok(JsValue::from(fees.to_string()))
+            let res = inner.estimate_fees(&message).await.handle_error()?;
+            Ok(JsValue::from(res.to_string()))
         }))
     }
 
     #[wasm_bindgen(js_name = "sendMessage")]
     pub fn send_message(&self, message: &SignedMessage) -> PromisePendingTransaction {
-        let inner = self.inner.clone();
+        let mut inner =  self.inner.subscription.clone();
         let crypto::SignedMessage { message, expire_at } = message.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut inner = inner.lock().trust_me();
 
             let pending_transaction = inner
-                .subscription
                 .send(&message, expire_at)
                 .await
                 .handle_error()?;
@@ -236,14 +145,12 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(js_name = "getLatestBlock")]
     pub fn get_latest_block(&self) -> PromiseLatestBlock {
-        let inner = self.inner.clone();
-
+        let inner = self.inner.transport.clone();
+        let sub = self.inner.subscription.clone();
         JsCast::unchecked_into(future_to_promise(async move {
-            let inner = inner.lock().trust_me();
 
             let latest_block = inner
-                .transport
-                .get_latest_block(&inner.subscription.address())
+                .get_latest_block(&sub.address())
                 .await
                 .handle_error()?;
 
@@ -257,16 +164,14 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(js_name = "waitForNextBlock")]
     pub fn wait_for_next_block(&self, current: String, timeout: u32) -> PromiseString {
-        let inner = self.inner.clone();
-
+        let inner =  self.inner.transport.clone();
+        let sub = self.inner.subscription.clone();
         JsCast::unchecked_into(future_to_promise(async move {
-            let inner = inner.lock().trust_me();
 
             let next_block = inner
-                .transport
                 .wait_for_next_block(
                     &current,
-                    &inner.subscription.address(),
+                    &sub.address(),
                     Duration::from_secs(timeout as u64),
                 )
                 .await
@@ -277,25 +182,22 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(js_name = "refresh")]
     pub fn refresh(&mut self) -> PromiseVoid {
-        let inner = self.inner.clone();
+        let mut inner = self.inner.subscription.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut inner = inner.lock().trust_me();
-            inner.subscription.refresh().await.handle_error()?;
+            inner.refresh().await.handle_error()?;
             Ok(JsValue::undefined())
         }))
     }
 
     #[wasm_bindgen(js_name = "handleBlock")]
     pub fn handle_block(&mut self, block_id: String) -> PromiseVoid {
-        let inner = self.inner.clone();
+        let transport = self.inner.transport.clone();
+        let mut subscription = self.inner.subscription.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut inner = inner.lock().trust_me();
-
-            let block = inner.transport.get_block(&block_id).await.handle_error()?;
-            inner
-                .subscription
+            let block = transport.get_block(&block_id).await.handle_error()?;
+            subscription
                 .handle_block(&block)
                 .await
                 .handle_error()?;
@@ -310,12 +212,9 @@ impl TonWalletSubscription {
             hash: from.hash,
         };
 
-        let inner = self.inner.clone();
-
+        let mut inner = self.inner.subscription.clone();
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut inner = inner.lock().trust_me();
             inner
-                .subscription
                 .preload_transactions(from)
                 .await
                 .handle_error()?;
@@ -326,20 +225,20 @@ impl TonWalletSubscription {
     #[wasm_bindgen(getter, js_name = "pollingMethod")]
     pub fn polling_method(&self) -> crate::core::PollingMethod {
         crate::core::convert_polling_method(
-            self.inner.lock().trust_me().subscription.polling_method(),
+            self.inner.subscription.polling_method(),
         )
     }
 }
 
 pub struct TonWalletSubscriptionImpl {
     transport: Arc<gql::GqlTransport>,
-    subscription: core::ton_wallet::TonWalletSubscription,
+    subscription: libnekoton::core::ton_wallet::TonWallet,
 }
 
 impl TonWalletSubscriptionImpl {
     pub fn new(
         transport: Arc<gql::GqlTransport>,
-        subscription: core::ton_wallet::TonWalletSubscription,
+        subscription: libnekoton::core::ton_wallet::TonWallet,
     ) -> Self {
         Self {
             transport,
