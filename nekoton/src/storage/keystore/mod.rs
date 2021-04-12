@@ -11,6 +11,8 @@ use libnekoton::storage;
 use crate::crypto::{AccountType, StoredKey};
 use crate::utils::*;
 
+const DERIVED_SIGNER: &str = "derived_key_signer";
+
 #[wasm_bindgen]
 pub struct KeyStore {
     #[wasm_bindgen(skip)]
@@ -25,7 +27,10 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                storage::KeyStore::load(storage as Arc<dyn external::Storage>)
+                storage::KeyStore::new(storage as Arc<dyn external::Storage>)
+                    .with_signer(DERIVED_SIGNER, crypto::DerivedKeySigner::new())
+                    .handle_error()?
+                    .load()
                     .await
                     .handle_error()?,
             );
@@ -34,25 +39,36 @@ impl KeyStore {
         }))
     }
 
-    #[wasm_bindgen(js_name = "addKey")]
-    pub fn add_key(&self, key: &StoredKey) -> PromiseString {
+    #[wasm_bindgen(js_name = "setMasterKey")]
+    pub fn add_key(&self, name: String, phrase: String, password: String) -> PromiseString {
         let inner = self.inner.clone();
-        let key = key.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let public_key = inner.add_key(key).await.handle_error()?;
-            Ok(JsValue::from(public_key))
+            let entry = inner
+                .add_key::<crypto::DerivedKeySigner>(
+                    &name,
+                    crypto::DerivedKeyCreateInput::Import {
+                        phrase: phrase.into(),
+                        password: password.into(),
+                    },
+                )
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(hex::encode(entry.public_key.as_bytes())))
         }))
     }
 
     #[wasm_bindgen(js_name = "removeKey")]
-    pub fn remove_key(&self, public_key: String) -> PromiseVoid {
+    pub fn remove_key(&self, public_key: String) -> Result<PromiseVoid, JsValue> {
         let inner = self.inner.clone();
+        let public_key =
+            ed25519_dalek::PublicKey::from_bytes(&hex::decode(&public_key).handle_error()?)
+                .handle_error()?;
 
-        JsCast::unchecked_into(future_to_promise(async move {
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
             inner.remove_key(&public_key).await.handle_error()?;
             Ok(JsValue::undefined())
-        }))
+        })))
     }
 
     #[wasm_bindgen]
@@ -65,33 +81,46 @@ impl KeyStore {
         }))
     }
 
-    #[wasm_bindgen(js_name = "getKey")]
-    pub fn get_key(&self, public_key: String) -> PromiseOptionStoredKey {
+    #[wasm_bindgen]
+    pub fn sign(
+        &self,
+        message: &crate::core::wallet::UnsignedMessage,
+        password: String,
+    ) -> PromiseSignedMessage {
         let inner = self.inner.clone();
+        let message = message.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let keys = inner.stored_keys().await;
-            Ok(JsValue::from(
-                keys.get(&public_key)
-                    .cloned()
-                    .map(|inner| StoredKey { inner }),
-            ))
+            let hash = crypto::UnsignedMessage::hash(message.as_ref());
+            let signature = inner
+                .sign::<crypto::DerivedKeySigner>(
+                    hash,
+                    crypto::DerivedKeySignParams {
+                        account_id: 0,
+                        password: password.into(),
+                    },
+                )
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(crate::core::wallet::SignedMessage {
+                inner: message.sign(&signature).handle_error()?,
+            }))
         }))
     }
 
-    #[wasm_bindgen(js_name = "getStoredKeys")]
+    #[wasm_bindgen(js_name = "getKeys")]
     pub fn get_stored_keys(&self) -> PromiseKeyStoreEntries {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let keys = inner.stored_keys().await;
+            let keys = inner.get_entries().await;
 
             Ok(keys
                 .iter()
-                .map(|(public_key, stored)| {
+                .map(|entry| {
                     JsValue::from(KeyStoreEntry {
-                        public_key: public_key.clone(),
-                        account_type: stored.account_type(),
+                        name: entry.name.clone(),
+                        public_key: hex::encode(entry.public_key.as_bytes()),
                     })
                 })
                 .collect::<js_sys::Array>()
@@ -102,6 +131,9 @@ impl KeyStore {
 
 #[wasm_bindgen]
 extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<SignedMessage>")]
+    pub type PromiseSignedMessage;
+
     #[wasm_bindgen(typescript_type = "Promise<Array<KeyStoreEntry>>")]
     pub type PromiseKeyStoreEntries;
 
@@ -118,20 +150,20 @@ extern "C" {
 #[wasm_bindgen]
 pub struct KeyStoreEntry {
     #[wasm_bindgen(skip)]
-    pub public_key: String,
+    pub name: String,
     #[wasm_bindgen(skip)]
-    pub account_type: crypto::MnemonicType,
+    pub public_key: String,
 }
 
 #[wasm_bindgen]
 impl KeyStoreEntry {
+    #[wasm_bindgen(getter)]
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
     #[wasm_bindgen(getter, js_name = "publicKey")]
     pub fn public_key(&self) -> String {
         self.public_key.clone()
-    }
-
-    #[wasm_bindgen(getter, js_name = "accountType")]
-    pub fn account_type(&self) -> AccountType {
-        AccountType::new(self.account_type)
     }
 }

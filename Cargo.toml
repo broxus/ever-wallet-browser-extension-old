@@ -5,3 +5,6 @@ members = ["nekoton"]
 opt-level = "s"
 lto = true
 codegen-units = 1
+
+[patch."https://github.com/tonlabs/ton-labs-types.git"]
+ton_types = { git = "https://github.com/broxus/ton-labs-types.git" }

@@ -274,6 +274,14 @@ impl Message {
     pub fn bounced(&self) -> bool {
         self.inner.bounced
     }
+
+    #[wasm_bindgen(getter, js_name = "bodyHash")]
+    pub fn body_hash(&self) -> Option<String> {
+        self.inner
+            .body
+            .as_ref()
+            .map(|body| hex::encode(body.hash.as_slice()))
+    }
 }
 
 impl From<core::models::Message> for Message {

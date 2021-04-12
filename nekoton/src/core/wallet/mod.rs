@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
+use libnekoton::core::models::Expiration;
 use libnekoton::core::{self, ton_wallet};
 use libnekoton::crypto;
 use libnekoton::transport::gql;
@@ -53,8 +54,11 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "prepareDeploy")]
-    pub fn prepare_deploy(&self, expire_at: u32) -> Result<UnsignedMessage, JsValue> {
-        let inner = self.inner.prepare_deploy(expire_at).handle_error()?;
+    pub fn prepare_deploy(&self, timeout: u32) -> Result<UnsignedMessage, JsValue> {
+        let inner = self
+            .inner
+            .prepare_deploy(Expiration::Timeout(timeout))
+            .handle_error()?;
         Ok(UnsignedMessage { inner })
     }
 
@@ -65,7 +69,7 @@ impl TonWallet {
         dest: &str,
         amount: &str,
         bounce: bool,
-        expire_at: u32,
+        timeout: u32,
     ) -> Result<Option<UnsignedMessage>, JsValue> {
         let dest = ton_block::MsgAddressInt::from_str(dest).handle_error()?;
         let amount = u64::from_str(amount).handle_error()?;
@@ -73,7 +77,14 @@ impl TonWallet {
         Ok(
             match self
                 .inner
-                .prepare_transfer(&current_state.inner, dest, amount, bounce, None, expire_at)
+                .prepare_transfer(
+                    &current_state.inner,
+                    dest,
+                    amount,
+                    bounce,
+                    None,
+                    Expiration::Timeout(timeout),
+                )
                 .handle_error()?
             {
                 ton_wallet::TransferAction::Sign(inner) => Some(UnsignedMessage { inner }),
@@ -91,6 +102,16 @@ pub struct UnsignedMessage {
 
 #[wasm_bindgen]
 impl UnsignedMessage {
+    #[wasm_bindgen(js_name = "refreshTimeout")]
+    pub fn refresh_timeout(&mut self) {
+        self.inner.refresh_timeout();
+    }
+
+    #[wasm_bindgen(js_name = "expireAt")]
+    pub fn expire_at(&self) -> u32 {
+        self.inner.expire_at()
+    }
+
     #[wasm_bindgen(getter)]
     pub fn hash(&self) -> String {
         hex::encode(crypto::UnsignedMessage::hash(self.inner.as_ref()))
@@ -160,12 +181,14 @@ impl TonWalletSubscription {
             Ok(
                 match inner
                     .transport
-                    .get_account_state(inner.subscription.address())
+                    .get_contract_state(inner.subscription.address())
                     .await
                     .handle_error()?
                 {
-                    libnekoton::transport::models::ContractState::Exists { account, .. } => {
-                        JsValue::from(ContractState { inner: account })
+                    libnekoton::transport::models::ContractState::Exists(state) => {
+                        JsValue::from(ContractState {
+                            inner: state.account,
+                        })
                     }
                     _ => JsValue::undefined(),
                 },
@@ -193,8 +216,6 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(js_name = "sendMessage")]
     pub fn send_message(&self, message: &SignedMessage) -> PromisePendingTransaction {
-        use libnekoton::core::AccountSubscription;
-
         let inner = self.inner.clone();
         let crypto::SignedMessage { message, expire_at } = message.inner.clone();
 
@@ -256,8 +277,6 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(js_name = "refresh")]
     pub fn refresh(&mut self) -> PromiseVoid {
-        use libnekoton::core::AccountSubscription;
-
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -269,8 +288,6 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(js_name = "handleBlock")]
     pub fn handle_block(&mut self, block_id: String) -> PromiseVoid {
-        use libnekoton::core::AccountSubscription;
-
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -308,8 +325,6 @@ impl TonWalletSubscription {
 
     #[wasm_bindgen(getter, js_name = "pollingMethod")]
     pub fn polling_method(&self) -> crate::core::PollingMethod {
-        use libnekoton::core::AccountSubscription;
-
         crate::core::convert_polling_method(
             self.inner.lock().trust_me().subscription.polling_method(),
         )
@@ -370,7 +385,7 @@ extern "C" {
     pub fn on_message_sent(
         this: &TonWalletNotificationHandlerImpl,
         pending_transaction: crate::core::PendingTransaction,
-        transaction: crate::core::Transaction,
+        transaction: Option<crate::core::Transaction>,
     );
 
     #[wasm_bindgen(method, js_name = "onMessageExpired")]
@@ -407,14 +422,14 @@ impl From<TonWalletNotificationHandlerImpl> for TonWalletNotificationHandler {
     }
 }
 
-impl core::AccountSubscriptionHandler for TonWalletNotificationHandler {
+impl core::ton_wallet::TonWalletSubscriptionHandler for TonWalletNotificationHandler {
     fn on_message_sent(
         &self,
         pending_transaction: core::models::PendingTransaction,
-        transaction: core::models::Transaction,
+        transaction: Option<core::models::Transaction>,
     ) {
         self.inner
-            .on_message_sent(pending_transaction.into(), transaction.into());
+            .on_message_sent(pending_transaction.into(), transaction.map(From::from));
     }
 
     fn on_message_expired(&self, pending_transaction: core::models::PendingTransaction) {
