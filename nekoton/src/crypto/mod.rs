@@ -1,5 +1,4 @@
 use wasm_bindgen::prelude::*;
-
 use libnekoton::crypto;
 
 use crate::utils::*;

@@ -72,6 +72,7 @@ pub fn check_address(address: &str) -> bool {
 #[wasm_bindgen(js_name = "getHints")]
 pub fn get_hints(word: &str) -> StringArray {
     use wasm_bindgen::JsCast;
-    let ar: js_sys::Array = libnekoton::crypto::get_hints(word).into_iter().map(|x| JsValue::from(x)).collect();
+    use libnekoton::crypto::dict::get_hints;
+    let ar: js_sys::Array = get_hints(word).into_iter().map(|x| JsValue::from(x)).collect();
     ar.unchecked_into::<StringArray>()
 }

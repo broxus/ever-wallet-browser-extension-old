@@ -869,7 +869,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#31efd1a301118591f5d19cab2ebf1bb77dfde07c"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#4d7ba22c46462b1032de1bfdb5ab05a4df0f7bcb"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1490,7 +1490,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-abi.git#1f640b6b421ec7a2b62a54b476e614c26cbb70a7"
+source = "git+https://github.com/tonlabs/ton-labs-abi.git#fd81b3bd3fd9a8b2c1ff85403ff08c5525ca062d"
 dependencies = [
  "base64 0.10.1",
  "byteorder",

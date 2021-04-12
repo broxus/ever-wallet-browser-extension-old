@@ -1,12 +1,11 @@
 use std::sync::Arc;
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use wasm_bindgen_futures::*;
-
 use libnekoton::crypto;
 use libnekoton::external;
 use libnekoton::storage;
+use wasm_bindgen::JsCast;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::*;
 
 use crate::crypto::{AccountType, StoredKey};
 use crate::utils::*;
@@ -126,6 +125,20 @@ impl KeyStore {
                 .collect::<js_sys::Array>()
                 .unchecked_into())
         }))
+    }
+
+    #[wasm_bindgen(js_name = "ChangeMasterPassword")]
+    pub fn change_master_password(&self, old: String, new: String) -> PromiseVoid {
+        use libnekoton::crypto::{DerivedKeyUpdateParams, DerivedKeySigner};
+        let update = DerivedKeyUpdateParams::ChangePassword { old_password: old.into(), new_password: new.into() };
+        let inner = self.inner.clone();
+        JsCast::unchecked_into(future_to_promise(
+            async move {
+                inner.update_key::<DerivedKeySigner>(update).await.handle_error()?;
+                Ok(JsValue::undefined()
+                )
+            }
+        ))
     }
 }
 
