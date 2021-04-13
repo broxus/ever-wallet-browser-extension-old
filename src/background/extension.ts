@@ -60,13 +60,7 @@ async function startListener(connection: nt.GqlConnection) {
 
     const knownTransactions = new Array<nt.Transaction>()
 
-    const wallet = new nt.TonWallet(publicKey, 'WalletV3')
-    const address = wallet.address
-    console.log(publicKey, address)
-
     class TonWalletHandler {
-        constructor(private address: string) {}
-
         onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
             console.log(pendingTransaction, transaction)
         }
@@ -76,7 +70,6 @@ async function startListener(connection: nt.GqlConnection) {
         }
 
         onStateChanged(newState: nt.AccountState) {
-            accountStateCache.store(address, newState)
             console.log(newState)
         }
 
@@ -88,21 +81,19 @@ async function startListener(connection: nt.GqlConnection) {
         }
     }
 
-    const handler = new TonWalletHandler(address)
+    const handler = new TonWalletHandler()
 
-    console.log('Restored state: ', await accountStateCache.load(address))
-
-    const subscription = await connection.subscribeToTonWallet(address, handler)
+    const wallet = await connection.subscribeToTonWallet(publicKey, 'WalletV3', handler)
 
     if (knownTransactions.length !== 0) {
         const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1]
         if (oldestKnownTransaction.prevTransactionId != null) {
-            await subscription.preloadTransactions(oldestKnownTransaction.prevTransactionId)
+            await wallet.preloadTransactions(oldestKnownTransaction.prevTransactionId)
         }
     }
 
     let currentBlockId: string | null = null
-    let lastPollingMethod = subscription.pollingMethod
+    let lastPollingMethod = wallet.pollingMethod
     let i = 0
     while (true) {
         i += 1
@@ -113,18 +104,18 @@ async function startListener(connection: nt.GqlConnection) {
                     setTimeout(() => resolve(), POLLING_INTERVAL)
                 })
                 console.log('manual refresh')
-                await subscription.refresh()
+                await wallet.refresh()
                 break
             }
             case 'reliable': {
                 if (lastPollingMethod != 'reliable' || currentBlockId == null) {
-                    currentBlockId = (await subscription.getLatestBlock()).id
+                    currentBlockId = (await wallet.getLatestBlock()).id
                 }
 
-                const nextBlockId: string = await subscription.waitForNextBlock(currentBlockId, 60)
+                const nextBlockId: string = await wallet.waitForNextBlock(currentBlockId, 60)
                 console.log(nextBlockId, currentBlockId != nextBlockId)
 
-                await subscription.handleBlock(nextBlockId)
+                await wallet.handleBlock(nextBlockId)
                 currentBlockId = nextBlockId
                 break
             }
@@ -132,7 +123,7 @@ async function startListener(connection: nt.GqlConnection) {
 
         if (i == 1) {
             console.log('Preparing message')
-            const contractState = await subscription.getContractState()
+            const contractState = await wallet.getContractState()
             if (contractState == null) {
                 console.log('Contract state is empty')
                 continue
@@ -155,23 +146,26 @@ async function startListener(connection: nt.GqlConnection) {
                 continue
             }
 
-            // {
-            //     const signedMessage = unsignedMessage.signFake()
-            //     const totalFees = await subscription.estimateFees(signedMessage)
-            //     console.log('Fees:', totalFees)
-            // }
+            // estimate fees
             {
-                const signedMessage = await keystore.sign(unsignedMessage, '1234')
-                const totalFees = await subscription.estimateFees(signedMessage)
+                const signedMessage = unsignedMessage.signFake()
+                const totalFees = await wallet.estimateFees(signedMessage)
+                console.log('Fees:', totalFees)
+            }
+
+            // send message
+            {
+                const signedMessage = await keystore.sign(unsignedMessage, publicKey, '1234')
+                const totalFees = await wallet.estimateFees(signedMessage)
                 console.log('Signed message fees:', totalFees)
 
-                currentBlockId = (await subscription.getLatestBlock()).id
-                const pendingTransaction = await subscription.sendMessage(signedMessage)
+                currentBlockId = (await wallet.getLatestBlock()).id
+                const pendingTransaction = await wallet.sendMessage(signedMessage)
                 console.log(pendingTransaction)
             }
         }
 
-        lastPollingMethod = subscription.pollingMethod
+        lastPollingMethod = wallet.pollingMethod
     }
 }
 
