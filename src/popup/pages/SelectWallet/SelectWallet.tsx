@@ -4,8 +4,8 @@ import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { createAccount, setWalletType } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
-import './select-wallet.scss'
 import { GeneratedMnemonic } from '../../../../nekoton/pkg'
+import './select-wallet.scss'
 
 interface ISelectWallet {
     publicKey?: string

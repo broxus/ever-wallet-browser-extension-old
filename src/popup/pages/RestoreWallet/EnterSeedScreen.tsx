@@ -5,23 +5,18 @@ import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { setSeed } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
-import TagsInput from "../../components/TagsInput/TagsInput";
+import TagsInput from '../../components/TagsInput/TagsInput'
 
 const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
-    const [words, setWords] = useState('')
-    const [localSeed, setLocalSeed] = useState<string[]>([])
+    const [words, setWords] = useState<string[]>([])
 
     const { handleSubmit, errors } = useForm()
 
     const seedLength = walletType === 'WalletV3' ? 24 : 12
 
-    useEffect(() => {
-        setLocalSeed(words?.split(/[ ,]+/).filter((el) => el !== ''))
-    }, [words])
-
     const onSubmit = () => {
         setStep(9)
-        setSeed(localSeed)
+        setSeed(words)
     }
 
     return (
@@ -31,7 +26,7 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
                     Enter your seed phrase
                 </h2>
                 <form id="password" onSubmit={handleSubmit(onSubmit)}>
-                    <TagsInput />
+                    <TagsInput words={words} setWords={setWords} />
                     {/*<TextareaAutosize*/}
                     {/*    autoFocus*/}
                     {/*    placeholder={'Separate words with comma or space'}*/}
@@ -49,7 +44,7 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
                     {/*        minLength: 6,*/}
                     {/*    })}*/}
                     {/*/>*/}
-                    <div className="words-count">{`${localSeed.length}/${seedLength} words`}</div>
+                    <div className="words-count">{`${words.length}/${seedLength} words`}</div>
                     {errors.pwd && (
                         <div className="check-seed__content-error">
                             The seed is required and must be minimum 6 characters long
@@ -60,7 +55,7 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
             <div className="create-password-page__content-buttons">
                 <Button
                     text={'Confirm'}
-                    disabled={localSeed.length < seedLength}
+                    disabled={words.length < seedLength}
                     type="submit"
                     form="password"
                 />
