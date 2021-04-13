@@ -869,7 +869,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#4d7f537629c78b217c78ae87871cab5b0939743a"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#5ba05d73222fc57e96259cc1bd1a30e8a06b69bf"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1479,9 +1479,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "134af885d758d645f0f0505c9a8b3f9bf8a348fd822e112ab5248138348f1722"
+checksum = "83f0c8e7c0addab50b663055baf787d0af7f413a46e6e7fb9559a4e4db7137a5"
 dependencies = [
  "autocfg",
  "pin-project-lite",

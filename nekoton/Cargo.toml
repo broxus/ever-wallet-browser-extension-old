@@ -37,7 +37,7 @@ ton_api = { git = "https://github.com/broxus/ton-labs-tl.git", branch = "origina
 ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
 ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
 
-[dependencies.libnekoton]
+[dependencies.nt]
 package = "nekoton"
 git = "ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git"
 branch = "dev"

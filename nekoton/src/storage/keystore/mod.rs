@@ -1,8 +1,5 @@
 use std::sync::Arc;
 
-use libnekoton::crypto;
-use libnekoton::external;
-use libnekoton::storage;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
@@ -14,7 +11,7 @@ const DERIVED_SIGNER: &str = "derived_key_signer";
 #[wasm_bindgen]
 pub struct KeyStore {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<storage::KeyStore>,
+    pub inner: Arc<nt::storage::KeyStore>,
 }
 
 #[wasm_bindgen]
@@ -25,8 +22,8 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                storage::KeyStore::new(storage as Arc<dyn external::Storage>)
-                    .with_signer(DERIVED_SIGNER, crypto::DerivedKeySigner::new())
+                nt::storage::KeyStore::builder(storage as Arc<dyn nt::external::Storage>)
+                    .with_signer(DERIVED_SIGNER, nt::crypto::DerivedKeySigner::new())
                     .handle_error()?
                     .load()
                     .await
@@ -38,14 +35,16 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "setMasterKey")]
-    pub fn add_key(&self, name: String, phrase: String, password: String) -> PromiseString {
+    pub fn set_master_key(&self, name: String, phrase: String, password: String) -> PromiseString {
+        use nt::crypto::{DerivedKeyCreateInput, DerivedKeySigner};
+
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let entry = inner
-                .add_key::<crypto::DerivedKeySigner>(
+                .add_key::<DerivedKeySigner>(
                     &name,
-                    crypto::DerivedKeyCreateInput::Import {
+                    DerivedKeyCreateInput::Import {
                         phrase: phrase.into(),
                         password: password.into(),
                     },
@@ -56,12 +55,65 @@ impl KeyStore {
         }))
     }
 
-    #[wasm_bindgen(js_name = "removeKey")]
-    pub fn remove_key(&self, public_key: String) -> Result<PromiseVoid, JsValue> {
+    #[wasm_bindgen(js_name = "changeMasterPassword")]
+    pub fn change_master_password(&self, old: String, new: String) -> PromiseVoid {
+        use nt::crypto::{DerivedKeySigner, DerivedKeyUpdateParams};
+
+        let update = DerivedKeyUpdateParams::ChangePassword {
+            old_password: old.into(),
+            new_password: new.into(),
+        };
+
         let inner = self.inner.clone();
-        let public_key =
-            ed25519_dalek::PublicKey::from_bytes(&hex::decode(&public_key).handle_error()?)
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            inner
+                .update_key::<DerivedKeySigner>(update)
+                .await
                 .handle_error()?;
+            Ok(JsValue::undefined())
+        }))
+    }
+
+    #[wasm_bindgen]
+    pub fn sign(
+        &self,
+        message: &crate::crypto::UnsignedMessage,
+        public_key: String,
+        password: String,
+    ) -> Result<PromiseSignedMessage, JsValue> {
+        use nt::crypto::{DerivedKeySignParams, DerivedKeySigner};
+
+        let message = message.inner.clone();
+        let public_key = parse_public_key(&public_key)?;
+        let password = password.into();
+
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let hash = nt::crypto::UnsignedMessage::hash(message.as_ref());
+
+            let signature = inner
+                .sign::<DerivedKeySigner>(
+                    hash,
+                    DerivedKeySignParams::ByPublicKey {
+                        public_key,
+                        password,
+                    },
+                )
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(crate::crypto::SignedMessage {
+                inner: message.sign(&signature).handle_error()?,
+            }))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "removeKey")]
+    pub fn remove_key(&self, public_key: &str) -> Result<PromiseVoid, JsValue> {
+        let public_key = parse_public_key(public_key)?;
+
+        let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             inner.remove_key(&public_key).await.handle_error()?;
@@ -76,33 +128,6 @@ impl KeyStore {
         JsCast::unchecked_into(future_to_promise(async move {
             inner.clear().await.handle_error()?;
             Ok(JsValue::undefined())
-        }))
-    }
-
-    #[wasm_bindgen]
-    pub fn sign(
-        &self,
-        message: &crate::core::wallet::UnsignedMessage,
-        password: String,
-    ) -> PromiseSignedMessage {
-        let inner = self.inner.clone();
-        let message = message.inner.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let hash = crypto::UnsignedMessage::hash(message.as_ref());
-            let signature = inner
-                .sign::<crypto::DerivedKeySigner>(
-                    hash,
-                    crypto::DerivedKeySignParams {
-                        account_id: 0,
-                        password: password.into(),
-                    },
-                )
-                .await
-                .handle_error()?;
-            Ok(JsValue::from(crate::core::wallet::SignedMessage {
-                inner: message.sign(&signature).handle_error()?,
-            }))
         }))
     }
 
@@ -123,23 +148,6 @@ impl KeyStore {
                 })
                 .collect::<js_sys::Array>()
                 .unchecked_into())
-        }))
-    }
-
-    #[wasm_bindgen(js_name = "ChangeMasterPassword")]
-    pub fn change_master_password(&self, old: String, new: String) -> PromiseVoid {
-        use libnekoton::crypto::{DerivedKeySigner, DerivedKeyUpdateParams};
-        let update = DerivedKeyUpdateParams::ChangePassword {
-            old_password: old.into(),
-            new_password: new.into(),
-        };
-        let inner = self.inner.clone();
-        JsCast::unchecked_into(future_to_promise(async move {
-            inner
-                .update_key::<DerivedKeySigner>(update)
-                .await
-                .handle_error()?;
-            Ok(JsValue::undefined())
         }))
     }
 }

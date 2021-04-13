@@ -1,5 +1,8 @@
+use std::str::FromStr;
+
 use anyhow::Error;
 use futures::channel::oneshot;
+use ton_block::MsgAddressInt;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 
@@ -36,6 +39,14 @@ pub trait HandleError {
     fn handle_error(self) -> Result<Self::Output, JsValue>;
 }
 
+pub fn parse_public_key(public_key: &str) -> Result<ed25519_dalek::PublicKey, JsValue> {
+    ed25519_dalek::PublicKey::from_bytes(&hex::decode(&public_key).handle_error()?).handle_error()
+}
+
+pub fn parse_address(address: &str) -> Result<MsgAddressInt, JsValue> {
+    MsgAddressInt::from_str(address).handle_error()
+}
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<void>")]
@@ -49,4 +60,7 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Array<Transaction>")]
     pub type TransactionsList;
+
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type StringArray;
 }

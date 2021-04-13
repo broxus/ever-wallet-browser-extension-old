@@ -1,19 +1,16 @@
+use std::convert::TryInto;
 use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use ed25519_dalek::PublicKey;
 use futures::channel::oneshot;
-use std::convert::TryFrom;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use libnekoton::core;
-use libnekoton::external;
-use libnekoton::transport::{gql, Transport};
+use nt::transport::gql;
 
-use crate::utils::{HandleError, PromiseVoid};
+use crate::utils::*;
 
 #[wasm_bindgen]
 extern "C" {
@@ -53,23 +50,21 @@ impl GqlConnection {
     #[wasm_bindgen(js_name = "subscribeToTonWallet")]
     pub fn subscribe_main_wallet(
         &self,
-        public_key: String,
-        contract_type: crate::core::ContractType,
-        handler: crate::core::wallet::TonWalletNotificationHandlerImpl,
+        public_key: &str,
+        contract_type: crate::core::ton_wallet::ContractType,
+        handler: crate::core::ton_wallet::TonWalletNotificationHandlerImpl,
     ) -> Result<PromiseTonWalletSubscription, JsValue> {
-        let public_key =
-            PublicKey::from_bytes(&hex::decode(public_key).handle_error()?).handle_error()?;
-
-        let contract_type = core::ton_wallet::ContractType::try_from(contract_type)?;
+        let public_key = parse_public_key(&public_key)?;
+        let contract_type = contract_type.try_into()?;
 
         let transport = Arc::new(self.make_transport());
-        let handler = Arc::new(crate::core::wallet::TonWalletNotificationHandler::from(
+        let handler = Arc::new(crate::core::ton_wallet::TonWalletNotificationHandler::from(
             handler,
         ));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let subscription = core::ton_wallet::TonWallet::subscribe(
-                transport.clone() as Arc<dyn Transport>,
+            let wallet = nt::core::ton_wallet::TonWallet::subscribe(
+                transport.clone() as Arc<dyn nt::transport::Transport>,
                 public_key,
                 contract_type,
                 handler,
@@ -77,34 +72,21 @@ impl GqlConnection {
             .await
             .handle_error()?;
 
-            let address = subscription.address().to_string();
-            let public_key = hex::encode(subscription.public_key().as_bytes());
-            let contract_type = subscription.contract_type();
+            let address = wallet.address().to_string();
+            let public_key = hex::encode(wallet.public_key().as_bytes());
+            let contract_type = wallet.contract_type();
 
-            let inner = Arc::new(crate::core::wallet::TonWalletImpl::new(
-                transport,
-                subscription,
+            let inner = Arc::new(crate::core::ton_wallet::TonWalletImpl::new(
+                transport, wallet,
             ));
 
-            Ok(JsValue::from(crate::core::wallet::TonWallet {
+            Ok(JsValue::from(crate::core::ton_wallet::TonWallet {
                 address,
                 public_key,
                 contract_type,
                 inner,
             }))
         })))
-    }
-
-    #[wasm_bindgen(js_name = "testGetConfig")]
-    pub fn test_get_config(&self) -> PromiseVoid {
-        let transport = self.make_transport();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let config = transport.get_blockchain_config().await.handle_error()?;
-            log(&format!("{:?}", config.raw_config()));
-
-            Ok(JsValue::undefined())
-        }))
     }
 }
 
@@ -119,7 +101,7 @@ pub struct GqlConnectionImpl {
 }
 
 #[async_trait]
-impl external::GqlConnection for GqlConnectionImpl {
+impl nt::external::GqlConnection for GqlConnectionImpl {
     async fn post(&self, data: &str) -> Result<String> {
         let (tx, rx) = oneshot::channel();
 

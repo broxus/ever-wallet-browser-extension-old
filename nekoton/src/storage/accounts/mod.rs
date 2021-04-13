@@ -6,16 +6,12 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use libnekoton::core::ton_wallet;
-use libnekoton::external;
-use libnekoton::storage;
-
 use crate::utils::*;
 
 #[wasm_bindgen]
 pub struct AccountsStorage {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<storage::AccountsStorage>,
+    pub inner: Arc<nt::storage::AccountsStorage>,
 }
 
 #[wasm_bindgen]
@@ -26,7 +22,7 @@ impl AccountsStorage {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                storage::AccountsStorage::load(storage as Arc<dyn external::Storage>)
+                nt::storage::AccountsStorage::load(storage as Arc<dyn nt::external::Storage>)
                     .await
                     .handle_error()?,
             );
@@ -40,12 +36,10 @@ impl AccountsStorage {
         &self,
         name: String,
         public_key: &str,
-        contract_type: crate::core::ContractType,
+        contract_type: crate::core::ton_wallet::ContractType,
         update_current: bool,
     ) -> Result<PromiseString, JsValue> {
-        let public_key =
-            ed25519_dalek::PublicKey::from_bytes(&hex::decode(public_key).handle_error()?)
-                .handle_error()?;
+        let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
 
         let inner = self.inner.clone();
@@ -150,7 +144,7 @@ pub struct AccountsStorageEntry {
     #[wasm_bindgen(skip)]
     pub public_key: String,
     #[wasm_bindgen(skip)]
-    pub contract_type: ton_wallet::ContractType,
+    pub contract_type: nt::core::ton_wallet::ContractType,
 }
 
 #[wasm_bindgen]
@@ -171,7 +165,7 @@ impl AccountsStorageEntry {
     }
 
     #[wasm_bindgen(getter, js_name = "contractType")]
-    pub fn contract_type(&self) -> crate::core::ContractType {
+    pub fn contract_type(&self) -> crate::core::ton_wallet::ContractType {
         self.contract_type.into()
     }
 }
@@ -179,7 +173,7 @@ impl AccountsStorageEntry {
 #[wasm_bindgen]
 pub struct AssetsList {
     #[wasm_bindgen(skip)]
-    pub inner: storage::AssetsList,
+    pub inner: nt::storage::AssetsList,
 }
 
 #[wasm_bindgen]
@@ -222,7 +216,7 @@ impl AssetsList {
 #[wasm_bindgen]
 pub struct TonWalletAsset {
     #[wasm_bindgen(skip)]
-    pub inner: storage::TonWalletAsset,
+    pub inner: nt::storage::TonWalletAsset,
 }
 
 #[wasm_bindgen]
@@ -238,13 +232,13 @@ impl TonWalletAsset {
     }
 
     #[wasm_bindgen(getter, js_name = "contractType")]
-    pub fn contract_type(&self) -> crate::core::ContractType {
+    pub fn contract_type(&self) -> crate::core::ton_wallet::ContractType {
         self.inner.contract.into()
     }
 }
 
-impl From<storage::TonWalletAsset> for TonWalletAsset {
-    fn from(inner: storage::TonWalletAsset) -> Self {
+impl From<nt::storage::TonWalletAsset> for TonWalletAsset {
+    fn from(inner: nt::storage::TonWalletAsset) -> Self {
         Self { inner }
     }
 }
@@ -252,19 +246,19 @@ impl From<storage::TonWalletAsset> for TonWalletAsset {
 #[wasm_bindgen]
 pub struct TokenWalletAsset {
     #[wasm_bindgen(skip)]
-    pub inner: storage::TokenWalletAsset,
+    pub inner: nt::storage::TokenWalletAsset,
 }
 
 #[wasm_bindgen]
 impl TokenWalletAsset {
     #[wasm_bindgen(getter)]
-    pub fn symbol(&self) -> crate::core::Symbol {
+    pub fn symbol(&self) -> crate::core::models::Symbol {
         self.inner.symbol.clone().into()
     }
 }
 
-impl From<storage::TokenWalletAsset> for TokenWalletAsset {
-    fn from(inner: storage::TokenWalletAsset) -> Self {
+impl From<nt::storage::TokenWalletAsset> for TokenWalletAsset {
+    fn from(inner: nt::storage::TokenWalletAsset) -> Self {
         Self { inner }
     }
 }
@@ -272,7 +266,7 @@ impl From<storage::TokenWalletAsset> for TokenWalletAsset {
 #[wasm_bindgen]
 pub struct DePoolAsset {
     #[wasm_bindgen(skip)]
-    pub inner: storage::DePoolAsset,
+    pub inner: nt::storage::DePoolAsset,
 }
 
 #[wasm_bindgen]
@@ -283,8 +277,8 @@ impl DePoolAsset {
     }
 }
 
-impl From<storage::DePoolAsset> for DePoolAsset {
-    fn from(inner: storage::DePoolAsset) -> Self {
+impl From<nt::storage::DePoolAsset> for DePoolAsset {
+    fn from(inner: nt::storage::DePoolAsset) -> Self {
         Self { inner }
     }
 }
