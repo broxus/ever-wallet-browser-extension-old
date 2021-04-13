@@ -446,6 +446,7 @@ export const calculateFee = (address: string, messageToPrepare: MessageToPrepare
             bounce,
             expireAt
         )
+
         if (unsignedMessage == null) {
             // TODO: show notification with deployment
             throw new Error('Contract must be deployed first')

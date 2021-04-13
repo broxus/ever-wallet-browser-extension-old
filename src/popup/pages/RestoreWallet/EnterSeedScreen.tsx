@@ -5,6 +5,7 @@ import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { setSeed } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
+import TagsInput from "../../components/TagsInput/TagsInput";
 
 const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
     const [words, setWords] = useState('')
@@ -30,13 +31,14 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
                     Enter your seed phrase
                 </h2>
                 <form id="password" onSubmit={handleSubmit(onSubmit)}>
-                    <TextareaAutosize
-                        autoFocus
-                        placeholder={'Separate words with comma or space'}
-                        onChange={(event: { target: { value: React.SetStateAction<string> } }) =>
-                            setWords(event.target.value)
-                        }
-                    />
+                    <TagsInput />
+                    {/*<TextareaAutosize*/}
+                    {/*    autoFocus*/}
+                    {/*    placeholder={'Separate words with comma or space'}*/}
+                    {/*    onChange={(event: { target: { value: React.SetStateAction<string> } }) =>*/}
+                    {/*        setWords(event.target.value)*/}
+                    {/*    }*/}
+                    {/*/>*/}
                     {/*<Input*/}
                     {/*    label={'Separate words with comma or space'}*/}
                     {/*    autoFocus*/}
