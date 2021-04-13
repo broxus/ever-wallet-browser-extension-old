@@ -1,0 +1,13 @@
+@import '../../styles/colors';
+
+.MuiInput-underline:after {
+    border-bottom: 2px solid $windowBgActive !important;
+}
+
+.MuiFormLabel-root.Mui-focused {
+    color: $windowBgActive !important;
+}
+
+.MuiInputBase-root {
+    padding: 8px 0 !important;
+}

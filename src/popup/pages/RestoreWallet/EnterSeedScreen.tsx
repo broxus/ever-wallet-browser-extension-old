@@ -26,7 +26,7 @@ const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
                     Enter your seed phrase
                 </h2>
                 <form id="password" onSubmit={handleSubmit(onSubmit)}>
-                    <TagsInput words={words} setWords={setWords} />
+                    <TagsInput setWords={setWords} />
                     {/*<TextareaAutosize*/}
                     {/*    autoFocus*/}
                     {/*    placeholder={'Separate words with comma or space'}*/}
