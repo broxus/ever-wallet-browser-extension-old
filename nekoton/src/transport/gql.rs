@@ -1,9 +1,10 @@
-use std::str::FromStr;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
+use ed25519_dalek::PublicKey;
 use futures::channel::oneshot;
+use std::convert::TryFrom;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
@@ -52,29 +53,43 @@ impl GqlConnection {
     #[wasm_bindgen(js_name = "subscribeToTonWallet")]
     pub fn subscribe_main_wallet(
         &self,
-        addr: &str,
+        public_key: String,
+        contract_type: crate::core::ContractType,
         handler: crate::core::wallet::TonWalletNotificationHandlerImpl,
     ) -> Result<PromiseTonWalletSubscription, JsValue> {
-        let address = ton_block::MsgAddressInt::from_str(addr).handle_error()?;
+        let public_key =
+            PublicKey::from_bytes(&hex::decode(public_key).handle_error()?).handle_error()?;
+
+        let contract_type = core::ton_wallet::ContractType::try_from(contract_type)?;
+
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(crate::core::wallet::TonWalletNotificationHandler::from(
             handler,
         ));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let subscription = core::ton_wallet::TonWalletSubscription::subscribe(
+            let subscription = core::ton_wallet::TonWallet::subscribe(
                 transport.clone() as Arc<dyn Transport>,
-                address,
+                public_key,
+                contract_type,
                 handler,
             )
             .await
             .handle_error()?;
 
-            let inner = Arc::new(Mutex::new(
-                crate::core::wallet::TonWalletSubscriptionImpl::new(transport, subscription),
+            let address = subscription.address().to_string();
+            let public_key = hex::encode(subscription.public_key().as_bytes());
+            let contract_type = subscription.contract_type();
+
+            let inner = Arc::new(crate::core::wallet::TonWalletImpl::new(
+                transport,
+                subscription,
             ));
 
-            Ok(JsValue::from(crate::core::wallet::TonWalletSubscription {
+            Ok(JsValue::from(crate::core::wallet::TonWallet {
+                address,
+                public_key,
+                contract_type,
                 inner,
             }))
         })))
