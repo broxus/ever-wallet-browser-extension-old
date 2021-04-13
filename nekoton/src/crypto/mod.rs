@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::*;
 use nt::crypto;
 
 use crate::utils::*;
+use wasm_bindgen::JsCast;
 
 #[wasm_bindgen]
 pub struct UnsignedMessage {
@@ -68,33 +69,31 @@ impl SignedMessage {
 }
 
 #[wasm_bindgen(js_name = "generateMnemonic")]
-pub fn generate_mnemonic(account_type: MnemonicType) -> Result<GeneratedMnemonic, JsValue> {
-    let key = crypto::generate_key(account_type.into()).handle_error()?;
-    Ok(GeneratedMnemonic {
-        phrase: key.words.join(" "),
-        mnemonic_type: account_type.inner,
-    })
+pub fn generate_mnemonic(mnemonic_type: MnemonicType) -> Result<GeneratedMnemonic, JsValue> {
+    let key = crypto::generate_key(mnemonic_type.into()).handle_error()?;
+    Ok(make_generated_mnemonic(key.words.join(" "), mnemonic_type))
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const GENERATED_MNEMONIC: &str = r#"
+export type GeneratedMnemonic = {
+    phrase: string,
+    mnemonicType: MnemonicType,
+};
+"#;
+
 #[wasm_bindgen]
-pub struct GeneratedMnemonic {
-    #[wasm_bindgen(skip)]
-    pub phrase: String,
-    #[wasm_bindgen(skip)]
-    pub mnemonic_type: crypto::MnemonicType,
+extern "C" {
+    #[wasm_bindgen(typescript_type = "GeneratedMnemonic")]
+    pub type GeneratedMnemonic;
 }
 
-#[wasm_bindgen]
-impl GeneratedMnemonic {
-    #[wasm_bindgen(getter)]
-    pub fn phrase(&self) -> String {
-        self.phrase.clone()
-    }
-
-    #[wasm_bindgen(getter, js_name = "mnemonicType")]
-    pub fn mnemonic_type(&self) -> MnemonicType {
-        MnemonicType::new(self.mnemonic_type)
-    }
+fn make_generated_mnemonic(phrase: String, mnemonic_type: MnemonicType) -> GeneratedMnemonic {
+    ObjectBuilder::new()
+        .set("phrase", phrase)
+        .set("mnemonicType", mnemonic_type)
+        .build()
+        .unchecked_into()
 }
 
 #[wasm_bindgen]

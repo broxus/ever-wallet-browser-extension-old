@@ -41,18 +41,18 @@ pub trait HandleError {
     fn handle_error(self) -> Result<Self::Output, JsValue>;
 }
 
-struct ObjectBuilder {
+pub struct ObjectBuilder {
     object: js_sys::Object,
 }
 
 impl ObjectBuilder {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             object: js_sys::Object::new(),
         }
     }
 
-    fn set<T>(self, key: &str, value: T) -> Self
+    pub fn set<T>(self, key: &str, value: T) -> Self
     where
         JsValue: From<T>,
     {
@@ -62,7 +62,7 @@ impl ObjectBuilder {
         self
     }
 
-    fn build(self) -> JsValue {
+    pub fn build(self) -> JsValue {
         JsValue::from(self.object)
     }
 }

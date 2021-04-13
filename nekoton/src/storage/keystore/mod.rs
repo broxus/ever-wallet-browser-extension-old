@@ -56,12 +56,16 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "changeMasterPassword")]
-    pub fn change_master_password(&self, old: String, new: String) -> PromiseVoid {
+    pub fn change_master_password(
+        &self,
+        old_password: String,
+        new_password: String,
+    ) -> PromiseVoid {
         use nt::crypto::{DerivedKeySigner, DerivedKeyUpdateParams};
 
         let update = DerivedKeyUpdateParams::ChangePassword {
-            old_password: old.into(),
-            new_password: new.into(),
+            old_password: old_password.into(),
+            new_password: new_password.into(),
         };
 
         let inner = self.inner.clone();
@@ -141,11 +145,12 @@ impl KeyStore {
             Ok(keys
                 .iter()
                 .map(|entry| {
-                    JsValue::from(KeyStoreEntry {
-                        name: entry.name.clone(),
-                        public_key: hex::encode(entry.public_key.as_bytes()),
-                    })
+                    make_key_store_entry(
+                        entry.name.clone(),
+                        hex::encode(entry.public_key.as_bytes()),
+                    )
                 })
+                .map(JsValue::from)
                 .collect::<js_sys::Array>()
                 .unchecked_into())
         }))
@@ -170,23 +175,24 @@ extern "C" {
     pub type PromiseKeyStore;
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const MESSAGE: &str = r#"
+export type KeyStoreEntry = {
+    name: string,
+    publicKey: string,
+};
+"#;
+
 #[wasm_bindgen]
-pub struct KeyStoreEntry {
-    #[wasm_bindgen(skip)]
-    pub name: String,
-    #[wasm_bindgen(skip)]
-    pub public_key: String,
+extern "C" {
+    #[wasm_bindgen(typescript_type = "KeyStoreEntry")]
+    pub type KeyStoreEntry;
 }
 
-#[wasm_bindgen]
-impl KeyStoreEntry {
-    #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.name.clone()
-    }
-
-    #[wasm_bindgen(getter, js_name = "publicKey")]
-    pub fn public_key(&self) -> String {
-        self.public_key.clone()
-    }
+fn make_key_store_entry(name: String, public_key: String) -> KeyStoreEntry {
+    ObjectBuilder::new()
+        .set("name", name)
+        .set("publicKey", public_key)
+        .build()
+        .unchecked_into()
 }

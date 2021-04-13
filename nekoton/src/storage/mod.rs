@@ -1,5 +1,4 @@
 mod accounts;
-mod cache;
 mod keystore;
 
 use std::sync::Arc;

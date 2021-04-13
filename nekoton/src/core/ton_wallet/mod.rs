@@ -44,7 +44,7 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "accountState")]
     pub fn account_state(&self) -> crate::core::models::AccountState {
         let inner = self.inner.wallet.lock().trust_me();
-        inner.account_state().clone().into()
+        crate::core::models::make_account_state(inner.account_state().clone())
     }
 
     #[wasm_bindgen(js_name = "prepareDeploy")]
@@ -141,7 +141,7 @@ impl TonWallet {
             let pending_transaction = wallet.send(&message, expire_at).await.handle_error()?;
 
             Ok(JsValue::from(
-                crate::core::models::PendingTransaction::from(pending_transaction),
+                crate::core::models::make_pending_transaction(pending_transaction),
             ))
         }))
     }
@@ -153,12 +153,7 @@ impl TonWallet {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let latest_block = transport.get_latest_block(&address).await.handle_error()?;
-
-            Ok(JsValue::from(LatestBlock {
-                id: latest_block.id,
-                end_lt: latest_block.end_lt,
-                gen_utime: latest_block.gen_utime,
-            }))
+            Ok(make_latest_block(latest_block))
         }))
     }
 
@@ -203,28 +198,25 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
-    pub fn preload_transactions(
-        &mut self,
-        from: &crate::core::models::TransactionId,
-    ) -> PromiseVoid {
+    pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
         let from = nt::core::models::TransactionId {
-            lt: from.lt,
-            hash: from.hash,
+            lt: u64::from_str(&lt).handle_error()?,
+            hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };
 
         let inner = self.inner.clone();
 
-        JsCast::unchecked_into(future_to_promise(async move {
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
             wallet.preload_transactions(from).await.handle_error()?;
             Ok(JsValue::undefined())
-        }))
+        })))
     }
 
     #[wasm_bindgen(getter, js_name = "pollingMethod")]
     pub fn polling_method(&self) -> crate::core::models::PollingMethod {
-        crate::core::models::convert_polling_method(
+        crate::core::models::make_polling_method(
             self.inner.wallet.lock().trust_me().polling_method(),
         )
     }
@@ -299,16 +291,22 @@ impl nt::core::ton_wallet::TonWalletSubscriptionHandler for TonWalletNotificatio
         pending_transaction: nt::core::models::PendingTransaction,
         transaction: Option<nt::core::models::Transaction>,
     ) {
-        self.inner
-            .on_message_sent(pending_transaction.into(), transaction.map(From::from));
+        use crate::core::models::*;
+        self.inner.on_message_sent(
+            make_pending_transaction(pending_transaction),
+            transaction.map(make_transaction),
+        );
     }
 
     fn on_message_expired(&self, pending_transaction: nt::core::models::PendingTransaction) {
-        self.inner.on_message_expired(pending_transaction.into());
+        use crate::core::models::*;
+        self.inner
+            .on_message_expired(make_pending_transaction(pending_transaction));
     }
 
     fn on_state_changed(&self, new_state: nt::core::models::AccountState) {
-        self.inner.on_state_changed(new_state.into());
+        use crate::core::models::*;
+        self.inner.on_state_changed(make_account_state(new_state));
     }
 
     fn on_transactions_found(
@@ -316,44 +314,34 @@ impl nt::core::ton_wallet::TonWalletSubscriptionHandler for TonWalletNotificatio
         transactions: Vec<nt::core::models::Transaction>,
         batch_info: nt::core::models::TransactionsBatchInfo,
     ) {
+        use crate::core::models::*;
         self.inner.on_transactions_found(
             transactions
                 .into_iter()
-                .map(crate::core::models::Transaction::from)
+                .map(make_transaction)
                 .map(JsValue::from)
                 .collect::<js_sys::Array>()
                 .unchecked_into(),
-            batch_info.into(),
+            make_transactions_batch_info(batch_info),
         )
     }
 }
 
-#[wasm_bindgen]
-pub struct LatestBlock {
-    #[wasm_bindgen(skip)]
-    pub id: String,
-    #[wasm_bindgen(skip)]
-    pub end_lt: u64,
-    #[wasm_bindgen(skip)]
-    pub gen_utime: u32,
-}
+#[wasm_bindgen(typescript_custom_section)]
+const LATEST_BLOCK: &'static str = r#"
+export type LatestBlock = {
+    id: string,
+    endLt: string,
+    genUtime: number,
+};
+"#;
 
-#[wasm_bindgen]
-impl LatestBlock {
-    #[wasm_bindgen(getter)]
-    pub fn id(&self) -> String {
-        self.id.clone()
-    }
-
-    #[wasm_bindgen(getter, final, js_name = "endLt")]
-    pub fn end_lt(&self) -> String {
-        self.end_lt.to_string()
-    }
-
-    #[wasm_bindgen(getter, final, js_name = "genUtime")]
-    pub fn gen_utime(&self) -> u32 {
-        self.gen_utime
-    }
+fn make_latest_block(latest_block: nt::transport::gql::LatestBlock) -> JsValue {
+    ObjectBuilder::new()
+        .set("id", latest_block.id)
+        .set("endLt", latest_block.end_lt.to_string())
+        .set("genUtime", latest_block.gen_utime)
+        .build()
 }
 
 #[wasm_bindgen]

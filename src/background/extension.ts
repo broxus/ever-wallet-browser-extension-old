@@ -58,7 +58,6 @@ async function startListener(connection: nt.GqlConnection) {
     }
     const publicKey = keystoreEntries[0].publicKey
 
-    const accountStateCache = new nt.TonWalletStateCache(storage)
     const knownTransactions = new Array<nt.Transaction>()
 
     const wallet = new nt.TonWallet(publicKey, 'WalletV3')
