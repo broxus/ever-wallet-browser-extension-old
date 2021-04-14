@@ -23,7 +23,7 @@ const Receive: React.FC<IReceive> = () => (
                     size={80}
                 />
             </div>
-            <div className="receivse-screen__qr-code-instruction">
+            <div className="receive-screen__qr-code-instruction">
                 Get the address with your smartphone camera by scanning this QR code.
             </div>
         </div>

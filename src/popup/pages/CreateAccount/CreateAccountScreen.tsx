@@ -6,8 +6,8 @@ import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import { selectStyles } from '../../constants/selectStyle'
 import walletOptions from '../../constants/walletTypes'
 import CheckSeed from '../../components/CheckSeed/CheckSeed'
-import './create-account.scss'
 import Button from "../../components/Button/Button";
+import './create-account.scss'
 
 const options = [
     { value: '1', label: 'Key 1' },

@@ -2,7 +2,6 @@ import React, { Dispatch, SetStateAction, useState } from 'react'
 import _ from 'lodash'
 import cn from 'classnames'
 import Input from '../Input/Input'
-
 import TonLogo from '../../img/ton-logo.svg'
 import Tumbler from '../Tumbler/Tumbler'
 import './add-new-token.scss'
