@@ -75,6 +75,11 @@ pub fn parse_address(address: &str) -> Result<MsgAddressInt, JsValue> {
     MsgAddressInt::from_str(address).handle_error()
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const GENERAL_STUFF: &str = r#"
+export type EnumItem<T extends string, D> = { type: T, data: D };
+"#;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<void>")]

@@ -52,13 +52,13 @@ impl GqlConnection {
         &self,
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
-        handler: crate::core::ton_wallet::TonWalletNotificationHandlerImpl,
+        handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
     ) -> Result<PromiseTonWalletSubscription, JsValue> {
         let public_key = parse_public_key(&public_key)?;
         let contract_type = contract_type.try_into()?;
 
         let transport = Arc::new(self.make_transport());
-        let handler = Arc::new(crate::core::ton_wallet::TonWalletNotificationHandler::from(
+        let handler = Arc::new(crate::core::ton_wallet::TonWalletSubscriptionHandler::from(
             handler,
         ));
 

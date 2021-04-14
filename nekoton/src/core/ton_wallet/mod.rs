@@ -243,50 +243,50 @@ impl TonWalletImpl {
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_name = "TonWalletSubscriptionHandler")]
-    pub type TonWalletNotificationHandlerImpl;
+    pub type TonWalletSubscriptionHandlerImpl;
 
     #[wasm_bindgen(method, js_name = "onMessageSent")]
     pub fn on_message_sent(
-        this: &TonWalletNotificationHandlerImpl,
+        this: &TonWalletSubscriptionHandlerImpl,
         pending_transaction: crate::core::models::PendingTransaction,
         transaction: Option<crate::core::models::Transaction>,
     );
 
     #[wasm_bindgen(method, js_name = "onMessageExpired")]
     pub fn on_message_expired(
-        this: &TonWalletNotificationHandlerImpl,
+        this: &TonWalletSubscriptionHandlerImpl,
         pending_transaction: crate::core::models::PendingTransaction,
     );
 
     #[wasm_bindgen(method, js_name = "onStateChanged")]
     pub fn on_state_changed(
-        this: &TonWalletNotificationHandlerImpl,
+        this: &TonWalletSubscriptionHandlerImpl,
         new_state: crate::core::models::AccountState,
     );
 
     #[wasm_bindgen(method, js_name = "onTransactionsFound")]
     pub fn on_transactions_found(
-        this: &TonWalletNotificationHandlerImpl,
+        this: &TonWalletSubscriptionHandlerImpl,
         transactions: TransactionsList,
         batch_info: crate::core::models::TransactionsBatchInfo,
     );
 }
 
-unsafe impl Send for TonWalletNotificationHandlerImpl {}
+unsafe impl Send for TonWalletSubscriptionHandlerImpl {}
 
-unsafe impl Sync for TonWalletNotificationHandlerImpl {}
+unsafe impl Sync for TonWalletSubscriptionHandlerImpl {}
 
-pub struct TonWalletNotificationHandler {
-    inner: TonWalletNotificationHandlerImpl,
+pub struct TonWalletSubscriptionHandler {
+    inner: TonWalletSubscriptionHandlerImpl,
 }
 
-impl From<TonWalletNotificationHandlerImpl> for TonWalletNotificationHandler {
-    fn from(inner: TonWalletNotificationHandlerImpl) -> Self {
+impl From<TonWalletSubscriptionHandlerImpl> for TonWalletSubscriptionHandler {
+    fn from(inner: TonWalletSubscriptionHandlerImpl) -> Self {
         Self { inner }
     }
 }
 
-impl nt::core::ton_wallet::TonWalletSubscriptionHandler for TonWalletNotificationHandler {
+impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
     fn on_message_sent(
         &self,
         pending_transaction: nt::core::models::PendingTransaction,

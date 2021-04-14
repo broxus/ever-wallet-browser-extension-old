@@ -209,6 +209,163 @@ impl TokenWalletImpl {
 
 #[wasm_bindgen]
 extern "C" {
+    #[wasm_bindgen(js_name = "TokenWalletSubscriptionHandler")]
+    pub type TokenWalletSubscriptionHandlerImpl;
+
+    #[wasm_bindgen(method, js_name = "onBalanceChanged")]
+    pub fn on_balance_changed(this: &TokenWalletSubscriptionHandlerImpl, balance: String);
+
+    #[wasm_bindgen(method, js_name = "onTransactionsFound")]
+    pub fn on_transactions_found(
+        this: &TokenWalletSubscriptionHandlerImpl,
+        transactions: TokenWalletTransactionsList,
+        batch_info: crate::core::models::TransactionsBatchInfo,
+    );
+}
+
+unsafe impl Send for TokenWalletSubscriptionHandlerImpl {}
+
+unsafe impl Sync for TokenWalletSubscriptionHandlerImpl {}
+
+pub struct TokenWalletSubscriptionHandler {
+    inner: TokenWalletSubscriptionHandlerImpl,
+}
+
+impl From<TokenWalletSubscriptionHandlerImpl> for TokenWalletSubscriptionHandler {
+    fn from(inner: TokenWalletSubscriptionHandlerImpl) -> Self {
+        Self { inner }
+    }
+}
+
+impl token_wallet::TokenWalletSubscriptionHandler for TokenWalletSubscriptionHandler {
+    fn on_balance_changed(&self, balance: BigUint) {
+        self.inner.on_balance_changed(balance.to_string());
+    }
+
+    fn on_transactions_found(
+        &self,
+        transactions: Vec<nt::core::transactions::TokenWalletTransaction>,
+        batch_info: nt::core::models::TransactionsBatchInfo,
+    ) {
+        use crate::core::models::*;
+
+        self.inner.on_transactions_found(
+            transactions
+                .into_iter()
+                .map(make_token_wallet_transaction)
+                .map(JsValue::from)
+                .collect::<js_sys::Array>()
+                .unchecked_into(),
+            make_transactions_batch_info(batch_info),
+        );
+    }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TOKEN_WALLET_TRANSACTION: &str = r#"
+export type TokenWalletTransaction =
+    | EnumItem<'incoming_transfer', { tokens: string, senderAddress: string }>
+    | EnumItem<'outgoing_transfer', { to: TransferRecipient, tokens: string }>
+    | EnumItem<'swap_back', { tokens: string, to: string }>
+    | EnumItem<'accept', { tokens: string }>
+    | EnumItem<'transfer_bounced', { tokens: string }>
+    | EnumItem<'swap_back_bounced', { tokens: string }>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TokenWalletTransaction")]
+    pub type TokenWalletTransaction;
+}
+
+fn make_token_wallet_transaction(
+    data: nt::core::transactions::TokenWalletTransaction,
+) -> TokenWalletTransaction {
+    use nt::core::transactions;
+
+    let (ty, data) = match data {
+        transactions::TokenWalletTransaction::IncomingTransfer(transfer) => (
+            "incoming_transfer",
+            ObjectBuilder::new()
+                .set("tokens", transfer.tokens.to_string())
+                .set("senderAddress", transfer.sender_address.to_string())
+                .build(),
+        ),
+        transactions::TokenWalletTransaction::OutgoingTransfer(transfer) => (
+            "outgoing_transfer",
+            ObjectBuilder::new()
+                .set("to", make_transfer_recipient(transfer.to))
+                .set("tokens", transfer.tokens.to_string())
+                .build(),
+        ),
+        transactions::TokenWalletTransaction::SwapBack(swap_back) => (
+            "swap_back",
+            ObjectBuilder::new()
+                .set("to", swap_back.to)
+                .set("tokens", swap_back.tokens.to_string())
+                .build(),
+        ),
+        transactions::TokenWalletTransaction::Accept(accept) => (
+            "accept",
+            ObjectBuilder::new()
+                .set("tokens", accept.tokens.to_string())
+                .build(),
+        ),
+        transactions::TokenWalletTransaction::TransferBounced(tokens) => (
+            "transfer_bounced",
+            ObjectBuilder::new()
+                .set("tokens", tokens.to_string())
+                .build(),
+        ),
+        transactions::TokenWalletTransaction::SwapBackBounced(tokens) => (
+            "swap_back_bounced",
+            ObjectBuilder::new()
+                .set("tokens", tokens.to_string())
+                .build(),
+        ),
+    };
+
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("data", data)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TRANSFER_RECIPIENT: &str = r#"
+export type TransferRecipient = {
+    type: 'owner_wallet' | 'token_wallet',
+    address: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TransferRecipient")]
+    pub type TransferRecipient;
+}
+
+fn make_transfer_recipient(data: nt::core::transactions::TransferRecipient) -> TransferRecipient {
+    use nt::core::transactions;
+
+    let (ty, address) = match data {
+        transactions::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
+        transactions::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
+    };
+
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("address", address.to_string())
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen]
+extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<InternalMessage>")]
     pub type PromiseInternalMessage;
+
+    #[wasm_bindgen(typescript_type = "Array<TokenWalletTransaction>")]
+    pub type TokenWalletTransactionsList;
 }
