@@ -1,195 +1,191 @@
-import init, * as nt from "../../nekoton/pkg";
-import {GqlSocket, mergeTransactions, StorageConnector} from "./common";
-
-const LITECLIENT_EXTENSION_ID = 'fakpmbkocblneahenciednepadenbdpb';
-
-const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json';
+import init, * as nt from '../../nekoton/pkg'
+import { GqlSocket, mergeTransactions, StorageConnector } from './common'
+import ItemType = chrome.contextMenus.ItemType
 
 chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
-    const url = new URL(tab.url ?? '');
+    const url = new URL(tab.url ?? '')
 
-    chrome.browserAction.setBadgeText({text: url.host});
-});
+    chrome.browserAction.setBadgeText({ text: url.host })
+})
+;(async () => {
+    await init('index_bg.wasm')
 
-(async () => {
-    await init('index_bg.wasm');
+    const socket = new GqlSocket()
+    const connection = await socket.connect({
+        endpoint: 'https://main.ton.dev/graphql',
+        timeout: 60000, // 60s
+    })
 
-    // ADNL example
-    // {
-    //     const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(Config.parse);
-    //     console.log("Config loaded:", config);
-    //
-    //     const socket = new AdnlSocket(LITECLIENT_EXTENSION_ID);
-    //     const connection = await socket.connect(config);
-    //
-    //     const core = TonInterface.overAdnl(connection);
-    //     console.log(await core.getAccountState());
-    // }
+    await startListener(connection)
+})()
 
-    // GraphQL example
-    {
-        const socket = new GqlSocket();
-        const connection = await socket.connect({
-            endpoint: 'https://main.ton.dev/graphql',
-            timeout: 60000, // 60s
-        });
+async function startListener(connection: nt.GqlConnection) {
+    const POLLING_INTERVAL = 10000 // 10s
 
-        const core = nt.TonInterface.overGraphQL(connection);
+    const storage = new nt.Storage(new StorageConnector())
 
-        startListener(connection, {
-            publicKey: "1161f67ca580dd2b9935967b04109e0e988601fc0894e145f7cd56534e817257",
-            contractType: 'WalletV3'
-        });
+    // Keystore
+    const keystore = await nt.KeyStore.load(storage)
+    await keystore.clear()
+    await keystore.setMasterKey(
+        'Main key',
+        'naive pudding fabric canal round peanut nature metal fog exhibit security side',
+        '1234'
+    )
+
+    const keystoreEntries = await keystore.getKeys()
+    if (keystoreEntries.length === 0) {
+        return
     }
+    const publicKey = keystoreEntries[0].publicKey
 
-    // Helper examples
-    let addr = nt.unpackAddress("EQCGFc7mlPWLihHoLkst3Yo9vkv-dQLpVNl8CgAt6juQFHqZ", true);
-    console.log(addr.to_string());
-})();
-
-async function testKeystore() {
-    const storage = new nt.Storage(new StorageConnector());
-
-    // keystore
-    const keystore = await nt.KeyStore.load(storage);
-
-    const mnemonic = nt.StoredKey.generateMnemonic(nt.AccountType.makeLabs(0));
-    const newStoredKey = mnemonic.createKey("Name", "123");
-
-    const restoredKey = new nt.StoredKey('Name2', mnemonic.phrase, mnemonic.accountType, "123123123");
-
-    const newPublicKey = await keystore.addKey(newStoredKey);
-    const newRestoredPublicKeyKey = await keystore.addKey(restoredKey);
-
-    await keystore.removeKey(newPublicKey);
-    const tempGetKey = await keystore.getKey(newRestoredPublicKeyKey);
-    if (!tempGetKey) {
-        return;
-    }
-
-    const accountsStorage = await nt.AccountsStorage.load(storage);
-    const currentAccount = await accountsStorage.getCurrentAccount();
-    console.log("Current account:", currentAccount);
-
-    // accounts
-    const address = await accountsStorage.addAccount("Account 1", tempGetKey.publicKey, 'SurfWallet', true);
-
-    const assets = await accountsStorage.getAccount(address);
-    if (assets == null) {
-        return;
-    }
-
-    //await keystore.clear();
-}
-
-function startListener(connection: nt.GqlConnection, {publicKey, contractType}: { publicKey: string, contractType: nt.ContractType }) {
-    const POLLING_INTERVAL = 10000; // 10s
-
-    const knownTransactions = new Array<nt.Transaction>();
-
-    const storage = new nt.Storage(new StorageConnector());
-    const accountStateCache = new nt.TonWalletStateCache(storage);
-
-    const wallet = new nt.TonWallet(publicKey, contractType);
-    const address = wallet.address;
+    const knownTransactions = new Array<nt.Transaction>()
 
     class TonWalletHandler {
-        constructor(private address: string) {
-        }
-
         onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
-            console.log(pendingTransaction, transaction);
+            console.log(pendingTransaction, transaction)
         }
 
         onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-            console.log(pendingTransaction);
+            console.log(pendingTransaction)
         }
 
         onStateChanged(newState: nt.AccountState) {
-            accountStateCache.store(address, newState);
-            console.log(newState);
+            console.log(newState)
         }
 
         onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
-            console.log("New transactions batch: ", info);
-            mergeTransactions(knownTransactions, transactions, info);
+            console.log('New transactions batch: ', info)
+            mergeTransactions(knownTransactions, transactions, info)
 
-            console.log("All sorted:", checkTransactionsSorted(knownTransactions));
+            console.log('All sorted:', checkTransactionsSorted(knownTransactions))
         }
     }
 
-    (async () => {
-        const handler = new TonWalletHandler(address);
+    const handler = new TonWalletHandler()
 
-        console.log("Restored state: ", await accountStateCache.load(address));
+    const wallet = await connection.subscribeToTonWallet(publicKey, 'WalletV3', handler)
 
-        const subscription = await connection.subscribeToTonWallet(address, handler);
+    if (knownTransactions.length !== 0) {
+        const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1]
+        if (oldestKnownTransaction.prevTransactionId != null) {
+            await wallet.preloadTransactions(
+                oldestKnownTransaction.prevTransactionId.lt,
+                oldestKnownTransaction.prevTransactionId.hash
+            )
+        }
+    }
 
-        if (knownTransactions.length !== 0) {
-            const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1];
-            if (oldestKnownTransaction.prevTransactionId != null) {
-                await subscription.preloadTransactions(oldestKnownTransaction.prevTransactionId);
+    let currentBlockId: string | null = null
+    let lastPollingMethod = wallet.pollingMethod
+    let i = 0
+    while (true) {
+        i += 1
+
+        switch (lastPollingMethod) {
+            case 'manual': {
+                await new Promise<void>((resolve) => {
+                    setTimeout(() => resolve(), POLLING_INTERVAL)
+                })
+                console.log('manual refresh')
+                await wallet.refresh()
+                break
+            }
+            case 'reliable': {
+                if (lastPollingMethod != 'reliable' || currentBlockId == null) {
+                    currentBlockId = (await wallet.getLatestBlock()).id
+                }
+
+                const nextBlockId: string = await wallet.waitForNextBlock(currentBlockId, 60)
+                console.log(nextBlockId, currentBlockId != nextBlockId)
+
+                await wallet.handleBlock(nextBlockId)
+                currentBlockId = nextBlockId
+                break
             }
         }
 
-        let currentBlockId: string | null = null;
-        let lastPollingMethod = subscription.pollingMethod;
-        for (let i = 0; i < 10; ++i) {
-            switch (lastPollingMethod) {
-                case 'manual': {
-                    await new Promise<void>((resolve,) => {
-                        setTimeout(() => resolve(), POLLING_INTERVAL);
-                    });
-                    console.log("manual refresh");
-                    await subscription.refresh();
-                    break;
-                }
-                case 'reliable': {
-                    if (lastPollingMethod != 'reliable' || currentBlockId == null) {
-                        currentBlockId = (await subscription.getLatestBlock()).id;
-                    }
-
-                    const nextBlockId: string = await subscription.waitForNextBlock(currentBlockId, 60);
-                    console.log(nextBlockId, currentBlockId != nextBlockId);
-
-                    await subscription.handleBlock(nextBlockId);
-                    currentBlockId = nextBlockId;
-                    break;
-                }
+        if (i == 1) {
+            console.log('Preparing message')
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                console.log('Contract state is empty')
+                continue
             }
 
-            lastPollingMethod = subscription.pollingMethod;
+            const dest = '0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb'
+            const amount = '10000000' // 0.01 TON
+            const bounce = false
+            const timeout = 60 // expire in 60 seconds
 
-            if (i == 3) {
-                console.log("Preparing message");
-                const contractState = await subscription.getContractState();
-                if (contractState == null) {
-                    console.log("Contract state is empty");
-                    continue;
+            const unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                dest,
+                amount,
+                bounce,
+                timeout
+            )
+            if (unsignedMessage == null) {
+                console.log('Contract must be deployed first')
+
+                const unsignedDeployMessage = wallet.prepareDeploy(60)
+
+                // estimate fees
+                {
+                    const signedMessage = unsignedDeployMessage.signFake()
+                    const totalFees = await wallet.estimateFees(signedMessage)
+                    console.log('Fees:', totalFees)
                 }
 
-                const dest = "-1:3333333333333333333333333333333333333333333333333333333333333333";
-                const amount = "1000000000"; // 1 TON
-                const bounce = false;
-                const expireAt = new Date().getTime() + 60; // expire in 60 seconds
+                // send message
+                {
+                    const signedMessage = await keystore.sign(
+                        unsignedDeployMessage,
+                        publicKey,
+                        '1234'
+                    )
+                    const totalFees = await wallet.estimateFees(signedMessage)
+                    console.log('Signed message fees:', totalFees)
 
-                const unsignedMessage = wallet.prepareTransfer(contractState, dest, amount, bounce, expireAt);
-                if (unsignedMessage == null) {
-                    console.log("Contract must be deployed first");
-                    continue;
+                    currentBlockId = (await wallet.getLatestBlock()).id
+                    const pendingTransaction = await wallet.sendMessage(signedMessage)
+                    console.log(pendingTransaction)
                 }
 
-                const signedMessage = unsignedMessage.signFake();
-                const totalFees = await subscription.estimateFees(signedMessage);
-                console.log("Fees:", totalFees);
+                continue
+            }
+
+            // estimate fees
+            {
+                const signedMessage = unsignedMessage.signFake()
+                const totalFees = await wallet.estimateFees(signedMessage)
+                console.log('Fees:', totalFees)
+            }
+
+            // send message
+            {
+                const signedMessage = await keystore.sign(unsignedMessage, publicKey, '1234')
+                const totalFees = await wallet.estimateFees(signedMessage)
+                console.log('Signed message fees:', totalFees)
+
+                currentBlockId = (await wallet.getLatestBlock()).id
+                const pendingTransaction = await wallet.sendMessage(signedMessage)
+                console.log(pendingTransaction)
             }
         }
-    })();
+
+        lastPollingMethod = wallet.pollingMethod
+    }
 }
 
 function checkTransactionsSorted(transactions: Array<nt.Transaction>) {
-    return transactions.reduce(({sorted, previous}, current) => {
-        const result = previous ? sorted && previous.id.lt.localeCompare(current.id.lt) > 0 : true;
-        return {sorted: result, previous: current};
-    }, <{ sorted: boolean, previous: nt.Transaction | null }>{sorted: true, previous: null}).sorted;
+    return transactions.reduce(
+        ({ sorted, previous }, current) => {
+            const result = previous
+                ? sorted && previous.id.lt.localeCompare(current.id.lt) > 0
+                : true
+            return { sorted: result, previous: current }
+        },
+        <{ sorted: boolean; previous: nt.Transaction | null }>{ sorted: true, previous: null }
+    ).sorted
 }

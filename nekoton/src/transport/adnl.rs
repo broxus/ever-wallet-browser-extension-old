@@ -6,9 +6,8 @@ use futures::channel::oneshot;
 use ton_api::ton;
 use wasm_bindgen::prelude::*;
 
-use libnekoton::external;
-use libnekoton::transport::adnl;
-use libnekoton::utils::*;
+use nt::transport::adnl;
+use nt::utils::*;
 
 use crate::utils::*;
 
@@ -38,7 +37,7 @@ pub struct AdnlConnectionImpl {
 }
 
 #[async_trait]
-impl external::AdnlConnection for AdnlConnection {
+impl nt::external::AdnlConnection for AdnlConnection {
     async fn query(&self, request: ton::TLObject) -> AdnlResponse {
         let rx = {
             let mut inner = self.inner.lock().unwrap();

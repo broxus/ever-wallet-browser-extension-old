@@ -1,127 +1,92 @@
+mod encrypted_key;
+
 use wasm_bindgen::prelude::*;
 
-use libnekoton::crypto;
+use nt::crypto;
 
 use crate::utils::*;
+use wasm_bindgen::JsCast;
 
 #[wasm_bindgen]
-#[derive(Clone)]
-pub struct StoredKey {
+pub struct UnsignedMessage {
     #[wasm_bindgen(skip)]
-    pub inner: crypto::EncryptedKey,
+    pub inner: Box<dyn crypto::UnsignedMessage>,
 }
 
 #[wasm_bindgen]
-impl StoredKey {
-    /// Creates ['CryptoHandler'] from mnemonic
-    /// # Arguments
-    /// * `mnemonic` - 12 or 24 words, depending on mnemonic type - [`LABS_MNEMONIC`] or [`LEGACY_MNEMONIC`] set in `mnemonic_type`
-    #[wasm_bindgen(constructor)]
-    pub fn new(
-        name: &str,
-        mnemonic: &str,
-        account_type: AccountType,
-        password: &str,
-    ) -> Result<StoredKey, JsValue> {
-        Ok(StoredKey {
-            inner: crypto::EncryptedKey::new(name, password.into(), account_type.into(), &mnemonic)
-                .handle_error()?,
-        })
+impl UnsignedMessage {
+    #[wasm_bindgen(js_name = "refreshTimeout")]
+    pub fn refresh_timeout(&mut self) {
+        self.inner.refresh_timeout();
     }
 
-    #[wasm_bindgen(js_name = "generateMnemonic")]
-    pub fn generate_mnemonic(account_type: AccountType) -> Result<GeneratedMnemonic, JsValue> {
-        let key = crypto::generate_key(account_type.into()).handle_error()?;
-        Ok(GeneratedMnemonic {
-            phrase: key.words.join(" "),
-            account_type: account_type.inner,
-        })
-    }
-
-    #[wasm_bindgen(js_name = "changePassword")]
-    pub fn change_password(
-        &mut self,
-        old_password: &str,
-        new_password: &str,
-    ) -> Result<(), JsValue> {
-        self.inner
-            .change_password(old_password.into(), new_password.into())
-            .handle_error()?;
-        Ok(())
-    }
-
-    #[wasm_bindgen(js_name = "fromJSON")]
-    pub fn from_json(data: &str) -> Result<StoredKey, JsValue> {
-        Ok(StoredKey {
-            inner: crypto::EncryptedKey::from_reader(data.as_bytes()).handle_error()?,
-        })
-    }
-
-    #[wasm_bindgen(js_name = "toJSON")]
-    pub fn to_json(&self) -> String {
-        self.inner.as_json()
-    }
-
-    #[wasm_bindgen(getter, js_name = "publicKey")]
-    pub fn public_key(&self) -> String {
-        hex::encode(self.inner.public_key())
+    #[wasm_bindgen(js_name = "expireAt")]
+    pub fn expire_at(&self) -> u32 {
+        self.inner.expire_at()
     }
 
     #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.inner.name().to_owned()
+    pub fn hash(&self) -> String {
+        hex::encode(crypto::UnsignedMessage::hash(self.inner.as_ref()))
     }
 
-    #[wasm_bindgen(getter, js_name = "accountType")]
-    pub fn account_type(&self) -> AccountType {
-        AccountType {
-            inner: self.inner.account_type().clone(),
-        }
+    #[wasm_bindgen(js_name = "signFake")]
+    pub fn sign_fake(&self) -> Result<SignedMessage, JsValue> {
+        let inner = self.inner.sign(&[0; 64]).handle_error()?;
+        Ok(SignedMessage { inner })
     }
 }
 
 #[wasm_bindgen]
-pub struct GeneratedMnemonic {
+pub struct SignedMessage {
     #[wasm_bindgen(skip)]
-    pub phrase: String,
-    #[wasm_bindgen(skip)]
-    pub account_type: crypto::MnemonicType,
+    pub inner: crypto::SignedMessage,
 }
 
 #[wasm_bindgen]
-impl GeneratedMnemonic {
-    #[wasm_bindgen(js_name = "createKey")]
-    pub fn create_key(self, name: &str, password: &str) -> Result<StoredKey, JsValue> {
-        Ok(StoredKey {
-            inner: crypto::EncryptedKey::new(
-                name,
-                password.into(),
-                self.account_type,
-                &self.phrase,
-            )
-            .handle_error()?,
-        })
+impl SignedMessage {
+    #[wasm_bindgen(getter, js_name = "expireAt")]
+    pub fn expire_at(&self) -> u32 {
+        self.inner.expire_at
     }
+}
 
-    #[wasm_bindgen(getter)]
-    pub fn phrase(&self) -> String {
-        self.phrase.clone()
-    }
+#[wasm_bindgen(js_name = "generateMnemonic")]
+pub fn generate_mnemonic(mnemonic_type: MnemonicType) -> Result<GeneratedMnemonic, JsValue> {
+    let key = crypto::generate_key(mnemonic_type.into()).handle_error()?;
+    Ok(make_generated_mnemonic(key.words.join(" "), mnemonic_type))
+}
 
-    #[wasm_bindgen(getter, js_name = "accountType")]
-    pub fn account_type(&self) -> AccountType {
-        AccountType::new(self.account_type)
-    }
+#[wasm_bindgen(typescript_custom_section)]
+const GENERATED_MNEMONIC: &str = r#"
+export type GeneratedMnemonic = {
+    phrase: string,
+    mnemonicType: MnemonicType,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "GeneratedMnemonic")]
+    pub type GeneratedMnemonic;
+}
+
+fn make_generated_mnemonic(phrase: String, mnemonic_type: MnemonicType) -> GeneratedMnemonic {
+    ObjectBuilder::new()
+        .set("phrase", phrase)
+        .set("mnemonicType", mnemonic_type)
+        .build()
+        .unchecked_into()
 }
 
 #[wasm_bindgen]
 #[derive(Copy, Clone)]
-pub struct AccountType {
+pub struct MnemonicType {
     #[wasm_bindgen(skip)]
     pub inner: crypto::MnemonicType,
 }
 
-impl AccountType {
+impl MnemonicType {
     pub fn new(account_type: crypto::MnemonicType) -> Self {
         Self {
             inner: account_type,
@@ -130,15 +95,15 @@ impl AccountType {
 }
 
 #[wasm_bindgen]
-impl AccountType {
+impl MnemonicType {
     #[wasm_bindgen(js_name = "makeLabs")]
-    pub fn make_labs(id: u16) -> AccountType {
-        AccountType::new(crypto::MnemonicType::Labs(id))
+    pub fn make_labs(id: u16) -> MnemonicType {
+        MnemonicType::new(crypto::MnemonicType::Labs(id))
     }
 
     #[wasm_bindgen(js_name = "makeLegacy")]
-    pub fn make_legacy() -> AccountType {
-        AccountType::new(crypto::MnemonicType::Legacy)
+    pub fn make_legacy() -> MnemonicType {
+        MnemonicType::new(crypto::MnemonicType::Legacy)
     }
 
     #[wasm_bindgen(getter, js_name = "wordCount")]
@@ -158,8 +123,8 @@ impl AccountType {
     }
 }
 
-impl From<AccountType> for crypto::MnemonicType {
-    fn from(t: AccountType) -> Self {
+impl From<MnemonicType> for crypto::MnemonicType {
+    fn from(t: MnemonicType) -> Self {
         t.inner
     }
 }

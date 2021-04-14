@@ -19,6 +19,7 @@ dyn-clone = "1.0"
 ed25519-dalek = "1.0.1"
 futures = "0.3"
 js-sys = "0.3"
+num-bigint = "0.2"
 pin-project-lite = "0.2"
 rand = { version = "0.7", features = ["getrandom"] }
 serde = { version = "1.0", features = ["derive"] }
@@ -31,12 +32,13 @@ wasm-bindgen-futures = "0.4"
 wee_alloc = "0.4"
 x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
+wasm-logger = "0.2"
 
 ton_api = { git = "https://github.com/broxus/ton-labs-tl.git", branch = "original", package = "ton_api" }
 ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
 ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
 
-[dependencies.libnekoton]
+[dependencies.nt]
 package = "nekoton"
 git = "ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git"
 branch = "dev"

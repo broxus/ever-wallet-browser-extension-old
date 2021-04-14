@@ -1,7 +1,12 @@
+use std::str::FromStr;
+
 use anyhow::Error;
 use futures::channel::oneshot;
+use ton_block::MsgAddressInt;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
+
+use nt::utils::*;
 
 pub struct QueryHandler<T> {
     tx: oneshot::Sender<T>,
@@ -36,6 +41,45 @@ pub trait HandleError {
     fn handle_error(self) -> Result<Self::Output, JsValue>;
 }
 
+pub struct ObjectBuilder {
+    object: js_sys::Object,
+}
+
+impl ObjectBuilder {
+    pub fn new() -> Self {
+        Self {
+            object: js_sys::Object::new(),
+        }
+    }
+
+    pub fn set<T>(self, key: &str, value: T) -> Self
+    where
+        JsValue: From<T>,
+    {
+        let key = JsValue::from_str(key);
+        let value = JsValue::from(value);
+        js_sys::Reflect::set(&self.object, &key, &value).trust_me();
+        self
+    }
+
+    pub fn build(self) -> JsValue {
+        JsValue::from(self.object)
+    }
+}
+
+pub fn parse_public_key(public_key: &str) -> Result<ed25519_dalek::PublicKey, JsValue> {
+    ed25519_dalek::PublicKey::from_bytes(&hex::decode(&public_key).handle_error()?).handle_error()
+}
+
+pub fn parse_address(address: &str) -> Result<MsgAddressInt, JsValue> {
+    MsgAddressInt::from_str(address).handle_error()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const GENERAL_STUFF: &str = r#"
+export type EnumItem<T extends string, D> = { type: T, data: D };
+"#;
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<void>")]
@@ -49,4 +93,7 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Array<Transaction>")]
     pub type TransactionsList;
+
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type StringArray;
 }
