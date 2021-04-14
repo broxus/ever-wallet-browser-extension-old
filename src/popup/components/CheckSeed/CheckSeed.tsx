@@ -1,9 +1,9 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React from 'react'
 import { useForm } from 'react-hook-form'
 import Input from '../Input/Input'
-import { Button } from '../button'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'
+import Button from "../Button/Button";
 import './check-seed.scss'
 
 interface ICheckSeed {
@@ -11,7 +11,7 @@ interface ICheckSeed {
     seed: string[]
 }
 
-const CheckSeed: React.FC<any> = ({ setStep, seed }) => {
+const CheckSeed: React.FC<ICheckSeed> = ({ setStep, seed }) => {
     const { register, handleSubmit, errors } = useForm()
 
     const validateWord = (word: string, position: number) => {

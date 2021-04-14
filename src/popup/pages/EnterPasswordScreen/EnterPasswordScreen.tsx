@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Input from '../../components/Input/Input'
-import { Button } from '../../components/button'
+import  Button  from '../../components/Button/Button'
 import { connect } from 'react-redux'
 import { restoreAccountFromSeed, setPassword } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
@@ -26,8 +26,6 @@ const EnterPasswordScreen: React.FC<any> = ({
     }
 
     useEffect(() => {
-        console.log('account', account)
-        console.log('error', error)
         if (account?.length > 0) {
             setStep(6)
         } else if (error) {

@@ -4,7 +4,7 @@ import Autocomplete from '@material-ui/lab/Autocomplete'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import TextField from '@material-ui/core/TextField'
 import { getHints } from '../../../../nekoton/pkg'
-import { formatSeed } from '../../utils/formatSeedInput'
+import { formatSeed } from '../../utils/formatData'
 import './tags-input.scss'
 
 const useStyles = makeStyles((theme: Theme) =>

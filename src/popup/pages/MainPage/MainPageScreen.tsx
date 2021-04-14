@@ -1,31 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react'
-import cn from 'classnames'
-import UserPic from '../../img/user-avatar-placeholder.svg'
-import ReceiveIcon from '../../img/receive.svg'
-import SendIcon from '../../img/send.svg'
+import React, { useEffect, useState } from 'react'
 import TonLogo from '../../img/ton-logo.svg'
 import TonLogoS from '../../img/ton-logo-s.svg'
-import USDTLogoS from '../../img/usdt-logo-s.svg'
 import Arrow from '../../img/arrow.svg'
-import { Button } from '../../components/button'
-import { createRipple, removeRipple } from '../../common/ripple'
-import SlidingPanel from '../../components/SlidingPanel/SlidingPanel'
-import Send from '../../components/Send/Send'
-import Receive from '../../components/Receive/Receive'
-import AddNewToken from '../../components/AddNewToken/AddNewToken'
 import { connect } from 'react-redux'
 import { AppState } from '../../store/app/types'
 import { startSubscription } from '../../store/app/actions'
-import KeyStorage from '../../components/KeyStorage/KeyStorage'
-import CreateAccountScreen from '../CreateAccount/CreateAccountScreen'
-import EnterPassword from '../../components/EnterPassword/EnterPassword'
-import SaveSeed from '../../components/SaveSeed/SaveSeed'
-import AssetFull from '../../components/AssetFull/AssetFull'
-import CopyToClipboard from 'react-copy-to-clipboard'
-import ReactTooltip from 'react-tooltip'
-import AccountModal from '../../components/AccountModal/AccountModal'
 import Decimal from 'decimal.js'
 import * as nt from '../../../../nekoton/pkg'
+import AccountDetails from '../../components/AccountDetails/AccountDetails'
+import UserAssets from '../../components/UserAssets/UserAssets'
+import { convertAddress, convertTons } from '../../utils/formatData'
 import './main-page.scss'
 
 Decimal.config({
@@ -34,154 +18,6 @@ Decimal.config({
     toExpNeg: -500,
     toExpPos: 500,
 })
-
-const convertTons = (amount: string) => new Decimal(amount).div(1000000000).toString()
-
-type AccountDetailsParams = {
-    parentStep: number
-    tonWalletState: nt.AccountState | null
-    account: string
-    setGlobalStep: (arg0: number) => void
-}
-
-const AccountDetails: React.FC<AccountDetailsParams> = ({
-    parentStep,
-    tonWalletState,
-    account,
-    setGlobalStep,
-}) => {
-    const [modalVisible, setModalVisible] = useState(false)
-    const [panelVisible, setPanelVisible] = useState(false)
-    const [activeContent, setActiveContent] = useState(0)
-
-    // TODO temp hack, remove later
-    const [step, setStep] = useState(0)
-
-    useEffect(() => {
-        if (parentStep === 6) {
-            setPanelVisible(true)
-            setActiveContent(6)
-        }
-    }, [parentStep])
-    // TODO temp hack, remove later
-
-    const handleSendReceive = (action: 'send' | 'receive') => {
-        setPanelVisible(true)
-        setActiveContent(+!(action === 'receive'))
-    }
-
-    const handleReceiveClick = () => {
-        setPanelVisible(true)
-        setActiveContent(0)
-    }
-
-    const handleSendClick = () => {
-        setPanelVisible(true)
-        setActiveContent(1)
-    }
-
-    return (
-        <>
-            <div className="main-page__account-details">
-                <div className="main-page__account-details-top-panel">
-                    <div className="main-page__account-details-network">Free TON main net</div>
-                    <div
-                        onClick={() => setModalVisible(true)}
-                        // style={{ cursor: 'pointer', position: 'relevant' }}
-                        style={{ cursor: 'pointer' }}
-                    >
-                        <UserPic />
-                    </div>
-                    {modalVisible && (
-                        <AccountModal
-                            setActiveContent={setActiveContent}
-                            setPanelVisible={setPanelVisible}
-                            setModalVisible={setModalVisible}
-                            setStep={setGlobalStep}
-                        />
-                    )}
-                </div>
-                <div className="main-page__account-details-acc">
-                    <span className="main-page__account-details-acc-account"> Account 1</span>
-                    <CopyToClipboard
-                        text={account}
-                        onCopy={() => {
-                            ReactTooltip.hide()
-                        }}
-                    >
-                        <span
-                            className="main-page__account-details-acc-address"
-                            data-tip="Click to copy"
-                        >
-                            {`${account.slice(0, 6)}...${account.slice(-4)}`}
-                        </span>
-                    </CopyToClipboard>
-                    <ReactTooltip type="dark" effect="solid" place="bottom" />
-                </div>
-                <div className="main-page__account-details-balance">
-                    <span className="main-page__account-details-balance-number">
-                        {convertTons(tonWalletState?.balance || '0').toLocaleString()} TON
-                    </span>
-                    <span className="main-page__account-details-balance-comment">
-                        Total portfolio value
-                    </span>
-                </div>
-                <div className="main-page__account-details-buttons">
-                    <button
-                        className="main-page__account-details-button _blue"
-                        onMouseDown={createRipple}
-                        onMouseLeave={removeRipple}
-                        onMouseUp={(event) => {
-                            removeRipple(event)
-                            handleReceiveClick && handleReceiveClick()
-                        }}
-                    >
-                        <div className="main-page__account-details-button__content">
-                            {/*@ts-ignore*/}
-                            <ReceiveIcon style={{ marginRight: '8px' }} />
-                            Receive
-                        </div>
-                    </button>
-
-                    <button
-                        className="main-page__account-details-button _blue"
-                        onMouseDown={createRipple}
-                        onMouseLeave={removeRipple}
-                        onMouseUp={(event) => {
-                            removeRipple(event)
-                            handleSendClick && handleSendClick()
-                        }}
-                    >
-                        <div className="main-page__account-details-button__content">
-                            {/*@ts-ignore*/}
-                            <SendIcon style={{ marginRight: '8px' }} />
-                            Send
-                        </div>
-                    </button>
-                </div>
-            </div>
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                {activeContent === 0 ? (
-                    <Receive onReturn={setPanelVisible} />
-                ) : activeContent === 1 ? (
-                    <Send onReturn={setPanelVisible} />
-                ) : activeContent === 2 ? (
-                    <KeyStorage setActiveContent={setActiveContent} />
-                ) : activeContent === 3 ? (
-                    <CreateAccountScreen />
-                ) : activeContent === 4 ? (
-                    <EnterPassword setStep={setStep} minHeight={'170px'} />
-                ) : activeContent === 5 ? (
-                    <SaveSeed setStep={setStep} />
-                ) : activeContent === 6 ? (
-                    <AssetFull handleSendReceive={handleSendReceive} />
-                ) : (
-                    <></>
-                )}
-            </SlidingPanel>
-        </>
-    )
-}
 
 type AssetProps = {
     tonWalletState: nt.AccountState
@@ -202,53 +38,6 @@ export const Asset: React.FC<AssetProps> = ({ tonWalletState }) => (
         <Arrow />
     </div>
 )
-
-type AssetsListProps = {
-    tonWalletState: nt.AccountState | null
-    setActiveContent: (arg0: number) => void
-}
-
-const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveContent }) => {
-    const [panelVisible, setPanelVisible] = useState(false)
-
-    return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                position: 'relative',
-            }}
-        >
-            {/*TODO remove later*/}
-            {tonWalletState && (
-                <div onClick={() => setActiveContent(6)}>
-                    <Asset tonWalletState={tonWalletState} />
-                </div>
-            )}
-            {/*<div*/}
-            {/*    style={{*/}
-            {/*        width: '100%',*/}
-            {/*        height: '70px',*/}
-            {/*        background:*/}
-            {/*            'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',*/}
-            {/*        bottom: 0,*/}
-            {/*        position: 'absolute',*/}
-            {/*    }}*/}
-            {/*></div>*/}
-            {/*<div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>*/}
-            <div style={{ marginBottom: '32px' }}>
-                <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
-            </div>
-            {/*</div>*/}
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                <AddNewToken onReturn={setPanelVisible} />
-            </SlidingPanel>
-        </div>
-    )
-}
-
-const convertAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`
 
 type TransactionProps = {
     transaction: nt.Transaction
@@ -314,50 +103,6 @@ export const TransactionsList: React.FC<TransactionListProps> = ({ transactions 
                 return <Transaction transaction={transaction} />
             })}
         </div>
-    )
-}
-
-type UserAssetsProps = {
-    tonWalletState: nt.AccountState | null
-    transactions: nt.Transaction[]
-    setActiveContent: (arg0: number) => void
-}
-
-const UserAssets: React.FC<UserAssetsProps> = ({
-    tonWalletState,
-    transactions,
-    setActiveContent,
-}) => {
-    const [activeTab, setActiveTab] = useState(0)
-    const content = [
-        <AssetsList tonWalletState={tonWalletState} setActiveContent={setActiveContent} />,
-        <TransactionsList transactions={transactions} />,
-    ]
-
-    return (
-        <>
-            <div className="main-page__user-assets">
-                <div className="main-page__user-assets-panel">
-                    <div
-                        className={cn('main-page__user-assets-panel-tab', {
-                            _active: activeTab === 0,
-                        })}
-                        onClick={() => setActiveTab(0)}
-                    >
-                        Assets
-                    </div>
-                    <div
-                        className={cn('main-page__user-assets-panel-tab', {
-                            _active: activeTab === 1,
-                        })}
-                        onClick={() => setActiveTab(1)}
-                    >
-                        Transactions
-                    </div>
-                </div>
-                {content[activeTab]}
-            </div>
-        </>
     )
 }
 

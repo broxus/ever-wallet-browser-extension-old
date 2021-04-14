@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Button } from '../../components/button'
+import  Button  from '../../components/Button/Button'
 import CopyButton from '../../components/CopyButton/CopyButton'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'

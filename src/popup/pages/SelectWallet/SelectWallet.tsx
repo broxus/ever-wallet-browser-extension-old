@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import RadioButton from '../../components/RadioButton/RadioButton'
-import { Button } from '../../components/button'
+import  Button  from '../../components/Button/Button'
 import { connect } from 'react-redux'
 import { createAccount, setWalletType } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'

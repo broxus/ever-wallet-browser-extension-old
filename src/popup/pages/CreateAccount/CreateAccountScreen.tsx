@@ -1,6 +1,5 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import Input from '../../components/Input/Input'
-import { Button } from '../../components/button'
 import EnterPassword from '../../components/EnterPassword/EnterPassword'
 import Select from 'react-select'
 import SaveSeed from '../../components/SaveSeed/SaveSeed'
@@ -8,6 +7,7 @@ import { selectStyles } from '../../constants/selectStyle'
 import walletOptions from '../../constants/walletTypes'
 import CheckSeed from '../../components/CheckSeed/CheckSeed'
 import './create-account.scss'
+import Button from "../../components/Button/Button";
 
 const options = [
     { value: '1', label: 'Key 1' },

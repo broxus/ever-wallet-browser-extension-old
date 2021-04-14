@@ -1,7 +1,7 @@
 import React from 'react'
 import SittingMan from '../../img/welcome.svg'
-import { Button } from '../../components/button'
 import './welcome-page.scss'
+import Button from "../../components/Button/Button";
 
 interface IWelcomeScreen {
     setStep: (arg0: number) => void

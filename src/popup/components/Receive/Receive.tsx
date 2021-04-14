@@ -1,8 +1,8 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import UserPic from '../../img/user-avatar-placeholder.svg'
-import './receive.scss'
-import { Button } from '../button'
 import QRCode from 'react-qr-code'
+import Button from "../Button/Button";
+import './receive.scss'
 
 interface IReceive {
     onReturn?: Dispatch<SetStateAction<boolean>>
@@ -23,7 +23,7 @@ const Receive: React.FC<IReceive> = () => (
                     size={80}
                 />
             </div>
-            <div className="receive-screen__qr-code-instruction">
+            <div className="receivse-screen__qr-code-instruction">
                 Get the address with your smartphone camera by scanning this QR code.
             </div>
         </div>

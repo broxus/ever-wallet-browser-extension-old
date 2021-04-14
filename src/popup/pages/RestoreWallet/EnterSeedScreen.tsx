@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import TextareaAutosize from 'react-textarea-autosize'
+import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Button } from '../../components/button'
 import { connect } from 'react-redux'
 import { setSeed } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
 import TagsInput from '../../components/TagsInput/TagsInput'
+import  Button  from '../../components/Button/Button'
 
 const EnterSeedScreen: React.FC<any> = ({ setStep, setSeed, walletType }) => {
     const [words, setWords] = useState<string[]>([])

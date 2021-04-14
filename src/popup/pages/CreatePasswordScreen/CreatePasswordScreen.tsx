@@ -1,9 +1,9 @@
-import React, { useMemo } from 'react'
+import React from 'react'
 import Input from '../../components/Input/Input'
-import { Button } from '../../components/button'
 import { useForm } from 'react-hook-form'
 import { connect } from 'react-redux'
 import { setPassword } from '../../store/app/actions'
+import Button from "../../components/Button/Button";
 import './create-password.scss'
 
 interface ICreatePasswordScreen {

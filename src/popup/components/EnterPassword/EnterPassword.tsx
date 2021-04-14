@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import Input from '../Input/Input'
-import { Button } from '../button'
+import Button from "../Button/Button";
 import './enter-password.scss'
 
 interface IEnterPassword {

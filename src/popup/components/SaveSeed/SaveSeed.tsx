@@ -1,10 +1,10 @@
 import React, { Dispatch, SetStateAction, useEffect, Validator } from 'react'
-import { Button } from '../button'
-import './save-seed.scss'
 import Loader from '../Loader/Loader'
 import { connect } from 'react-redux'
 import { generateSeedPhrase } from '../../store/app/actions'
 import { AppState } from '../../store/app/types'
+import './save-seed.scss'
+import Button from "../Button/Button";
 
 interface ISaveSeed {
     setStep: Dispatch<SetStateAction<number>>

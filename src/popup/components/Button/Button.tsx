@@ -3,7 +3,7 @@ import cn from 'classnames'
 import Ripple from 'react-ripples'
 import { createRipple, removeRipple } from '../../common/ripple'
 
-import './style.scss'
+import './button.scss'
 
 export type ButtonProps = {
     text: string
@@ -15,7 +15,7 @@ export type ButtonProps = {
     noBorder?: boolean
 }
 
-export class Button extends React.Component<ButtonProps, {}> {
+class Button extends React.Component<ButtonProps, {}> {
     render() {
         const { text, white, disabled, noBorder, onClick, type, form } = this.props
         let className = cn('button', {
@@ -44,3 +44,5 @@ export class Button extends React.Component<ButtonProps, {}> {
         )
     }
 }
+
+export default Button

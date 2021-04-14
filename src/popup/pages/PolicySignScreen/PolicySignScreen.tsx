@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import Signature from '../../img/policy-sign.svg'
-import { Button } from '../../components/button'
+import  Button  from '../../components/Button/Button'
 import './policy-sign.scss'
 import Checkbox from '../../components/Checkbox/Checkbox'
 

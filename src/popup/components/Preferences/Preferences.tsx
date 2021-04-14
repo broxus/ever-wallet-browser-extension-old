@@ -2,9 +2,9 @@ import React, { Dispatch, SetStateAction } from 'react'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import Input from '../Input/Input'
 import Select from 'react-select'
-import './send.scss'
-import { Button } from '../button'
 import { selectStyles } from '../../constants/selectStyle'
+import './send.scss'
+import Button from "../Button/Button";
 
 const options = [
     { value: '1', label: 'USDT' },

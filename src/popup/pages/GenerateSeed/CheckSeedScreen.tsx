@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import CheckSeedInput from '../../components/CheckSeedInput/CheckSeedInput'
-import { Button } from '../../components/button'
+import  Button  from '../../components/Button/Button'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'
 
