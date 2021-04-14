@@ -2,10 +2,6 @@ import init, * as nt from '../../nekoton/pkg'
 import { GqlSocket, mergeTransactions, StorageConnector } from './common'
 import ItemType = chrome.contextMenus.ItemType
 
-const LITECLIENT_EXTENSION_ID = 'fakpmbkocblneahenciednepadenbdpb'
-
-const CONFIG_URL: string = 'https://freeton.broxus.com/mainnet.config.json'
-
 chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
     const url = new URL(tab.url ?? '')
 
@@ -14,28 +10,13 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
 ;(async () => {
     await init('index_bg.wasm')
 
-    // ADNL example
-    // {
-    //     const config: Config = await fetch(CONFIG_URL).then(data => data.json()).then(Config.parse);
-    //     console.log("Config loaded:", config);
-    //
-    //     const socket = new AdnlSocket(LITECLIENT_EXTENSION_ID);
-    //     const connection = await socket.connect(config);
-    //
-    //     const core = TonInterface.overAdnl(connection);
-    //     console.log(await core.getAccountState());
-    // }
+    const socket = new GqlSocket()
+    const connection = await socket.connect({
+        endpoint: 'https://main.ton.dev/graphql',
+        timeout: 60000, // 60s
+    })
 
-    // GraphQL example
-    {
-        const socket = new GqlSocket()
-        const connection = await socket.connect({
-            endpoint: 'https://main.ton.dev/graphql',
-            timeout: 60000, // 60s
-        })
-
-        await startListener(connection)
-    }
+    await startListener(connection)
 })()
 
 async function startListener(connection: nt.GqlConnection) {
@@ -88,7 +69,10 @@ async function startListener(connection: nt.GqlConnection) {
     if (knownTransactions.length !== 0) {
         const oldestKnownTransaction = knownTransactions[knownTransactions.length - 1]
         if (oldestKnownTransaction.prevTransactionId != null) {
-            await wallet.preloadTransactions(oldestKnownTransaction.prevTransactionId)
+            await wallet.preloadTransactions(
+                oldestKnownTransaction.prevTransactionId.lt,
+                oldestKnownTransaction.prevTransactionId.hash
+            )
         }
     }
 
@@ -155,8 +139,11 @@ async function startListener(connection: nt.GqlConnection) {
 
                 // send message
                 {
-                    //const signedMessage = await keystore.sign(unsignedMessage, publicKey, '1234')
-                    const signedMessage = await unsignedDeployMessage.sign(encryptedKey, '1234')
+                    const signedMessage = await keystore.sign(
+                        unsignedDeployMessage,
+                        publicKey,
+                        '1234'
+                    )
                     const totalFees = await wallet.estimateFees(signedMessage)
                     console.log('Signed message fees:', totalFees)
 

@@ -48,19 +48,19 @@ impl GqlConnection {
     }
 
     #[wasm_bindgen(js_name = "subscribeToTonWallet")]
-    pub fn subscribe_main_wallet(
+    pub fn subscribe_to_main_wallet(
         &self,
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
         handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
-    ) -> Result<PromiseTonWalletSubscription, JsValue> {
+    ) -> Result<PromiseTonWallet, JsValue> {
+        use crate::core::ton_wallet::*;
+
         let public_key = parse_public_key(&public_key)?;
         let contract_type = contract_type.try_into()?;
 
         let transport = Arc::new(self.make_transport());
-        let handler = Arc::new(crate::core::ton_wallet::TonWalletSubscriptionHandler::from(
-            handler,
-        ));
+        let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::ton_wallet::TonWallet::subscribe(
@@ -76,14 +76,52 @@ impl GqlConnection {
             let public_key = hex::encode(wallet.public_key().as_bytes());
             let contract_type = wallet.contract_type();
 
-            let inner = Arc::new(crate::core::ton_wallet::TonWalletImpl::new(
-                transport, wallet,
-            ));
+            let inner = Arc::new(TonWalletImpl::new(transport, wallet));
 
-            Ok(JsValue::from(crate::core::ton_wallet::TonWallet {
+            Ok(JsValue::from(TonWallet {
                 address,
                 public_key,
                 contract_type,
+                inner,
+            }))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToTokenWallet")]
+    pub fn subscribe_to_token_wallet(
+        &self,
+        owner: &str,
+        root_token_contract: &str,
+        handler: crate::core::token_wallet::TokenWalletSubscriptionHandlerImpl,
+    ) -> Result<PromiseTokenWallet, JsValue> {
+        use crate::core::token_wallet::*;
+
+        let owner = parse_address(owner)?;
+        let root_token_contract = parse_address(root_token_contract)?;
+
+        let transport = Arc::new(self.make_transport());
+        let handler = Arc::new(TokenWalletSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::token_wallet::TokenWallet::subscribe(
+                transport.clone() as Arc<dyn nt::transport::Transport>,
+                owner,
+                root_token_contract,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            let version = wallet.version().to_string();
+            let symbol = wallet.symbol().clone();
+            let owner = wallet.owner().to_string();
+
+            let inner = Arc::new(TokenWalletImpl::new(transport, wallet));
+
+            Ok(JsValue::from(TokenWallet {
+                version,
+                symbol,
+                owner,
                 inner,
             }))
         })))
@@ -152,6 +190,9 @@ pub enum QueryError {
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<TonWalletSubscription>")]
-    pub type PromiseTonWalletSubscription;
+    #[wasm_bindgen(typescript_type = "Promise<TonWallet>")]
+    pub type PromiseTonWallet;
+
+    #[wasm_bindgen(typescript_type = "Promise<TokenWallet>")]
+    pub type PromiseTokenWallet;
 }
