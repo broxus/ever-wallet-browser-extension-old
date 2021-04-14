@@ -130,7 +130,7 @@ async function startListener(connection: nt.GqlConnection) {
             }
 
             const dest = '0:a921453472366b7feeec15323a96b5dcf17197c88dc0d4578dfa52900b8a33cb'
-            const amount = '100000000' // 0.1 TON
+            const amount = '10000000' // 0.01 TON
             const bounce = false
             const timeout = 60 // expire in 60 seconds
 
@@ -143,6 +143,28 @@ async function startListener(connection: nt.GqlConnection) {
             )
             if (unsignedMessage == null) {
                 console.log('Contract must be deployed first')
+
+                const unsignedDeployMessage = wallet.prepareDeploy(60)
+
+                // estimate fees
+                {
+                    const signedMessage = unsignedDeployMessage.signFake()
+                    const totalFees = await wallet.estimateFees(signedMessage)
+                    console.log('Fees:', totalFees)
+                }
+
+                // send message
+                {
+                    //const signedMessage = await keystore.sign(unsignedMessage, publicKey, '1234')
+                    const signedMessage = await unsignedDeployMessage.sign(encryptedKey, '1234')
+                    const totalFees = await wallet.estimateFees(signedMessage)
+                    console.log('Signed message fees:', totalFees)
+
+                    currentBlockId = (await wallet.getLatestBlock()).id
+                    const pendingTransaction = await wallet.sendMessage(signedMessage)
+                    console.log(pendingTransaction)
+                }
+
                 continue
             }
 

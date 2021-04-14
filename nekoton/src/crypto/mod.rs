@@ -35,23 +35,6 @@ impl UnsignedMessage {
         let inner = self.inner.sign(&[0; 64]).handle_error()?;
         Ok(SignedMessage { inner })
     }
-
-    #[wasm_bindgen]
-    pub fn sign(
-        &self,
-        key: &encrypted_key::EncryptedKey,
-        password: &str,
-    ) -> Result<SignedMessage, JsValue> {
-        let signature = key
-            .inner
-            .sign(
-                crypto::UnsignedMessage::hash(self.inner.as_ref()),
-                password.into(),
-            )
-            .handle_error()?;
-        let inner = self.inner.sign(&signature).handle_error()?;
-        Ok(SignedMessage { inner })
-    }
 }
 
 #[wasm_bindgen]
