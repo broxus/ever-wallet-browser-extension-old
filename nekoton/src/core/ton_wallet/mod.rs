@@ -10,6 +10,7 @@ use wasm_bindgen_futures::*;
 use nt::core::ton_wallet;
 use nt::utils::*;
 
+use super::PromiseLatestBlock;
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -120,7 +121,7 @@ impl TonWallet {
         let message = signed_message.inner.message.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().unwrap();
+            let mut wallet = inner.wallet.lock().trust_me();
 
             let res = wallet.estimate_fees(&message).await.handle_error()?;
             Ok(JsValue::from(res.to_string()))
@@ -153,7 +154,7 @@ impl TonWallet {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let latest_block = transport.get_latest_block(&address).await.handle_error()?;
-            Ok(make_latest_block(latest_block))
+            Ok(super::make_latest_block(latest_block))
         }))
     }
 
@@ -230,11 +231,11 @@ pub struct TonWalletImpl {
 impl TonWalletImpl {
     pub fn new(
         transport: Arc<nt::transport::gql::GqlTransport>,
-        subscription: ton_wallet::TonWallet,
+        wallet: ton_wallet::TonWallet,
     ) -> Self {
         Self {
             transport,
-            wallet: Mutex::new(subscription),
+            wallet: Mutex::new(wallet),
         }
     }
 }
@@ -327,23 +328,6 @@ impl nt::core::ton_wallet::TonWalletSubscriptionHandler for TonWalletNotificatio
     }
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const LATEST_BLOCK: &'static str = r#"
-export type LatestBlock = {
-    id: string,
-    endLt: string,
-    genUtime: number,
-};
-"#;
-
-fn make_latest_block(latest_block: nt::transport::gql::LatestBlock) -> JsValue {
-    ObjectBuilder::new()
-        .set("id", latest_block.id)
-        .set("endLt", latest_block.end_lt.to_string())
-        .set("genUtime", latest_block.gen_utime)
-        .build()
-}
-
 #[wasm_bindgen]
 pub struct ContractState {
     #[wasm_bindgen(skip)]
@@ -388,7 +372,4 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<PendingTransaction>")]
     pub type PromisePendingTransaction;
-
-    #[wasm_bindgen(typescript_type = "Promise<LatestBlock>")]
-    pub type PromiseLatestBlock;
 }

@@ -848,6 +848,7 @@ dependencies = [
  "hex 0.4.3",
  "js-sys",
  "nekoton 0.1.0 (git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev)",
+ "num-bigint",
  "pin-project-lite",
  "rand",
  "serde",
@@ -869,7 +870,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#5c32dacb187d5ceceacf99d03e80144ce2544ccc"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#f8463512baab83bbe3a76f29e0ce36bd3783d2e1"
 dependencies = [
  "aes-ctr",
  "anyhow",
