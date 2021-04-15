@@ -25,6 +25,23 @@ pub struct TokenWallet {
     pub inner: Arc<TokenWalletImpl>,
 }
 
+impl TokenWallet {
+    pub fn new(
+        transport: Arc<nt::transport::gql::GqlTransport>,
+        wallet: token_wallet::TokenWallet,
+    ) -> Self {
+        Self {
+            version: wallet.version().to_string(),
+            symbol: wallet.symbol().clone(),
+            owner: wallet.owner().to_string(),
+            inner: Arc::new(TokenWalletImpl {
+                transport,
+                wallet: Mutex::new(wallet),
+            }),
+        }
+    }
+}
+
 #[wasm_bindgen]
 impl TokenWallet {
     #[wasm_bindgen(js_name = "makeCollectTokensCall")]
@@ -193,18 +210,6 @@ impl TokenWallet {
 pub struct TokenWalletImpl {
     transport: Arc<nt::transport::gql::GqlTransport>,
     wallet: Mutex<token_wallet::TokenWallet>,
-}
-
-impl TokenWalletImpl {
-    pub fn new(
-        transport: Arc<nt::transport::gql::GqlTransport>,
-        wallet: token_wallet::TokenWallet,
-    ) -> Self {
-        Self {
-            transport,
-            wallet: Mutex::new(wallet),
-        }
-    }
 }
 
 #[wasm_bindgen]

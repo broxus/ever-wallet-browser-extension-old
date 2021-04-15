@@ -870,7 +870,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#76b8d8dd21478c4453f2426cd2102ad15e5381f1"
+source = "git+ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git?branch=dev#dbe523c8fcedbc102bfaf80f49d8210e924a2b94"
 dependencies = [
  "aes-ctr",
  "anyhow",

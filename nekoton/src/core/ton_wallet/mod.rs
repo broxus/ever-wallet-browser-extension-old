@@ -22,7 +22,27 @@ pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub contract_type: ton_wallet::ContractType,
     #[wasm_bindgen(skip)]
+    pub details: ton_wallet::TonWalletDetails,
+    #[wasm_bindgen(skip)]
     pub inner: Arc<TonWalletImpl>,
+}
+
+impl TonWallet {
+    pub fn new(
+        transport: Arc<nt::transport::gql::GqlTransport>,
+        wallet: ton_wallet::TonWallet,
+    ) -> Self {
+        Self {
+            address: wallet.address().to_string(),
+            public_key: hex::encode(wallet.public_key().as_bytes()),
+            contract_type: wallet.contract_type(),
+            details: wallet.details(),
+            inner: Arc::new(TonWalletImpl {
+                transport,
+                wallet: Mutex::new(wallet),
+            }),
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -40,6 +60,11 @@ impl TonWallet {
     #[wasm_bindgen(getter, js_name = "contractType")]
     pub fn contract_type(&self) -> ContractType {
         self.contract_type.into()
+    }
+
+    #[wasm_bindgen(getter, js_name = "details")]
+    pub fn details(&self) -> TonWalletDetails {
+        make_ton_wallet_details(self.details)
     }
 
     #[wasm_bindgen(js_name = "accountState")]
@@ -228,18 +253,6 @@ pub struct TonWalletImpl {
     wallet: Mutex<ton_wallet::TonWallet>,
 }
 
-impl TonWalletImpl {
-    pub fn new(
-        transport: Arc<nt::transport::gql::GqlTransport>,
-        wallet: ton_wallet::TonWallet,
-    ) -> Self {
-        Self {
-            transport,
-            wallet: Mutex::new(wallet),
-        }
-    }
-}
-
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(js_name = "TonWalletSubscriptionHandler")]
@@ -326,6 +339,30 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
             make_transactions_batch_info(batch_info),
         )
     }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TON_WALLET_DETAILS: &str = r#"
+export type TonWalletDetails = {
+    requiresSeparateDeploy: boolean,
+    minAmount: string,
+    supportsPayload: boolean,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TonWalletDetails")]
+    pub type TonWalletDetails;
+}
+
+fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonWalletDetails {
+    ObjectBuilder::new()
+        .set("requiresSeparateDeploy", data.requires_separate_deploy)
+        .set("minAmount", data.min_amount.to_string())
+        .set("supportsPayload", data.supports_payload)
+        .build()
+        .unchecked_into()
 }
 
 #[wasm_bindgen]

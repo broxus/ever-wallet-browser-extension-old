@@ -27,11 +27,16 @@ async function startListener(connection: nt.GqlConnection) {
     // Keystore
     const keystore = await nt.KeyStore.load(storage)
     await keystore.clear()
-    await keystore.setMasterKey(
-        'Main key',
-        'naive pudding fabric canal round peanut nature metal fog exhibit security side',
-        '1234'
-    )
+    await keystore.addKey('Main key', {
+        type: 'master_key',
+        data: {
+            params: {
+                phrase:
+                    'naive pudding fabric canal round peanut nature metal fog exhibit security side',
+            },
+            password: '1234',
+        },
+    })
 
     const keystoreEntries = await keystore.getKeys()
     if (keystoreEntries.length === 0) {
@@ -139,11 +144,10 @@ async function startListener(connection: nt.GqlConnection) {
 
                 // send message
                 {
-                    const signedMessage = await keystore.sign(
-                        unsignedDeployMessage,
-                        publicKey,
-                        '1234'
-                    )
+                    const signedMessage = await keystore.sign(unsignedDeployMessage, {
+                        type: 'master_key',
+                        data: { publicKey, password: '1234' },
+                    })
                     const totalFees = await wallet.estimateFees(signedMessage)
                     console.log('Signed message fees:', totalFees)
 
@@ -164,7 +168,10 @@ async function startListener(connection: nt.GqlConnection) {
 
             // send message
             {
-                const signedMessage = await keystore.sign(unsignedMessage, publicKey, '1234')
+                const signedMessage = await keystore.sign(unsignedMessage, {
+                    type: 'master_key',
+                    data: { publicKey, password: '1234' },
+                })
                 const totalFees = await wallet.estimateFees(signedMessage)
                 console.log('Signed message fees:', totalFees)
 

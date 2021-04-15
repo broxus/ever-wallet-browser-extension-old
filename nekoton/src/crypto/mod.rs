@@ -1,11 +1,12 @@
 mod encrypted_key;
 
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use nt::crypto;
 
 use crate::utils::*;
-use wasm_bindgen::JsCast;
 
 #[wasm_bindgen]
 pub struct UnsignedMessage {
@@ -52,8 +53,10 @@ impl SignedMessage {
 }
 
 #[wasm_bindgen(js_name = "generateMnemonic")]
-pub fn generate_mnemonic(mnemonic_type: MnemonicType) -> Result<GeneratedMnemonic, JsValue> {
-    let key = crypto::generate_key(mnemonic_type.into()).handle_error()?;
+pub fn generate_mnemonic(mnemonic_type: JsMnemonicType) -> Result<GeneratedMnemonic, JsValue> {
+    let mnemonic_type = parse_mnemonic_type(mnemonic_type)?;
+
+    let key = crypto::generate_key(mnemonic_type).handle_error()?;
     Ok(make_generated_mnemonic(key.words.join(" "), mnemonic_type))
 }
 
@@ -71,60 +74,72 @@ extern "C" {
     pub type GeneratedMnemonic;
 }
 
-fn make_generated_mnemonic(phrase: String, mnemonic_type: MnemonicType) -> GeneratedMnemonic {
+fn make_generated_mnemonic(
+    phrase: String,
+    mnemonic_type: nt::crypto::MnemonicType,
+) -> GeneratedMnemonic {
     ObjectBuilder::new()
         .set("phrase", phrase)
-        .set("mnemonicType", mnemonic_type)
+        .set("mnemonicType", make_mnemonic_type(mnemonic_type))
         .build()
         .unchecked_into()
 }
 
+#[wasm_bindgen(js_name = "makeLabsMnemonic")]
+pub fn make_labs_mnemonic(id: u16) -> JsMnemonicType {
+    make_mnemonic_type(crypto::MnemonicType::Labs(id))
+}
+
+#[wasm_bindgen(js_name = "makeLegacyMnemonic")]
+pub fn make_legacy_mnemonic() -> JsMnemonicType {
+    make_mnemonic_type(crypto::MnemonicType::Legacy)
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MNEMONIC_TYPE: &str = r#"
+export type MnemonicType = 
+    | { type: 'labs', accountId: number } 
+    | { type: 'legacy' };
+"#;
+
 #[wasm_bindgen]
-#[derive(Copy, Clone)]
-pub struct MnemonicType {
-    #[wasm_bindgen(skip)]
-    pub inner: crypto::MnemonicType,
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MnemonicType")]
+    pub type JsMnemonicType;
 }
 
-impl MnemonicType {
-    pub fn new(account_type: crypto::MnemonicType) -> Self {
-        Self {
-            inner: account_type,
+#[derive(Copy, Clone, Deserialize)]
+#[serde(tag = "type", rename_all = "lowercase")]
+pub enum ParsedMnemonicType {
+    #[serde(rename_all = "camelCase")]
+    Labs {
+        account_id: u16,
+    },
+    Legacy,
+}
+
+impl From<ParsedMnemonicType> for nt::crypto::MnemonicType {
+    fn from(data: ParsedMnemonicType) -> Self {
+        match data {
+            ParsedMnemonicType::Labs { account_id } => nt::crypto::MnemonicType::Labs(account_id),
+            ParsedMnemonicType::Legacy => nt::crypto::MnemonicType::Legacy,
         }
     }
 }
 
-#[wasm_bindgen]
-impl MnemonicType {
-    #[wasm_bindgen(js_name = "makeLabs")]
-    pub fn make_labs(id: u16) -> MnemonicType {
-        MnemonicType::new(crypto::MnemonicType::Labs(id))
+pub fn make_mnemonic_type(data: nt::crypto::MnemonicType) -> JsMnemonicType {
+    match data {
+        nt::crypto::MnemonicType::Labs(account_id) => ObjectBuilder::new()
+            .set("type", "labs")
+            .set("accountId", account_id)
+            .build(),
+        nt::crypto::MnemonicType::Legacy => ObjectBuilder::new().set("type", "legacy").build(),
     }
-
-    #[wasm_bindgen(js_name = "makeLegacy")]
-    pub fn make_legacy() -> MnemonicType {
-        MnemonicType::new(crypto::MnemonicType::Legacy)
-    }
-
-    #[wasm_bindgen(getter, js_name = "wordCount")]
-    pub fn word_count(&self) -> u32 {
-        match self.inner {
-            crypto::MnemonicType::Labs(_) => 12,
-            crypto::MnemonicType::Legacy => 24,
-        }
-    }
-
-    #[wasm_bindgen(getter, js_name = "accountId")]
-    pub fn account_id(&self) -> u16 {
-        match self.inner {
-            crypto::MnemonicType::Labs(id) => id,
-            _ => 0,
-        }
-    }
+    .unchecked_into()
 }
 
-impl From<MnemonicType> for crypto::MnemonicType {
-    fn from(t: MnemonicType) -> Self {
-        t.inner
-    }
+pub fn parse_mnemonic_type(data: JsMnemonicType) -> Result<nt::crypto::MnemonicType, JsValue> {
+    JsValue::into_serde::<ParsedMnemonicType>(&data)
+        .handle_error()
+        .map(From::from)
 }

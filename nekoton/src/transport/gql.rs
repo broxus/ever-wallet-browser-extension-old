@@ -72,18 +72,7 @@ impl GqlConnection {
             .await
             .handle_error()?;
 
-            let address = wallet.address().to_string();
-            let public_key = hex::encode(wallet.public_key().as_bytes());
-            let contract_type = wallet.contract_type();
-
-            let inner = Arc::new(TonWalletImpl::new(transport, wallet));
-
-            Ok(JsValue::from(TonWallet {
-                address,
-                public_key,
-                contract_type,
-                inner,
-            }))
+            Ok(JsValue::from(TonWallet::new(transport, wallet)))
         })))
     }
 
@@ -112,18 +101,7 @@ impl GqlConnection {
             .await
             .handle_error()?;
 
-            let version = wallet.version().to_string();
-            let symbol = wallet.symbol().clone();
-            let owner = wallet.owner().to_string();
-
-            let inner = Arc::new(TokenWalletImpl::new(transport, wallet));
-
-            Ok(JsValue::from(TokenWallet {
-                version,
-                symbol,
-                owner,
-                inner,
-            }))
+            Ok(JsValue::from(TokenWallet::new(transport, wallet)))
         })))
     }
 }

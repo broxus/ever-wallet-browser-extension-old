@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 use nt::crypto;
 
-use super::{MnemonicType, SignedMessage, UnsignedMessage};
+use super::{JsMnemonicType, SignedMessage, UnsignedMessage};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -17,12 +17,14 @@ impl EncryptedKey {
     #[wasm_bindgen(constructor)]
     pub fn new(
         name: &str,
-        mnemonic: &str,
-        account_type: MnemonicType,
+        phrase: &str,
+        mnemonic_type: JsMnemonicType,
         password: &str,
     ) -> Result<EncryptedKey, JsValue> {
+        let mnemonic_type = super::parse_mnemonic_type(mnemonic_type)?;
+
         Ok(EncryptedKey {
-            inner: crypto::EncryptedKey::new(name, password.into(), account_type.into(), &mnemonic)
+            inner: crypto::EncryptedKey::new(name, password.into(), mnemonic_type, phrase.into())
                 .handle_error()?,
         })
     }
@@ -78,10 +80,8 @@ impl EncryptedKey {
         self.inner.name().to_owned()
     }
 
-    #[wasm_bindgen(getter, js_name = "accountType")]
-    pub fn account_type(&self) -> MnemonicType {
-        MnemonicType {
-            inner: self.inner.account_type().clone(),
-        }
+    #[wasm_bindgen(getter, js_name = "mnemonicType")]
+    pub fn mnemonic_type(&self) -> JsMnemonicType {
+        super::make_mnemonic_type(self.inner.mnemonic_type())
     }
 }
