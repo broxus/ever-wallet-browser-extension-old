@@ -141,35 +141,41 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "estimateFees")]
-    pub fn estimate_fees(&self, signed_message: &crate::crypto::SignedMessage) -> PromiseString {
+    pub fn estimate_fees(
+        &self,
+        signed_message: crate::crypto::JsSignedMessage,
+    ) -> Result<PromiseString, JsValue> {
         let inner = self.inner.clone();
-        let message = signed_message.inner.message.clone();
+        let message = crate::crypto::parse_signed_message(signed_message)?;
 
-        JsCast::unchecked_into(future_to_promise(async move {
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
-            let res = wallet.estimate_fees(&message).await.handle_error()?;
+            let res = wallet.estimate_fees(&message.boc).await.handle_error()?;
             Ok(JsValue::from(res.to_string()))
-        }))
+        })))
     }
 
     #[wasm_bindgen(js_name = "sendMessage")]
     pub fn send_message(
         &self,
-        message: &crate::crypto::SignedMessage,
-    ) -> PromisePendingTransaction {
+        message: crate::crypto::JsSignedMessage,
+    ) -> Result<PromisePendingTransaction, JsValue> {
         let inner = self.inner.clone();
-        let nt::crypto::SignedMessage { message, expire_at } = message.inner.clone();
+        let message = crate::crypto::parse_signed_message(message)?;
 
-        JsCast::unchecked_into(future_to_promise(async move {
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().unwrap();
 
-            let pending_transaction = wallet.send(&message, expire_at).await.handle_error()?;
+            let pending_transaction = wallet
+                .send(&message.boc, message.expire_at)
+                .await
+                .handle_error()?;
 
             Ok(JsValue::from(
                 crate::core::models::make_pending_transaction(pending_transaction),
             ))
-        }))
+        })))
     }
 
     #[wasm_bindgen(js_name = "getLatestBlock")]

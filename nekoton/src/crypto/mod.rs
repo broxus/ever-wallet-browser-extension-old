@@ -1,6 +1,7 @@
 mod encrypted_key;
 
 use serde::Deserialize;
+use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -32,24 +33,51 @@ impl UnsignedMessage {
     }
 
     #[wasm_bindgen(js_name = "signFake")]
-    pub fn sign_fake(&self) -> Result<SignedMessage, JsValue> {
-        let inner = self.inner.sign(&[0; 64]).handle_error()?;
-        Ok(SignedMessage { inner })
+    pub fn sign_fake(&self) -> Result<JsSignedMessage, JsValue> {
+        self.inner
+            .sign(&[0; 64])
+            .handle_error()
+            .and_then(make_signed_message)
     }
 }
 
-#[wasm_bindgen]
-pub struct SignedMessage {
-    #[wasm_bindgen(skip)]
-    pub inner: crypto::SignedMessage,
-}
+#[wasm_bindgen(typescript_custom_section)]
+const SIGNED_MESSAGE: &str = r#"
+export type SignedMessage = {
+    expireAt: number,
+    boc: string,
+};
+"#;
 
 #[wasm_bindgen]
-impl SignedMessage {
-    #[wasm_bindgen(getter, js_name = "expireAt")]
-    pub fn expire_at(&self) -> u32 {
-        self.inner.expire_at
-    }
+extern "C" {
+    #[wasm_bindgen(typescript_type = "SignedMessage")]
+    pub type JsSignedMessage;
+}
+
+pub fn make_signed_message(data: nt::crypto::SignedMessage) -> Result<JsSignedMessage, JsValue> {
+    let boc = {
+        let cell = data.message.write_to_new_cell().handle_error()?.into();
+        base64::encode(ton_types::serialize_toc(&cell).handle_error()?)
+    };
+
+    Ok(ObjectBuilder::new()
+        .set("expireAt", data.expire_at)
+        .set("boc", boc)
+        .build()
+        .unchecked_into())
+}
+
+#[derive(Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ParsedSignedMessage {
+    pub expire_at: u32,
+    #[serde(deserialize_with = "deserialize_message")]
+    pub boc: ton_block::Message,
+}
+
+pub fn parse_signed_message(data: JsSignedMessage) -> Result<ParsedSignedMessage, JsValue> {
+    JsValue::into_serde::<ParsedSignedMessage>(&data).handle_error()
 }
 
 #[wasm_bindgen(js_name = "generateMnemonic")]
@@ -142,4 +170,15 @@ pub fn parse_mnemonic_type(data: JsMnemonicType) -> Result<nt::crypto::MnemonicT
     JsValue::into_serde::<ParsedMnemonicType>(&data)
         .handle_error()
         .map(From::from)
+}
+
+fn deserialize_message<'de, D>(deserializer: D) -> Result<ton_block::Message, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::de::Error;
+    use ton_block::Deserializable;
+
+    let data = String::deserialize(deserializer)?;
+    ton_block::Message::construct_from_base64(&data).map_err(D::Error::custom)
 }

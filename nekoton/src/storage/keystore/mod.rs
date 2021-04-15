@@ -204,9 +204,9 @@ impl KeyStore {
             }
             .handle_error()?;
 
-            Ok(JsValue::from(crate::crypto::SignedMessage {
-                inner: message.sign(&signature).handle_error()?,
-            }))
+            let message = message.sign(&signature).handle_error()?;
+
+            crate::crypto::make_signed_message(message).map(JsValue::from)
         })))
     }
 

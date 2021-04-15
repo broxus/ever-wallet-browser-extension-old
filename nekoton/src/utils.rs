@@ -67,6 +67,12 @@ impl ObjectBuilder {
     }
 }
 
+impl Default for ObjectBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub fn parse_public_key(public_key: &str) -> Result<ed25519_dalek::PublicKey, JsValue> {
     ed25519_dalek::PublicKey::from_bytes(&hex::decode(&public_key).handle_error()?).handle_error()
 }

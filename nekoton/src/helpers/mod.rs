@@ -59,7 +59,7 @@ pub fn check_address(address: &str) -> bool {
 pub fn get_hints(word: &str) -> StringArray {
     nt::crypto::dict::get_hints(word)
         .into_iter()
-        .map(|x| JsValue::from(x))
+        .map(JsValue::from)
         .collect::<js_sys::Array>()
         .unchecked_into()
 }

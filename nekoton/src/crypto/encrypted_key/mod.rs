@@ -2,7 +2,7 @@ use wasm_bindgen::prelude::*;
 
 use nt::crypto;
 
-use super::{JsMnemonicType, SignedMessage, UnsignedMessage};
+use super::{JsMnemonicType, JsSignedMessage, UnsignedMessage};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -46,7 +46,7 @@ impl EncryptedKey {
         &self,
         message: &UnsignedMessage,
         password: &str,
-    ) -> Result<SignedMessage, JsValue> {
+    ) -> Result<JsSignedMessage, JsValue> {
         let signature = self
             .inner
             .sign(
@@ -54,8 +54,8 @@ impl EncryptedKey {
                 password.into(),
             )
             .handle_error()?;
-        let inner = message.inner.sign(&signature).handle_error()?;
-        Ok(SignedMessage { inner })
+        let message = message.inner.sign(&signature).handle_error()?;
+        super::make_signed_message(message)
     }
 
     #[wasm_bindgen(js_name = "fromJSON")]

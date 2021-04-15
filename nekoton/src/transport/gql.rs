@@ -123,9 +123,7 @@ impl nt::external::GqlConnection for GqlConnectionImpl {
 
         self.sender.send(data, GqlQuery { tx });
 
-        let response = rx
-            .await
-            .unwrap_or_else(|_| Err(QueryError::RequestDropped))?;
+        let response = rx.await.unwrap_or(Err(QueryError::RequestDropped))?;
         Ok(response)
     }
 }
