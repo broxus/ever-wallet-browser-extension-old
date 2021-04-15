@@ -1,0 +1,29 @@
+@import 'src/popup/styles/colors';
+
+.select-wallet {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 28px 28px;
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 100%;
+
+        &-options {
+            display: flex;
+            flex-direction: column;
+            &-title {
+                margin-bottom: 28px;
+            }
+        }
+
+        &-buttons {
+            display: flex;
+            flex-direction: column;
+            height: 108px;
+            justify-content: space-around;
+        }
+    }
+}

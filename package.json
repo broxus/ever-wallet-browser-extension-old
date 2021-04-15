@@ -29,6 +29,8 @@
     "@types/chrome": "0.0.133",
     "@types/chrome-apps": "0.0.12",
     "@types/classnames": "^2.2.11",
+    "@types/decimal.js": "^7.4.0",
+    "@types/lodash": "^4.14.168",
     "@types/react": "^17.0.2",
     "@types/react-copy-to-clipboard": "^5.0.0",
     "@types/react-select": "^4.0.13",
@@ -50,17 +52,23 @@
     "webpack-merge": "^5.7.3"
   },
   "dependencies": {
+    "@material-ui/core": "^4.11.3",
+    "@material-ui/lab": "^4.0.0-alpha.57",
     "@types/react-dom": "^17.0.1",
     "base64-js": "^1.5.1",
     "classnames": "^2.2.6",
+    "decimal.js": "^10.2.1",
     "immer": "^9.0.1",
     "react": "^17.0.1",
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^17.0.1",
+    "react-hook-form": "^6.15.5",
     "react-qr-code": "^1.1.1",
     "react-redux": "^7.2.3",
+    "react-ripples": "^2.2.1",
     "react-select": "^4.2.1",
-    "react-tooltip": "^4.2.15",
+    "react-textarea-autosize": "^8.3.2",
+    "react-tooltip": "^4.2.17",
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0"
   }

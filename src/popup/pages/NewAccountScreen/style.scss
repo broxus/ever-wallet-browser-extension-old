@@ -1,0 +1,37 @@
+@import '../../styles/colors';
+
+.welcome-page {
+  &__bg {
+    background-color: $illustrationBg;
+    height: 372px;
+    position: relative;
+    width: 92%;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 28px 28px;
+    position: absolute;
+    top: 0;
+    height: 100%;
+
+    &-header-xl {
+      top: 12px;
+      margin-bottom: 20px;
+    }
+
+    &-header-s {
+      margin-bottom: 40px;
+    }
+
+    &-button {
+      margin-bottom: 12px;
+    }
+
+    &-illustration {
+      top: 216px;
+    }
+  }
+}

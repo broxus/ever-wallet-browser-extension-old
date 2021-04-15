@@ -1,0 +1,80 @@
+@import 'src/popup/styles/colors';
+
+.generate-seed-page {
+    &__bg {
+        background-color: $illustrationBg;
+        height: 300px;
+        position: relative;
+        width: 56px;
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 28px 28px;
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 100%;
+
+        &-form {
+            min-height: 304px;
+        }
+
+        &-title {
+            margin-bottom: 28px;
+        }
+
+        & ol {
+            list-style: none;
+            counter-reset: my-counter;
+            list-style-position: outside;
+            column-count: 2;
+
+            & li {
+                counter-increment: my-counter;
+
+                &::before {
+                    content: counter(my-counter) '. ';
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    line-height: 20px;
+                    letter-spacing: 0.25px;
+                    color: #96a1a7;
+                    flex: none;
+                    order: 0;
+                    flex-grow: 0;
+                    margin: 0px 0px;
+                    width: 3em;
+                    box-sizing: border-box;
+                    display: inline-block;
+                    padding: 0 4px;
+                }
+            }
+        }
+
+        &-word {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            margin-bottom: 8px;
+            white-space: nowrap;
+        }
+        &-buttons {
+            display: flex;
+            flex-direction: column;
+            height: 130px;
+            justify-content: space-around;
+        }
+        &-check-seed-buttons {
+            display: flex;
+            flex-direction: column;
+            height: 108px;
+            justify-content: space-around;
+        }
+    }
+}

@@ -63,3 +63,14 @@ pub fn get_hints(word: &str) -> StringArray {
         .collect::<js_sys::Array>()
         .unchecked_into()
 }
+
+#[wasm_bindgen(js_name = "validateMnemonic")]
+pub fn validate_mnemonic(
+    phrase: &str,
+    mnemonic_type: crate::crypto::JsMnemonicType,
+) -> Result<(), JsValue> {
+    let mnemonic_type = crate::crypto::parse_mnemonic_type(mnemonic_type)?;
+    nt::crypto::derive_from_phrase(phrase, mnemonic_type)
+        .handle_error()
+        .map(|_| ())
+}

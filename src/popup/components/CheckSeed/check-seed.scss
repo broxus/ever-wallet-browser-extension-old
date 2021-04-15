@@ -1,0 +1,30 @@
+@import '../../styles/colors';
+
+.check-seed {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        min-height: 448px;
+        height: 100%;
+        width: 100%;
+
+        &-title {
+            margin-bottom: 28px;
+        }
+        &-error {
+            display: block;
+            width: 100%;
+            font-size: 12px;
+            line-height: 16px;
+            letter-spacing: 0.4px;
+            color: darkred;
+        }
+    }
+    &__buttons {
+        display: flex;
+        &-back-btn {
+            width: 50%;
+            margin-right: 12px;
+        }
+    }
+}

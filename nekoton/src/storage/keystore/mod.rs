@@ -36,7 +36,11 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "addKey")]
-    pub fn add_key(&self, name: String, new_key: JsNewKey) -> Result<PromiseString, JsValue> {
+    pub fn add_key(
+        &self,
+        name: String,
+        new_key: JsNewKey,
+    ) -> Result<PromiseKeyStoreEntry, JsValue> {
         use nt::crypto::*;
 
         let inner = self.inner.clone();
@@ -258,6 +262,9 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<Array<KeyStoreEntry>>")]
     pub type PromiseKeyStoreEntries;
 
+    #[wasm_bindgen(typescript_type = "Promise<KeyStoreEntry>")]
+    pub type PromiseKeyStoreEntry;
+
     #[wasm_bindgen(typescript_type = "Promise<StoredKey>")]
     pub type PromiseStoredKey;
 
@@ -287,10 +294,12 @@ extern "C" {
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 enum ParsedNewKey {
+    #[serde(rename_all = "camelCase")]
     MasterKey {
         params: ParsedNewMasterKeyParams,
         password: String,
     },
+    #[serde(rename_all = "camelCase")]
     EncryptedKey {
         phrase: String,
         mnemonic_type: crate::crypto::ParsedMnemonicType,
@@ -307,7 +316,9 @@ export type DerivedKeyParams = { account_id: number };
 #[derive(Deserialize)]
 #[serde(untagged)]
 enum ParsedNewMasterKeyParams {
+    #[serde(rename_all = "camelCase")]
     MasterKeyParams { phrase: String },
+    #[serde(rename_all = "camelCase")]
     DerivedKeyParams { account_id: u16 },
 }
 
