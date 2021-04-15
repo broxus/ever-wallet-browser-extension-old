@@ -11,6 +11,7 @@
         &-title {
             margin-bottom: 28px;
         }
+
         &-error {
             display: block;
             width: 100%;
@@ -18,13 +19,6 @@
             line-height: 16px;
             letter-spacing: 0.4px;
             color: darkred;
-        }
-    }
-    &__buttons {
-        display: flex;
-        &-back-btn {
-            width: 50%;
-            margin-right: 12px;
         }
     }
 }

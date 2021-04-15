@@ -4,7 +4,6 @@ import * as nt from '../../../nekoton/pkg'
 
 export enum Step {
     WELCOME_PAGE,
-    POLICY_SIGN_SCREEN,
     CREATE_NEW_WALLET,
     RESTORE_WALLET,
     MAIN_PAGE,

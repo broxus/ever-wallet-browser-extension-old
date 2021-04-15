@@ -4,7 +4,7 @@ import cn from 'classnames'
 import { Asset, TransactionsList } from '../../pages/MainPage/MainPageScreen'
 import SlidingPanel from '../SlidingPanel/SlidingPanel'
 import AddNewToken from '../AddNewToken/AddNewToken'
-import  Button  from '../Button/Button'
+import Button from '../Button'
 
 type UserAssetsProps = {
     tonWalletState: nt.AccountState | null

@@ -1,18 +1,21 @@
-@import '../../styles/colors';
+@import 'src/popup/styles/colors';
 
 .policy-sign-page {
     &__illustration {
-        left: -28px;
-        top: 0;
+        left: 28px;
+        top: 192px;
         position: absolute;
-    }
 
-    &__bg {
+        width: 332px;
+        height: 200px;
+
         background-color: $illustrationBg;
-        height: 300px;
-        position: relative;
-        margin-left: 28px;
-        width: 92%;
+
+        svg {
+            bottom: 10px;
+            left: -28px;
+            position: absolute;
+        }
     }
 
     &__content {
@@ -20,12 +23,14 @@
         flex-direction: column;
         justify-content: space-between;
         padding: 40px 28px 28px;
-        height: 310px;
-        max-width: 360px;
         position: absolute;
+        top: 0;
+        height: 100%;
 
         &-checkbox {
             display: flex;
+            margin-top: auto;
+            margin-bottom: 18px;
 
             &-label {
                 font-size: 14px;

@@ -1,7 +1,9 @@
 import React from 'react'
-import Input from '../Input/Input'
 import { CustomElement, FieldElement, FieldValues, Ref } from 'react-hook-form'
-import './check-seed-input.scss'
+
+import Input from '../Input/Input'
+
+import './style.scss'
 
 interface ICheckSeedInput {
     number: number

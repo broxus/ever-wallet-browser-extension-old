@@ -1,10 +1,10 @@
 import React from 'react'
-import Button from '../../components/Button/Button'
 import { Step } from '../../common'
 
+import Button from '../../components/Button'
 import SittingMan from '../../img/welcome.svg'
 
-import './welcome-page.scss'
+import './style.scss'
 
 interface IWelcomeScreen {
     setStep: (step: Step) => void
@@ -30,6 +30,7 @@ const WelcomeScreen: React.FC<IWelcomeScreen> = ({ setStep }) => (
                     text="Sign in with seed phrase"
                     white
                     onClick={() => setStep(Step.RESTORE_WALLET)}
+                    noBorder
                 />
             </div>
         </div>

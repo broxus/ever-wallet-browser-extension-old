@@ -1,18 +1,21 @@
 import React, { useState } from 'react'
-import Signature from '../../img/policy-sign.svg'
-import  Button  from '../../components/Button/Button'
-import './policy-sign.scss'
-import Checkbox from '../../components/Checkbox/Checkbox'
 
-interface IPolicySignScreen {
-    setStep: (arg0: number) => void
+import Signature from '../../img/policy-sign.svg'
+import Button from '../Button'
+import Checkbox from '../Checkbox/Checkbox'
+
+import './style.scss'
+
+interface ISignPolicy {
+    onSubmit: () => void
+    onBack: () => void
 }
 
-const PolicySignScreen: React.FC<IPolicySignScreen> = ({ setStep }) => {
+const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
     const [checked, setChecked] = useState(false)
+
     return (
         <>
-            <div className="policy-sign-page__bg"></div>
             <div className="policy-sign-page__illustration">
                 <Signature />
             </div>
@@ -36,13 +39,14 @@ const PolicySignScreen: React.FC<IPolicySignScreen> = ({ setStep }) => {
                         <Button
                             text="Submit"
                             disabled={!checked}
-                            onClick={() => (checked ? setStep(2) : null)}
+                            onClick={() => (checked ? onSubmit() : null)}
                         />
                     </div>
-                    <Button text="Back" white onClick={() => setStep(0)} />
+                    <Button text="Back" white onClick={() => onBack()} />
                 </div>
             </div>
         </>
     )
 }
-export default PolicySignScreen
+
+export default SignPolicy

@@ -1,9 +1,9 @@
 @import 'src/popup/styles/colors';
 
-.generate-seed-page {
+.exported-seed {
     &__bg {
         background-color: $illustrationBg;
-        height: 300px;
+        height: 350px;
         position: relative;
         width: 56px;
     }
@@ -19,7 +19,7 @@
         width: 100%;
 
         &-form {
-            min-height: 304px;
+            margin-bottom: auto;
         }
 
         &-title {
@@ -27,9 +27,8 @@
         }
 
         & ol {
-            list-style: none;
             counter-reset: my-counter;
-            list-style-position: outside;
+            list-style: none outside none;
             column-count: 2;
 
             & li {
@@ -46,7 +45,7 @@
                     flex: none;
                     order: 0;
                     flex-grow: 0;
-                    margin: 0px 0px;
+                    margin: 0 0;
                     width: 3em;
                     box-sizing: border-box;
                     display: inline-block;
@@ -61,20 +60,17 @@
             font-size: 16px;
             line-height: 20px;
             letter-spacing: 0.25px;
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             white-space: nowrap;
         }
+
         &-buttons {
             display: flex;
             flex-direction: column;
-            height: 130px;
-            justify-content: space-around;
-        }
-        &-check-seed-buttons {
-            display: flex;
-            flex-direction: column;
-            height: 108px;
-            justify-content: space-around;
+
+            & > button:not(:last-child), .panel {
+                margin-bottom: 12px;
+            }
         }
     }
 }

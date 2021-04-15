@@ -3,7 +3,7 @@ import UserPic from '../../img/user-avatar-placeholder.svg'
 import Input from '../Input/Input'
 import Select from 'react-select'
 import { selectStyles } from '../../constants/selectStyle'
-import Button from "../Button/Button";
+import Button from '../Button'
 import './send.scss'
 
 const options = [

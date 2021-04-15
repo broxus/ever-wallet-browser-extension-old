@@ -5,6 +5,7 @@ import { connect } from 'react-redux'
 
 import * as nt from '../../../../nekoton/pkg'
 
+import SignPolicy from '../../components/SignPolicy'
 import SelectContractType from '../../components/SelectContractType'
 import ExportedSeed from '../../components/ExportedSeed'
 import CheckSeed from '../../components/CheckSeed'
@@ -14,6 +15,7 @@ import Modal from '../../components/Modal/Modal'
 import './style.scss'
 
 enum LocalStep {
+    SIGN_POLICY,
     SELECT_CONTRACT_TYPE,
     SHOW_PHRASE,
     CHECK_PHRASE,
@@ -26,7 +28,7 @@ interface ISetupScreen {
 }
 
 const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) => {
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_CONTRACT_TYPE)
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
     const [error, setError] = useState<string>()
 
     const seed = useState<nt.GeneratedMnemonic>(generateSeed())[0]
@@ -47,14 +49,23 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
 
     return (
         <>
+            {localStep == LocalStep.SIGN_POLICY && (
+                <SignPolicy
+                    onSubmit={() => {
+                        setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
+                    }}
+                    onBack={() => {
+                        setStep(Step.WELCOME_PAGE)
+                    }}
+                />
+            )}
             {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
                 <SelectContractType
                     onSubmit={(contractType) => {
                         setContractType(contractType)
                         setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
-                    onReturnBack={() => setStep(Step.WELCOME_PAGE)}
-                    onSkip={() => setStep(Step.MAIN_PAGE)}
+                    onBack={() => setStep(Step.WELCOME_PAGE)}
                     excludedContracts={['WalletV3']}
                 />
             )}

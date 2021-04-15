@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
-import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen'
-import PolicySignScreen from './pages/PolicySignScreen/PolicySignScreen'
-import MainPageScreen from './pages/MainPage/MainPageScreen'
-import NewAccountScreen from './pages/NewAccountScreen'
-import RestoreAccountScreen from './pages/RestoreAccountScreen'
-
 import { AppState } from './store/app/types'
 import { checkAccounts } from './store/app/actions'
 import { Step, Action } from './common'
+
+import WelcomeScreen from './pages/WelcomeScreen'
+import MainPageScreen from './pages/MainPage/MainPageScreen'
+import NewAccountScreen from './pages/NewAccountScreen'
+import RestoreAccountScreen from './pages/RestoreAccountScreen'
 
 import './styles/main.scss'
 
@@ -33,7 +32,6 @@ const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
     return (
         <>
             {step == Step.WELCOME_PAGE && <WelcomeScreen setStep={setStep} />}
-            {step == Step.POLICY_SIGN_SCREEN && <PolicySignScreen setStep={setStep} />}
             {step == Step.CREATE_NEW_WALLET && <NewAccountScreen setStep={setStep} />}
             {step == Step.RESTORE_WALLET && <RestoreAccountScreen setStep={setStep} />}
             {step == Step.MAIN_PAGE && <MainPageScreen setStep={setStep} />}

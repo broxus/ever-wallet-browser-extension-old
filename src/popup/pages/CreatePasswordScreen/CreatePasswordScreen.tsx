@@ -2,7 +2,8 @@ import React from 'react'
 import Input from '../../components/Input/Input'
 import { useForm } from 'react-hook-form'
 import { connect } from 'react-redux'
-import Button from '../../components/Button/Button'
+import { setPassword } from '../../store/app/actions'
+import Button from '../../components/Button'
 import './create-password.scss'
 
 interface ICreatePasswordScreen {

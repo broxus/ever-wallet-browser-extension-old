@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+
 import CheckSeedInput from '../../components/CheckSeedInput/CheckSeedInput'
-import Button from '../../components/Button/Button'
+import Button from '../../components/Button'
+
+import './style.scss'
 
 interface ICheckSeed {
     onSubmit: () => void
@@ -30,12 +33,12 @@ const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
     }
 
     return (
-        <div className="generate-seed-page__content">
-            <h2>Let’s check the seed phrase</h2>
+        <div className="exported-seed__content">
+            <h2 className="exported-seed__content-title">Let’s check the seed phrase</h2>
             <form
                 id="words"
                 onSubmit={handleSubmit(onSubmit)}
-                className="generate-seed-page__content-form"
+                className="exported-seed__content-form"
             >
                 {numbers.map((item: number, i: number) => (
                     <CheckSeedInput
@@ -53,7 +56,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
                     <div className="check-seed__content-error">Your seed doesn't match</div>
                 )}
             </form>
-            <div className="generate-seed-page__content-check-seed-buttons">
+            <div className="exported-seed__content-buttons">
                 <Button text={'Confirm'} type="submit" form="words" />
                 <Button text={'Back'} white onClick={onBack} />
             </div>

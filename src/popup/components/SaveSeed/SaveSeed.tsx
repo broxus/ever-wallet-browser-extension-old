@@ -2,9 +2,9 @@ import React, { Dispatch, SetStateAction, useEffect, Validator } from 'react'
 import Loader from '../Loader/Loader'
 import { connect } from 'react-redux'
 import { generateSeed } from '../../store/app/actions'
-import Button from '../Button/Button'
-import * as nt from '../../../../nekoton/pkg'
+import { AppState } from '../../store/app/types'
 import './save-seed.scss'
+import Button from '../Button'
 
 interface ISaveSeed {
     setStep: Dispatch<SetStateAction<number>>

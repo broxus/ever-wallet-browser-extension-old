@@ -1,11 +1,13 @@
 import React, { Dispatch, SetStateAction, useState } from 'react'
 import _ from 'lodash'
 import cn from 'classnames'
+import { useForm } from 'react-hook-form'
+
+import Button from '../Button'
 import Input from '../Input/Input'
 import TonLogo from '../../img/ton-logo.svg'
 import Tumbler from '../Tumbler/Tumbler'
-import { useForm } from 'react-hook-form'
-import Button from '../Button/Button'
+
 import './add-new-token.scss'
 
 interface IToken {

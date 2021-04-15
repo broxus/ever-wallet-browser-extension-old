@@ -1,7 +1,7 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import UserPic from '../../img/user-avatar-placeholder.svg'
 import QRCode from 'react-qr-code'
-import Button from "../Button/Button";
+import Button from '../Button'
 import './receive.scss'
 
 interface IReceive {

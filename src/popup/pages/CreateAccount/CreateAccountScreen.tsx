@@ -6,7 +6,7 @@ import SaveSeed from '../../components/SaveSeed/SaveSeed'
 import { selectStyles } from '../../constants/selectStyle'
 import walletOptions from '../../constants/walletTypes'
 import CheckSeed from '../../components/CheckSeed'
-import Button from '../../components/Button/Button'
+import Button from '../../components/Button'
 
 import './create-account.scss'
 
