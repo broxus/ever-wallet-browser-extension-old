@@ -7,7 +7,7 @@ import { selectStyles } from '../../constants/selectStyle'
 import { useForm } from 'react-hook-form'
 import { AppState } from '../../store/app/types'
 import { connect } from 'react-redux'
-import { addKey, calculateFee, createKey, exportKey } from '../../store/app/actions'
+import { calculateFee, exportKey } from '../../store/app/actions'
 import './send.scss'
 
 const options = [
@@ -28,7 +28,7 @@ const TransactionSending = () => {
     return (
         <>
             <h2 className="send-screen__form-title">Transaction is sending</h2>
-            <div className="send-screen__tx-sending"></div>
+            <div className="send-screen__tx-sending" />
             <Button text={'OK'} type={'button'} />
         </>
     )
@@ -182,8 +182,6 @@ const mapStateToProps = (store: { app: AppState }) => ({
 })
 
 export default connect(mapStateToProps, {
-    createKey,
-    addKey,
     exportKey,
     calculateFee,
 })(Send)

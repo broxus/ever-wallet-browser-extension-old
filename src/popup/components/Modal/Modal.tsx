@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react'
 import './modal.scss'
 
 type IModal = {
-    className: string
+    className?: string
     onClose: () => void
 }
 

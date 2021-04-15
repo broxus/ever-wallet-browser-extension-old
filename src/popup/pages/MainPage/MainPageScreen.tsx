@@ -48,10 +48,9 @@ export const Transaction: React.FC<TransactionProps> = ({ transaction }) => {
         <>
             <div className="main-page__user-assets-asset">
                 <div style={{ display: 'flex', width: '100%' }}>
-                    {/*// @ts-ignore*/}
-                    <TonLogoS
-                        style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}
-                    />
+                    <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
+                        <TonLogoS />
+                    </div>
                     <div className="main-page__user-assets-asset-number">
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span className="main-page__user-assets-asset-number-dollars">

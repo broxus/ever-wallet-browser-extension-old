@@ -1,12 +1,11 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import { AppState } from '../../store/app/types'
-import { addKey, exportKey } from '../../store/app/actions'
+import { exportKey } from '../../store/app/actions'
 import ThreeDots from '../../img/three-dots.svg'
 import UserPicS from '../../img/user-avatar-placeholder-s.svg'
 import Modal from '../Modal/Modal'
-import './key-storage.scss'
 import Button from '../Button/Button'
+import './key-storage.scss'
 
 interface IKeyStorage {
     createdKey?: any
@@ -69,7 +68,7 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey, setActiveCon
                             >
                                 <ThreeDots />
                                 {modalOpen && (
-                                    <Modal setModalVisible={setModalOpen}>
+                                    <Modal onClose={() => setModalOpen(false)}>
                                         <div
                                             className="key-storage__key-modal-content"
                                             onClick={() => exportSeedPhrase()}
@@ -98,13 +97,6 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey, setActiveCon
     )
 }
 
-const mapStateToProps = (store: { app: AppState }) => ({
-    createdKey: store.app.createdKey,
-    phrase: store.app.phrase,
-    publicKey: store.app.publicKey,
-})
-
-export default connect(mapStateToProps, {
-    addKey,
+export default connect(null, {
     exportKey,
 })(KeyStorage)

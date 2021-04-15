@@ -15,9 +15,8 @@ const generateRandomNumbers = () => {
 
     while (nums.size !== 4) {
         nums.add(Math.floor(Math.random() * 12) + 1)
-        numArray = Array.from(nums).sort((a, b) => a - b)
     }
-
+    numArray = Array.from(nums).sort((a, b) => a - b)
     return numArray
 }
 

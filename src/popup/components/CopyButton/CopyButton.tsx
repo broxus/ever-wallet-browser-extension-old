@@ -1,7 +1,7 @@
 import React from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
-import './copy-button.scss'
 import ReactTooltip from 'react-tooltip'
+import './copy-button.scss'
 
 interface ICopyButton {
     children: JSX.Element

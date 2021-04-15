@@ -6,8 +6,8 @@ interface ICloseIcon {
 }
 const CloseIcon: React.FC<ICloseIcon> = ({ handleClick }) => (
     <div className="close-container" onClick={() => handleClick(false)}>
-        <div className="leftright"></div>
-        <div className="rightleft"></div>
+        <div className="leftright"/>
+        <div className="rightleft"/>
     </div>
 )
 

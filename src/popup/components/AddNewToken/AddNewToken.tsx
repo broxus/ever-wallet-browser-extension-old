@@ -4,9 +4,9 @@ import cn from 'classnames'
 import Input from '../Input/Input'
 import TonLogo from '../../img/ton-logo.svg'
 import Tumbler from '../Tumbler/Tumbler'
-import './add-new-token.scss'
 import { useForm } from 'react-hook-form'
-import Button from "../Button/Button";
+import Button from '../Button/Button'
+import './add-new-token.scss'
 
 interface IToken {
     checked: boolean
@@ -31,7 +31,7 @@ export const Token: React.FC<IToken> = ({ checked, handleChange, id }) => {
 
 const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
     const [checked, setChecked] = useState({ 1: false, 2: false, 3: false, 4: false, 5: false })
-    const { register, handleSubmit, errors, watch, getValues } = useForm()
+    const { register, handleSubmit, errors } = useForm()
 
     const onSubmit = async () => {
         console.log('submitted')
@@ -39,7 +39,8 @@ const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
 
     const handleChange = (id: number) => {
         const copy = _.cloneDeep(checked)
-        copy[id] = !checked[id]
+        console.log(id)
+        // copy[id] = !checked[id]
         setChecked(copy)
     }
 
