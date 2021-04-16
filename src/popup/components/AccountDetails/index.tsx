@@ -1,11 +1,8 @@
 import React, { useState } from 'react'
-import { convertAddress, convertTons } from '@utils'
+import { convertTons } from '@utils'
 import { createRipple, removeRipple } from '@common'
+
 import * as nt from '@nekoton'
-
-import ReactTooltip from 'react-tooltip'
-import CopyToClipboard from 'react-copy-to-clipboard'
-
 import SlidingPanel from '@components/SlidingPanel'
 import Receive from '@components/Receive'
 import Send from '@components/Send'
@@ -17,7 +14,9 @@ import CreateAccountScreen from '../../pages/CreateAccount'
 
 import ReceiveIcon from '@img/receive.svg'
 import SendIcon from '@img/send.svg'
-import UserPic from '@img/user-avatar-placeholder.svg'
+import Notifications from '@img/notifications.svg'
+import Profile from '@img/profile.svg'
+import AccountCard from '@components/AccountCard'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | null
@@ -53,13 +52,13 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletStat
         <>
             <div className="main-page__account-details">
                 <div className="main-page__account-details-top-panel">
-                    <div className="main-page__account-details-network">Free TON main net</div>
+                    <Notifications />
+                    <div className="main-page__account-details-network">Mainnet</div>
                     <div
                         onClick={() => setModalVisible(true)}
-                        // style={{ cursor: 'pointer', position: 'relevant' }}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                        <UserPic />
+                        <Profile />
                     </div>
                     {modalVisible && (
                         <AccountModal
@@ -78,31 +77,11 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletStat
                         />
                     )}
                 </div>
-                <div className="main-page__account-details-acc">
-                    <span className="main-page__account-details-acc-account">{account.name}</span>
-                    <CopyToClipboard
-                        text={account.tonWallet.address}
-                        onCopy={() => {
-                            ReactTooltip.hide()
-                        }}
-                    >
-                        <span
-                            className="main-page__account-details-acc-address"
-                            data-tip="Click to copy"
-                        >
-                            {convertAddress(account.tonWallet.address)}
-                        </span>
-                    </CopyToClipboard>
-                    <ReactTooltip type="dark" effect="solid" place="bottom" />
-                </div>
-                <div className="main-page__account-details-balance">
-                    <span className="main-page__account-details-balance-number">
-                        {convertTons(tonWalletState?.balance || '0').toLocaleString()} TON
-                    </span>
-                    <span className="main-page__account-details-balance-comment">
-                        Total portfolio value
-                    </span>
-                </div>
+                <AccountCard
+                    accountName={account.name}
+                    address={account.tonWallet.address}
+                    balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
+                />
                 <div className="main-page__account-details-buttons">
                     <button
                         className="main-page__account-details-button _blue"

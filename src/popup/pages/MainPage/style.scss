@@ -3,17 +3,17 @@
 .main-page {
     &__account-details {
         background-color: $mainDarkBg;
-        height: 262px;
+        height: 392px;
         padding: 16px 20px 28px;
 
         &-top-panel {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
             margin-bottom: 30px;
         }
 
         &-network {
-            background: $mainDarkAccent;
+            background: rgba(255, 255, 255, 0.16);
             border-radius: 91px;
             color: $windowBg;
             cursor: pointer;
@@ -24,61 +24,10 @@
             font-weight: 500;
             font-size: 14px;
             letter-spacing: 0.75px;
-            margin-right: 36px;
             line-height: 20px;
-
             padding: 5px 10px;
-            width: 188px;
         }
 
-        &-acc {
-            margin-bottom: 8px;
-            &-account {
-                color: $mainLightAccent;
-                font-style: normal;
-                font-weight: 500;
-                font-size: 16px;
-                line-height: 20px;
-                letter-spacing: 0.25px;
-                margin-right: 8px;
-            }
-
-            &-address {
-                background: rgba(255, 255, 255, 0.1);
-                border-radius: 4px;
-                cursor: pointer;
-                padding: 4px 8px;
-                font-style: normal;
-                font-weight: normal;
-                font-size: 16px;
-                line-height: 20px;
-                letter-spacing: 0.25px;
-
-                color: $windowFgActive;
-                margin-bottom: 8px;
-            }
-        }
-
-        &-balance {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 28px;
-            &-number {
-                color: $mainLightAccent;
-                font-style: normal;
-                font-weight: bold;
-                font-size: 24px;
-                line-height: 32px;
-            }
-            &-comment {
-                font-style: normal;
-                font-weight: 500;
-                font-size: 12px;
-                line-height: 16px;
-                letter-spacing: 0.4px;
-                color: $mainLightAccent;
-            }
-        }
         &-buttons {
             display: flex;
         }

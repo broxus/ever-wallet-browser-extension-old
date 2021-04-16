@@ -152,17 +152,20 @@ const Carousel = () => {
     const [state, dispatch] = useReducer(slidesReducer, initialState)
 
     return (
-        <div className="slides">
-            {/*@ts-ignore*/}
-            <button onClick={() => dispatch({ type: 'PREV' })}>‹</button>
 
-            {[...slides, ...slides, ...slides].map((slide, i) => {
-                let offset = slides.length + (state.slideIndex - i)
-                return <Slide slide={slide} offset={offset} key={i} />
-            })}
-            {/*@ts-ignore*/}
-            <button onClick={() => dispatch({ type: 'NEXT' })}>›</button>
-        </div>
+
+
+        // <div className="slides">
+        //     {/*@ts-ignore*/}
+        //     <button onClick={() => dispatch({ type: 'PREV' })}>‹</button>
+        //
+        //     {[...slides, ...slides, ...slides].map((slide, i) => {
+        //         let offset = slides.length + (state.slideIndex - i)
+        //         return <Slide slide={slide} offset={offset} key={i} />
+        //     })}
+        //     {/*@ts-ignore*/}
+        //     <button onClick={() => dispatch({ type: 'NEXT' })}>›</button>
+        // </div>
     )
 }
 
