@@ -6,7 +6,7 @@
         display: flex;
         justify-content: space-between;
         width: 100%;
-        padding: 12px;
+        padding: 12px 0;
 
         &-dots {
             display: flex;
@@ -30,6 +30,7 @@
         }
         &-arrows {
             display: flex;
+            align-items: center;
             &-elem {
                 align-items: center;
                 cursor: pointer;
@@ -40,7 +41,9 @@
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 box-sizing: border-box;
                 border-radius: 100px;
-                margin-right: 12px;
+                &:not(:last-child) {
+                    margin-right: 12px;
+                }
 
                 &:hover {
                     background-color: rgba(255, 255, 255, 0.1);

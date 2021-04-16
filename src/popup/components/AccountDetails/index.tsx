@@ -16,13 +16,28 @@ import ReceiveIcon from '@img/receive.svg'
 import SendIcon from '@img/send.svg'
 import Notifications from '@img/notifications.svg'
 import Profile from '@img/profile.svg'
+import AddAccount from '@img/add-account.svg'
 import AccountCard from '@components/AccountCard'
 import Carousel from '@components/Carousel'
+import './style.scss'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     onLogOut: () => void
+}
+
+const AddNewAccountCard: React.FC<any> = () => {
+    return (
+        <div className="new-account">
+            {/*@ts-ignore*/}
+            <AddAccount style={{ cursor: 'pointer' }} />
+            <div className="new-account-title">Add account</div>
+            <div className="new-account-comment">
+                You can create a new account or add created one
+            </div>
+        </div>
+    )
 }
 
 const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletState, onLogOut }) => {
@@ -85,6 +100,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletStat
                             address={account.tonWallet.address}
                             balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
                         />,
+                        <AddNewAccountCard />,
                     ]}
                 />
 
