@@ -32,9 +32,13 @@ const TagsInput: React.FC<ITagsInput> = ({ setWords }) => {
     const onInputChange = (_event: React.ChangeEvent<{}>, value: string) => {
         if (value) {
             const clone = _.cloneDeep(formatSeed(value))
-            const last = clone.pop()
-            if (typeof last === 'string') {
-                setHints(nt.getBip39Hints(last))
+            if (clone.length === 12) {
+                setWords(clone)
+            } else {
+                const last = clone.pop()
+                if (typeof last === 'string') {
+                    setHints(nt.getBip39Hints(last))
+                }
             }
         }
     }

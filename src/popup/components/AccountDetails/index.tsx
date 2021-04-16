@@ -12,6 +12,7 @@ import Profile from '@img/profile.svg'
 import AddAccount from '@img/add-account.svg'
 import AccountCard from '@components/AccountCard'
 import Carousel from '@components/Carousel'
+
 import './style.scss'
 
 type AccountDetailsParams = {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import cn from 'classnames'
 import * as nt from '@nekoton'
 
@@ -7,6 +7,8 @@ import AddNewToken from '@components/AddNewToken'
 import Button from '@components/Button'
 import Asset from '@components/Asset'
 import TransactionsList from '@components/TransactionsList'
+
+import './style.scss'
 
 type UserAssetsProps = {
     tonWalletState: nt.AccountState | null
@@ -22,36 +24,20 @@ type AssetsListProps = {
 const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveContent }) => {
     const [panelVisible, setPanelVisible] = useState(false)
 
+    useEffect(() => {
+        console.log(tonWalletState, 'tonWalletState')
+    })
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                position: 'relative',
-            }}
-        >
+        <div className="user-assets">
             {/*TODO remove later*/}
             {tonWalletState && (
                 <div onClick={() => setActiveContent(6)}>
                     <Asset tonWalletState={tonWalletState} />
                 </div>
             )}
-            {/*<div*/}
-            {/*    style={{*/}
-            {/*        width:'100%',*/}
-            {/*        height: '70px',*/}
-            {/*        background:*/}
-            {/*            'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 44%)',*/}
-            {/*        bottom: 0,*/}
-            {/*        position: 'absolute',*/}
-            {/*    }}*/}
-            {/*></div>*/}
-            {/*<div style={{ width: '148px', position: 'absolute', bottom: '0', left: '85px' }}>*/}
-            <div style={{ marginBottom: '32px' }}>
+            <div className="user-assets__add-new-btn">
                 <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
             </div>
-            {/*</div>*/}
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
                 <AddNewToken onReturn={setPanelVisible} />
             </SlidingPanel>

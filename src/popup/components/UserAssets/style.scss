@@ -1,0 +1,9 @@
+.user-assets {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    &__add-new-btn {
+        margin-bottom: 32px;
+    }
+}

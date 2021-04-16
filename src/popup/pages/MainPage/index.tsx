@@ -9,7 +9,6 @@ import * as nt from '@nekoton'
 import AccountDetails from '@components/AccountDetails'
 import UserAssets from '@components/UserAssets'
 
-import './style.scss'
 import SlidingPanel from '@components/SlidingPanel'
 import Receive from '@components/Receive'
 import Send from '@components/Send'
@@ -17,6 +16,8 @@ import KeyStorage from '@components/KeyStorage'
 import CreateAccountScreen from '../CreateAccount'
 import EnterPassword from '@components/EnterPassword'
 import AssetFull from '@components/AssetFull'
+
+import './style.scss'
 
 interface IMainPage {
     account: nt.AssetsList | null
