@@ -8,11 +8,12 @@ import './style.scss'
 
 interface IAccountCard {
     accountName: string
+    publicKey: string
     address: string
     balance: string
 }
 
-const AccountCard: React.FC<IAccountCard> = ({ accountName, address, balance }) => (
+const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, balance }) => (
     <div className="account-card">
         <div className="account-card__info">
             <div className="account-card__info-details">
@@ -20,7 +21,7 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, address, balance }) 
                 <div className="account-card__info-details-public-key">
                     Public key
                     <CopyToClipboard
-                        text={'some key'}
+                        text={publicKey}
                         onCopy={() => {
                             ReactTooltip.hide()
                         }}
@@ -29,7 +30,7 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, address, balance }) 
                             className="account-card__info-details-public-key-value"
                             data-tip="Click to copy"
                         >
-                            some key
+                            {convertAddress(publicKey)}
                         </span>
                     </CopyToClipboard>
                     <ReactTooltip type="dark" effect="solid" place="bottom" />
