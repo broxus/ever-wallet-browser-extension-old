@@ -10,6 +10,13 @@ import AccountDetails from '@components/AccountDetails'
 import UserAssets from '@components/UserAssets'
 
 import './style.scss'
+import SlidingPanel from "@components/SlidingPanel";
+import Receive from "@components/Receive";
+import Send from "@components/Send";
+import KeyStorage from "@components/KeyStorage";
+import CreateAccountScreen from "../CreateAccount";
+import EnterPassword from "@components/EnterPassword";
+import AssetFull from "@components/AssetFull";
 
 interface IMainPage {
     account: nt.AssetsList | null
@@ -51,6 +58,36 @@ const MainPage: React.FC<IMainPage> = ({
                 setActiveContent={setActiveContent}
                 transactions={transactions}
             />
+            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
+                {activeContent === 0 ? (
+                    <Receive accountName={account.name} address={account.tonWallet.address} />
+                ) : activeContent === 1 ? (
+                    tonWalletState ? (
+                        <Send
+                            account={account}
+                            tonWalletState={tonWalletState}
+                            onBack={() => {
+                                setPanelVisible(false)
+                            }}
+                        />
+                    ) : (
+                        <></>
+                    )
+                ) : activeContent === 2 ? (
+                    <KeyStorage setActiveContent={setActiveContent} />
+                ) : activeContent === 3 ? (
+                    <CreateAccountScreen />
+                ) : activeContent === 4 ? (
+                    <EnterPassword setStep={setStep} minHeight={'170px'} />
+                ) : activeContent === 5 ? (
+                    <SaveSeed setStep={setStep} />
+                ) : activeContent === 6 ? (
+                    <AssetFull handleSendReceive={handleSendReceive} />
+                ) : (
+                    <></>
+                )}
+            </SlidingPanel>
+
         </>
     )
 }

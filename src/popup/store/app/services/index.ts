@@ -75,31 +75,39 @@ const subscribe = async (
     ;(async () => {
         let currentBlockId: string | null = null
         let lastPollingMethod = tonWallet.pollingMethod
-        for (let i = 0; i < 10; ++i) {
-            switch (lastPollingMethod) {
-                case 'manual': {
-                    await new Promise<void>((resolve) => {
-                        setTimeout(() => resolve(), POLLING_INTERVAL)
-                    })
-                    console.log('manual refresh')
-                    await tonWallet.refresh()
-                    break
-                }
-                case 'reliable': {
-                    if (lastPollingMethod != 'reliable' || currentBlockId == null) {
-                        currentBlockId = (await tonWallet.getLatestBlock()).id
-                    }
+        while (true) {
+            await new Promise<void>((resolve) => {
+                setTimeout(() => resolve(), POLLING_INTERVAL)
+            })
+            console.log('manual refresh')
+            await tonWallet.refresh()
 
-                    const nextBlockId: string = await tonWallet.waitForNextBlock(currentBlockId, 60)
-                    console.log(nextBlockId, currentBlockId != nextBlockId)
+            console.log(tonWallet.accountState())
 
-                    await tonWallet.handleBlock(nextBlockId)
-                    currentBlockId = nextBlockId
-                    break
-                }
-            }
+            // switch (lastPollingMethod) {
+            // case 'manual': {
+            //     await new Promise<void>((resolve) => {
+            //         setTimeout(() => resolve(), POLLING_INTERVAL)
+            //     })
+            //     console.log('manual refresh')
+            //     await tonWallet.refresh()
+            //     break
+            // }
+            // case 'reliable': {
+            //     if (lastPollingMethod != 'reliable' || currentBlockId == null) {
+            //         currentBlockId = (await tonWallet.getLatestBlock()).id
+            //     }
+            //
+            //     const nextBlockId: string = await tonWallet.waitForNextBlock(currentBlockId, 60)
+            //     console.log(nextBlockId, currentBlockId != nextBlockId)
+            //
+            //     await tonWallet.handleBlock(nextBlockId)
+            //     currentBlockId = nextBlockId
+            //     break
+            // }
+            // }
 
-            lastPollingMethod = tonWallet.pollingMethod
+            // lastPollingMethod = tonWallet.pollingMethod
         }
     })().then((_) => {})
 

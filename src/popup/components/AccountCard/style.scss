@@ -65,7 +65,7 @@
     &__pattern {
         border-top-right-radius: 6px;
         border-bottom-right-radius: 6px;
-        overflow: auto;
+        overflow: hidden;
         position: relative;
         &-ellipsis {
             cursor: pointer;
