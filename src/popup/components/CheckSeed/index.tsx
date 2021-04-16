@@ -53,7 +53,7 @@ const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
                 )}
             </form>
             <div className="exported-seed__content-buttons">
-                <Button text={'Confirm'} type="submit" form="words" />
+                <Button text={'Confirm'} onClick={handleSubmit(onSubmit)} form="words" />
                 <Button text={'Back'} white onClick={onBack} />
             </div>
         </div>

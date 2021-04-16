@@ -256,7 +256,7 @@ const EnterAddress: React.FC<IEnterAddress> = ({ account, tonWalletState, onSubm
                 <div style={{ width: '50%', marginRight: '12px' }}>
                     <Button text={'Back'} onClick={onBack} white />
                 </div>
-                <Button text={'Send'} type={'submit'} form="send" />
+                <Button text={'Send'} onClick={handleSubmit(onSubmit)} form="send" />
             </div>
         </>
     )

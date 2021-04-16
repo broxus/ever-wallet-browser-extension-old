@@ -70,7 +70,7 @@ const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
                 <div style={{ width: '50%', marginRight: '12px' }}>
                     <Button text={'Back'} onClick={() => onReturn(false)} white />
                 </div>
-                <Button text={'Select assets'} type="submit" />
+                <Button text={'Select assets'} onClick={handleSubmit(onSubmit)} />
             </div>
         </form>
     )

@@ -58,7 +58,13 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
                 </form>
             </div>
             <div className="enter-password__content-buttons">
-                <Button text={'Sign in the wallet'} type="submit" form="password" />
+                <Button
+                    text={'Sign in the wallet'}
+                    onClick={handleSubmit(() => {
+                        onSubmit(getValues('pwd'))
+                    })}
+                    form="password"
+                />
                 <Button text={'Back'} white onClick={onBack} />
             </div>
         </div>
