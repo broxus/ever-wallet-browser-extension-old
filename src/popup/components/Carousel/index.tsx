@@ -11,10 +11,6 @@ interface ICarousel {
 const Carousel: React.FC<ICarousel> = ({ content }) => {
     const [active, setActive] = useState(0)
 
-    useEffect(() => {
-        console.log(active, 'active')
-    }, [active])
-
     const decrementIndex = () => {
         setActive((active + content.length - 1) % content.length)
     }
@@ -25,7 +21,9 @@ const Carousel: React.FC<ICarousel> = ({ content }) => {
 
     return (
         <>
-            <div>{content[active] || <div>empty</div>}</div>
+            <div className="carousel__content">
+                <div className="carousel__content__slide">{content[active]}</div>
+            </div>
             <div className="carousel__navigation">
                 <div className="carousel__navigation-dots">
                     {content.map((_el, i) => (
