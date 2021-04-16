@@ -17,7 +17,7 @@ interface IApp {
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount, store }) => {
+const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.WELCOME)
 
     useEffect(() => {
@@ -42,7 +42,6 @@ const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount, store }) => {
 
 const mapStateToProps = (store: { app: AppState }) => ({
     accountLoaded: store.app.selectedAccount != null,
-    store: store.app,
 })
 
 export default connect(mapStateToProps, { setupCurrentAccount })(App)

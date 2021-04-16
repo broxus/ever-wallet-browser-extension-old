@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { convertTons } from '@utils'
 import { hideModalOnClick } from '@common'
 import * as nt from '@nekoton'
 
 import UserPicS from '@img/user-avatar-placeholder-s.svg'
-import Plus from '@img/plus.svg'
+import './style.scss'
 
 type IAccountModal = {
     account: nt.AssetsList
@@ -33,7 +33,7 @@ const AccountModal: React.FC<IAccountModal> = ({
         const wrapperRef = useRef(null)
         hideModalOnClick(wrapperRef, onClose)
         return (
-            <div ref={wrapperRef} className="main-page__account-settings noselect">
+            <div ref={wrapperRef} className="account-settings noselect">
                 {props.children}
             </div>
         )
@@ -41,60 +41,54 @@ const AccountModal: React.FC<IAccountModal> = ({
 
     return (
         <Wrapper>
-            <div className="main-page__account-settings-section">
-                <div
-                    className="main-page__account-settings-section-item"
-                    style={{ display: 'flex' }}
-                >
+            <div className="account-settings-section">
+                <div className="account-settings-section-item" style={{ display: 'flex' }}>
                     <UserPicS />
                     <div style={{ padding: '0 12px' }}>
-                        <div className="main-page__account-settings-section-account">
-                            {account.name}
-                        </div>
-                        <div className="main-page__account-settings-section-item-value">
+                        <div className="account-settings-section-account">{account.name}</div>
+                        <div className="account-settings-section-item-value">
                             {`${convertTons(tonWalletState?.balance || '0')} TON`}
                         </div>
                         <div onClick={() => onOpenConnectedSites?.()}>Connected sites</div>
                     </div>
                 </div>
+                <div className="account-settings-section-item">Other seeds</div>
+                <div className="account-settings-section-item">Add seed</div>
             </div>
-            <div className="main-page__account-settings-separator" />
-            <div className="main-page__account-settings-section">
-                <div
-                    className="main-page__account-settings-section-item"
-                    style={{ display: 'flex' }}
-                    onClick={() => onCreateAccount?.()}
-                >
-                    <Plus />
-                    <div style={{ padding: '0 12px' }}>Create account</div>
+            {/*<div className="account-settings-separator" />*/}
+            {/*<div className="account-settings-section">*/}
+            {/*    <div*/}
+            {/*        className="account-settings-section-item"*/}
+            {/*        style={{ display: 'flex' }}*/}
+            {/*        onClick={() => onCreateAccount?.()}*/}
+            {/*    >*/}
+            {/*        <Plus />*/}
+            {/*        <div style={{ padding: '0 12px' }}>Create account</div>*/}
+            {/*    </div>*/}
+            {/*</div>*/}
+            <div className="account-settings-separator" />
+            <div className="account-settings-section">
+                <div className="account-settings-section-item" onClick={() => onOpenKeyStore?.()}>
+                    Seeds preferences
                 </div>
-            </div>
-            <div className="main-page__account-settings-separator" />
-            <div className="main-page__account-settings-section">
-                <div
-                    className="main-page__account-settings-section-item"
-                    onClick={() => onOpenKeyStore?.()}
-                >
+                <div className="account-settings-section-item" onClick={() => onOpenKeyStore?.()}>
                     Key storage
                 </div>
                 <div
-                    className="main-page__account-settings-section-item"
+                    className="account-settings-section-item"
                     onClick={() => onOpenWalletSettings?.()}
                 >
                     Wallet settings
                 </div>
                 <div
-                    className="main-page__account-settings-section-item"
+                    className="account-settings-section-item"
                     onClick={() => onOpenInformation?.()}
                 >
                     Information and help
                 </div>
             </div>
-            <div className="main-page__account-settings-separator" />
-            <div
-                className="main-page__account-settings-section-item-log-out"
-                onClick={() => onLogOut()}
-            >
+            <div className="account-settings-separator" />
+            <div className="account-settings-section-item-log-out" onClick={() => onLogOut()}>
                 Log out
             </div>
         </Wrapper>
