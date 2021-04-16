@@ -275,6 +275,7 @@ export const sendMessage = (
     console.log(`Entries: ${JSON.stringify(await keyStore.getKeys())}`)
     console.log(`Signing with public key: ${account.tonWallet.publicKey}`)
 
+    message.refreshTimeout()
     const signedMessage = await keyStore.sign(message, {
         type: 'encrypted_key',
         data: {
