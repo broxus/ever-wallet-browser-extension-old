@@ -3,14 +3,7 @@ import { convertTons } from '@utils'
 import { createRipple, removeRipple } from '@common'
 
 import * as nt from '@nekoton'
-import SlidingPanel from '@components/SlidingPanel'
-import Receive from '@components/Receive'
-import Send from '@components/Send'
-import KeyStorage from '@components/KeyStorage'
 import AccountModal from '@components/AccountModal'
-import AssetFull from '@components/AssetFull'
-import EnterPassword from '@components/EnterPassword'
-import CreateAccountScreen from '../../pages/CreateAccount'
 
 import ReceiveIcon from '@img/receive.svg'
 import SendIcon from '@img/send.svg'
@@ -27,13 +20,20 @@ type AccountDetailsParams = {
     handleSendClick: () => void
     handleReceiveClick: () => void
     onLogOut: () => void
+    handleCreateNewAcc: () => void
 }
 
-const AddNewAccountCard: React.FC = () => {
+interface IAddNewAccountCard {
+    handleCreateNewAcc: (arg0: number) => void
+}
+
+const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc }) => {
     return (
         <div className="new-account">
             {/*@ts-ignore*/}
-            <AddAccount style={{ cursor: 'pointer' }} />
+            <div onClick={() => handleCreateNewAcc()} className="new-account-icon">
+                <AddAccount />
+            </div>
             <div className="new-account-title">Add account</div>
             <div className="new-account-comment">
                 You can create a new account or add created one
@@ -48,6 +48,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     onLogOut,
     handleReceiveClick,
     handleSendClick,
+    handleCreateNewAcc,
 }) => {
     const [modalVisible, setModalVisible] = useState(false)
 
@@ -92,7 +93,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             publicKey={account?.tonWallet.publicKey}
                             balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
                         />,
-                        <AddNewAccountCard />,
+                        <AddNewAccountCard handleCreateNewAcc={handleCreateNewAcc} />,
                     ]}
                 />
 

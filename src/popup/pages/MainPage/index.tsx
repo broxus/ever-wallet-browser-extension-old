@@ -38,6 +38,9 @@ const MainPage: React.FC<IMainPage> = ({
     const [activeContent, setActiveContent] = useState(0)
     const [panelVisible, setPanelVisible] = useState(false)
 
+
+    // TODO create one handler
+
     const handleSendReceive = (action: 'send' | 'receive') => {
         setPanelVisible(true)
         setActiveContent(+!(action === 'receive'))
@@ -51,6 +54,11 @@ const MainPage: React.FC<IMainPage> = ({
     const handleSendClick = () => {
         setPanelVisible(true)
         setActiveContent(1)
+    }
+
+    const handleCreateNewAcc = () => {
+        setPanelVisible(true)
+        setActiveContent(3)
     }
 
     useEffect(() => {
@@ -70,6 +78,7 @@ const MainPage: React.FC<IMainPage> = ({
                 }}
                 handleReceiveClick={handleReceiveClick}
                 handleSendClick={handleSendClick}
+                handleCreateNewAcc={handleCreateNewAcc}
             />
             <UserAssets
                 tonWalletState={tonWalletState}

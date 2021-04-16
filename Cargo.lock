@@ -887,7 +887,6 @@ dependencies = [
  "getrandom",
  "graphql_client",
  "hex 0.4.3",
- "log",
  "num-bigint",
  "num-traits",
  "once_cell",
