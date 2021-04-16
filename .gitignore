@@ -10,3 +10,5 @@
 
 .prettierrc
 .DS_Store
+
+/report.*.json
