@@ -116,6 +116,7 @@ export const loadSubscription = async (
     let subscription = subscriptions.get(address)
     if (subscription == null) {
         subscription = subscribe(publicKey, contractType, handler(address))
+        subscriptions.set(address, subscription)
     }
 
     return subscription

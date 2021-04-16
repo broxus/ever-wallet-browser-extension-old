@@ -16,7 +16,7 @@ chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
         timeout: 60000, // 60s
     })
 
-    await startListener(connection)
+    //await startListener(connection)
 })()
 
 async function startListener(connection: nt.GqlConnection) {

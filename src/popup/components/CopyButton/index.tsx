@@ -8,6 +8,7 @@ interface ICopyButton {
     children: JSX.Element
     text: string
 }
+
 const CopyButton: React.FC<ICopyButton> = ({ children, text }) => {
     return (
         <>

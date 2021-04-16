@@ -290,21 +290,27 @@ const Send: React.FC<IAddNewToken> = ({
     const [pendingTransaction, setPendingTransaction] = useState<nt.PendingTransaction>()
 
     const showSendingMessage = (pendingTransaction: nt.PendingTransaction) => {
+        const close = () => {
+            setPendingTransaction(undefined)
+            setLocalStep(LocalStep.ENTER_ADDRESS)
+            onBack()
+        }
+
         const isDone =
             deliveredMessages.findIndex(
                 (item) => item.pendingTransaction.bodyHash == pendingTransaction.bodyHash
             ) >= 0
         if (isDone) {
-            return <TransactionSent onBack={onBack} />
+            return <TransactionSent onBack={close} />
         }
 
         const isFailed =
             expiredMessages.findIndex((item) => item.bodyHash == pendingTransaction.bodyHash) >= 0
         if (isFailed) {
-            return <TransactionExpired onBack={onBack} />
+            return <TransactionExpired onBack={close} />
         }
 
-        return <TransactionSending onBack={onBack} />
+        return <TransactionSending onBack={close} />
     }
 
     return (

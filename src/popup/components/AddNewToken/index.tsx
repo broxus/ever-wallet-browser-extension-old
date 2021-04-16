@@ -68,7 +68,7 @@ const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
             </div>
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onReturn} white />
+                    <Button text={'Back'} onClick={() => onReturn(false)} white />
                 </div>
                 <Button text={'Select assets'} type="submit" />
             </div>
@@ -86,7 +86,7 @@ const CustomToken: React.FC<IAddNewToken> = ({ onReturn }) => {
             />
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onReturn} white />
+                    <Button text={'Back'} onClick={() => onReturn(false)} white />
                 </div>
                 <Button text={'Select assets'} />
             </div>

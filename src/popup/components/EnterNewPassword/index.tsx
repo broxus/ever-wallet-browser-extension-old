@@ -24,7 +24,6 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
                 <form
                     id="password"
                     onSubmit={handleSubmit(() => {
-                        console.log(getValues('pwd'))
                         onSubmit(getValues('pwd'))
                     })}
                     style={{ position: 'relative' }}

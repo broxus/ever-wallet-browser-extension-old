@@ -45,7 +45,7 @@ const Send: React.FC<IAddNewToken> = ({ onReturn }) => {
             <Input className="send-screen__form-comment" label={'Comment...'} />
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onReturn} white />
+                    <Button text={'Back'} onClick={() => onReturn(false)} white />
                 </div>
                 <Button text={'Send'} />
             </div>
