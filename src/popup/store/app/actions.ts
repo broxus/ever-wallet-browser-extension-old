@@ -6,6 +6,7 @@ import {
     loadAccountsStorage,
     ITonWalletHandler,
     lockSubscription,
+    setLatestBlock,
 } from './services'
 
 import * as nt from '@nekoton'
@@ -289,6 +290,8 @@ export const sendMessage = (
 ) => async (dispatch: AppDispatch) => {
     const accountsStorage = await loadAccountsStorage()
 
+    console.log(address)
+
     const account = await accountsStorage.getAccount(address)
     if (account == null) {
         throw new Error("Selected account doesn't exist")
@@ -314,8 +317,11 @@ export const sendMessage = (
         makeSubscriptionHandler(dispatch)
     )
 
-    let unlock = await lockSubscription(tonWallet.address)
+    let unlock = await lockSubscription(address)
     try {
+        const latestBlockId = await tonWallet.getLatestBlock()
+        setLatestBlock(address, latestBlockId.id)
+
         const pendingTransaction = await tonWallet.sendMessage(signedMessage)
         unlock()
         return pendingTransaction

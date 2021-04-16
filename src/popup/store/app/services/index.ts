@@ -61,6 +61,15 @@ export interface ITonWalletHandler {
     onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
 }
 
+const latestBlocks = new Map<string, string>()
+export const setLatestBlock = (address: string, blockId: string) => {
+    latestBlocks.set(address, blockId)
+}
+
+export const resetLatestBlock = (address: string) => {
+    latestBlocks.delete(address)
+}
+
 const subscribe = async (
     publicKey: string,
     contractType: nt.ContractType,
@@ -76,41 +85,50 @@ const subscribe = async (
     const POLLING_INTERVAL = 10000 // 10s
 
     ;(async () => {
-        let currentBlockId: string | null = null
+        const address = tonWallet.address
+        let pollingMethodChanged = false
         let lastPollingMethod = tonWallet.pollingMethod
+        let currentBlockId: string | null = null
+
         while (true) {
-            await new Promise<void>((resolve) => {
-                setTimeout(() => resolve(), POLLING_INTERVAL)
-            })
-            console.log('manual refresh')
-            await tonWallet.refresh()
+            switch (lastPollingMethod) {
+                case 'manual': {
+                    currentBlockId = null
+                    await new Promise<void>((resolve) => {
+                        setTimeout(() => resolve(), POLLING_INTERVAL)
+                    })
+                    console.log('manual refresh')
 
-            console.log(tonWallet.accountState())
+                    const unlock = await lockSubscription(address)
+                    await tonWallet.refresh()
+                    unlock()
 
-            // switch (lastPollingMethod) {
-            // case 'manual': {
-            //     await new Promise<void>((resolve) => {
-            //         setTimeout(() => resolve(), POLLING_INTERVAL)
-            //     })
-            //     console.log('manual refresh')
-            //     await tonWallet.refresh()
-            //     break
-            // }
-            // case 'reliable': {
-            //     if (lastPollingMethod != 'reliable' || currentBlockId == null) {
-            //         currentBlockId = (await tonWallet.getLatestBlock()).id
-            //     }
-            //
-            //     const nextBlockId: string = await tonWallet.waitForNextBlock(currentBlockId, 60)
-            //     console.log(nextBlockId, currentBlockId != nextBlockId)
-            //
-            //     await tonWallet.handleBlock(nextBlockId)
-            //     currentBlockId = nextBlockId
-            //     break
-            // }
-            // }
+                    break
+                }
+                case 'reliable': {
+                    if (pollingMethodChanged || currentBlockId == null) {
+                        currentBlockId =
+                            latestBlocks.get(address) || (await tonWallet.getLatestBlock()).id
+                    }
 
-            // lastPollingMethod = tonWallet.pollingMethod
+                    const nextBlockId: string = await tonWallet.waitForNextBlock(currentBlockId, 60)
+                    console.log(nextBlockId, currentBlockId != nextBlockId)
+
+                    const unlock = await lockSubscription(address)
+                    await tonWallet.handleBlock(nextBlockId)
+                    unlock()
+
+                    currentBlockId = nextBlockId
+                    break
+                }
+            }
+
+            const unlock = await lockSubscription(address)
+            const pollingMethod = tonWallet.pollingMethod
+            unlock()
+
+            pollingMethodChanged = lastPollingMethod != pollingMethod
+            lastPollingMethod = pollingMethod
         }
     })().then((_) => {})
 
