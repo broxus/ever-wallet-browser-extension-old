@@ -24,10 +24,12 @@ import './style.scss'
 type AccountDetailsParams = {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
+    handleSendClick: () => void
+    handleReceiveClick: () => void
     onLogOut: () => void
 }
 
-const AddNewAccountCard: React.FC<any> = () => {
+const AddNewAccountCard: React.FC = () => {
     return (
         <div className="new-account">
             {/*@ts-ignore*/}
@@ -40,25 +42,14 @@ const AddNewAccountCard: React.FC<any> = () => {
     )
 }
 
-const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletState, onLogOut }) => {
+const AccountDetails: React.FC<AccountDetailsParams> = ({
+    account,
+    tonWalletState,
+    onLogOut,
+    handleReceiveClick,
+    handleSendClick,
+}) => {
     const [modalVisible, setModalVisible] = useState(false)
-    const [panelVisible, setPanelVisible] = useState(false)
-    const [activeContent, setActiveContent] = useState(0)
-
-    const handleSendReceive = (action: 'send' | 'receive') => {
-        setPanelVisible(true)
-        setActiveContent(+!(action === 'receive'))
-    }
-
-    const handleReceiveClick = () => {
-        setPanelVisible(true)
-        setActiveContent(0)
-    }
-
-    const handleSendClick = () => {
-        setPanelVisible(true)
-        setActiveContent(1)
-    }
 
     if (account == null) {
         return null
@@ -139,35 +130,6 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletStat
                     </button>
                 </div>
             </div>
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                {activeContent === 0 ? (
-                    <Receive accountName={account.name} address={account.tonWallet.address} />
-                ) : activeContent === 1 ? (
-                    tonWalletState ? (
-                        <Send
-                            account={account}
-                            tonWalletState={tonWalletState}
-                            onBack={() => {
-                                setPanelVisible(false)
-                            }}
-                        />
-                    ) : (
-                        <></>
-                    )
-                ) : activeContent === 2 ? (
-                    <KeyStorage setActiveContent={setActiveContent} />
-                ) : activeContent === 3 ? (
-                    <CreateAccountScreen />
-                ) : activeContent === 4 ? (
-                    <EnterPassword setStep={setStep} minHeight={'170px'} />
-                ) : activeContent === 5 ? (
-                    <SaveSeed setStep={setStep} />
-                ) : activeContent === 6 ? (
-                    <AssetFull handleSendReceive={handleSendReceive} />
-                ) : (
-                    <></>
-                )}
-            </SlidingPanel>
         </>
     )
 }

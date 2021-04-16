@@ -9,14 +9,15 @@ import UserPic from '@img/user-avatar-placeholder.svg'
 import './style.scss'
 
 interface IReceive {
-    accountName: string
+    accountName?: string
     address: string
 }
 
 const Receive: React.FC<IReceive> = ({ accountName, address }) => (
     <>
         <div className="receive-screen__account_details">
-            <UserPic /> <span className="receive-screen__account_details-title">{accountName}</span>
+            <UserPic />
+            <span className="receive-screen__account_details-title">{accountName || ''}</span>
         </div>
 
         <h3 className="receive-screen__form-title">Your address to receive TON funds</h3>

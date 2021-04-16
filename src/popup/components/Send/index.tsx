@@ -104,7 +104,7 @@ const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
 }
 
 type IEnterPassword = {
-    account: nt.AssetsList
+    account: nt.AssetsList | null
     params: MessageToPrepare
     prepareMessage: Action<typeof prepareMessage>
     estimateFees: Action<typeof estimateFees>

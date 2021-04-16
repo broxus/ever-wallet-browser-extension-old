@@ -10,13 +10,13 @@ import AccountDetails from '@components/AccountDetails'
 import UserAssets from '@components/UserAssets'
 
 import './style.scss'
-import SlidingPanel from "@components/SlidingPanel";
-import Receive from "@components/Receive";
-import Send from "@components/Send";
-import KeyStorage from "@components/KeyStorage";
-import CreateAccountScreen from "../CreateAccount";
-import EnterPassword from "@components/EnterPassword";
-import AssetFull from "@components/AssetFull";
+import SlidingPanel from '@components/SlidingPanel'
+import Receive from '@components/Receive'
+import Send from '@components/Send'
+import KeyStorage from '@components/KeyStorage'
+import CreateAccountScreen from '../CreateAccount'
+import EnterPassword from '@components/EnterPassword'
+import AssetFull from '@components/AssetFull'
 
 interface IMainPage {
     account: nt.AssetsList | null
@@ -36,6 +36,22 @@ const MainPage: React.FC<IMainPage> = ({
     logOut,
 }) => {
     const [activeContent, setActiveContent] = useState(0)
+    const [panelVisible, setPanelVisible] = useState(false)
+
+    const handleSendReceive = (action: 'send' | 'receive') => {
+        setPanelVisible(true)
+        setActiveContent(+!(action === 'receive'))
+    }
+
+    const handleReceiveClick = () => {
+        setPanelVisible(true)
+        setActiveContent(0)
+    }
+
+    const handleSendClick = () => {
+        setPanelVisible(true)
+        setActiveContent(1)
+    }
 
     useEffect(() => {
         if (account != null) {
@@ -52,6 +68,8 @@ const MainPage: React.FC<IMainPage> = ({
                     await logOut()
                     setStep(Step.WELCOME)
                 }}
+                handleReceiveClick={handleReceiveClick}
+                handleSendClick={handleSendClick}
             />
             <UserAssets
                 tonWalletState={tonWalletState}
@@ -60,7 +78,7 @@ const MainPage: React.FC<IMainPage> = ({
             />
             <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
                 {activeContent === 0 ? (
-                    <Receive accountName={account.name} address={account.tonWallet.address} />
+                    <Receive accountName={account?.name} address={account?.tonWallet.address} />
                 ) : activeContent === 1 ? (
                     tonWalletState ? (
                         <Send
@@ -87,7 +105,6 @@ const MainPage: React.FC<IMainPage> = ({
                     <></>
                 )}
             </SlidingPanel>
-
         </>
     )
 }
