@@ -1,5 +1,5 @@
 import * as nt from '@nekoton'
-import { GqlSocket, StorageConnector } from '../../../../background/common'
+import { GqlSocket, StorageConnector, Mutex } from '../../../../background/common'
 
 let storage: nt.Storage | null = null
 export const loadStorage = () => {
@@ -53,8 +53,11 @@ const loadConnection = async () => {
 
 export interface ITonWalletHandler {
     onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction): void
+
     onMessageExpired(pendingTransaction: nt.PendingTransaction): void
+
     onStateChanged(newState: nt.AccountState): void
+
     onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
 }
 
@@ -128,4 +131,15 @@ export const loadSubscription = async (
     }
 
     return subscription
+}
+
+const subscriptionMutex = new Map<string, Mutex>()
+export const lockSubscription = async (address: string) => {
+    let mutex = subscriptionMutex.get(address)
+    if (mutex == null) {
+        mutex = new Mutex()
+        subscriptionMutex.set(address, mutex)
+    }
+
+    return await mutex.lock()
 }

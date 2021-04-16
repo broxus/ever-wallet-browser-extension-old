@@ -1,9 +1,15 @@
 import { AppDispatch } from '../index'
 import { Locale, MessageToPrepare, AppState } from './types'
-import { loadKeyStore, loadSubscription, loadAccountsStorage, ITonWalletHandler } from './services'
+import {
+    loadKeyStore,
+    loadSubscription,
+    loadAccountsStorage,
+    ITonWalletHandler,
+    lockSubscription,
+} from './services'
 
 import * as nt from '@nekoton'
-import { mergeTransactions } from '../../../background/common'
+import { mergeTransactions, Mutex } from '../../../background/common'
 import { parseTons } from '@utils'
 
 export const Action = {
@@ -205,39 +211,49 @@ export const startSubscription = (address: string) => async (dispatch: AppDispat
 export const prepareMessage = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch
 ) => {
-    const accountsStorage = await loadAccountsStorage()
-    const account = await accountsStorage.getAccount(address)
-    if (account == null) {
-        throw new Error("Selected account doesn't exist")
+    let unlock: (() => void) | null = null
+    try {
+        const accountsStorage = await loadAccountsStorage()
+        const account = await accountsStorage.getAccount(address)
+        if (account == null) {
+            throw new Error("Selected account doesn't exist")
+        }
+
+        const tonWallet = await loadSubscription(
+            account.tonWallet.publicKey,
+            account.tonWallet.contractType,
+            makeSubscriptionHandler(dispatch)
+        )
+
+        unlock = await lockSubscription(tonWallet.address)
+
+        const contractState = await tonWallet.getContractState()
+        if (contractState == null) {
+            throw new Error('Contract state is empty')
+        }
+
+        const amount = parseTons(messageToPrepare.amount)
+        const bounce = false
+        const expireAt = 60 // seconds
+
+        const unsignedMessage = tonWallet.prepareTransfer(
+            contractState,
+            messageToPrepare.recipient,
+            amount,
+            bounce,
+            expireAt
+        )
+        if (unsignedMessage == null) {
+            // TODO: show notification with deployment
+            throw new Error('Contract must be deployed first')
+        }
+
+        unlock()
+        return unsignedMessage
+    } catch (e) {
+        unlock?.()
+        throw e
     }
-
-    const tonWallet = await loadSubscription(
-        account.tonWallet.publicKey,
-        account.tonWallet.contractType,
-        makeSubscriptionHandler(dispatch)
-    )
-
-    const contractState = await tonWallet.getContractState()
-    if (contractState == null) {
-        throw new Error('Contract state is empty')
-    }
-
-    const amount = parseTons(messageToPrepare.amount)
-    const bounce = false
-    const expireAt = 60 // seconds
-
-    const unsignedMessage = tonWallet.prepareTransfer(
-        contractState,
-        messageToPrepare.recipient,
-        amount,
-        bounce,
-        expireAt
-    )
-    if (unsignedMessage == null) {
-        // TODO: show notification with deployment
-        throw new Error('Contract must be deployed first')
-    }
-    return unsignedMessage
 }
 
 export const estimateFees = (address: string, message: nt.SignedMessage) => async (
@@ -255,7 +271,15 @@ export const estimateFees = (address: string, message: nt.SignedMessage) => asyn
         makeSubscriptionHandler(dispatch)
     )
 
-    return await tonWallet.estimateFees(message)
+    let unlock = await lockSubscription(tonWallet.address)
+    try {
+        const fees = await tonWallet.estimateFees(message)
+        unlock()
+        return fees
+    } catch (e) {
+        unlock()
+        throw e
+    }
 }
 
 export const sendMessage = (
@@ -290,7 +314,15 @@ export const sendMessage = (
         makeSubscriptionHandler(dispatch)
     )
 
-    return await tonWallet.sendMessage(signedMessage)
+    let unlock = await lockSubscription(tonWallet.address)
+    try {
+        const pendingTransaction = await tonWallet.sendMessage(signedMessage)
+        unlock()
+        return pendingTransaction
+    } catch (e) {
+        unlock()
+        throw e
+    }
 }
 
 export const removeDeliveredMessage = (pendingTransaction: nt.PendingTransaction) => async (
