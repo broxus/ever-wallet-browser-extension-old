@@ -1,46 +1,47 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
-import { AppState } from './store/app/types'
-import { checkAccounts } from './store/app/actions'
-import { Step, Action } from './common'
+import { AppState } from '@store/app/types'
+import { setupCurrentAccount } from '@store/app/actions'
+import { Step } from '@common'
+import { Action } from '@utils'
 
-import WelcomeScreen from './pages/WelcomeScreen'
-import MainPageScreen from './pages/MainPage/MainPageScreen'
-import NewAccountScreen from './pages/NewAccountScreen'
-import RestoreAccountScreen from './pages/RestoreAccountScreen'
+import WelcomePage from './pages/WelcomePage'
+import MainPage from './pages/MainPage'
+import NewAccountPage from './pages/NewAccountScreen'
+import RestoreAccountPage from './pages/RestoreAccountScreen'
 
 import './styles/main.scss'
 
 interface IApp {
     accountLoaded: boolean
-    checkAccounts: Action<typeof checkAccounts>
+    setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
-    const [step, setStep] = useState<number>(Step.WELCOME_PAGE)
+const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
+    const [step, setStep] = useState<number>(Step.WELCOME)
 
     useEffect(() => {
-        checkAccounts().then(() => {})
+        setupCurrentAccount().then(() => {})
     }, [])
 
     useEffect(() => {
         if (accountLoaded) {
-            setStep(Step.MAIN_PAGE)
+            setStep(Step.MAIN)
         }
     }, [accountLoaded])
 
     return (
         <>
-            {step == Step.WELCOME_PAGE && <WelcomeScreen setStep={setStep} />}
-            {step == Step.CREATE_NEW_WALLET && <NewAccountScreen setStep={setStep} />}
-            {step == Step.RESTORE_WALLET && <RestoreAccountScreen setStep={setStep} />}
-            {step == Step.MAIN_PAGE && <MainPageScreen setStep={setStep} />}
+            {step == Step.WELCOME && <WelcomePage setStep={setStep} />}
+            {step == Step.CREATE_NEW_WALLET && <NewAccountPage setStep={setStep} />}
+            {step == Step.RESTORE_WALLET && <RestoreAccountPage setStep={setStep} />}
+            {step == Step.MAIN && <MainPage setStep={setStep} />}
         </>
     )
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({
-    accountLoaded: store.app.accountLoaded,
+    accountLoaded: store.app.selectedAccount != null,
 })
 
-export default connect(mapStateToProps, { checkAccounts })(App)
+export default connect(mapStateToProps, { setupCurrentAccount })(App)

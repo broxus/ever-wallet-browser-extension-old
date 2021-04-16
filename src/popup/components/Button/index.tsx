@@ -1,6 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react'
 import cn from 'classnames'
-import { createRipple, removeRipple } from '../../common/ripple'
+import { createRipple, removeRipple } from '@common'
 
 import './style.scss'
 

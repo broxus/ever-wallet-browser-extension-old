@@ -26,17 +26,17 @@ async function startListener(connection: nt.GqlConnection) {
 
     // Keystore
     const keystore = await nt.KeyStore.load(storage)
-    await keystore.clear()
-    await keystore.addKey('Main key', {
-        type: 'master_key',
-        data: {
-            params: {
-                phrase:
-                    'naive pudding fabric canal round peanut nature metal fog exhibit security side',
-            },
-            password: '1234',
-        },
-    })
+    // await keystore.clear()
+    // await keystore.addKey('Main key', {
+    //     type: 'master_key',
+    //     data: {
+    //         params: {
+    //             phrase:
+    //                 'naive pudding fabric canal round peanut nature metal fog exhibit security side',
+    //         },
+    //         password: '1234',
+    //     },
+    // })
 
     const keystoreEntries = await keystore.getKeys()
     if (keystoreEntries.length === 0) {
@@ -85,7 +85,7 @@ async function startListener(connection: nt.GqlConnection) {
     let lastPollingMethod = wallet.pollingMethod
     let i = 0
     while (true) {
-        i += 1
+        //i += 1
 
         switch (lastPollingMethod) {
             case 'manual': {

@@ -9,4 +9,3 @@ const createRootReducer = () =>
 export default createRootReducer
 
 export type RootState = ReturnType<typeof createRootReducer>
-

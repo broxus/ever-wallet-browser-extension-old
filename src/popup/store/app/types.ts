@@ -1,11 +1,10 @@
-import * as nt from '../../../../nekoton/pkg'
+import * as nt from '@nekoton'
 
 export type Locale = 'en_US' | 'ru_RU'
 
 export type AppState = {
-    accountLoaded: boolean
     locale: Locale
-    account: string
+    selectedAccount: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     transactions: nt.Transaction[]
 }

@@ -1,6 +1,7 @@
 import React from 'react'
-import Button from '../Button'
-import CopyButton from '../CopyButton/CopyButton'
+
+import Button from '@components/Button'
+import CopyButton from '@components/CopyButton'
 
 import './style.scss'
 

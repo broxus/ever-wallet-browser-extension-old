@@ -1,20 +1,29 @@
-import { AppDispatch } from '../store'
+import React, { useEffect } from 'react'
 
-import * as nt from '../../../nekoton/pkg'
+export * from './ripple'
+
+import * as nt from '@nekoton'
 
 export enum Step {
-    WELCOME_PAGE,
+    WELCOME,
     CREATE_NEW_WALLET,
     RESTORE_WALLET,
-    MAIN_PAGE,
+    MAIN,
 }
-
-window.ObjectExt = { keys: Object.keys }
 
 export const DEFAULT_CONTRACT_TYPE: nt.ContractType = 'SafeMultisigWallet'
 
-export type Action<F extends Function> = F extends (
-    ...args: infer A
-) => (app: AppDispatch) => Promise<infer R>
-    ? (...args: A) => Promise<R>
-    : never
+export const hideModalOnClick = (ref: React.MutableRefObject<null>, onClose: () => void) => {
+    const handleClickOutside = (event: { target: any }) => {
+        // @ts-ignore
+        if (ref.current && !ref.current.contains(event.target)) {
+            onClose()
+        }
+    }
+    useEffect(() => {
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+        }
+    })
+}

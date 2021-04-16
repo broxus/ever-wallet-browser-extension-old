@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 
-import Signature from '../../img/policy-sign.svg'
-import Button from '../Button'
-import Checkbox from '../Checkbox/Checkbox'
+import Button from '@components/Button'
+import Checkbox from '@components/Checkbox'
+
+import Signature from '@img/policy-sign.svg'
 
 import './style.scss'
 
@@ -19,7 +20,7 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
             <div className="policy-sign-page__illustration">
                 <Signature />
             </div>
-            <div className="policy-sign-page__content">
+            <div className="policy-sign-page__content noselect">
                 <h2>Sign the decentralization policy to proceed</h2>
                 <div className="policy-sign-page__content-checkbox">
                     <Checkbox checked={checked} setChecked={setChecked} />

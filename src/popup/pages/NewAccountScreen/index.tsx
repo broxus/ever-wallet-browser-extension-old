@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
-import { Step, DEFAULT_CONTRACT_TYPE, Action } from '../../common'
-import { generateSeed, createAccount } from '../../store/app/actions'
+import { Action } from '@utils'
+import { Step, DEFAULT_CONTRACT_TYPE } from '@common'
+import { generateSeed, createAccount } from '@store/app/actions'
 import { connect } from 'react-redux'
+import * as nt from '@nekoton'
 
-import * as nt from '../../../../nekoton/pkg'
-
-import SignPolicy from '../../components/SignPolicy'
-import SelectContractType from '../../components/SelectContractType'
-import ExportedSeed from '../../components/ExportedSeed'
-import CheckSeed from '../../components/CheckSeed'
-import EnterPasswordScreen from '../../components/EnterPasswordScreen'
-import Modal from '../../components/Modal/Modal'
+import SignPolicy from '@components/SignPolicy'
+import SelectContractType from '@components/SelectContractType'
+import ExportedSeed from '@components/ExportedSeed'
+import CheckSeed from '@components/CheckSeed'
+import EnterNewPassword from '@components/EnterNewPassword'
+import Modal from '@components/Modal'
 
 import './style.scss'
 
@@ -22,12 +22,12 @@ enum LocalStep {
     ENTER_PASSWORD,
 }
 
-interface ISetupScreen {
+interface INewAccountPage {
     setStep: (step: Step) => void
     createAccount: Action<typeof createAccount>
 }
 
-const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) => {
+const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) => {
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
     const [error, setError] = useState<string>()
 
@@ -39,7 +39,7 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
     const onSubmit = async () => {
         try {
             await createAccount('Account 1', contractType, seed, password)
-            setStep(Step.MAIN_PAGE)
+            setStep(Step.MAIN)
         } catch (e) {
             setError(e.toString())
         }
@@ -55,7 +55,7 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
                         setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
                     }}
                     onBack={() => {
-                        setStep(Step.WELCOME_PAGE)
+                        setStep(Step.WELCOME)
                     }}
                 />
             )}
@@ -65,7 +65,7 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
                         setContractType(contractType)
                         setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
-                    onBack={() => setStep(Step.WELCOME_PAGE)}
+                    onBack={() => setStep(Step.WELCOME)}
                     excludedContracts={['WalletV3']}
                 />
             )}
@@ -92,7 +92,7 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
                 />
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (
-                <EnterPasswordScreen
+                <EnterNewPassword
                     onSubmit={async (password) => {
                         setPassword(password)
                         await onSubmit()
@@ -121,4 +121,4 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
 
 export default connect(null, {
     createAccount,
-})(NewAccountScreen)
+})(NewAccountPage)

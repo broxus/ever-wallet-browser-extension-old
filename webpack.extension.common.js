@@ -47,6 +47,14 @@ module.exports = {
         ],
     },
     resolve: {
+        alias: {
+            '@nekoton': path.resolve(__dirname, 'nekoton/pkg'),
+            '@common': path.resolve(__dirname, 'src/popup/common'),
+            '@components': path.resolve(__dirname, 'src/popup/components'),
+            '@img': path.resolve(__dirname, 'src/popup/img'),
+            '@store': path.resolve(__dirname, 'src/popup/store'),
+            '@utils': path.resolve(__dirname, 'src/popup/utils'),
+        },
         extensions: ['.tsx', '.ts', '.js'],
     },
     plugins: [

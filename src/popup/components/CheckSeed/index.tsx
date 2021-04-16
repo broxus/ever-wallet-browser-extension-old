@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { shuffleArray } from '@utils'
 
-import CheckSeedInput from '../../components/CheckSeedInput/CheckSeedInput'
-import Button from '../../components/Button'
+import CheckSeedInput from '@components/CheckSeedInput'
+import Button from '@components/Button'
 
 import './style.scss'
 
@@ -13,14 +14,9 @@ interface ICheckSeed {
 }
 
 const generateRandomNumbers = () => {
-    const nums = new Set<number>()
-    let numArray: number[] = []
-
-    while (nums.size !== 4) {
-        nums.add(Math.floor(Math.random() * 12) + 1)
-    }
-    numArray = Array.from(nums).sort((a, b) => a - b)
-    return numArray
+    return shuffleArray(new Array(12).fill(1).map((_, i) => i + 1))
+        .slice(0, 4)
+        .sort((a, b) => a - b)
 }
 
 const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {

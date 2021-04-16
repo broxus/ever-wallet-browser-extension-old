@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import * as nt from '../../../../nekoton/pkg'
+import * as nt from '@nekoton'
 
-import RadioButton from '../RadioButton/RadioButton'
-import Button from '../Button'
+import RadioButton from '@components/RadioButton'
+import Button from '@components/Button'
 
 import './style.scss'
 
