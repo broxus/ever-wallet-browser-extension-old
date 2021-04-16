@@ -28,6 +28,30 @@ export const Action = {
     ) => (draft: AppState) => {
         mergeTransactions(draft.transactions, newTransactions, info)
     },
+    addDeliveredMessage: (
+        pendingTransaction: nt.PendingTransaction,
+        transaction: nt.Transaction
+    ) => (draft: AppState) => {
+        draft.deliveredMessages.push({
+            pendingTransaction,
+            transaction,
+        })
+    },
+    removeDeliveredMessage: (pendingTransaction: nt.PendingTransaction) => (draft: AppState) => {
+        const index = draft.deliveredMessages.findIndex(
+            (item) => item.pendingTransaction.bodyHash == pendingTransaction.bodyHash
+        )
+        draft.deliveredMessages.splice(index, 1)
+    },
+    addExpiredMessage: (pendingTransaction: nt.PendingTransaction) => (draft: AppState) => {
+        draft.expiredMessages.push(pendingTransaction)
+    },
+    removeExpiredMessage: (pendingTransaction: nt.PendingTransaction) => (draft: AppState) => {
+        const index = draft.expiredMessages.findIndex(
+            (item) => item.bodyHash == pendingTransaction.bodyHash
+        )
+        draft.expiredMessages.splice(index, 1)
+    },
 }
 
 export const ActionTypes: { [K in keyof typeof Action]: K } = window.ObjectExt.keys(Action).reduce(
@@ -126,11 +150,16 @@ const makeSubscriptionHandler = (dispatch: AppDispatch) => (address: string) => 
         constructor(private dispatch: AppDispatch, private address: string) {}
 
         onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
-            console.log(pendingTransaction, transaction)
+            updateStore(
+                this.dispatch,
+                ActionTypes.addDeliveredMessage,
+                pendingTransaction,
+                transaction
+            )
         }
 
         onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-            console.log(pendingTransaction)
+            updateStore(this.dispatch, ActionTypes.addExpiredMessage, pendingTransaction)
         }
 
         onStateChanged(newState: nt.AccountState) {
@@ -261,4 +290,16 @@ export const sendMessage = (
     )
 
     return await tonWallet.sendMessage(signedMessage)
+}
+
+export const removeDeliveredMessage = (pendingTransaction: nt.PendingTransaction) => async (
+    dispatch: AppDispatch
+) => {
+    updateStore(dispatch, ActionTypes.removeDeliveredMessage, pendingTransaction)
+}
+
+export const removeExpiredMessage = (pendingTransaction: nt.PendingTransaction) => async (
+    dispatch: AppDispatch
+) => {
+    updateStore(dispatch, ActionTypes.removeExpiredMessage, pendingTransaction)
 }

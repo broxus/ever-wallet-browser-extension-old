@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { connect } from 'react-redux'
-import { AppState, MessageToPrepare } from '@store/app/types'
+import { AppState, DeliveredMessage, MessageToPrepare } from '@store/app/types'
 import { selectStyles } from '../../constants/selectStyle'
 import { Action, convertAddress, convertTons } from '@utils'
-import { prepareMessage, sendMessage, estimateFees } from '@store/app/actions'
+import {
+    prepareMessage,
+    sendMessage,
+    estimateFees,
+    removeDeliveredMessage,
+    removeExpiredMessage,
+} from '@store/app/actions'
 import * as nt from '@nekoton'
 
+import Lottie from 'react-lottie-player'
 import Select from 'react-select'
 import Input from '@components/Input'
 import Button from '@components/Button'
 
+import MoneyAnimation from '@img/lottie/money.json'
+import DoneAnimation from '@img/lottie/done.json'
+import FailedAnimation from '@img/lottie/failed.json'
 import UserPic from '@img/user-avatar-placeholder.svg'
 
 import './style.scss'
@@ -30,12 +40,65 @@ enum LocalStep {
     SENDING,
 }
 
-const TransactionSending = () => {
+type ITransactionExpired = {
+    onBack: () => void
+}
+
+const TransactionExpired: React.FC<ITransactionExpired> = ({ onBack }) => {
     return (
         <>
-            <h2 className="send-screen__form-title">Transaction is sending</h2>
-            <div className="send-screen__tx-sending" />
-            <Button text={'OK'} type={'button'} />
+            <h2 className="send-screen__form-title">Transaction expired</h2>
+            <div className="send-screen__tx-sending">
+                <Lottie
+                    loop
+                    animationData={FailedAnimation}
+                    play
+                    style={{ width: 150, height: 150 }}
+                />
+            </div>
+            <Button text={'OK'} type={'button'} onClick={onBack} />
+        </>
+    )
+}
+
+type ITransactionSent = {
+    onBack: () => void
+}
+
+const TransactionSent: React.FC<ITransactionSent> = ({ onBack }) => {
+    return (
+        <>
+            <h2 className="send-screen__form-title">Transaction has been sent</h2>
+            <div className="send-screen__tx-sending">
+                <Lottie
+                    loop
+                    animationData={DoneAnimation}
+                    play
+                    style={{ width: 150, height: 150 }}
+                />
+            </div>
+            <Button text={'OK'} type={'button'} onClick={onBack} />
+        </>
+    )
+}
+
+export type ITransactionSending = {
+    onBack: () => void
+}
+
+const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
+    return (
+        <>
+            <h2 className="send-screen__form-title">Transaction is sending...</h2>
+            <div className="send-screen__tx-sending">
+                <Lottie
+                    loop
+                    animationData={MoneyAnimation}
+                    play
+                    style={{ width: 150, height: 150 }}
+                />
+            </div>
+            <Button text={'OK'} type={'button'} onClick={onBack} />
         </>
     )
 }
@@ -202,15 +265,21 @@ const EnterAddress: React.FC<IEnterAddress> = ({ account, tonWalletState, onSubm
 interface IAddNewToken {
     account: nt.AssetsList
     tonWalletState: nt.AccountState
+    deliveredMessages: DeliveredMessage[]
+    expiredMessages: nt.PendingTransaction[]
     prepareMessage: Action<typeof prepareMessage>
     estimateFees: Action<typeof estimateFees>
     sendMessage: Action<typeof sendMessage>
+    removeDeliveredMessage: Action<typeof removeDeliveredMessage>
+    removeExpiredMessage: Action<typeof removeExpiredMessage>
     onBack: () => void
 }
 
 const Send: React.FC<IAddNewToken> = ({
     account,
     tonWalletState,
+    deliveredMessages,
+    expiredMessages,
     prepareMessage,
     estimateFees,
     sendMessage,
@@ -218,6 +287,25 @@ const Send: React.FC<IAddNewToken> = ({
 }) => {
     const [localStep, setLocalStep] = useState(LocalStep.ENTER_ADDRESS)
     const [messageParams, setMessageParams] = useState<MessageToPrepare>()
+    const [pendingTransaction, setPendingTransaction] = useState<nt.PendingTransaction>()
+
+    const showSendingMessage = (pendingTransaction: nt.PendingTransaction) => {
+        const isDone =
+            deliveredMessages.findIndex(
+                (item) => item.pendingTransaction.bodyHash == pendingTransaction.bodyHash
+            ) >= 0
+        if (isDone) {
+            return <TransactionSent onBack={onBack} />
+        }
+
+        const isFailed =
+            expiredMessages.findIndex((item) => item.bodyHash == pendingTransaction.bodyHash) >= 0
+        if (isFailed) {
+            return <TransactionExpired onBack={onBack} />
+        }
+
+        return <TransactionSending onBack={onBack} />
+    }
 
     return (
         <>
@@ -240,7 +328,7 @@ const Send: React.FC<IAddNewToken> = ({
                     estimateFees={estimateFees}
                     sendMessage={sendMessage}
                     onSubmit={(pendingTransaction) => {
-                        // TODO:
+                        setPendingTransaction(pendingTransaction)
                         setLocalStep(LocalStep.SENDING)
                     }}
                     onBack={() => {
@@ -248,9 +336,22 @@ const Send: React.FC<IAddNewToken> = ({
                     }}
                 />
             )}
-            {localStep == LocalStep.SENDING && <TransactionSending />}
+            {localStep == LocalStep.SENDING &&
+                pendingTransaction &&
+                showSendingMessage(pendingTransaction)}
         </>
     )
 }
 
-export default connect(null, { prepareMessage, estimateFees, sendMessage })(Send)
+const mapStateToProps = (store: { app: AppState }) => ({
+    deliveredMessages: store.app.deliveredMessages,
+    expiredMessages: store.app.expiredMessages,
+})
+
+export default connect(mapStateToProps, {
+    prepareMessage,
+    estimateFees,
+    sendMessage,
+    removeDeliveredMessage,
+    removeExpiredMessage,
+})(Send)

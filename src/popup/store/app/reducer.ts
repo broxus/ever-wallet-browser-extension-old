@@ -8,6 +8,8 @@ export const initialState: AppState = {
     selectedAccount: null,
     tonWalletState: null,
     transactions: new Array<Transaction>(),
+    deliveredMessages: [],
+    expiredMessages: [],
 }
 
 export default (state: AppState = initialState, action: Action): AppState =>
