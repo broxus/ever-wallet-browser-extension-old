@@ -7,6 +7,8 @@ export type AppState = {
     selectedAccount: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     transactions: nt.Transaction[]
+    deliveredMessages: DeliveredMessage[]
+    expiredMessages: nt.PendingTransaction[]
 }
 
 export type Action = {
@@ -18,4 +20,9 @@ export type MessageToPrepare = {
     amount: string
     recipient: string
     comment?: string
+}
+
+export type DeliveredMessage = {
+    pendingTransaction: nt.PendingTransaction
+    transaction: nt.Transaction
 }

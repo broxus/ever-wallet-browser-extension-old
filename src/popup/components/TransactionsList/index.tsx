@@ -18,7 +18,7 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
             }}
         >
             {transactions?.map((transaction) => {
-                return <Transaction transaction={transaction} />
+                return <Transaction key={transaction.id.lt} transaction={transaction} />
             })}
         </div>
     )
