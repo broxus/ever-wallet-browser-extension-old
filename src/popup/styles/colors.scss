@@ -19,14 +19,17 @@ $shadowFg: #00000018; // most shadows (including opacity)
 $walletTitleBg: #121213; // wallet window title background when window is inactive
 $walletTopBg: #1e1f21; // wallet top part background
 
+//main page color scheme
 $mainDarkBg: #060c32;
 $mainHeader: $mainDarkBg;
 $mainDarkAccent: #182052;
 $mainLightAccent: #f7e3dc;
 
+//account card color scheme
 $accountName: #ffffff;
 $accountTextFg: #c5e4f3;
 $accountBalance: #ffffff;
+$accountNavElem: #ffffff;
 
 $inactiveTab: #96a1a7;
 $iconGrey: #7d8b92;

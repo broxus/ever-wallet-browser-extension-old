@@ -17,6 +17,7 @@ import SendIcon from '@img/send.svg'
 import Notifications from '@img/notifications.svg'
 import Profile from '@img/profile.svg'
 import AccountCard from '@components/AccountCard'
+import Carousel from '@components/Carousel'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | null
@@ -77,11 +78,16 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({ account, tonWalletStat
                         />
                     )}
                 </div>
-                <AccountCard
-                    accountName={account.name}
-                    address={account.tonWallet.address}
-                    balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
+                <Carousel
+                    content={[
+                        <AccountCard
+                            accountName={account.name}
+                            address={account.tonWallet.address}
+                            balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
+                        />,
+                    ]}
                 />
+
                 <div className="main-page__account-details-buttons">
                     <button
                         className="main-page__account-details-button _blue"
