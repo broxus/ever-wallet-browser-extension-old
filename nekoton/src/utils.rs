@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::Error;
 use futures::channel::oneshot;
-use ton_block::MsgAddressInt;
+use ton_block::{Deserializable, MsgAddressInt};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 
@@ -79,6 +79,13 @@ pub fn parse_public_key(public_key: &str) -> Result<ed25519_dalek::PublicKey, Js
 
 pub fn parse_address(address: &str) -> Result<MsgAddressInt, JsValue> {
     MsgAddressInt::from_str(address).handle_error()
+}
+
+pub fn parse_slice(boc: &str) -> Result<ton_types::SliceData, JsValue> {
+    let body = base64::decode(boc).handle_error()?;
+    let cell =
+        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    Ok(cell.into())
 }
 
 #[wasm_bindgen(typescript_custom_section)]

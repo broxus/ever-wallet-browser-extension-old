@@ -235,6 +235,7 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
 
         const amount = parseTons(messageToPrepare.amount)
         const bounce = false
+        const body = messageToPrepare.comment != null ? nt.encodeComment(messageToPrepare.comment) : '';
         const expireAt = 60 // seconds
 
         const unsignedMessage = tonWallet.prepareTransfer(
@@ -242,6 +243,7 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
             messageToPrepare.recipient,
             amount,
             bounce,
+            body,
             expireAt
         )
         if (unsignedMessage == null) {

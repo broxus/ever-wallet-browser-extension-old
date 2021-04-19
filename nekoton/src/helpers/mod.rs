@@ -74,3 +74,11 @@ pub fn validate_mnemonic(
         .handle_error()
         .map(|_| ())
 }
+
+#[wasm_bindgen(js_name = "encodeComment")]
+pub fn encode_comment(comment: &str) -> Result<String, JsValue> {
+    let body = nt::helpers::abi::create_comment_payload(comment).handle_error()?;
+    Ok(base64::encode(
+        ton_types::serialize_toc(&body.into_cell()).handle_error()?,
+    ))
+}

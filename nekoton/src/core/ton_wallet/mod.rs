@@ -90,10 +90,16 @@ impl TonWallet {
         dest: &str,
         amount: &str,
         bounce: bool,
+        body: &str,
         timeout: u32,
     ) -> Result<Option<crate::crypto::UnsignedMessage>, JsValue> {
         let dest = parse_address(dest)?;
         let amount = u64::from_str(amount).handle_error()?;
+        let body = if !body.is_empty() {
+            Some(parse_slice(body)?)
+        } else {
+            None
+        };
 
         let wallet = self.inner.wallet.lock().unwrap();
 
@@ -104,7 +110,7 @@ impl TonWallet {
                     dest,
                     amount,
                     bounce,
-                    None,
+                    body,
                     nt::core::models::Expiration::Timeout(timeout),
                 )
                 .handle_error()?
