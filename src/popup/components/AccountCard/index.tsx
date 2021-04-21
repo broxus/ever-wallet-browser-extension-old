@@ -1,9 +1,12 @@
 import React from 'react'
-import Pattern from '../../img/ton-pattern.svg'
-import Ellipsis from '../../img/ellipsis.svg'
 import { convertAddress } from '@utils'
+
 import ReactTooltip from 'react-tooltip'
 import CopyToClipboard from 'react-copy-to-clipboard'
+
+import Pattern from '../../img/ton-pattern.svg'
+import Ellipsis from '../../img/ellipsis.svg'
+
 import './style.scss'
 
 interface IAccountCard {

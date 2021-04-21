@@ -1,12 +1,13 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React from 'react'
 
 import './style.scss'
 
 interface ICloseIcon {
-    handleClick: Dispatch<SetStateAction<boolean>>
+    onClick: () => void
 }
-const CloseIcon: React.FC<ICloseIcon> = ({ handleClick }) => (
-    <div className="close-container" onClick={() => handleClick(false)}>
+
+const CloseIcon: React.FC<ICloseIcon> = ({ onClick }) => (
+    <div className="close-container" onClick={onClick}>
         <div className="leftright" />
         <div className="rightleft" />
     </div>

@@ -10,23 +10,20 @@ import TransactionsList from '@components/TransactionsList'
 
 import './style.scss'
 
-type UserAssetsProps = {
-    tonWalletState: nt.AccountState | null
-    transactions: nt.Transaction[]
-    setActiveContent: (arg0: number) => void
-}
-
 type AssetsListProps = {
     tonWalletState: nt.AccountState | null
     setActiveContent: (arg0: number) => void
 }
 
-const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveContent }) => {
-    const [panelVisible, setPanelVisible] = useState(false)
+enum Panel {
+    ADD_NEW_TOKEN,
+}
 
-    useEffect(() => {
-        console.log(tonWalletState, 'tonWalletState')
-    })
+const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveContent }) => {
+    const [openedPanel, setOpenedPanel] = useState<Panel>()
+
+    const closePanel = () => setOpenedPanel(undefined)
+
     return (
         <div className="user-assets">
             {/*TODO remove later*/}
@@ -36,25 +33,32 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveConten
                 </div>
             )}
             <div className="user-assets__add-new-btn">
-                <Button text={'Add new asset'} white onClick={() => setPanelVisible(true)} />
+                <Button
+                    text={'Add new asset'}
+                    white
+                    onClick={() => setOpenedPanel(Panel.ADD_NEW_TOKEN)}
+                />
             </div>
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                <AddNewToken onReturn={setPanelVisible} />
+            <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
+                <AddNewToken onReturn={closePanel} />
             </SlidingPanel>
         </div>
     )
 }
 
-const UserAssets: React.FC<UserAssetsProps> = ({
-    tonWalletState,
-    transactions,
-    setActiveContent,
-}) => {
-    const [activeTab, setActiveTab] = useState(0)
-    const content = [
-        <AssetsList tonWalletState={tonWalletState} setActiveContent={setActiveContent} />,
-        <TransactionsList transactions={transactions} />,
-    ]
+type IUserAssets = {
+    tonWalletState: nt.AccountState | null
+    transactions: nt.Transaction[]
+    setActiveContent: (arg0: number) => void
+}
+
+enum AssetsTab {
+    ASSETS,
+    TRANSACTIONS,
+}
+
+const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setActiveContent }) => {
+    const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
     return (
         <>
@@ -62,22 +66,30 @@ const UserAssets: React.FC<UserAssetsProps> = ({
                 <div className="main-page__user-assets-panel">
                     <div
                         className={cn('main-page__user-assets-panel-tab', {
-                            _active: activeTab === 0,
+                            _active: activeTab == AssetsTab.ASSETS,
                         })}
-                        onClick={() => setActiveTab(0)}
+                        onClick={() => setActiveTab(AssetsTab.ASSETS)}
                     >
                         Assets
                     </div>
                     <div
                         className={cn('main-page__user-assets-panel-tab', {
-                            _active: activeTab === 1,
+                            _active: activeTab == AssetsTab.TRANSACTIONS,
                         })}
-                        onClick={() => setActiveTab(1)}
+                        onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}
                     >
                         Transactions
                     </div>
                 </div>
-                {content[activeTab]}
+                {activeTab == AssetsTab.ASSETS && (
+                    <AssetsList
+                        tonWalletState={tonWalletState}
+                        setActiveContent={setActiveContent}
+                    />
+                )}
+                {activeTab == AssetsTab.TRANSACTIONS && (
+                    <TransactionsList transactions={transactions} />
+                )}
             </div>
         </>
     )

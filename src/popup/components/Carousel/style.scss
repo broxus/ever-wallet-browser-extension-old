@@ -12,10 +12,10 @@
             right: -320px;
             height: 188px;
             width: 320px;
-            -webkit-animation: slide 0.5s forwards;
-            -webkit-animation-delay: 0.5s;
-            animation: slide 0.5s forwards;
-            animation-delay: 0.5s;
+            -webkit-animation: slide 0.2s forwards;
+            -webkit-animation-delay: 0.2s;
+            animation: slide 0.2s forwards;
+            animation-delay: 0.2s;
         }
     }
 
@@ -28,12 +28,14 @@
 
         &-dots {
             display: flex;
+            align-items: center;
+
             &-elem {
                 width: 6px;
                 height: 6px;
                 background: $accountNavElem;
                 opacity: 0.32;
-                border-radius: 100px;
+                border-radius: 50%;
                 margin-right: 6px;
 
                 &--active {
@@ -41,14 +43,16 @@
                     width: 8px;
                     height: 8px;
                     opacity: 1;
-                    border-radius: 100px;
+                    border-radius: 50%;
                     margin-right: 6px;
                 }
             }
         }
+
         &-arrows {
             display: flex;
             align-items: center;
+
             &-elem {
                 align-items: center;
                 cursor: pointer;
@@ -58,7 +62,8 @@
                 height: 32px;
                 border: 1px solid rgba(255, 255, 255, 0.2);
                 box-sizing: border-box;
-                border-radius: 100px;
+                border-radius: 50%;
+
                 &:not(:last-child) {
                     margin-right: 12px;
                 }

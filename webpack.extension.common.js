@@ -6,8 +6,8 @@ const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin')
 
 module.exports = {
     entry: {
-        popup: './src/popup/index.tsx',
-        background: './src/background/extension.ts',
+        popup: path.resolve(__dirname, 'src/popup/index.tsx'),
+        background: path.resolve(__dirname, 'src/background/extension.ts'),
     },
     module: {
         rules: [
@@ -59,7 +59,7 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
-        new HtmlWebpackPlugin({ template: 'src/popup/index.html' }),
+        new HtmlWebpackPlugin({ template: path.resolve(__dirname, 'src/popup/index.html') }),
         new WasmPackPlugin({
             extraArgs: '--target web',
             crateDirectory: path.resolve(__dirname, 'nekoton'),
@@ -67,10 +67,13 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 { from: path.resolve(__dirname, 'nekoton/pkg/index_bg.wasm') },
-                { from: './src/extension_manifest.json', to: 'manifest.json' },
-                // { from: './src/icons/icon16.png' },
-                // { from: './src/icons/icon48.png' },
-                // { from: './src/icons/icon128.png' },
+                {
+                    from: path.resolve(__dirname, 'src/extension_manifest.json'),
+                    to: 'manifest.json',
+                },
+                { from: path.resolve(__dirname, 'src/popup/icons/icon16.png') },
+                { from: path.resolve(__dirname, 'src/popup/icons/icon48.png') },
+                { from: path.resolve(__dirname, 'src/popup/icons/icon128.png') },
             ],
         }),
     ],

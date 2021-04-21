@@ -18,10 +18,11 @@ import './style.scss'
 type AccountDetailsParams = {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
-    handleSendClick: () => void
-    handleReceiveClick: () => void
+    onSend: () => void
+    onReceive: () => void
     onLogOut: () => void
-    handleCreateNewAcc: () => void
+    onCreateAccount: () => void
+    onOpenKeyStore: () => void
 }
 
 interface IAddNewAccountCard {
@@ -47,14 +48,20 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     account,
     tonWalletState,
     onLogOut,
-    handleReceiveClick,
-    handleSendClick,
-    handleCreateNewAcc,
+    onReceive,
+    onSend,
+    onCreateAccount,
+    onOpenKeyStore,
 }) => {
     const [modalVisible, setModalVisible] = useState(false)
 
     if (account == null) {
         return null
+    }
+
+    const accountModalAction = (action: () => void) => () => {
+        setModalVisible(false)
+        action()
     }
 
     return (
@@ -73,16 +80,10 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         <AccountModal
                             account={account}
                             tonWalletState={tonWalletState}
-                            onCreateAccount={() => {
-                                // TODO: create account
-                            }}
-                            onOpenKeyStore={() => {
-                                // TODO: open key store
-                            }}
-                            onLogOut={onLogOut}
-                            onClose={() => {
-                                setModalVisible(false)
-                            }}
+                            onCreateAccount={accountModalAction(onCreateAccount)}
+                            onOpenKeyStore={accountModalAction(onOpenKeyStore)}
+                            onLogOut={accountModalAction(onLogOut)}
+                            onClose={accountModalAction(() => {})}
                         />
                     )}
                 </div>
@@ -94,18 +95,19 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             publicKey={account?.tonWallet.publicKey}
                             balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
                         />,
-                        <AddNewAccountCard handleCreateNewAcc={handleCreateNewAcc} />,
+                        <AddNewAccountCard handleCreateNewAcc={onCreateAccount} />,
                     ]}
                 />
 
-                <div className="main-page__account-details-buttons">
+                <div className="main-page__account-details-buttons noselect">
                     <button
                         className="main-page__account-details-button _blue"
+                        onClick={() => {}}
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            handleReceiveClick && handleReceiveClick()
+                            onReceive?.()
                         }}
                     >
                         <div className="main-page__account-details-button__content">
@@ -117,11 +119,12 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
 
                     <button
                         className="main-page__account-details-button _blue"
+                        onClick={() => {}}
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            handleSendClick && handleSendClick()
+                            onSend?.()
                         }}
                     >
                         <div className="main-page__account-details-button__content">

@@ -13,10 +13,9 @@ import './style.scss'
 interface IKeyStorage {
     createdKey?: any
     publicKey?: any
-    setActiveContent?: any
 }
 
-const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey, setActiveContent }) => {
+const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey }) => {
     const [modalOpen, setModalOpen] = useState(false)
     const [panelOpen, setPanelOpen] = useState(false)
 

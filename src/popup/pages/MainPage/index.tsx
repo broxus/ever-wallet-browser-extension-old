@@ -14,7 +14,6 @@ import Receive from '@components/Receive'
 import Send from '@components/Send'
 import KeyStorage from '@components/KeyStorage'
 import CreateAccountScreen from '../CreateAccount'
-import EnterPassword from '@components/EnterPassword'
 import AssetFull from '@components/AssetFull'
 
 import './style.scss'
@@ -28,6 +27,14 @@ interface IMainPage {
     logOut: Action<typeof logOut>
 }
 
+enum Panel {
+    RECEIVE,
+    SEND,
+    KEY_STORAGE,
+    CREATE_ACCOUNT,
+    ASSET,
+}
+
 const MainPage: React.FC<IMainPage> = ({
     account,
     tonWalletState,
@@ -36,37 +43,19 @@ const MainPage: React.FC<IMainPage> = ({
     startSubscription,
     logOut,
 }) => {
-    const [activeContent, setActiveContent] = useState(0)
-    const [panelVisible, setPanelVisible] = useState(false)
-
-
-    // TODO create one handler
-
-    const handleSendReceive = (action: 'send' | 'receive') => {
-        setPanelVisible(true)
-        setActiveContent(+!(action === 'receive'))
-    }
-
-    const handleReceiveClick = () => {
-        setPanelVisible(true)
-        setActiveContent(0)
-    }
-
-    const handleSendClick = () => {
-        setPanelVisible(true)
-        setActiveContent(1)
-    }
-
-    const handleCreateNewAcc = () => {
-        setPanelVisible(true)
-        setActiveContent(3)
-    }
+    const [openedPanel, setOpenedPanel] = useState<Panel>()
 
     useEffect(() => {
         if (account != null) {
             startSubscription(account.tonWallet.address).then(() => {})
         }
     }, [])
+
+    if (account == null) {
+        return null
+    }
+
+    const closePanel = () => setOpenedPanel(undefined)
 
     return (
         <>
@@ -77,43 +66,34 @@ const MainPage: React.FC<IMainPage> = ({
                     await logOut()
                     setStep(Step.WELCOME)
                 }}
-                handleReceiveClick={handleReceiveClick}
-                handleSendClick={handleSendClick}
-                handleCreateNewAcc={handleCreateNewAcc}
+                onReceive={() => setOpenedPanel(Panel.RECEIVE)}
+                onSend={() => setOpenedPanel(Panel.SEND)}
+                onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
+                onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
             />
             <UserAssets
                 tonWalletState={tonWalletState}
-                setActiveContent={setActiveContent}
+                setActiveContent={setOpenedPanel}
                 transactions={transactions}
             />
-            <SlidingPanel isOpen={panelVisible} setIsOpen={setPanelVisible}>
-                {activeContent === 0 ? (
-                    <Receive accountName={account?.name} address={account?.tonWallet.address} />
-                ) : activeContent === 1 ? (
-                    tonWalletState ? (
+            <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
+                <>
+                    {openedPanel == Panel.RECEIVE && (
+                        <Receive accountName={account.name} address={account.tonWallet.address} />
+                    )}
+                    {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
                             account={account}
                             tonWalletState={tonWalletState}
-                            onBack={() => {
-                                setPanelVisible(false)
-                            }}
+                            onBack={closePanel}
                         />
-                    ) : (
-                        <></>
-                    )
-                ) : activeContent === 2 ? (
-                    <KeyStorage setActiveContent={setActiveContent} />
-                ) : activeContent === 3 ? (
-                    <CreateAccountScreen />
-                ) : activeContent === 4 ? (
-                    <EnterPassword setStep={setStep} minHeight={'170px'} />
-                ) : activeContent === 5 ? (
-                    <SaveSeed setStep={setStep} />
-                ) : activeContent === 6 ? (
-                    <AssetFull handleSendReceive={handleSendReceive} />
-                ) : (
-                    <></>
-                )}
+                    )}
+                    {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
+                    {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountScreen />}
+                    {openedPanel == Panel.ASSET && (
+                        <AssetFull handleSendReceive={handleSendReceive} />
+                    )}
+                </>
             </SlidingPanel>
         </>
     )
