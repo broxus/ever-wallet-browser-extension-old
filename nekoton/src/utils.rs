@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::Error;
 use futures::channel::oneshot;
-use ton_block::{Deserializable, MsgAddressInt};
+use ton_block::MsgAddressInt;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 

@@ -161,3 +161,12 @@ export const lockSubscription = async (address: string) => {
 
     return await mutex.lock()
 }
+
+export const loadAccount = async (address: string) => {
+    const accountsStorage = await loadAccountsStorage()
+    const account = await accountsStorage.getAccount(address)
+    if (account == null) {
+        throw new Error("Selected account doesn't exist")
+    }
+    return account;
+}

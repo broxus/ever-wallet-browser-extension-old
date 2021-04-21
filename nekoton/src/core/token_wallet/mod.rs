@@ -96,7 +96,7 @@ impl TokenWallet {
             // TODO: resolve token wallet by owner and send directly
             let message = wallet
                 .prepare_transfer(
-                    nt::core::transactions::TransferRecipient::OwnerWallet(dest),
+                    nt::core::models::TransferRecipient::OwnerWallet(dest),
                     tokens,
                 )
                 .handle_error()?;
@@ -249,7 +249,7 @@ impl token_wallet::TokenWalletSubscriptionHandler for TokenWalletSubscriptionHan
 
     fn on_transactions_found(
         &self,
-        transactions: Vec<nt::core::transactions::TokenWalletTransaction>,
+        transactions: Vec<nt::core::models::TokenWalletTransaction>,
         batch_info: nt::core::models::TransactionsBatchInfo,
     ) {
         use crate::core::models::*;
@@ -284,45 +284,45 @@ extern "C" {
 }
 
 fn make_token_wallet_transaction(
-    data: nt::core::transactions::TokenWalletTransaction,
+    data: nt::core::models::TokenWalletTransaction,
 ) -> TokenWalletTransaction {
-    use nt::core::transactions;
+    use nt::core::models;
 
     let (ty, data) = match data {
-        transactions::TokenWalletTransaction::IncomingTransfer(transfer) => (
+        models::TokenWalletTransaction::IncomingTransfer(transfer) => (
             "incoming_transfer",
             ObjectBuilder::new()
                 .set("tokens", transfer.tokens.to_string())
                 .set("senderAddress", transfer.sender_address.to_string())
                 .build(),
         ),
-        transactions::TokenWalletTransaction::OutgoingTransfer(transfer) => (
+        models::TokenWalletTransaction::OutgoingTransfer(transfer) => (
             "outgoing_transfer",
             ObjectBuilder::new()
                 .set("to", make_transfer_recipient(transfer.to))
                 .set("tokens", transfer.tokens.to_string())
                 .build(),
         ),
-        transactions::TokenWalletTransaction::SwapBack(swap_back) => (
+        models::TokenWalletTransaction::SwapBack(swap_back) => (
             "swap_back",
             ObjectBuilder::new()
                 .set("to", swap_back.to)
                 .set("tokens", swap_back.tokens.to_string())
                 .build(),
         ),
-        transactions::TokenWalletTransaction::Accept(accept) => (
+        models::TokenWalletTransaction::Accept(tokens) => (
             "accept",
             ObjectBuilder::new()
-                .set("tokens", accept.tokens.to_string())
+                .set("tokens", tokens.to_string())
                 .build(),
         ),
-        transactions::TokenWalletTransaction::TransferBounced(tokens) => (
+        models::TokenWalletTransaction::TransferBounced(tokens) => (
             "transfer_bounced",
             ObjectBuilder::new()
                 .set("tokens", tokens.to_string())
                 .build(),
         ),
-        transactions::TokenWalletTransaction::SwapBackBounced(tokens) => (
+        models::TokenWalletTransaction::SwapBackBounced(tokens) => (
             "swap_back_bounced",
             ObjectBuilder::new()
                 .set("tokens", tokens.to_string())
@@ -351,12 +351,12 @@ extern "C" {
     pub type TransferRecipient;
 }
 
-fn make_transfer_recipient(data: nt::core::transactions::TransferRecipient) -> TransferRecipient {
-    use nt::core::transactions;
+fn make_transfer_recipient(data: nt::core::models::TransferRecipient) -> TransferRecipient {
+    use nt::core::models;
 
     let (ty, address) = match data {
-        transactions::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
-        transactions::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
+        models::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
+        models::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
     };
 
     ObjectBuilder::new()

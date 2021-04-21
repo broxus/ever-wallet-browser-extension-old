@@ -6,7 +6,7 @@ import {
     loadAccountsStorage,
     ITonWalletHandler,
     lockSubscription,
-    setLatestBlock,
+    setLatestBlock, loadAccount,
 } from './services'
 
 import * as nt from '@nekoton'
@@ -209,16 +209,36 @@ export const startSubscription = (address: string) => async (dispatch: AppDispat
     }
 }
 
+export const prepareDeploy = (address: string) => async (dispatch: AppDispatch) => {
+    let unlock: (() => void) | null = null;
+    try {
+        const account = await loadAccount(address);
+
+        const tonWallet = await loadSubscription(
+            account.tonWallet.publicKey,
+            account.tonWallet.contractType,
+            makeSubscriptionHandler(dispatch)
+        );
+
+        unlock = await lockSubscription(tonWallet.address)
+
+        const timeout = 60;
+
+        const unsignedMessage = tonWallet.prepareDeploy(timeout)
+        unlock()
+        return unsignedMessage
+    } catch(e) {
+        unlock?.();
+        throw e;
+    }
+}
+
 export const prepareMessage = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch
 ) => {
     let unlock: (() => void) | null = null
     try {
-        const accountsStorage = await loadAccountsStorage()
-        const account = await accountsStorage.getAccount(address)
-        if (account == null) {
-            throw new Error("Selected account doesn't exist")
-        }
+        const account = await loadAccount(address);
 
         const tonWallet = await loadSubscription(
             account.tonWallet.publicKey,
@@ -262,11 +282,7 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
 export const estimateFees = (address: string, message: nt.SignedMessage) => async (
     dispatch: AppDispatch
 ) => {
-    const accountsStorage = await loadAccountsStorage()
-    const account = await accountsStorage.getAccount(address)
-    if (account == null) {
-        throw new Error("Selected account doesn't exist")
-    }
+    const account = await loadAccount(address);
 
     const tonWallet = await loadSubscription(
         account.tonWallet.publicKey,
@@ -290,19 +306,9 @@ export const sendMessage = (
     message: nt.UnsignedMessage,
     password: string
 ) => async (dispatch: AppDispatch) => {
-    const accountsStorage = await loadAccountsStorage()
-
-    console.log(address)
-
-    const account = await accountsStorage.getAccount(address)
-    if (account == null) {
-        throw new Error("Selected account doesn't exist")
-    }
+    const account = await loadAccount(address);
 
     const keyStore = await loadKeyStore()
-
-    console.log(`Entries: ${JSON.stringify(await keyStore.getKeys())}`)
-    console.log(`Signing with public key: ${account.tonWallet.publicKey}`)
 
     message.refreshTimeout()
     const signedMessage = await keyStore.sign(message, {

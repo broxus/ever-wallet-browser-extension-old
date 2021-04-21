@@ -1,4 +1,4 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -409,6 +409,12 @@ impl From<nt::core::ton_wallet::ContractType> for ContractType {
     fn from(c: nt::core::ton_wallet::ContractType) -> Self {
         JsValue::from(c.to_string()).unchecked_into()
     }
+}
+
+#[wasm_bindgen(js_name = "getContractTypeDetails")]
+pub fn get_contract_type_details(contract_type: ContractType) -> Result<TonWalletDetails, JsValue> {
+    let contract_type: nt::core::ton_wallet::ContractType = contract_type.try_into()?;
+    Ok(make_ton_wallet_details(contract_type.details()))
 }
 
 #[wasm_bindgen]

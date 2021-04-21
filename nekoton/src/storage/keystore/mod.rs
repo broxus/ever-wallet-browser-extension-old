@@ -10,7 +10,7 @@ use crate::utils::*;
 #[wasm_bindgen]
 pub struct KeyStore {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<nt::storage::KeyStore>,
+    pub inner: Arc<nt::core::keystore::KeyStore>,
 }
 
 #[wasm_bindgen]
@@ -21,7 +21,7 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                nt::storage::KeyStore::builder(storage as Arc<dyn nt::external::Storage>)
+                nt::core::keystore::KeyStore::builder(storage as Arc<dyn nt::external::Storage>)
                     .with_signer(DERIVED_SIGNER, nt::crypto::DerivedKeySigner::new())
                     .handle_error()?
                     .with_signer(ENCRYPTED_SIGNER, nt::crypto::EncryptedKeySigner::new())
@@ -461,7 +461,7 @@ extern "C" {
     pub type KeyStoreEntry;
 }
 
-fn make_key_store_entry(data: nt::storage::KeyStoreEntry) -> KeyStoreEntry {
+fn make_key_store_entry(data: nt::core::keystore::KeyStoreEntry) -> KeyStoreEntry {
     ObjectBuilder::new()
         .set("name", data.name)
         .set("publicKey", hex::encode(data.public_key.as_bytes()))
