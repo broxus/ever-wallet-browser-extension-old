@@ -5,7 +5,9 @@ import * as nt from '@nekoton'
 
 import TonLogoS from '@img/ton-logo-s.svg'
 
-type TransactionProps = {
+import './style.scss'
+
+type ITransactionsListItem = {
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
 }
@@ -33,29 +35,29 @@ const extractAddress = (transaction: nt.Transaction) => {
     }
 }
 
-const Transaction: React.FC<TransactionProps> = ({ transaction, additionalInfo }) => {
+const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, additionalInfo }) => {
     const value = extractValue(transaction)
     const address = extractAddress(transaction)
 
     return (
         <>
-            <div className="main-page__user-assets-asset">
+            <div className="transactions-list-item">
                 <div style={{ display: 'flex', width: '100%' }}>
                     <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
                         <TonLogoS />
                     </div>
-                    <div className="main-page__user-assets-asset-number">
+                    <div className="transactions-list-item__description">
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span className="main-page__user-assets-asset-number-dollars">
+                            <span className="transactions-list-item__description__date">
                                 {new Date(transaction.createdAt * 1000).toLocaleTimeString()}
                             </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span className="main-page__user-assets-asset-number-amount">
+                            <span className="transactions-list-item__description__address">
                                 {address && convertAddress(address)}
                             </span>
                             <span
-                                className={`main-page__user-assets-asset-number-${
+                                className={`transactions-list-item__description__${
                                     value.lessThan(0) ? 'expense' : 'income'
                                 }`}
                             >
@@ -63,13 +65,13 @@ const Transaction: React.FC<TransactionProps> = ({ transaction, additionalInfo }
                             </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span className="main-page__user-assets-asset-number-dollars">
+                            <span className="transactions-list-item__description__fees">
                                 Fees: {convertTons(transaction.totalFees)} TON
                             </span>
                         </div>
                         {additionalInfo && (
                             <span
-                                className="main-page__user-assets-asset-number-dollars"
+                                className="transactions-list-item__description__comment"
                                 style={{ color: '#000000', padding: '10px 0 0' }}
                             >
                                 Staking reward.
@@ -82,4 +84,4 @@ const Transaction: React.FC<TransactionProps> = ({ transaction, additionalInfo }
     )
 }
 
-export default Transaction
+export default TransactionListItem

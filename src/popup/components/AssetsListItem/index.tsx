@@ -5,20 +5,22 @@ import * as nt from '@nekoton'
 import TonLogo from '@img/ton-logo.svg'
 import Arrow from '@img/arrow.svg'
 
-type IAsset = {
+import './style.scss'
+
+type IAssetsListItem = {
     tonWalletState: nt.AccountState
 }
 
-const Asset: React.FC<IAsset> = ({ tonWalletState }) => (
-    <div className="main-page__user-assets-asset">
+const AssetsListItem: React.FC<IAssetsListItem> = ({ tonWalletState }) => (
+    <div className="assets-list-item">
         <div style={{ display: 'flex' }}>
             {/*// @ts-ignore*/}
-            <TonLogo style={{ marginRight: '16px', minWidth: '40px' }} />
-            <div className="main-page__user-assets-asset-number">
-                <span className="main-page__user-assets-asset-number-amount">
+            <TonLogo className="assets-list-item__logo" />
+            <div className="assets-list-item__balance">
+                <span className="assets-list-item__balance__amount">
                     {convertTons(tonWalletState.balance)} TON
                 </span>
-                <span className="main-page__user-assets-asset-number-dollars">
+                <span className="assets-list-item__balance__dollars">
                     {`$${estimateUsd(tonWalletState?.balance)}`}
                 </span>
             </div>
@@ -27,4 +29,4 @@ const Asset: React.FC<IAsset> = ({ tonWalletState }) => (
     </div>
 )
 
-export default Asset
+export default AssetsListItem

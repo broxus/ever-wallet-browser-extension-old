@@ -66,10 +66,10 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
 
     return (
         <>
-            <div className="main-page__account-details">
-                <div className="main-page__account-details-top-panel">
+            <div className="account-details">
+                <div className="account-details__top-panel">
                     <Notifications />
-                    <div className="main-page__account-details-network">Mainnet</div>
+                    <div className="account-details__network">Mainnet</div>
                     <div
                         onClick={() => setModalVisible(true)}
                         style={{ cursor: 'pointer', position: 'relative' }}
@@ -99,9 +99,9 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                     ]}
                 />
 
-                <div className="main-page__account-details-buttons noselect">
+                <div className="account-details__controls noselect">
                     <button
-                        className="main-page__account-details-button _blue"
+                        className="account-details__controls__button"
                         onClick={() => {}}
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
@@ -110,7 +110,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             onReceive?.()
                         }}
                     >
-                        <div className="main-page__account-details-button__content">
+                        <div className="account-details__controls__button__content">
                             {/*@ts-ignore*/}
                             <ReceiveIcon style={{ marginRight: '8px' }} />
                             Receive
@@ -118,7 +118,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                     </button>
 
                     <button
-                        className="main-page__account-details-button _blue"
+                        className="account-details__controls__button"
                         onClick={() => {}}
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
@@ -127,7 +127,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             onSend?.()
                         }}
                     >
-                        <div className="main-page__account-details-button__content">
+                        <div className="account-details__controls__button__content">
                             {/*@ts-ignore*/}
                             <SendIcon style={{ marginRight: '8px' }} />
                             Send

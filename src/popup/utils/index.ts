@@ -2,7 +2,10 @@ import Decimal from 'decimal.js'
 import { AppDispatch } from '../store'
 Decimal.set({ maxE: 500, minE: -500 })
 
-window.ObjectExt = { keys: Object.keys }
+window.ObjectExt = {
+    keys: Object.keys,
+    entries: Object.entries,
+}
 
 export type Action<F extends Function> = F extends (
     ...args: infer A

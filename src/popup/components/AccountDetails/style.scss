@@ -1,10 +1,86 @@
+@import "../../styles/colors";
+
+.account-details {
+    background-color: $mainDarkBg;
+    height: 392px;
+    padding: 16px 20px 28px;
+
+    &__top-panel {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+    }
+
+    &__network {
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 91px;
+        color: $windowBg;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        height: 30px;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        letter-spacing: 0.75px;
+        line-height: 20px;
+        padding: 5px 10px;
+    }
+
+    &__controls {
+        display: flex;
+
+        &__button {
+            $accountButtonBg: rgba(197, 228, 243, 0.1);
+            $accountButtonBgHover: rgba(197, 228, 243, 0.15);
+
+            display: flex;
+            background: $accountButtonBg;
+            flex-direction: row;
+            justify-content: center;
+            align-content: center;
+
+            position: relative;
+            overflow: hidden;
+
+            padding: 0.8em 1em;
+            width: 100%;
+
+            &:first-child {
+                margin-right: 12px;
+            }
+
+            &:hover {
+                background-color: $accountButtonBgHover;
+            }
+
+            span.ripple {
+                background-color: $accountButtonBg;
+            }
+
+            &__content {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                font-family: PT Root UI, serif;
+                font-style: normal;
+                font-weight: bold;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: $disabledButtonBg;
+                padding: 0 8px;
+            }
+        }
+    }
+}
+
 .new-account {
     display: flex;
     background: #c5e4f3;
 
     backdrop-filter: blur(80px);
-    background: linear-gradient(239.75deg, rgba(197, 228, 243, 1) 26.52%, rgba(197, 228, 243, 1))
-        100%;
+    background: linear-gradient(239.75deg, rgba(197, 228, 243, 1) 26.52%, rgba(197, 228, 243, 1)) 100%;
     border-radius: 6px;
     box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.24);
     flex-direction: column;

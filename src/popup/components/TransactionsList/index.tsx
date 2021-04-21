@@ -1,7 +1,7 @@
 import React from 'react'
 import * as nt from '@nekoton'
 
-import Transaction from '@components/Transaction'
+import TransactionListItem from '@components/TransactionsListItem'
 
 type TransactionListProps = {
     transactions: nt.Transaction[]
@@ -18,7 +18,7 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
             }}
         >
             {transactions?.map((transaction) => {
-                return <Transaction key={transaction.id.lt} transaction={transaction} />
+                return <TransactionListItem key={transaction.id.lt} transaction={transaction} />
             })}
         </div>
     )

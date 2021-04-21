@@ -5,7 +5,7 @@ import * as nt from '@nekoton'
 import SlidingPanel from '@components/SlidingPanel'
 import AddNewToken from '@components/AddNewToken'
 import Button from '@components/Button'
-import Asset from '@components/Asset'
+import AssetsListItem from '@components/AssetsListItem'
 import TransactionsList from '@components/TransactionsList'
 
 import './style.scss'
@@ -25,14 +25,14 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveConten
     const closePanel = () => setOpenedPanel(undefined)
 
     return (
-        <div className="user-assets">
+        <div className="user-assets__assets-list">
             {/*TODO remove later*/}
             {tonWalletState && (
                 <div onClick={() => setActiveContent(6)}>
-                    <Asset tonWalletState={tonWalletState} />
+                    <AssetsListItem tonWalletState={tonWalletState} />
                 </div>
             )}
-            <div className="user-assets__add-new-btn">
+            <div className="user-assets__assets-list__add-new-btn">
                 <Button
                     text={'Add new asset'}
                     white
@@ -40,7 +40,7 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveConten
                 />
             </div>
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
-                <AddNewToken onReturn={closePanel} />
+                <AddNewToken onBack={closePanel} />
             </SlidingPanel>
         </div>
     )
@@ -62,10 +62,10 @@ const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setAc
 
     return (
         <>
-            <div className="main-page__user-assets">
-                <div className="main-page__user-assets-panel">
+            <div className="user-assets">
+                <div className="user-assets__panel">
                     <div
-                        className={cn('main-page__user-assets-panel-tab', {
+                        className={cn('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.ASSETS,
                         })}
                         onClick={() => setActiveTab(AssetsTab.ASSETS)}
@@ -73,7 +73,7 @@ const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setAc
                         Assets
                     </div>
                     <div
-                        className={cn('main-page__user-assets-panel-tab', {
+                        className={cn('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.TRANSACTIONS,
                         })}
                         onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}

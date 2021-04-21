@@ -11,46 +11,71 @@ import TonLogo from '@img/ton-logo.svg'
 
 import './style.scss'
 
-interface IToken {
-    checked: boolean
-    handleChange: (id: any) => void
-    id: any
+type PredefinedToken = {
+    name: string
+    symbol: string
+    logo: () => JSX.Element
 }
-export const Token: React.FC<IToken> = ({ checked, handleChange, id }) => {
+
+const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
+    usdc: {
+        name: 'USD Coin',
+        symbol: 'USDC',
+        logo: () => {
+            // @ts-ignore
+            return <TonLogo className="assets-list-item__logo" />
+        },
+    },
+    another: {
+        name: 'USDT Coin',
+        symbol: 'USDT',
+        logo: () => {
+            // @ts-ignore
+            return <TonLogo className="assets-list-item__logo" />
+        },
+    },
+}
+
+interface IToken {
+    logo: () => JSX.Element
+    name: string
+    symbol: string
+    enabled: boolean
+    onToggle: (enabled: boolean) => void
+}
+
+export const Token: React.FC<IToken> = ({ logo, name, symbol, enabled, onToggle }) => {
     return (
-        <div className="main-page__user-assets-asset">
+        <div className="assets-list-item">
             <div style={{ display: 'flex' }}>
-                {/*// @ts-ignore*/}
-                <TonLogo style={{ marginRight: '16px', minWidth: '40px' }} />
-                <div className="main-page__user-assets-asset-number">
-                    <span className="main-page__user-assets-asset-number-amount">USD Coin</span>
-                    <span className="main-page__user-assets-asset-number-dollars">USDC</span>
+                {logo()}
+                <div className="assets-list-item__balance">
+                    <span className="assets-list-item__balance__amount">{name}</span>
+                    <span className="assets-list-item__balance__dollars">{symbol}</span>
                 </div>
             </div>
-            <Tumbler checked={checked} onChange={() => handleChange(id)} />
+            <Tumbler checked={enabled} onChange={onToggle} />
         </div>
     )
 }
 
-const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
-    const [checked, setChecked] = useState({ 1: false, 2: false, 3: false, 4: false, 5: false })
+type ISearchToken = {
+    tokens: { [K in string]: PredefinedToken }
+    onBack: () => void
+}
+
+const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
+    const [enabledTokens, setEnabledTokens] = useState<string[]>([])
     const { register, handleSubmit, errors } = useForm()
 
     const onSubmit = async () => {
         console.log('submitted')
     }
 
-    const handleChange = (id: number) => {
-        const copy = _.cloneDeep(checked)
-        console.log(id)
-        // copy[id] = !checked[id]
-        setChecked(copy)
-    }
-
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <Input
-                label={'Enter new account name...'}
+                label={'Enter token name...'}
                 className="add-new-token__search-form"
                 type="text"
                 name="name"
@@ -60,22 +85,42 @@ const SearchToken: React.FC<IAddNewToken> = ({ onReturn }) => {
             />
             {errors.name && <div className="check-seed__content-error">This field is required</div>}
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                <Token checked={checked['1']} handleChange={handleChange} id={1} />
-                <Token checked={checked['2']} handleChange={handleChange} id={2} />
-                <Token checked={checked['3']} handleChange={handleChange} id={3} />
-                <Token checked={checked['4']} handleChange={handleChange} id={4} />
-                <Token checked={checked['5']} handleChange={handleChange} id={5} />
+                {window.ObjectExt.entries(tokens).map(([id, token]) => {
+                    console.log(id, token)
+
+                    const makeOnToggle = (id: string) => (enabled: boolean) => {
+                        if (enabled) {
+                            setEnabledTokens([...enabledTokens, id])
+                        } else {
+                            setEnabledTokens(enabledTokens.filter((item) => item != id))
+                        }
+                    }
+
+                    return (
+                        <Token
+                            key={id}
+                            {...token}
+                            enabled={enabledTokens.includes(id)}
+                            onToggle={makeOnToggle(id)}
+                        />
+                    )
+                })}
             </div>
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={() => onReturn(false)} white />
+                    <Button text={'Back'} onClick={onBack} white />
                 </div>
                 <Button text={'Select assets'} onClick={handleSubmit(onSubmit)} />
             </div>
         </form>
     )
 }
-const CustomToken: React.FC<IAddNewToken> = ({ onReturn }) => {
+
+type ICustomToken = {
+    onBack: () => void
+}
+
+const CustomToken: React.FC<ICustomToken> = ({ onBack }) => {
     return (
         <>
             <Input label={'Contract wallet address...'} />
@@ -86,7 +131,7 @@ const CustomToken: React.FC<IAddNewToken> = ({ onReturn }) => {
             />
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={() => onReturn(false)} white />
+                    <Button text={'Back'} onClick={onBack} white />
                 </div>
                 <Button text={'Select assets'} />
             </div>
@@ -95,12 +140,17 @@ const CustomToken: React.FC<IAddNewToken> = ({ onReturn }) => {
 }
 
 interface IAddNewToken {
-    onReturn: Dispatch<SetStateAction<boolean>>
+    onBack: () => void
 }
 
-const AddNewToken: React.FC<IAddNewToken> = ({ onReturn }) => {
-    const [activeTab, setActiveTab] = useState(0)
-    const content = [<SearchToken onReturn={onReturn} />, <CustomToken onReturn={onReturn} />]
+enum Tab {
+    PREDEFINED,
+    CUSTOM,
+}
+
+const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
+    const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
+
     return (
         <>
             <h2>Select new assets</h2>
@@ -109,22 +159,25 @@ const AddNewToken: React.FC<IAddNewToken> = ({ onReturn }) => {
                 <div className="add-new-token__panel">
                     <div
                         className={cn('add-new-token__panel-tab', {
-                            _active: activeTab === 0,
+                            _active: activeTab == Tab.PREDEFINED,
                         })}
-                        onClick={() => setActiveTab(0)}
+                        onClick={() => setActiveTab(Tab.PREDEFINED)}
                     >
                         Search
                     </div>
                     <div
                         className={cn('add-new-token__panel-tab', {
-                            _active: activeTab === 1,
+                            _active: activeTab == Tab.CUSTOM,
                         })}
-                        onClick={() => setActiveTab(1)}
+                        onClick={() => setActiveTab(Tab.CUSTOM)}
                     >
                         Custom token
                     </div>
                 </div>
-                {content[activeTab]}
+                {activeTab == Tab.PREDEFINED && (
+                    <SearchToken onBack={onBack} tokens={PREDEFINED_TOKENS} />
+                )}
+                {activeTab == Tab.CUSTOM && <CustomToken onBack={onBack} />}
             </div>
         </>
     )
