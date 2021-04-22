@@ -3,24 +3,24 @@ import { Duplex } from 'readable-stream'
 import { duplex as isDuplex } from 'is-stream'
 import {
     JsonRpcEngine,
-    createIdRemapMiddleware,
     JsonRpcRequest,
     JsonRpcResponse,
     JsonRpcId,
     JsonRpcVersion,
     JsonRpcSuccess,
-} from 'json-rpc-engine'
+} from '../jrpc'
 import {
     ConsoleLike,
+    createIdRemapMiddleware,
     createErrorMiddleware,
     createStreamMiddleware,
     getRpcPromiseCallback,
     logStreamDisconnectWarning,
     Maybe,
-    RpcError,
+    NekotonRpcError,
     RpcErrorCode,
     SafeEventEmitter,
-} from './utils'
+} from '../utils'
 import pump from 'pump'
 
 interface UnvalidatedJsonRpcRequest {
@@ -122,13 +122,13 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
 
     public async request<T>(args: RequestArguments): Promise<Maybe<T>> {
         if (!args || typeof args !== 'object' || Array.isArray(args)) {
-            throw new RpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid request args')
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid request args')
         }
 
         const { method, params } = args
 
         if (method.length === 0) {
-            throw new RpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid request method')
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid request method')
         }
 
         if (
@@ -136,7 +136,7 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
             !Array.isArray(params) &&
             (typeof params !== 'object' || params === null)
         ) {
-            throw new RpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid request params')
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid request params')
         }
 
         return new Promise<T>((resolve, reject) => {
@@ -180,10 +180,13 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
     private _handleDisconnect = (isRecoverable: boolean, errorMessage?: string) => {
         let error
         if (isRecoverable) {
-            error = new RpcError(RpcErrorCode.TRY_AGAIN_LATER, errorMessage || 'Disconnected')
+            error = new NekotonRpcError(
+                RpcErrorCode.TRY_AGAIN_LATER,
+                errorMessage || 'Disconnected'
+            )
         } else {
-            error = new RpcError(
-                RpcErrorCode.INTERNAL_ERROR,
+            error = new NekotonRpcError(
+                RpcErrorCode.INTERNAL,
                 errorMessage || 'Permanently disconnected'
             )
         }

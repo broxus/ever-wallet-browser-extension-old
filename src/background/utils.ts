@@ -1,3 +1,4 @@
+import safeStringify from 'fast-safe-stringify'
 import { EventEmitter } from 'events'
 import {
     JsonRpcEngineNextCallback,
@@ -7,19 +8,22 @@ import {
     JsonRpcRequest,
     PendingJsonRpcResponse,
     JsonRpcEngine,
-} from 'json-rpc-engine'
+} from './jrpc'
 import { Duplex } from 'readable-stream'
 
-export enum RpcErrorCode {
-    TRY_AGAIN_LATER,
-    INTERNAL_ERROR,
-    INVALID_REQUEST,
+const MAX = 4294967295
+
+let idCounter = Math.floor(Math.random() * MAX)
+
+export const getUniqueId = (): number => {
+    idCounter = (idCounter + 1) % MAX
+    return idCounter
 }
 
-export class RpcError extends Error {
-    constructor(public code: RpcErrorCode, public errorMessage: string) {
-        super(`RpcError ${code}: ${errorMessage}`)
-    }
+export enum RpcErrorCode {
+    INTERNAL,
+    TRY_AGAIN_LATER,
+    INVALID_REQUEST,
 }
 
 export type Maybe<T> = Partial<T> | null | undefined
@@ -234,7 +238,7 @@ export const createStreamMiddleware = () => {
 export const createErrorMiddleware = (log: ConsoleLike): JsonRpcMiddleware<unknown, unknown> => {
     return (req, res, next) => {
         if (!req.method) {
-            res.error = new RpcError(
+            res.error = new NekotonRpcError(
                 RpcErrorCode.INVALID_REQUEST,
                 "The request 'method' must be a non-empty string."
             )
@@ -249,4 +253,147 @@ export const createErrorMiddleware = (log: ConsoleLike): JsonRpcMiddleware<unkno
             return done()
         })
     }
+}
+
+export const createIdRemapMiddleware = (): JsonRpcMiddleware<unknown, unknown> => {
+    return (req, res, next, _end) => {
+        const originalId = req.id
+        const newId = getUniqueId()
+        req.id = newId
+        res.id = newId
+        next((done) => {
+            req.id = originalId
+            res.id = originalId
+            done()
+        })
+    }
+}
+
+export interface JsonRpcError {
+    code: number
+    message: string
+    data?: unknown
+    stack?: string
+}
+
+export class NekotonRpcError<T> extends Error {
+    code: number
+    data?: T
+
+    constructor(code: number, message: string, data?: T) {
+        if (!Number.isInteger(code)) {
+            throw new Error('"code" must be an integer')
+        }
+
+        if (!message || (typeof message as any) !== 'string') {
+            throw new Error('"message" must be a nonempty string')
+        }
+
+        super(message)
+
+        this.code = code
+        this.data = data
+    }
+
+    serialize(): JsonRpcError {
+        const serialized: JsonRpcError = {
+            code: this.code,
+            message: this.message,
+        }
+        if (this.data !== undefined) {
+            serialized.data = this.data
+        }
+        if (this.stack) {
+            serialized.stack = this.stack
+        }
+        return serialized
+    }
+
+    toString(): string {
+        return safeStringify(this.serialize(), stringifyReplacer, 2)
+    }
+}
+
+const FALLBACK_ERROR: JsonRpcError = {
+    code: RpcErrorCode.INTERNAL,
+    message: 'Unspecified error message',
+}
+
+export const serializeError = (
+    error: unknown,
+    { fallbackError = FALLBACK_ERROR, shouldIncludeStack = false } = {}
+): JsonRpcError => {
+    if (
+        !fallbackError ||
+        !Number.isInteger(fallbackError.code) ||
+        (typeof fallbackError.message as any) !== 'string'
+    ) {
+        throw new Error('Must provide fallback error with integer number code and string message')
+    }
+
+    if (error instanceof NekotonRpcError) {
+        return error.serialize()
+    }
+
+    const serialized: Partial<JsonRpcError> = {}
+
+    if (
+        error &&
+        typeof error === 'object' &&
+        !Array.isArray(error) &&
+        hasKey(error as Record<string, unknown>, 'code')
+    ) {
+        const typedError = error as Partial<JsonRpcError>
+        serialized.code = typedError.code
+
+        if (typedError.message && (typeof typedError.message as any) === 'string') {
+            serialized.message = typedError.message
+
+            if (hasKey(typedError, 'data')) {
+                serialized.data = typedError.data
+            }
+        } else {
+            serialized.message = 'TODO: get message from code'
+
+            serialized.data = { originalError: assignOriginalError(error) }
+        }
+    } else {
+        serialized.code = fallbackError.code
+
+        const message = (error as any)?.message
+
+        serialized.message =
+            message && typeof message === 'string' ? message : fallbackError.message
+        serialized.data = { originalError: assignOriginalError(error) }
+    }
+
+    const stack = (error as any)?.stack
+
+    if (shouldIncludeStack && error && stack && (typeof stack as any) === 'stack') {
+        serialized.stack = stack
+    }
+
+    return serialized as JsonRpcError
+}
+
+export const jsonify = <T extends {}>(request: T): string => {
+    return safeStringify(request, stringifyReplacer, 2)
+}
+
+const stringifyReplacer = (_: unknown, value: unknown): unknown => {
+    if (value === '[Circular]') {
+        return undefined
+    }
+    return value
+}
+
+const assignOriginalError = (error: unknown): unknown => {
+    if (error && typeof error === 'object' && !Array.isArray(error)) {
+        return Object.assign({}, error)
+    }
+    return error
+}
+
+const hasKey = (obj: Record<string, unknown>, key: string) => {
+    return Object.prototype.hasOwnProperty.call(obj, key)
 }
