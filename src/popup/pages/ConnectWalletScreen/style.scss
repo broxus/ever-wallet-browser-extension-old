@@ -84,11 +84,12 @@
     }
 
     &__details {
-        padding: 0 20px 28px;
+        padding: 0 20px 20px;
 
         &__panel {
             display: flex;
             border-bottom: 1px solid #ebedee;
+            margin-bottom: 20px;
 
             &__tab {
                 font-style: normal;
@@ -107,6 +108,65 @@
                     border-bottom: 2px solid $windowBgActive;
                     margin-bottom: -1px;
                 }
+            }
+        }
+
+        &__description {
+            padding: 20px;
+            background: #f8f9f9;
+            margin-bottom: 28px;
+
+            &-param {
+                display: flex;
+                justify-content: space-between;
+                &:not(:last-child) {
+                    margin-bottom: 16px;
+                }
+
+                &-desc {
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    line-height: 20px;
+                    letter-spacing: 0.25px;
+                    color: #7d8b92;
+                }
+
+                &-value {
+                    font-family: PT Root UI, serif;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    line-height: 20px;
+                    letter-spacing: 0.25px;
+                    color: #000000;
+                }
+            }
+        }
+        &__data {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            height: 180px;
+            overflow: scroll;
+            color: #000000;
+            padding-bottom: 20px;
+            width: 100%;
+            max-width: 360px;
+            word-break: break-word;
+        }
+    }
+
+    &__buttons {
+        display: flex;
+        padding: 0 20px 28px;
+
+        &-button {
+            width: 100%;
+            &:not(last-child) {
+                margin-right: 12px;
             }
         }
     }
