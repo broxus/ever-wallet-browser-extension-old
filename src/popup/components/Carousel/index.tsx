@@ -22,6 +22,16 @@ const Carousel: React.FC<ICarousel> = ({ content }) => {
     return (
         <>
             <div className="carousel__content">
+                {/*    <div className="row">*/}
+                {/*        <div className="row__inner">*/}
+                {/*            {content.map((el, i) => (*/}
+                {/*                <div className={`tile${i === active ? ' -active' : ''} `}>*/}
+                {/*                    <div className="tile__media">{el}</div>*/}
+                {/*                </div>*/}
+                {/*            ))}*/}
+                {/*        </div>*/}
+                {/*    </div>*/}
+                {/*</div>*/}
                 <div className="carousel__content__slide">{content[active]}</div>
             </div>
             <div className="carousel__navigation">

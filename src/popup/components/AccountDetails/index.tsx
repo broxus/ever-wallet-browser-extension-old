@@ -95,6 +95,18 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             publicKey={account?.tonWallet.publicKey}
                             balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
                         />,
+                        // <AccountCard
+                        //     accountName={account.name}
+                        //     address={account.tonWallet.address}
+                        //     publicKey={account?.tonWallet.publicKey}
+                        //     balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
+                        // />,
+                        // <AccountCard
+                        //     accountName={account.name}
+                        //     address={account.tonWallet.address}
+                        //     publicKey={account?.tonWallet.publicKey}
+                        //     balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
+                        // />,
                         <AddNewAccountCard handleCreateNewAcc={onCreateAccount} />,
                     ]}
                 />

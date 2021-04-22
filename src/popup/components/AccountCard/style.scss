@@ -14,7 +14,7 @@
 
     border-radius: 6px;
     height: 188px;
-    width: 320px;
+    max-width: 320px;
     &__info {
         display: flex;
         flex-direction: column;
