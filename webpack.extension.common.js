@@ -12,7 +12,13 @@ module.exports = {
         popup: path.resolve(__dirname, 'src/popup/index.tsx'),
         contentscript: path.resolve(__dirname, 'src/background/contentscript.ts'),
         background: path.resolve(__dirname, 'src/background/extension.ts'),
-        inpage: path.resolve(__dirname, 'src/background/inpage.ts'),
+        inpage: {
+            import: path.resolve(__dirname, 'src/background/inpage.ts'),
+            library: {
+                name: 'inpage',
+                type: 'umd',
+            },
+        },
     },
     module: {
         rules: [
@@ -80,7 +86,10 @@ module.exports = {
                 { from: path.resolve(__dirname, 'src/popup/icons/icon128.png') },
             ],
         }),
-        new HtmlWebpackPlugin({ template: path.resolve(__dirname, 'src/popup/index.html') }),
+        new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, 'src/popup/index.html'),
+            chunks: ['popup'],
+        }),
         new ProvidePlugin({
             process: 'process/browser',
         }),
