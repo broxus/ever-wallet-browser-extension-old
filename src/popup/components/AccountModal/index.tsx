@@ -22,7 +22,6 @@ const AccountModal: React.FC<IAccountModal> = ({
     account,
     tonWalletState,
     onOpenConnectedSites,
-    onCreateAccount,
     onOpenKeyStore,
     onOpenWalletSettings,
     onOpenInformation,

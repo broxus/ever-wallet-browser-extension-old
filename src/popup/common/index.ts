@@ -5,6 +5,7 @@ export * from './ripple'
 import * as nt from '@nekoton'
 
 export enum Step {
+    LOADING,
     WELCOME,
     CREATE_NEW_WALLET,
     RESTORE_WALLET,

@@ -6,7 +6,8 @@ import {
     loadAccountsStorage,
     ITonWalletHandler,
     lockSubscription,
-    setLatestBlock, loadAccount,
+    setLatestBlock,
+    loadAccount,
 } from './services'
 
 import * as nt from '@nekoton'
@@ -83,18 +84,20 @@ export const setLocale = (locale: Locale) => async (dispatch: AppDispatch) => {
     updateStore(dispatch, ActionTypes.setLocale, locale)
 }
 
-export const setupCurrentAccount = () => async (dispatch: AppDispatch) => {
+export const setupCurrentAccount = () => async (dispatch: AppDispatch): Promise<boolean> => {
     const accountsStorage = await loadAccountsStorage()
 
     const currentAccount = await accountsStorage.getCurrentAccount()
     if (currentAccount == null) {
-        return
+        return false
     }
 
     const account = await accountsStorage.getAccount(currentAccount)
     if (account != null) {
         updateStore(dispatch, ActionTypes.setCurrentAccount, account)
     }
+
+    return account != null
 }
 
 export const logOut = () => async (dispatch: AppDispatch) => {
@@ -210,26 +213,26 @@ export const startSubscription = (address: string) => async (dispatch: AppDispat
 }
 
 export const prepareDeploy = (address: string) => async (dispatch: AppDispatch) => {
-    let unlock: (() => void) | null = null;
+    let unlock: (() => void) | null = null
     try {
-        const account = await loadAccount(address);
+        const account = await loadAccount(address)
 
         const tonWallet = await loadSubscription(
             account.tonWallet.publicKey,
             account.tonWallet.contractType,
             makeSubscriptionHandler(dispatch)
-        );
+        )
 
         unlock = await lockSubscription(tonWallet.address)
 
-        const timeout = 60;
+        const timeout = 60
 
         const unsignedMessage = tonWallet.prepareDeploy(timeout)
         unlock()
         return unsignedMessage
-    } catch(e) {
-        unlock?.();
-        throw e;
+    } catch (e) {
+        unlock?.()
+        throw e
     }
 }
 
@@ -238,7 +241,7 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
 ) => {
     let unlock: (() => void) | null = null
     try {
-        const account = await loadAccount(address);
+        const account = await loadAccount(address)
 
         const tonWallet = await loadSubscription(
             account.tonWallet.publicKey,
@@ -255,7 +258,8 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
 
         const amount = parseTons(messageToPrepare.amount)
         const bounce = false
-        const body = messageToPrepare.comment != null ? nt.encodeComment(messageToPrepare.comment) : '';
+        const body =
+            messageToPrepare.comment != null ? nt.encodeComment(messageToPrepare.comment) : ''
         const expireAt = 60 // seconds
 
         const unsignedMessage = tonWallet.prepareTransfer(
@@ -282,7 +286,7 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
 export const estimateFees = (address: string, message: nt.SignedMessage) => async (
     dispatch: AppDispatch
 ) => {
-    const account = await loadAccount(address);
+    const account = await loadAccount(address)
 
     const tonWallet = await loadSubscription(
         account.tonWallet.publicKey,
@@ -306,7 +310,7 @@ export const sendMessage = (
     message: nt.UnsignedMessage,
     password: string
 ) => async (dispatch: AppDispatch) => {
-    const account = await loadAccount(address);
+    const account = await loadAccount(address)
 
     const keyStore = await loadKeyStore()
 

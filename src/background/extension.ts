@@ -1,12 +1,6 @@
 import init, * as nt from '../../nekoton/pkg'
 import { GqlSocket, mergeTransactions, StorageConnector } from './common'
 import ItemType = chrome.contextMenus.ItemType
-
-chrome.tabs.onUpdated.addListener((_tabId, _changeInfo, tab) => {
-    const url = new URL(tab.url ?? '')
-
-    chrome.browserAction.setBadgeText({ text: url.host })
-})
 ;(async () => {
     await init('index_bg.wasm')
 
@@ -128,6 +122,7 @@ async function startListener(connection: nt.GqlConnection) {
                 dest,
                 amount,
                 bounce,
+                '',
                 timeout
             )
             if (unsignedMessage == null) {

@@ -1,5 +1,9 @@
 declare module '*.svg' {
-    const ReactComponent: React.FC<React.SVGProps<SVGSVGElement>>
+    interface IReactComponent
+        extends React.SVGProps<SVGSVGElement>,
+            React.HTMLAttributes<SVGSVGElement> {}
+
+    const ReactComponent: React.FC<IReactComponent>
     const content: string
 
     export { ReactComponent }

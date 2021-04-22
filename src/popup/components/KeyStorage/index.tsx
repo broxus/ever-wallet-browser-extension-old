@@ -21,7 +21,7 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey }) => {
 
     const exportSeedPhrase = () => {
         setPanelOpen(true)
-        setActiveContent(4)
+        //setActiveContent(4)
     }
 
     const savePrivateKey = () => {

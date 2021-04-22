@@ -63,3 +63,18 @@ h3 {
 ::-webkit-scrollbar {
     display: none;
 }
+
+.loader-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background-color: $mainLightAccent;
+
+    &__spinner {
+        stroke: $mainDarkAccent;
+        width: 100px;
+        height: 100px;
+    }
+}

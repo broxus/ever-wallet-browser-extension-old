@@ -32,6 +32,8 @@
     "@types/decimal.js": "^7.4.0",
     "@types/lodash": "^4.14.168",
     "@types/pako": "^1.0.1",
+    "@types/post-message-stream": "^3.0.0",
+    "@types/pump": "^1.1.1",
     "@types/react": "^17.0.2",
     "@types/react-copy-to-clipboard": "^5.0.0",
     "@types/react-select": "^4.0.13",
@@ -42,6 +44,7 @@
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.2.0",
     "prettier": "^2.2.1",
+    "process": "^0.11.10",
     "redux-devtools-extension": "^2.13.9",
     "sass": "^1.32.8",
     "sass-loader": "^11.0.1",
@@ -58,10 +61,16 @@
     "@types/react-dom": "^17.0.1",
     "base64-js": "^1.5.1",
     "bignumber.js": "^9.0.1",
+    "buffer": "^6.0.3",
     "classnames": "^2.2.6",
     "decimal.js": "^10.2.1",
     "immer": "^9.0.1",
+    "is-stream": "^2.0.0",
+    "json-rpc-engine": "^6.1.0",
+    "obj-multiplex": "^1.0.0",
     "pako": "^2.0.3",
+    "post-message-stream": "^3.0.0",
+    "pump": "^3.0.0",
     "react": "^17.0.1",
     "react-copy-to-clipboard": "^5.0.3",
     "react-dom": "^17.0.1",
@@ -74,6 +83,7 @@
     "react-textarea-autosize": "^8.3.2",
     "react-tooltip": "^4.2.17",
     "redux": "^4.0.5",
-    "redux-thunk": "^2.3.0"
+    "redux-thunk": "^2.3.0",
+    "util": "^0.12.3"
   }
 }

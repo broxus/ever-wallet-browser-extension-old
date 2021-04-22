@@ -1,14 +1,16 @@
 {
   "manifest_version": 2,
-  "name": "nekoton",
+  "name": "Nekoton",
   "version": "0.1.0",
   "browser_action": {
+    "default_title": "Nekoton",
     "default_popup": "index.html"
   },
   "background": {
     "scripts": [
       "background.js"
-    ]
+    ],
+    "persistent": false
   },
   "icons": {
     "16": "icon16.png",
@@ -17,7 +19,26 @@
   },
   "permissions": [
     "storage",
-    "<all_urls>"
+    "unlimitedStorage",
+    "clipboardWrite",
+    "activeTab",
+    "notifications"
   ],
-  "content_security_policy": "script-src 'self' 'wasm-eval'; object-src 'self'"
+  "content_security_policy": "script-src 'self' 'wasm-eval'; object-src 'self'",
+  "content_scripts": [
+    {
+      "matches": [
+        "file://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "contentscript.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "web_accessible_resources": [
+    "inpage.js"
+  ]
 }

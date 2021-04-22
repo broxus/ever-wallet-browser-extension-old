@@ -90,9 +90,7 @@ const MainPage: React.FC<IMainPage> = ({
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountScreen />}
-                    {openedPanel == Panel.ASSET && (
-                        <AssetFull handleSendReceive={handleSendReceive} />
-                    )}
+                    {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
                 </>
             </SlidingPanel>
         </>
