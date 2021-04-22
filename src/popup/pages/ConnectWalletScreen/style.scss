@@ -1,0 +1,113 @@
+@import '../../styles/colors';
+
+.connect-wallet {
+    height: 100vh;
+    &__top-panel {
+        align-items: center;
+        background-color: $mainDarkBg;
+        display: flex;
+        flex-direction: column;
+        height: 269px;
+        padding: 16px 20px 0;
+
+        &__title {
+            color: $accountName;
+            font-style: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            width: 100%;
+        }
+        &__source {
+            color: #c5e4f3;
+            font-style: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            margin-bottom: 24px;
+            opacity: 0.64;
+            width: 100%;
+        }
+        &__balance {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 24px;
+            line-height: 32px;
+            color: $accountBalance;
+            width: 100%;
+            &-decimals {
+                font-weight: normal;
+                font-size: 18px;
+                line-height: 24px;
+                letter-spacing: 0.5px;
+            }
+        }
+    }
+
+    &__network {
+        background: rgba(255, 255, 255, 0.16);
+        border-radius: 91px;
+        color: $windowBg;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        height: 30px;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        letter-spacing: 0.75px;
+        line-height: 20px;
+        padding: 5px 10px;
+        margin-bottom: 20px;
+        width: 78px;
+    }
+
+    &__address {
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+        font-style: normal;
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+        color: $accountName;
+        margin-bottom: 16px;
+        padding-bottom: 18px;
+        width: 100%;
+
+        &-entry {
+            display: flex;
+            padding: 0 12px;
+            white-space: nowrap;
+        }
+    }
+
+    &__details {
+        padding: 0 20px 28px;
+
+        &__panel {
+            display: flex;
+            border-bottom: 1px solid #ebedee;
+
+            &__tab {
+                font-style: normal;
+                font-weight: 500;
+                font-size: 16px;
+                color: $inactiveTab;
+                cursor: pointer;
+                line-height: 20px;
+                text-align: center;
+                letter-spacing: 0.25px;
+                padding: 16px 24px;
+                width: 50%;
+
+                &._active {
+                    color: $windowBgActive;
+                    border-bottom: 2px solid $windowBgActive;
+                    margin-bottom: -1px;
+                }
+            }
+        }
+    }
+}

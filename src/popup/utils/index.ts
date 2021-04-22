@@ -17,7 +17,8 @@ export const ONE_TON = '1000000000'
 
 export const formatSeed = (seed: string) => seed?.split(/[, ;\r\n\t]+/g).filter((el) => el !== '')
 
-export const convertAddress = (address: string) => `${address.slice(0, 6)}...${address.slice(-4)}`
+export const convertAddress = (address: string | undefined) =>
+    address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
 
 export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toString()
 
