@@ -6,7 +6,7 @@ import {
     NekotonRpcError,
     jsonify,
     JsonRpcError,
-} from '../utils'
+} from './utils'
 
 export type Json = boolean | number | string | null | { [property: string]: Json } | Json[]
 
@@ -63,12 +63,20 @@ export type JsonRpcMiddleware<T, U> = (
     end: JsonRpcEngineEndCallback
 ) => void
 
+export interface DestroyableMiddleware {
+    destroy(): void
+}
+
 export class JsonRpcEngine extends SafeEventEmitter {
     private readonly _middleware: JsonRpcMiddleware<unknown, unknown>[]
 
     constructor() {
         super()
         this._middleware = []
+    }
+
+    get middleware(): JsonRpcMiddleware<unknown, unknown>[] {
+        return this._middleware
     }
 
     push<T, U>(middleware: JsonRpcMiddleware<T, U>) {
@@ -165,8 +173,8 @@ export class JsonRpcEngine extends SafeEventEmitter {
     }
 
     private _promiseHandle(request: JsonRpcRequest<unknown>): Promise<JsonRpcResponse<unknown>> {
-        return new Promise((resolve) => {
-            this._handle(request, (_err, res) => {
+        return new Promise(async (resolve) => {
+            await this._handle(request, (_err, res) => {
                 resolve(res)
             })
         })

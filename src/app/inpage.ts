@@ -22,12 +22,13 @@ cleanContextForImports()
 import '../polyfills'
 import LocalMessageDuplexStream from 'post-message-stream'
 import { initializeProvider } from './provider'
+import { CONTENT_SCRIPT, INPAGE_SCRIPT } from '../shared/constants'
 
 restoreContextAfterImports()
 
 const nekotonStream = new LocalMessageDuplexStream({
-    name: 'nekoton-inpage',
-    target: 'nekoton-contentscript',
+    name: INPAGE_SCRIPT,
+    target: CONTENT_SCRIPT,
 })
 
 initializeProvider({

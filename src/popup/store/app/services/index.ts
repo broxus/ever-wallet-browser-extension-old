@@ -1,5 +1,5 @@
 import * as nt from '@nekoton'
-import { GqlSocket, StorageConnector, Mutex } from '../../../../background/common'
+import { GqlSocket, StorageConnector, Mutex } from '../../../../shared'
 
 let storage: nt.Storage | null = null
 export const loadStorage = () => {
@@ -168,5 +168,5 @@ export const loadAccount = async (address: string) => {
     if (account == null) {
         throw new Error("Selected account doesn't exist")
     }
-    return account;
+    return account
 }

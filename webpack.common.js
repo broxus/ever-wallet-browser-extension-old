@@ -8,12 +8,11 @@ const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin')
 
 module.exports = {
     entry: {
-        polyfills: path.resolve(__dirname, 'src/polyfills.ts'),
         popup: path.resolve(__dirname, 'src/popup/index.tsx'),
-        contentscript: path.resolve(__dirname, 'src/background/contentscript.ts'),
-        background: path.resolve(__dirname, 'src/background/extension.ts'),
+        background: path.resolve(__dirname, 'src/app/background/index.ts'),
+        contentscript: path.resolve(__dirname, 'src/app/contentscript.ts'),
         inpage: {
-            import: path.resolve(__dirname, 'src/background/inpage.ts'),
+            import: path.resolve(__dirname, 'src/app/inpage.ts'),
             library: {
                 name: 'inpage',
                 type: 'umd',
@@ -77,13 +76,10 @@ module.exports = {
         new CopyWebpackPlugin({
             patterns: [
                 { from: path.resolve(__dirname, 'nekoton/pkg/index_bg.wasm') },
-                {
-                    from: path.resolve(__dirname, 'src/extension_manifest.json'),
-                    to: 'manifest.json',
-                },
                 { from: path.resolve(__dirname, 'src/popup/icons/icon16.png') },
                 { from: path.resolve(__dirname, 'src/popup/icons/icon48.png') },
                 { from: path.resolve(__dirname, 'src/popup/icons/icon128.png') },
+                { from: path.resolve(__dirname, 'src/manifest.json') },
             ],
         }),
         new HtmlWebpackPlugin({
@@ -100,7 +96,7 @@ module.exports = {
     ],
     output: {
         filename: '[name].js',
-        path: path.resolve(__dirname, 'dist/extension'),
+        path: path.resolve(__dirname, 'dist'),
     },
     experiments: {
         asyncWebAssembly: true,

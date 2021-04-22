@@ -1,2 +1,2 @@
-import * as buffer from 'buffer'
-;(window as any).Buffer = buffer
+import { Buffer } from 'buffer'
+;(window as any).Buffer = Buffer
