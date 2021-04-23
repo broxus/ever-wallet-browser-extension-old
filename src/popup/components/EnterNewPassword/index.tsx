@@ -15,10 +15,10 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
     const { register, handleSubmit, errors, watch, getValues } = useForm()
 
     return (
-        <div className="enter-password__content">
-            <div className="enter-password__content-pwd-form">
-                <h2 className="enter-password__content-pwd-form-header">Password protection</h2>
-                <h3 className="enter-password__content-pwd-form-comment">
+        <div className="enter-new-password__content">
+            <div className="enter-new-password__content-pwd-form">
+                <h2 className="enter-new-password__content-pwd-form-header">Password protection</h2>
+                <h3 className="enter-new-password__content-pwd-form-comment">
                     So no one else, but you can unlock your wallet.
                 </h3>
                 <form
@@ -57,7 +57,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
                     )}
                 </form>
             </div>
-            <div className="enter-password__content-buttons">
+            <div className="enter-new-password__content-buttons">
                 <Button
                     text={'Sign in the wallet'}
                     onClick={handleSubmit(() => {

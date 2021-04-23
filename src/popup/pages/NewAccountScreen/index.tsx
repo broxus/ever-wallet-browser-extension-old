@@ -8,7 +8,7 @@ import * as nt from '@nekoton'
 import SignPolicy from '@components/SignPolicy'
 import SelectContractType from '@components/SelectContractType'
 import ExportedSeed from '@components/ExportedSeed'
-import CheckSeed from '@components/CheckSeed'
+import { CheckSeedOnCreation } from '@components/CheckSeed'
 import EnterNewPassword from '@components/EnterNewPassword'
 import Modal from '@components/Modal'
 
@@ -81,7 +81,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
                 />
             )}
             {localStep == LocalStep.CHECK_PHRASE && (
-                <CheckSeed
+                <CheckSeedOnCreation
                     onSubmit={() => {
                         setLocalStep(LocalStep.ENTER_PASSWORD)
                     }}

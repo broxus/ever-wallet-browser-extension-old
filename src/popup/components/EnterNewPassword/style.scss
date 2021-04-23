@@ -1,7 +1,51 @@
+@import '../../styles/colors';
+
 .enter-password-screen {
     &__modal {
         width: 100%;
         min-height: 100px;
         top: 0;
+    }
+}
+
+.enter-new-password {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 28px 28px;
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 100%;
+
+        &-pwd-form {
+            display: flex;
+            flex-direction: column;
+            height: 172px;
+            justify-content: space-between;
+
+            &-header {
+                margin-bottom: 12px;
+            }
+
+            &-comment {
+                color: $windowFg;
+                margin-bottom: 28px;
+            }
+
+            input {
+                cursor: text;
+            }
+        }
+
+        &-buttons {
+            display: flex;
+            flex-direction: column;
+
+            & > button:not(:last-child) {
+                margin-bottom: 12px;
+            }
+        }
     }
 }
