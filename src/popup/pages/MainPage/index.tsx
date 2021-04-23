@@ -26,7 +26,6 @@ interface IMainPage {
     setStep: (step: Step) => void
     startSubscription: Action<typeof startSubscription>
     logOut: Action<typeof logOut>
-    isDeployed: (address: string) => Promise<boolean>
 }
 
 enum Panel {
@@ -45,29 +44,12 @@ const MainPage: React.FC<IMainPage> = ({
     setStep,
     startSubscription,
     logOut,
-    isDeployed,
 }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
-    const [contractDeployed, setContractDeployed] = useState(false)
 
     useEffect(() => {
         if (account != null) {
             startSubscription(account.tonWallet.address).then(() => {})
-
-            Promise.resolve(isDeployed(account.tonWallet.address)).then((res) =>
-                setContractDeployed(res)
-            )
-            console.log(contractDeployed, 'contractDep')
-        }
-    }, [account])
-
-    useEffect(() => {
-        if (account != null) {
-            startSubscription(account.tonWallet.address).then(() => {})
-
-            Promise.resolve(isDeployed(account.tonWallet.address)).then((res) =>
-                console.log(res, 'res')
-            )
         }
     }, [])
 
@@ -91,7 +73,6 @@ const MainPage: React.FC<IMainPage> = ({
                 onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
                 onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
                 onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
-                contractDeployed={contractDeployed}
             />
             <UserAssets
                 tonWalletState={tonWalletState}
@@ -131,5 +112,4 @@ const mapStateToProps = (store: { app: AppState }) => ({
 export default connect(mapStateToProps, {
     startSubscription,
     logOut,
-    isDeployed,
 })(MainPage)

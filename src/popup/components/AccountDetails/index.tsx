@@ -14,7 +14,6 @@ import AddAccount from '@img/add-account.svg'
 import AccountCard from '@components/AccountCard'
 import Carousel from '@components/Carousel'
 
-import { isDeployed } from '@store/app/actions'
 import './style.scss'
 
 type AccountDetailsParams = {
@@ -26,7 +25,6 @@ type AccountDetailsParams = {
     onLogOut: () => void
     onCreateAccount: () => void
     onOpenKeyStore: () => void
-    contractDeployed: boolean
 }
 
 interface IAddNewAccountCard {
@@ -57,7 +55,6 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     onDeploy,
     onCreateAccount,
     onOpenKeyStore,
-    contractDeployed,
 }) => {
     const [modalVisible, setModalVisible] = useState(false)
 
