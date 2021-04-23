@@ -1,14 +1,33 @@
 import { EventEmitter } from 'events'
-import { Mutex } from 'await-semaphore'
 import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
-import { DestroyableMiddleware, JsonRpcEngine, JsonRpcMiddleware } from '../../shared/jrpc'
-import { createEngineStream } from '../../shared/utils'
+import * as nt from '@nekoton'
+
+import {
+    DestroyableMiddleware,
+    JsonRpcEngine,
+    JsonRpcFailure,
+    JsonRpcMiddleware,
+    JsonRpcRequest,
+    JsonRpcSuccess,
+} from '../../shared/jrpc'
+import {
+    createEngineStream,
+    NekotonRpcError,
+    nodeify,
+    RpcErrorCode,
+    serializeError,
+} from '../../shared/utils'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
+import { ApplicationState } from './ApplicationState'
+import { ApprovalController } from './controllers/ApprovalController'
 
 interface NekotonControllerOptions {
+    storage: nt.Storage
+    accountsStorage: nt.AccountsStorage
+    keyStore: nt.KeyStore
     showUserConfirmation: () => void
     openPopup: () => void
     getRequestAccountTabIds: () => { [origin: string]: number }
@@ -29,6 +48,9 @@ export class NekotonController extends EventEmitter {
     private readonly _connections: { [origin: string]: { [id: string]: { engine: JsonRpcEngine } } }
 
     private _options: NekotonControllerOptions
+    private _applicationState: ApplicationState
+
+    private _approvalController: ApprovalController
 
     constructor(options: NekotonControllerOptions) {
         super()
@@ -39,6 +61,16 @@ export class NekotonController extends EventEmitter {
         this._connections = {}
 
         this._options = options
+
+        this._applicationState = new ApplicationState({
+            storage: options.storage,
+            accountsStorage: options.accountsStorage,
+            keyStore: options.keyStore,
+        })
+
+        this._approvalController = new ApprovalController({
+            showApprovalRequest: options.showUserConfirmation,
+        })
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
@@ -66,11 +98,26 @@ export class NekotonController extends EventEmitter {
         this._setupProviderConnection(mux.createStream(NEKOTON_PROVIDER), sender, false)
     }
 
+    public getApi() {
+        return {
+            resolvePendingApproval: nodeify(
+                this._approvalController.resolve,
+                this._approvalController
+            ),
+            rejectPendingApproval: nodeify(
+                this._approvalController.reject,
+                this._approvalController
+            ),
+        }
+    }
+
     private _setupControllerConnection<T extends Duplex>(outStream: T) {
+        const api = this.getApi()
+
         this._activeControllerConnections += 1
         this.emit('controllerConnectionChanged', this._activeControllerConnections)
 
-        //outStream.on('data');
+        outStream.on('data', createMetaRPCHandler(api, outStream))
 
         const handleUpdate = (update: unknown) => {
             outStream.push({
@@ -182,6 +229,33 @@ export class NekotonController extends EventEmitter {
             delete this._connections[origin]
         }
     }
+
+    private _notifyConnections<T>(origin: string, payload: T) {
+        const connections = this._connections[origin]
+        if (connections) {
+            Object.values(connections).forEach(({ engine }) => {
+                engine.emit('notification', payload)
+            })
+        }
+    }
+
+    private _notifyAllConnections<T extends {}>(
+        payload: ((origin: { [id: string]: { engine: JsonRpcEngine } }) => T) | T
+    ) {
+        const getPayload =
+            typeof payload === 'function'
+                ? (origin: { [id: string]: { engine: JsonRpcEngine } }) =>
+                      (payload as (origin: { [id: string]: { engine: JsonRpcEngine } }) => T)(
+                          origin
+                      )
+                : () => payload
+
+        Object.values(this._connections).forEach((origin) => {
+            Object.values(origin).forEach(({ engine }) => {
+                engine.emit('notification', getPayload(origin))
+            })
+        })
+    }
 }
 
 interface AddConnectionOptions {
@@ -243,4 +317,43 @@ const setupMultiplex = <T extends Duplex>(connectionStream: T) => {
         }
     })
     return mux
+}
+
+const createMetaRPCHandler = <T extends Duplex>(
+    api: ReturnType<typeof NekotonController.prototype.getApi>,
+    outStream: T
+) => {
+    return (data: JsonRpcRequest<unknown[]>) => {
+        type MethodName = keyof typeof api
+
+        if (![data.method as MethodName]) {
+            outStream.write(<JsonRpcFailure>{
+                jsonrpc: '2.0',
+                error: new NekotonRpcError(
+                    RpcErrorCode.METHOD_NOT_FOUND,
+                    `${data.method} not found`
+                ),
+                id: data.id,
+            })
+        }
+
+        api[data.method as MethodName](
+            ...(data.params || []),
+            <T>(error: Error | undefined, result: T) => {
+                if (error) {
+                    outStream.write(<JsonRpcFailure>{
+                        jsonrpc: '2.0',
+                        error: serializeError(error, { shouldIncludeStack: true }),
+                        id: data.id,
+                    })
+                } else {
+                    outStream.write(<JsonRpcSuccess<T>>{
+                        jsonrpc: '2.0',
+                        result,
+                        id: data.id,
+                    })
+                }
+            }
+        )
+    }
 }

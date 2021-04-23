@@ -1,11 +1,12 @@
 import '../../polyfills'
 
 import endOfStream from 'end-of-stream'
-import init from '@nekoton'
+import init, * as nt from '@nekoton'
 import { ENVIRONMENT_TYPE_POPUP, ENVIRONMENT_TYPE_NOTIFICATION } from '../../shared/constants'
-import { NotificationManager } from './notificationManager'
-import { NekotonController } from './nekotonController'
 import { PortDuplexStream } from '../../shared/utils'
+import { StorageConnector } from '../../shared'
+import { NotificationManager } from './NotificationManager'
+import { NekotonController } from './NekotonController'
 import { checkForError } from './utils'
 
 const notificationManager = new NotificationManager()
@@ -25,7 +26,14 @@ const initialize = async () => {
 const setupController = async () => {
     console.log('Setup controller')
 
+    const storage = new nt.Storage(new StorageConnector())
+    const accountsStorage = await nt.AccountsStorage.load(storage)
+    const keyStore = await nt.KeyStore.load(storage)
+
     const controller = new NekotonController({
+        storage,
+        accountsStorage,
+        keyStore,
         showUserConfirmation: triggerUi,
         openPopup,
         getRequestAccountTabIds: () => {

@@ -89,12 +89,12 @@ export class NotificationManager {
                 left = (lastFocused.left || left) + ((lastFocused.width || 0) - NOTIFICATION_WIDTH)
             } catch (_) {
                 const { screenX, screenY, outerWidth } = window
-                top = Math.max(screenX, 0)
+                top = Math.max(screenY, 0)
                 left = Math.max(screenX + (outerWidth - NOTIFICATION_WIDTH), 0)
             }
 
             const popupWindow = await openWindow({
-                url: 'popup.html',
+                url: 'notification.html',
                 type: 'popup',
                 width: NOTIFICATION_WIDTH,
                 height: NOTIFICATION_HEIGHT,

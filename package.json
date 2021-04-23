@@ -72,6 +72,7 @@
     "obj-multiplex": "^1.0.0",
     "pako": "^2.0.3",
     "post-message-stream": "^3.0.0",
+    "promise-to-callback": "^1.0.0",
     "pump": "^3.0.0",
     "react": "^17.0.1",
     "react-copy-to-clipboard": "^5.0.3",

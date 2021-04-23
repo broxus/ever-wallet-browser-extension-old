@@ -2,6 +2,9 @@ import '../polyfills'
 
 import safeStringify from 'fast-safe-stringify'
 import { EventEmitter } from 'events'
+import { Duplex } from 'readable-stream'
+import promiseToCallback from 'promise-to-callback'
+
 import {
     JsonRpcEngineNextCallback,
     JsonRpcEngineEndCallback,
@@ -11,7 +14,6 @@ import {
     PendingJsonRpcResponse,
     JsonRpcEngine,
 } from './jrpc'
-import { Duplex } from 'readable-stream'
 
 const MAX = 4294967295
 
@@ -26,6 +28,8 @@ export enum RpcErrorCode {
     INTERNAL,
     TRY_AGAIN_LATER,
     INVALID_REQUEST,
+    RESOURCE_UNAVAILABLE,
+    METHOD_NOT_FOUND,
 }
 
 export type Maybe<T> = Partial<T> | null | undefined
@@ -104,6 +108,35 @@ export class SafeEventEmitter extends EventEmitter {
         }
 
         return true
+    }
+}
+
+const callbackNoop = (error?: Error) => {
+    if (error) {
+        throw error
+    }
+}
+
+export const nodeify = <C>(fn: Function, context: C) => {
+    return function (...args: unknown[]) {
+        const lastArg = args[args.length - 1]
+        const lastArgIsCallback = typeof lastArg === 'function'
+
+        let callback
+        if (lastArgIsCallback) {
+            callback = lastArg
+            args.pop()
+        } else {
+            callback = callbackNoop
+        }
+
+        let result
+        try {
+            result = Promise.resolve(fn.apply(context, args))
+        } catch (e) {
+            result = Promise.reject(e)
+        }
+        promiseToCallback(result)(callback)
     }
 }
 

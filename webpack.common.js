@@ -83,8 +83,14 @@ module.exports = {
             ],
         }),
         new HtmlWebpackPlugin({
-            template: path.resolve(__dirname, 'src/popup/index.html'),
+            template: path.resolve(__dirname, 'src/popup/popup.html'),
             chunks: ['popup'],
+            filename: 'popup.html',
+        }),
+        new HtmlWebpackPlugin({
+            template: path.resolve(__dirname, 'src/popup/notification.html'),
+            chunks: ['popup'],
+            filename: 'notification.html',
         }),
         new ProvidePlugin({
             process: 'process/browser',
