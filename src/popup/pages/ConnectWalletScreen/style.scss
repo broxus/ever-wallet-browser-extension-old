@@ -44,6 +44,79 @@
         }
     }
 
+    &__spend-top-panel {
+        align-items: center;
+        background-color: $mainDarkBg;
+        display: flex;
+        flex-direction: column;
+        height: 337px;
+        padding: 16px 20px 0;
+
+        &__network {
+            align-items: center;
+            justify-content: space-between;
+            display: flex;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+            margin-bottom: 24px;
+            width: 100%;
+        }
+
+        &__site {
+            align-items: center;
+            display: flex;
+            color: #ffffff;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        &__header {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 24px;
+            line-height: 32px;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        &__comment {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #ffffff;
+            opacity: 0.6;
+        }
+        &__account {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #ffffff;
+            padding: 0 8px;
+        }
+    }
+
+    &__spend-details {
+        padding: 20px;
+        &-title {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 20px;
+            line-height: 24px;
+            letter-spacing: 0.15px;
+            margin-bottom: 10px;
+            color: #000000;
+        }
+    }
+
     &__network {
         background: rgba(255, 255, 255, 0.16);
         border-radius: 91px;
@@ -78,6 +151,7 @@
 
         &-entry {
             display: flex;
+            align-items: center;
             padding: 0 12px;
             white-space: nowrap;
         }

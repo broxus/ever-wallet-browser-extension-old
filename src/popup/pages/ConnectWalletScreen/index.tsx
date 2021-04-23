@@ -5,11 +5,15 @@ import cn from 'classnames'
 import './style.scss'
 import { Step } from '@common'
 import UserPicS from '@img/user-avatar-placeholder-s.svg'
+import WebsiteIcon from '@img/website-icon.svg'
 import Arrow from '@img/arrow.svg'
 import { AppState } from '@store/app/types'
 import { connect } from 'react-redux'
 import { convertAddress, convertTons } from '@utils'
 import Button from '@components/Button'
+import SlidingPanel from '@components/SlidingPanel'
+import AddNewToken from '@components/AddNewToken'
+import EnterPassword from '@components/EnterPassword'
 
 type IConnectWallet = {
     setStep: (step: Step) => void
@@ -26,6 +30,87 @@ enum LocalStep {
     REQUEST_CONTRACT,
     SPEND,
     CONNECT_WALLET,
+}
+
+interface ISpend {
+    account: nt.AssetsList | null
+    tonWalletState: nt.AccountState | null
+    setStep: (step: Step) => void
+}
+
+const Spend: React.FC<ISpend> = ({ setStep, account, tonWalletState }) => {
+    const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
+
+    const [isOpen, setIsOpen] = useState<boolean>(false)
+
+    return (
+        <div className="connect-wallet">
+            <div className="connect-wallet__spend-top-panel">
+                <div className="connect-wallet__spend-top-panel__network">
+                    <div className="connect-wallet__address-entry">
+                        <UserPicS />
+                        <div className="connect-wallet__spend-top-panel__account">
+                            {account?.name}
+                        </div>
+                    </div>
+                    <div className="connect-wallet__network" style={{ marginBottom: '0' }}>
+                        Mainnet
+                    </div>
+                </div>
+                <div className="connect-wallet__spend-top-panel__site">
+                    <WebsiteIcon />
+                    <div className="connect-wallet__address-entry">https://tonbrdige.io</div>
+                </div>
+                <h3 className="connect-wallet__spend-top-panel__header">
+                    Allow this site to spend your WTON?
+                </h3>
+                <p className="connect-wallet__spend-top-panel__comment">
+                    Do you trust this site? By granting this permission, you’re allowing
+                    https://app.uniswap.org to withdraw your WTON and automate transactions for you.
+                </p>
+            </div>
+            <div className="connect-wallet__spend-details">
+                <p className="connect-wallet__spend-details-title">Transaction details</p>
+                <div className="connect-wallet__details__description">
+                    <div className="connect-wallet__details__description-param">
+                        <span className="connect-wallet__details__description-param-desc">Fee</span>
+                        <span className="connect-wallet__details__description-param-value">
+                            0.12 TON
+                        </span>
+                    </div>
+                    <div className="connect-wallet__details__description-param">
+                        <span className="connect-wallet__details__description-param-desc">
+                            Amount
+                        </span>
+                        <span className="connect-wallet__details__description-param-value">
+                            12 TON
+                        </span>
+                    </div>
+                    <div className="connect-wallet__details__description-param">
+                        <span className="connect-wallet__details__description-param-desc">To</span>
+                        <span className="connect-wallet__details__description-param-value">
+                            {convertAddress(
+                                '0x095ea7b30000000000000000000007a250d5630b4cf539739df2c5dacb4c659f2488df'
+                            )}
+                        </span>
+                    </div>
+                </div>
+                <p className="connect-wallet__spend-details-title">Data</p>
+                <div className="connect-wallet__details__data">{JSON.stringify(mockData)}</div>
+            </div>
+            <div className="connect-wallet__buttons">
+                <div className="connect-wallet__buttons-button">
+                    <Button type="button" white text="Reject" onClick={() => setStep(Step.MAIN)} />
+                </div>
+                <div className="connect-wallet__buttons-button">
+                    <Button type="submit" text="Send" onClick={() => setIsOpen(true)} />
+                </div>
+            </div>
+            <SlidingPanel isOpen={isOpen} onClose={() => setIsOpen(false)}>
+                <EnterPassword setStep={setStep} minHeight={'300px'} />
+            </SlidingPanel>
+        </div>
+    )
 }
 
 interface IRequestContract {
@@ -164,7 +249,7 @@ const RequestContract: React.FC<IRequestContract> = ({ account, tonWalletState, 
 }
 
 const ConnectWallet: React.FC<IConnectWallet> = ({ setStep, account, tonWalletState }) => {
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.REQUEST_CONTRACT)
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SPEND)
 
     const [password, setPassword] = useState<string>('')
 
@@ -184,6 +269,9 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ setStep, account, tonWalletSt
                     tonWalletState={tonWalletState}
                     setStep={setStep}
                 />
+            )}
+            {localStep == LocalStep.SPEND && (
+                <Spend account={account} tonWalletState={tonWalletState} setStep={setStep} />
             )}
         </>
     )
