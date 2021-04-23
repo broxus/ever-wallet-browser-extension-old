@@ -14,6 +14,7 @@ interface ISlidingPanel {
 const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, onClose, children }) => {
     return (
         <>
+            {isOpen && <div className="sliding-panel__fade-in"></div>}
             <div className={cn('sliding-panel__wrapper', { _active: isOpen })}>
                 <div className="sliding-panel__wrapper__background" onClick={onClose} />
                 <div className={cn('sliding-panel__content')}>
