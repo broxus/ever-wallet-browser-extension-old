@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { AppState } from '@store/app/types'
-import { logOut, startSubscription } from '@store/app/actions'
+import { isDeployed, logOut, startSubscription } from '@store/app/actions'
 import { Step } from '@common'
 import { Action } from '@utils'
 import * as nt from '@nekoton'
@@ -17,6 +17,7 @@ import CreateAccountScreen from '../CreateAccount'
 import AssetFull from '@components/AssetFull'
 
 import './style.scss'
+import DeployWallet from '@components/DeployWallet/DeployWallet'
 
 interface IMainPage {
     account: nt.AssetsList | null
@@ -25,6 +26,7 @@ interface IMainPage {
     setStep: (step: Step) => void
     startSubscription: Action<typeof startSubscription>
     logOut: Action<typeof logOut>
+    isDeployed: (address: string) => Promise<boolean>
 }
 
 enum Panel {
@@ -33,6 +35,7 @@ enum Panel {
     KEY_STORAGE,
     CREATE_ACCOUNT,
     ASSET,
+    DEPLOY,
 }
 
 const MainPage: React.FC<IMainPage> = ({
@@ -42,12 +45,29 @@ const MainPage: React.FC<IMainPage> = ({
     setStep,
     startSubscription,
     logOut,
+    isDeployed,
 }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
+    const [contractDeployed, setContractDeployed] = useState(false)
 
     useEffect(() => {
         if (account != null) {
             startSubscription(account.tonWallet.address).then(() => {})
+
+            Promise.resolve(isDeployed(account.tonWallet.address)).then((res) =>
+                setContractDeployed(res)
+            )
+            console.log(contractDeployed, 'contractDep')
+        }
+    }, [account])
+
+    useEffect(() => {
+        if (account != null) {
+            startSubscription(account.tonWallet.address).then(() => {})
+
+            Promise.resolve(isDeployed(account.tonWallet.address)).then((res) =>
+                console.log(res, 'res')
+            )
         }
     }, [])
 
@@ -68,8 +88,10 @@ const MainPage: React.FC<IMainPage> = ({
                 }}
                 onReceive={() => setOpenedPanel(Panel.RECEIVE)}
                 onSend={() => setOpenedPanel(Panel.SEND)}
+                onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
                 onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
                 onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
+                contractDeployed={contractDeployed}
             />
             <UserAssets
                 tonWalletState={tonWalletState}
@@ -91,6 +113,9 @@ const MainPage: React.FC<IMainPage> = ({
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountScreen />}
                     {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
+                    {openedPanel == Panel.DEPLOY && (
+                        <DeployWallet account={account} tonWalletState={tonWalletState} />
+                    )}
                 </>
             </SlidingPanel>
         </>
@@ -106,4 +131,5 @@ const mapStateToProps = (store: { app: AppState }) => ({
 export default connect(mapStateToProps, {
     startSubscription,
     logOut,
+    isDeployed,
 })(MainPage)

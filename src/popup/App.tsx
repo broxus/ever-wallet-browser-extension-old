@@ -44,8 +44,8 @@ const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
 
     useEffect(() => {
         if (accountLoaded) {
-            // setStep(Step.MAIN)
-            setStep(Step.CONNECT_WALLET)
+            setStep(Step.MAIN)
+            // setStep(Step.CONNECT_WALLET)
         }
     }, [accountLoaded])
 

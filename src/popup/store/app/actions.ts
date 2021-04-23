@@ -212,6 +212,22 @@ export const startSubscription = (address: string) => async (dispatch: AppDispat
     }
 }
 
+export const isDeployed = (address: string) => async (dispatch: AppDispatch) => {
+    try {
+        const account = await loadAccount(address)
+
+        const tonWallet = await loadSubscription(
+            account.tonWallet.publicKey,
+            account.tonWallet.contractType,
+            makeSubscriptionHandler(dispatch)
+        )
+        return tonWallet.accountState().isDeployed
+    } catch (e) {
+        console.log(e, 'e')
+        return false
+    }
+}
+
 export const prepareDeploy = (address: string) => async (dispatch: AppDispatch) => {
     let unlock: (() => void) | null = null
     try {
@@ -222,6 +238,14 @@ export const prepareDeploy = (address: string) => async (dispatch: AppDispatch) 
             account.tonWallet.contractType,
             makeSubscriptionHandler(dispatch)
         )
+
+        if (!tonWallet.accountState().isDeployed) {
+            if (account.tonWallet.contractType == 'WalletV3') {
+                const deploy_msg = tonWallet.prepareDeploy(60)
+                await sendMessage(address, deploy_msg, 'lol') //todo
+            } else {
+            }
+        }
 
         unlock = await lockSubscription(tonWallet.address)
 

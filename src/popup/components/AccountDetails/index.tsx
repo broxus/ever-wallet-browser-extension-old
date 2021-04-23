@@ -7,12 +7,14 @@ import AccountModal from '@components/AccountModal'
 
 import ReceiveIcon from '@img/receive.svg'
 import SendIcon from '@img/send.svg'
+import DeployIcon from '@img/deploy-icon.svg'
 import Notifications from '@img/notifications.svg'
 import Profile from '@img/profile.svg'
 import AddAccount from '@img/add-account.svg'
 import AccountCard from '@components/AccountCard'
 import Carousel from '@components/Carousel'
 
+import { isDeployed } from '@store/app/actions'
 import './style.scss'
 
 type AccountDetailsParams = {
@@ -20,9 +22,11 @@ type AccountDetailsParams = {
     tonWalletState: nt.AccountState | null
     onSend: () => void
     onReceive: () => void
+    onDeploy: () => void
     onLogOut: () => void
     onCreateAccount: () => void
     onOpenKeyStore: () => void
+    contractDeployed: boolean
 }
 
 interface IAddNewAccountCard {
@@ -50,8 +54,10 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     onLogOut,
     onReceive,
     onSend,
+    onDeploy,
     onCreateAccount,
     onOpenKeyStore,
+    contractDeployed,
 }) => {
     const [modalVisible, setModalVisible] = useState(false)
 
@@ -136,13 +142,27 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            onSend?.()
+                            if (tonWalletState?.isDeployed) {
+                                onSend?.()
+                            } else {
+                                onDeploy?.()
+                            }
                         }}
                     >
                         <div className="account-details__controls__button__content">
-                            {/*@ts-ignore*/}
-                            <SendIcon style={{ marginRight: '8px' }} />
-                            Send
+                            {tonWalletState?.isDeployed ? (
+                                <>
+                                    {/*@ts-ignore*/}
+                                    <SendIcon style={{ marginRight: '8px' }} />
+                                    Send
+                                </>
+                            ) : (
+                                <>
+                                    {/*@ts-ignore*/}
+                                    <DeployIcon style={{ marginRight: '8px' }} />
+                                    Deploy
+                                </>
+                            )}
                         </div>
                     </button>
                 </div>

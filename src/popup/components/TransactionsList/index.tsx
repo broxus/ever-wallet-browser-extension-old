@@ -1,5 +1,6 @@
 import React from 'react'
 import * as nt from '@nekoton'
+import './style.scss'
 
 import TransactionListItem from '@components/TransactionsListItem'
 
@@ -17,6 +18,9 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
                 position: 'relative',
             }}
         >
+            {!(transactions.length > 0) && (
+                <p className="transactions-list-empty">History is empty</p>
+            )}
             {transactions?.map((transaction) => {
                 return <TransactionListItem key={transaction.id.lt} transaction={transaction} />
             })}
