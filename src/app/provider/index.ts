@@ -1,6 +1,6 @@
 import { Duplex } from 'readable-stream'
-import { NekotonInpageProvider } from './nekotonInpageProvider'
-import { ConsoleLike } from '../utils'
+import { NekotonInpageProvider } from './NekotonInpageProvider'
+import { ConsoleLike } from '../../shared/utils'
 
 type InitializeProviderOptions<T extends Duplex> = {
     connectionStream: T

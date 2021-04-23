@@ -2,55 +2,9 @@ import '../polyfills'
 
 import LocalMessageDuplexStream from 'post-message-stream'
 import ObjectMultiplex from 'obj-multiplex'
-import { Duplex } from 'readable-stream'
+import { PortDuplexStream } from '../shared/utils'
 import pump from 'pump'
-
-const CONTENT_SCRIPT = 'nekoton-contentscript'
-const INPAGE_SCRIPT = 'nekoton-inpage'
-const PROVIDER = 'nekoton-provider'
-
-class PortDuplexStream extends Duplex {
-    private port: chrome.runtime.Port
-
-    constructor(port: chrome.runtime.Port) {
-        super({ objectMode: true })
-        this.port = port
-        this.port.onMessage.addListener((msg: unknown) => this.onMessage(msg))
-        this.port.onDisconnect.addListener(() => this.onDisconnect())
-    }
-
-    private onMessage(msg: unknown) {
-        if (Buffer.isBuffer(msg)) {
-            const data: Buffer = Buffer.from(msg)
-            this.push(data)
-        } else {
-            this.push(msg)
-        }
-    }
-
-    private onDisconnect() {
-        this.destroy()
-    }
-
-    _read(_size?: number) {
-        return undefined
-    }
-
-    _write(message: unknown, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-        try {
-            if (Buffer.isBuffer(message)) {
-                const data: Record<string, unknown> = message.toJSON()
-                data._isBuffer = true
-                this.port.postMessage(data)
-            } else {
-                this.port.postMessage(message)
-            }
-        } catch (e) {
-            return callback(new Error('PortDuplexStream - disconnected'))
-        }
-        return callback()
-    }
-}
+import { CONTENT_SCRIPT, INPAGE_SCRIPT, NEKOTON_PROVIDER } from '../shared/constants'
 
 const logStreamDisconnectWarning = (remoteLabel: string, error?: Error) => {
     console.debug(`Nekoton: Content script lost connection to "${remoteLabel}"`, error)
@@ -75,7 +29,7 @@ const checkSuffix = () => {
     return true
 }
 
-const checkDocymentElement = () => {
+const checkDocumentElement = () => {
     const documentElement = document.documentElement.nodeName
     if (documentElement) {
         return documentElement.toLowerCase() === 'html'
@@ -83,7 +37,7 @@ const checkDocymentElement = () => {
     return true
 }
 
-const shouldInjectProvider = () => checkDoctype() && checkSuffix() && checkDocymentElement()
+const shouldInjectProvider = () => checkDoctype() && checkSuffix() && checkDocumentElement()
 
 const injectScript = () => {
     try {
@@ -106,7 +60,7 @@ const forwardTrafficBetweenMutexes = (
     const channelA = a.createStream(channelName)
     const channelB = b.createStream(channelName)
     pump(channelA, channelB, channelA, (e) => {
-        console.debug(`Nekoton: Muxed traffix for channel "${channelName}" failed`, e)
+        console.debug(`Nekoton: Muxed traffic for channel "${channelName}" failed`, e)
     })
 }
 
@@ -115,7 +69,7 @@ const notifyInpageOfStreamFailure = () => {
         {
             target: INPAGE_SCRIPT,
             data: {
-                name: PROVIDER,
+                name: NEKOTON_PROVIDER,
                 data: {
                     jsonrpc: '2.0',
                     method: 'NEKOTON_STREAM_FAILURE',
@@ -146,10 +100,10 @@ const setupStreams = () => {
         logStreamDisconnectWarning('Nekoton background multiplex', e)
         notifyInpageOfStreamFailure()
     })
-
-    forwardTrafficBetweenMutexes(PROVIDER, pageMux, extensionMux)
+    forwardTrafficBetweenMutexes(NEKOTON_PROVIDER, pageMux, extensionMux)
 }
 
 if (shouldInjectProvider()) {
     injectScript()
+    setupStreams()
 }

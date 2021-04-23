@@ -7,8 +7,7 @@ import {
     JsonRpcResponse,
     JsonRpcId,
     JsonRpcVersion,
-    JsonRpcSuccess,
-} from '../jrpc'
+} from '../../shared/jrpc'
 import {
     ConsoleLike,
     createIdRemapMiddleware,
@@ -20,7 +19,8 @@ import {
     NekotonRpcError,
     RpcErrorCode,
     SafeEventEmitter,
-} from '../utils'
+} from '../../shared/utils'
+import { NEKOTON_PROVIDER } from '../../shared/constants'
 import pump from 'pump'
 
 interface UnvalidatedJsonRpcRequest {
@@ -55,10 +55,10 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
     constructor(
         connectionStream: S,
         {
-            jsonRpcStreamName = 'nekoton-provider',
+            jsonRpcStreamName = NEKOTON_PROVIDER,
             logger = console,
             maxEventListeners = 100,
-        }: NekotonInpageProviderOptions = {}
+        }: NekotonInpageProviderOptions
     ) {
         super()
 
@@ -98,12 +98,12 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         )
 
         const rpcEngine = new JsonRpcEngine()
-        rpcEngine.push(createIdRemapMiddleware)
+        rpcEngine.push(createIdRemapMiddleware())
         rpcEngine.push(createErrorMiddleware(this._log))
         rpcEngine.push(jsonRpcConnection.middleware)
         this._rpcEngine = rpcEngine
 
-        this._initializeState()
+        this._initializeState().then(() => {})
 
         jsonRpcConnection.events.on('notification', (payload) => {
             const { method, params } = payload
@@ -142,6 +142,13 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         return new Promise<T>((resolve, reject) => {
             this._rpcRequest({ method, params }, getRpcPromiseCallback(resolve, reject))
         })
+    }
+
+    public sendAsync(
+        payload: JsonRpcRequest<unknown>,
+        callback: (error: Error | null, response?: JsonRpcResponse<unknown>) => void
+    ) {
+        this._rpcRequest(payload, callback)
     }
 
     private _initializeState = async () => {

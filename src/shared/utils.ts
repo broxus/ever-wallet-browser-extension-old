@@ -1,5 +1,10 @@
+import '../polyfills'
+
 import safeStringify from 'fast-safe-stringify'
 import { EventEmitter } from 'events'
+import { Duplex } from 'readable-stream'
+import promiseToCallback from 'promise-to-callback'
+
 import {
     JsonRpcEngineNextCallback,
     JsonRpcEngineEndCallback,
@@ -9,7 +14,6 @@ import {
     PendingJsonRpcResponse,
     JsonRpcEngine,
 } from './jrpc'
-import { Duplex } from 'readable-stream'
 
 const MAX = 4294967295
 
@@ -24,6 +28,8 @@ export enum RpcErrorCode {
     INTERNAL,
     TRY_AGAIN_LATER,
     INVALID_REQUEST,
+    RESOURCE_UNAVAILABLE,
+    METHOD_NOT_FOUND,
 }
 
 export type Maybe<T> = Partial<T> | null | undefined
@@ -105,6 +111,81 @@ export class SafeEventEmitter extends EventEmitter {
     }
 }
 
+const callbackNoop = (error?: Error) => {
+    if (error) {
+        throw error
+    }
+}
+
+export const nodeify = <C>(fn: Function, context: C) => {
+    return function (...args: unknown[]) {
+        const lastArg = args[args.length - 1]
+        const lastArgIsCallback = typeof lastArg === 'function'
+
+        let callback
+        if (lastArgIsCallback) {
+            callback = lastArg
+            args.pop()
+        } else {
+            callback = callbackNoop
+        }
+
+        let result
+        try {
+            result = Promise.resolve(fn.apply(context, args))
+        } catch (e) {
+            result = Promise.reject(e)
+        }
+        promiseToCallback(result)(callback)
+    }
+}
+
+export class PortDuplexStream extends Duplex {
+    private port: chrome.runtime.Port
+
+    constructor(port: chrome.runtime.Port) {
+        super({ objectMode: true })
+        this.port = port
+        this.port.onMessage.addListener((msg: unknown) => this._onMessage(msg))
+        this.port.onDisconnect.addListener(() => {
+            console.log('onDisconnect')
+            this._onDisconnect()
+        })
+    }
+
+    private _onMessage(msg: unknown) {
+        if (Buffer.isBuffer(msg)) {
+            const data: Buffer = Buffer.from(msg)
+            this.push(data)
+        } else {
+            this.push(msg)
+        }
+    }
+
+    private _onDisconnect() {
+        this.destroy()
+    }
+
+    _read() {
+        return undefined
+    }
+
+    _write(message: unknown, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
+        try {
+            if (Buffer.isBuffer(message)) {
+                const data: Record<string, unknown> = message.toJSON()
+                data._isBuffer = true
+                this.port.postMessage(data)
+            } else {
+                this.port.postMessage(message)
+            }
+        } catch (e) {
+            return callback(new Error('PortDuplexStream - disconnected'))
+        }
+        return callback()
+    }
+}
+
 export const logStreamDisconnectWarning = (
     log: ConsoleLike,
     remoteLabel: string,
@@ -143,29 +224,30 @@ export const createEngineStream = (options: EngineStreamOptions): Duplex => {
     }
 
     const { engine } = options
-    const stream = new Duplex({ objectMode: true, read, write })
+    const stream = new Duplex({
+        objectMode: true,
+        read: () => {
+            return false
+        },
+        write: (
+            request: JsonRpcRequest<unknown>,
+            _encoding: unknown,
+            cb: (error?: Error | null) => void
+        ) => {
+            engine.handle(request, (_err, res) => {
+                stream.push(res)
+            })
+            cb()
+        },
+    })
 
     if (engine.on) {
         engine.on('notification', (message) => {
             stream.push(message)
         })
     }
+
     return stream
-
-    function read() {
-        return undefined
-    }
-
-    function write(
-        request: JsonRpcRequest<unknown>,
-        _encoding: unknown,
-        cb: (error?: Error | null) => void
-    ) {
-        engine.handle(request, (_err, res) => {
-            stream.push(res)
-        })
-        cb()
-    }
 }
 
 interface IdMapValue {

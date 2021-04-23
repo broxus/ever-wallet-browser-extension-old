@@ -11,7 +11,7 @@ import {
 } from './services'
 
 import * as nt from '@nekoton'
-import { mergeTransactions, Mutex } from '../../../background/common'
+import { mergeTransactions } from '../../../shared'
 import { parseTons } from '@utils'
 
 export const Action = {
