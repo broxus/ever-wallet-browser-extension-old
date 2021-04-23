@@ -4,8 +4,13 @@ import { AppState } from '@store/app/types'
 import { setupCurrentAccount } from '@store/app/actions'
 import { Step } from '@common'
 import { Action } from '@utils'
-import { IMetaRPCClient } from '@utils/MetaRPCClient'
-import init from '@nekoton'
+import { IControllerRpcClient } from '@utils/ControllerRpcClient'
+import {
+    ENVIRONMENT_TYPE_POPUP,
+    ENVIRONMENT_TYPE_NOTIFICATION,
+    ENVIRONMENT_TYPE_BACKGROUND,
+} from '../shared/constants'
+import init, * as nt from '@nekoton'
 
 import WelcomePage from './pages/WelcomePage'
 import MainPage from './pages/MainPage'
@@ -26,27 +31,28 @@ const Loader: React.FC = () => {
     )
 }
 
-export interface ActiveTab {
-    id?: number
-    title?: string
-    origin: string
-    protocol?: string
-    url?: string
-}
+export type ActiveTab =
+    | nt.EnumItem<
+          typeof ENVIRONMENT_TYPE_POPUP,
+          {
+              id?: number
+              title?: string
+              origin: string
+              protocol?: string
+              url?: string
+          }
+      >
+    | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
+    | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
 interface IApp {
     activeTab?: ActiveTab
-    backgroundConnection: IMetaRPCClient
+    controllerRpc: IControllerRpcClient
     accountLoaded: boolean
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({
-    activeTab,
-    backgroundConnection,
-    accountLoaded,
-    setupCurrentAccount,
-}) => {
+const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.LOADING)
     const [notificationValue, setNotificationValue] = useState<any>()
 
@@ -57,23 +63,10 @@ const App: React.FC<IApp> = ({
                 setStep(Step.WELCOME)
             }
 
-            console.log(activeTab)
-
-            window.NEKOTON_PROVIDER.sendAsync(
-                {
-                    jsonrpc: '2.0',
-                    method: 'getApproval',
-                },
-                (error: Error | null, response: string) => {
-                    if (error) {
-                        backgroundConnection.getApproval(response, (error, response) => {
-                            setNotificationValue(response)
-                            console.log(error)
-                        })
-                    }
-                    console.log(error, response)
-                }
-            )
+            controllerRpc.getState((error, response) => {
+                setNotificationValue(response)
+                console.log(error, response)
+            })
         })
     }, [])
 

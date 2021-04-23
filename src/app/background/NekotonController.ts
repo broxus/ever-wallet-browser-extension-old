@@ -23,6 +23,7 @@ import {
 import { NEKOTON_PROVIDER } from '../../shared/constants'
 import { ApplicationState } from './ApplicationState'
 import { ApprovalController } from './controllers/ApprovalController'
+import { createProviderMiddleware } from './providerMiddleware'
 
 interface NekotonControllerOptions {
     storage: nt.Storage
@@ -51,8 +52,6 @@ export class NekotonController extends EventEmitter {
     private _applicationState: ApplicationState
 
     private _approvalController: ApprovalController
-
-    private _pendingApprovals: { [origin: string]: unknown } = {}
 
     constructor(options: NekotonControllerOptions) {
         super()
@@ -104,8 +103,10 @@ export class NekotonController extends EventEmitter {
         type ApiCallback<T> = (error: Error | null, result: T) => void
 
         return {
-            getState: (origin: string, cb: ApiCallback<unknown>) => {
-                cb(null, this._pendingApprovals[origin])
+            getState: (cb: ApiCallback<unknown>) => {
+                cb(null, {
+                    pendingApprovals: this._approvalController.state,
+                })
             },
             resolvePendingApproval: nodeify(
                 this._approvalController.resolve,
@@ -197,44 +198,12 @@ export class NekotonController extends EventEmitter {
         }
         engine.push(createLoggerMiddleware({ origin }))
 
-        // temp middleware
-        engine.push((req, res, _next, end) => {
-            if (req.method === 'ton_sendMessage') {
-                const id = nanoid()
-                this._pendingApprovals[origin] = id
-
-                this._approvalController
-                    .addAndShowApprovalRequest({
-                        id,
-                        origin,
-                        type: 'sendMessage',
-                        requestData: {
-                            params: req.params,
-                        },
-                    })
-                    .then((pendingTransaction) => {
-                        res.result = pendingTransaction
-                        end()
-                    })
-                    .catch((error) => {
-                        end(error)
-                    })
-                return
-            } else if (req.method === 'getApproval') {
-                res.id = req.id
-                res.jsonrpc = req.jsonrpc
-                res.result = this._pendingApprovals[origin]
-                end()
-                return
-            }
-
-            end(
-                new NekotonRpcError(
-                    RpcErrorCode.METHOD_NOT_FOUND,
-                    `provider "${req.method}" not found`
-                )
-            )
-        })
+        engine.push(
+            createProviderMiddleware({
+                origin,
+                approvals: this._approvalController,
+            })
+        )
 
         return engine
     }

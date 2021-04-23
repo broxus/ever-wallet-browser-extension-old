@@ -2,21 +2,29 @@ import { Duplex } from 'readable-stream'
 import { getUniqueId, JsonRpcError, NekotonRpcError, SafeEventEmitter } from '../../shared/utils'
 import { JsonRpcNotification } from '../../shared/jrpc'
 
-import { Approval } from '../../app/background/controllers/ApprovalController'
+import { NekotonController } from '../../app/background/NekotonController'
 
-type MetaRequestCallback<T> = (error: JsonRpcError | undefined, result?: T) => void
-type MetaRequest<A extends unknown[], T> = (...args: [...A, MetaRequestCallback<T>]) => void
+type ApiHandlers = ReturnType<typeof NekotonController.prototype.getApi>
+type ApiMethods = keyof ApiHandlers
 
-export interface IMetaRPCClient {
+type ClientMethods = {
     onNotification(handler: (data: JsonRpcNotification<unknown>) => void): void
-
     close(): void
-
-    getState: MetaRequest<[string], {}>
-    getApproval: MetaRequest<[string], Approval<{ address: string; balance: string }>>
 }
 
-class MetaRPCClient<T extends Duplex> {
+type ControllerRpcMethods = {
+    [P in ApiMethods]: ApiHandlers[P]
+}
+
+export type IControllerRpcClient = {
+    [k in keyof ClientMethods | keyof ControllerRpcMethods]: k extends keyof ClientMethods
+        ? ClientMethods[k]
+        : k extends keyof ControllerRpcMethods
+        ? ControllerRpcMethods[k]
+        : never
+}
+
+class ControllerRpcClient<T extends Duplex> {
     _connectionStream: T
     _notificationChannel: SafeEventEmitter = new SafeEventEmitter()
     _requests: Map<number, (error: Error | undefined, result?: unknown) => void> = new Map<
@@ -76,10 +84,15 @@ class MetaRPCClient<T extends Duplex> {
     }
 }
 
-export const metaRPCClientFactory = <T extends Duplex>(connectionStream: T): IMetaRPCClient => {
-    const metaRPCClient = new MetaRPCClient(connectionStream)
+export const makeControllerRpcClient = <T extends Duplex>(
+    connectionStream: T
+): IControllerRpcClient => {
+    const metaRPCClient = new ControllerRpcClient(connectionStream)
     return (new Proxy(metaRPCClient, {
-        get: <T extends Duplex>(object: MetaRPCClient<T>, property: keyof MetaRPCClient<T>) => {
+        get: <T extends Duplex>(
+            object: ControllerRpcClient<T>,
+            property: keyof ControllerRpcClient<T>
+        ) => {
             if (object[property]) {
                 return object[property]
             }
@@ -101,5 +114,5 @@ export const metaRPCClientFactory = <T extends Duplex>(connectionStream: T): IMe
                 })
             }
         },
-    }) as unknown) as IMetaRPCClient
+    }) as unknown) as IControllerRpcClient
 }

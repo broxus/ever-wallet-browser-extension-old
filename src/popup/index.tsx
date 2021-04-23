@@ -10,8 +10,12 @@ import pump from 'pump'
 import { getEnvironmentType } from '@utils'
 import App, { ActiveTab } from './App'
 import { PortDuplexStream } from '../shared/utils'
-import { ENVIRONMENT_TYPE_POPUP } from '../shared/constants'
-import { metaRPCClientFactory, IMetaRPCClient } from '@utils/MetaRPCClient'
+import {
+    Environment,
+    ENVIRONMENT_TYPE_BACKGROUND,
+    ENVIRONMENT_TYPE_POPUP,
+} from '../shared/constants'
+import { IControllerRpcClient, makeControllerRpcClient } from '@utils/ControllerRpcClient'
 import store from '@store'
 import { StreamProvider } from '@utils/StreamProvider'
 
@@ -36,10 +40,10 @@ const start = async () => {
     })
 }
 
-const queryCurrentActiveTab = async (windowType: string) => {
-    return new Promise<ActiveTab | undefined>((resolve) => {
+const queryCurrentActiveTab = async (windowType: Environment) => {
+    return new Promise<ActiveTab>((resolve) => {
         if (windowType !== ENVIRONMENT_TYPE_POPUP) {
-            return resolve(undefined)
+            return resolve({ type: windowType } as any)
         }
 
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -50,10 +54,10 @@ const queryCurrentActiveTab = async (windowType: string) => {
                 : { origin: undefined, protocol: undefined }
 
             if (!origin || origin == 'null') {
-                return resolve(undefined)
+                return resolve({ type: ENVIRONMENT_TYPE_BACKGROUND } as any)
             }
 
-            resolve({ id, title, origin, protocol, url })
+            resolve({ type: ENVIRONMENT_TYPE_POPUP, data: { id, title, origin, protocol, url } })
         })
     })
 }
@@ -71,7 +75,7 @@ const initializeUi = (
         ReactDOM.render(
             <React.StrictMode>
                 <Provider store={store}>
-                    <App activeTab={activeTab} backgroundConnection={backgroundConnection} />
+                    <App activeTab={activeTab} controllerRpc={backgroundConnection} />
                 </Provider>
             </React.StrictMode>,
             document.getElementById('root')
@@ -81,7 +85,7 @@ const initializeUi = (
 
 const connectToBackground = (
     connectionStream: Duplex,
-    cb: (error: Error | undefined, backgroundRpc: IMetaRPCClient) => void
+    callback: (error: Error | undefined, controllerRpc: IControllerRpcClient) => void
 ) => {
     connectionStream.on('data', (data) => {
         console.log('Connection stream data:', data)
@@ -94,7 +98,7 @@ const connectToBackground = (
         }
     })
 
-    setupControllerConnection((mux.createStream('controller') as unknown) as Duplex, cb)
+    setupControllerConnection((mux.createStream('controller') as unknown) as Duplex, callback)
     setupWeb3Connection(mux.createStream('provider'))
 }
 
@@ -105,15 +109,14 @@ const setupWeb3Connection = <T extends Duplex>(connectionStream: T) => {
             console.error(error)
         }
     })
-    window.NEKOTON_PROVIDER = providerStream
 }
 
 const setupControllerConnection = (
     connectionStream: Duplex,
-    callback: (error: Error | undefined, backgroundRpc: IMetaRPCClient) => void
+    callback: (error: Error | undefined, controllerRpc: IControllerRpcClient) => void
 ) => {
-    const backgroundRPC = metaRPCClientFactory(connectionStream)
-    callback(undefined, backgroundRPC)
+    const controllerRpc = makeControllerRpcClient(connectionStream)
+    callback(undefined, controllerRpc)
 }
 
 start().catch(console.error)

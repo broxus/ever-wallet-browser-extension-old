@@ -2,7 +2,6 @@ export {}
 
 declare global {
     import { NotificationManager } from '../app/background/notificationManager'
-    import { StreamProvider } from '@utils/StreamProvider'
 
     interface Define extends {} {}
 
@@ -14,6 +13,5 @@ declare global {
 
         define?: Define
         NEKOTON_NOTIFIER: NotificationManager
-        NEKOTON_PROVIDER: StreamProvider
     }
 }

@@ -5,6 +5,7 @@ import {
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_BACKGROUND,
+    Environment,
 } from '../../shared/constants'
 
 Decimal.set({ maxE: 500, minE: -500 })
@@ -54,14 +55,16 @@ export const shuffleArray = <T>(array: T[]) => {
     return array
 }
 
-const getEnvironmentTypeCached = memoize((url) => {
-    const parseUrl = new URL(url)
-    if (parseUrl.pathname === '/popup.html') {
-        return ENVIRONMENT_TYPE_POPUP
-    } else if (parseUrl.pathname === '/notification.html') {
-        return ENVIRONMENT_TYPE_NOTIFICATION
+const getEnvironmentTypeCached = memoize(
+    (url): Environment => {
+        const parseUrl = new URL(url)
+        if (parseUrl.pathname === '/popup.html') {
+            return ENVIRONMENT_TYPE_POPUP
+        } else if (parseUrl.pathname === '/notification.html') {
+            return ENVIRONMENT_TYPE_NOTIFICATION
+        }
+        return ENVIRONMENT_TYPE_BACKGROUND
     }
-    return ENVIRONMENT_TYPE_BACKGROUND
-})
+)
 
 export const getEnvironmentType = (url = window.location.href) => getEnvironmentTypeCached(url)
