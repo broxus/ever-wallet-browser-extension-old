@@ -57,6 +57,7 @@
       "@common/*": ["src/popup/common/*"],
       "@components/*": ["src/popup/components/*"],
       "@img/*": ["src/popup/img/*"],
+      "@store": ["src/popup/store"],
       "@store/*": ["src/popup/store/*"],
       "@utils": ["src/popup/utils"],
       "@utils/*": ["src/popup/utils/*"],

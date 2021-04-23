@@ -326,15 +326,15 @@ const createMetaRPCHandler = <T extends Duplex>(
     return (data: JsonRpcRequest<unknown[]>) => {
         type MethodName = keyof typeof api
 
-        if (![data.method as MethodName]) {
+        if (api[data.method as MethodName] == null) {
             outStream.write(<JsonRpcFailure>{
                 jsonrpc: '2.0',
-                error: new NekotonRpcError(
-                    RpcErrorCode.METHOD_NOT_FOUND,
-                    `${data.method} not found`
+                error: serializeError(
+                    new NekotonRpcError(RpcErrorCode.METHOD_NOT_FOUND, `${data.method} not found`)
                 ),
                 id: data.id,
             })
+            return
         }
 
         api[data.method as MethodName](

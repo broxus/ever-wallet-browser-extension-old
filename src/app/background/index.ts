@@ -54,6 +54,7 @@ const setupController = async () => {
 
     function connectRemote(remotePort: chrome.runtime.Port) {
         const processName = remotePort.name
+
         const isNekotonInternalProcess = nekotonInternalProcessHash[processName]
 
         console.log('On remote connect', processName)

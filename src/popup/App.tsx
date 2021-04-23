@@ -4,15 +4,16 @@ import { AppState } from '@store/app/types'
 import { setupCurrentAccount } from '@store/app/actions'
 import { Step } from '@common'
 import { Action } from '@utils'
+import { IMetaRPCClient } from '@utils/MetaRPCClient'
 import init from '@nekoton'
 
 import WelcomePage from './pages/WelcomePage'
 import MainPage from './pages/MainPage'
 import NewAccountPage from './pages/NewAccountScreen'
+
 import RestoreAccountPage from './pages/RestoreAccountScreen'
 
 import Oval from '@img/oval.svg'
-
 import './styles/main.scss'
 import WalletInteract from './pages/ConnectWalletScreen'
 
@@ -25,12 +26,22 @@ const Loader: React.FC = () => {
     )
 }
 
+export interface ActiveTab {
+    id?: number
+    title?: string
+    origin: string
+    protocol?: string
+    url?: string
+}
+
 interface IApp {
+    activeTab?: ActiveTab
+    backgroundConnection: IMetaRPCClient
     accountLoaded: boolean
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
+const App: React.FC<IApp> = ({ backgroundConnection, accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.LOADING)
 
     useEffect(() => {
@@ -39,6 +50,10 @@ const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
             if (!hasAccount) {
                 setStep(Step.WELCOME)
             }
+
+            backgroundConnection.getState((error) => {
+                console.log(error)
+            })
         })
     }, [])
 
