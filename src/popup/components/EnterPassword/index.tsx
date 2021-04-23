@@ -6,11 +6,12 @@ import Button from '@components/Button'
 import './style.scss'
 
 interface IEnterPassword {
-    minHeight: string
-    setStep: Dispatch<SetStateAction<number>>
+    minHeight?: string
+    handleNext: () => void
+    handleBack: () => void
 }
 
-const EnterPassword: React.FC<IEnterPassword> = ({ setStep, minHeight }) => {
+const EnterPassword: React.FC<IEnterPassword> = ({ minHeight, handleNext, handleBack }) => {
     return (
         <div className="enter-password">
             <div className="enter-password__content" style={{ minHeight }}>
@@ -20,10 +21,8 @@ const EnterPassword: React.FC<IEnterPassword> = ({ setStep, minHeight }) => {
                 </div>
             </div>
             <div className="enter-password__buttons">
-                <div className="enter-password__buttons-back-btn">
-                    <Button text={'Back'} onClick={() => setStep(1)} white />
-                </div>
-                <Button text={'Next'} onClick={() => setStep(3)} />
+                <Button text={'Back'} onClick={() => handleBack()} white />
+                <Button text={'Next'} onClick={() => handleNext()} />
             </div>
         </div>
     )

@@ -116,7 +116,11 @@ const CreateAccountScreen = () => {
     const createAccountContent = [
         <AccountName setStep={setStep} />,
         <AccountSelectKey setStep={setStep} />,
-        <EnterPassword setStep={setStep} minHeight={'448px'} />,
+        <EnterPassword
+            handleBack={() => setStep(1)}
+            handleNext={() => setStep(3)}
+            minHeight={'448px'}
+        />,
         // @ts-ignore
         <CheckSeed setStep={setStep} />,
     ]

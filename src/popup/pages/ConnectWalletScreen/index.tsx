@@ -107,7 +107,7 @@ const Spend: React.FC<ISpend> = ({ setStep, account, tonWalletState }) => {
                 </div>
             </div>
             <SlidingPanel isOpen={isOpen} onClose={() => setIsOpen(false)}>
-                <EnterPassword setStep={setStep} minHeight={'300px'} />
+                <EnterPassword handleNext={() => {}} handleBack={() => {}} />
             </SlidingPanel>
         </div>
     )
