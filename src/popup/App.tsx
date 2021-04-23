@@ -14,7 +14,7 @@ import RestoreAccountPage from './pages/RestoreAccountScreen'
 import Oval from '@img/oval.svg'
 
 import './styles/main.scss'
-import ConnectWallet from './pages/ConnectWalletScreen'
+import WalletInteract from './pages/ConnectWalletScreen'
 
 const Loader: React.FC = () => {
     return (
@@ -44,8 +44,8 @@ const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
 
     useEffect(() => {
         if (accountLoaded) {
-            setStep(Step.MAIN)
-            // setStep(Step.CONNECT_WALLET)
+            // setStep(Step.MAIN)
+            setStep(Step.CONNECT_WALLET)
         }
     }, [accountLoaded])
 
@@ -56,7 +56,7 @@ const App: React.FC<IApp> = ({ accountLoaded, setupCurrentAccount }) => {
             {step == Step.CREATE_NEW_WALLET && <NewAccountPage setStep={setStep} />}
             {step == Step.RESTORE_WALLET && <RestoreAccountPage setStep={setStep} />}
             {step == Step.MAIN && <MainPage setStep={setStep} />}
-            {step == Step.CONNECT_WALLET && <ConnectWallet setStep={setStep} />}
+            {step == Step.CONNECT_WALLET && <WalletInteract setStep={setStep} />}
         </>
     )
 }

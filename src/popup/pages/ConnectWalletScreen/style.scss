@@ -244,4 +244,133 @@
             }
         }
     }
+
+    &-select-account {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 32px 20px;
+        height: 100%;
+
+        &__title {
+            margin-bottom: 32px;
+        }
+
+        &-source {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: #7d8b92;
+            padding: 0 16px;
+        }
+        &__item {
+            align-items: center;
+            border-bottom: 1px solid #ebedee;
+            display: flex;
+            color: $windowFg;
+            cursor: pointer;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+
+            &:hover {
+                color: $activeButtonBg;
+
+                //background-color: #919191;
+            }
+            &-select {
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: #96a1a7;
+                margin-bottom: -6px;
+            }
+
+            &-value {
+                font-style: normal;
+                font-weight: normal;
+                font-size: 12px;
+                line-height: 16px;
+                letter-spacing: 0.4px;
+                color: #96a1a7;
+            }
+        }
+    }
+}
+
+@keyframes blink {
+    /**
+     * At the start of the animation the dot
+     * has an opacity of .2
+     */
+    0% {
+        opacity: 0.2;
+    }
+    /**
+     * At 20% the dot is fully visible and
+     * then fades out slowly
+     */
+    20% {
+        opacity: 1;
+    }
+    /**
+     * Until it reaches an opacity of .2 and
+     * the animation can start again
+     */
+    100% {
+        opacity: 0.2;
+    }
+}
+
+.process span {
+    /**
+     * Use the blink animation, which is defined above
+     */
+    animation-name: blink;
+    /**
+     * The animation should take 1.4 seconds
+     */
+    animation-duration: 1.4s;
+    /**
+     * It will repeat itself forever
+     */
+    animation-iteration-count: infinite;
+    /**
+     * This makes sure that the starting style (opacity: .2)
+     * of the animation is applied before the animation starts.
+     * Otherwise we would see a short flash or would have
+     * to set the default styling of the dots to the same
+     * as the animation. Same applies for the ending styles.
+     */
+    animation-fill-mode: both;
+}
+
+.process span:nth-child(2) {
+    /**
+     * Starts the animation of the third dot
+     * with a delay of .2s, otherwise all dots
+     * would animate at the same time
+     */
+    animation-delay: 0.2s;
+}
+
+.process span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+.process span:nth-child(4) {
+    animation-delay: 0.6s;
+}
+.process span:nth-child(5) {
+    animation-delay: 0.8s;
+}
+.process span:nth-child(6) {
+    animation-delay: 1s;
 }

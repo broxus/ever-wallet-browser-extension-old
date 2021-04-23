@@ -6,16 +6,17 @@ import './style.scss'
 import { Step } from '@common'
 import UserPicS from '@img/user-avatar-placeholder-s.svg'
 import WebsiteIcon from '@img/website-icon.svg'
+import TonWalletLogo from '@img/ton-wallet-logo.svg'
 import Arrow from '@img/arrow.svg'
 import { AppState } from '@store/app/types'
 import { connect } from 'react-redux'
 import { convertAddress, convertTons } from '@utils'
 import Button from '@components/Button'
 import SlidingPanel from '@components/SlidingPanel'
-import AddNewToken from '@components/AddNewToken'
 import EnterPassword from '@components/EnterPassword'
+import Checkbox from '@components/Checkbox'
 
-type IConnectWallet = {
+type IWalletInteract = {
     setStep: (step: Step) => void
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
@@ -36,6 +37,163 @@ interface ISpend {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     setStep: (step: Step) => void
+}
+
+enum ConnectWalletLocalStep {
+    SELECT_ACCOUNT,
+    CONFIRM,
+    CONNECTING,
+}
+
+interface IConnectWallet {
+    account: nt.AssetsList | null
+    tonWalletState: nt.AccountState | null
+}
+
+const ConnectWallet: React.FC<IConnectWallet> = ({ account, tonWalletState }) => {
+    const [localStep, setLocalStep] = useState<ConnectWalletLocalStep>(
+        ConnectWalletLocalStep.SELECT_ACCOUNT
+    )
+
+    const [checked, setChecked] = useState(false)
+    const [confirmChecked, setConfirmChecked] = useState(true)
+
+    return (
+        <div className="connect-wallet-select-account">
+            {localStep === ConnectWalletLocalStep.SELECT_ACCOUNT && (
+                <>
+                    <div>
+                        <div className="connect-wallet__spend-top-panel__site">
+                            <WebsiteIcon />
+                            <div className="connect-wallet-select-account-source">
+                                https://tonbrdige.io
+                            </div>
+                        </div>
+                        <h2 className="connect-wallet-select-account__title">
+                            Select account(s) to connect with Crystal wallet
+                        </h2>
+                        <div
+                            className="connect-wallet-select-account__item"
+                            style={{ paddingBottom: '32px' }}
+                        >
+                            <Checkbox checked={checked} setChecked={setChecked} />
+                            <span className="connect-wallet-select-account__item-select">
+                                Select all
+                            </span>
+                        </div>
+                        <div
+                            className="connect-wallet-select-account__item"
+                            style={{ display: 'flex' }}
+                        >
+                            <Checkbox checked={checked} setChecked={setChecked} />
+
+                            <UserPicS />
+                            <div style={{ padding: '0 12px' }}>
+                                <div className="account-settings-section-account">
+                                    {account.name}
+                                </div>
+                                <div className="connect-wallet-select-account__item-value">
+                                    {`${convertTons(tonWalletState?.balance || '0')} TON`}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <Button
+                        type="submit"
+                        text="Next"
+                        disabled={!checked}
+                        onClick={() => setLocalStep(ConnectWalletLocalStep.CONFIRM)}
+                    />
+                </>
+            )}
+            {localStep === ConnectWalletLocalStep.CONFIRM && (
+                <>
+                    <div>
+                        <div className="connect-wallet__spend-top-panel__site">
+                            <WebsiteIcon />
+                            <div className="connect-wallet-select-account-source">
+                                https://tonbrdige.io
+                            </div>
+                        </div>
+                        <h2>{`Connected to ${account.name}`}</h2>
+                        <div
+                            className="connect-wallet-select-account__item-value"
+                            style={{ marginBottom: '32px' }}
+                        >
+                            {`${convertTons(tonWalletState?.balance || '0')} TON`}
+                        </div>
+                        <h3 style={{ fontWeight: 'bold', marginBottom: '16px' }}>
+                            Allow this site to:
+                        </h3>
+                        <div
+                            className="connect-wallet-select-account__item"
+                            style={{ paddingBottom: '16px' }}
+                        >
+                            <Checkbox checked={confirmChecked} setChecked={setConfirmChecked} />
+                            <span className="connect-wallet-select-account__item-select">
+                                View the addresses of your permitted accounts (require)
+                            </span>
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '50%', marginRight: '12px' }}>
+                            <Button
+                                text={'Back'}
+                                onClick={() => setLocalStep(ConnectWalletLocalStep.SELECT_ACCOUNT)}
+                                white
+                            />
+                        </div>
+                        <Button
+                            text={'Connect'}
+                            disabled={!confirmChecked}
+                            onClick={() => setLocalStep(ConnectWalletLocalStep.CONNECTING)}
+                        />
+                    </div>
+                </>
+            )}
+            {localStep === ConnectWalletLocalStep.CONNECTING && (
+                <div
+                    style={{
+                        display: 'flex',
+                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        height: '100%',
+                    }}
+                >
+                    <h2 style={{ marginBottom: '48px' }}>Connecting...</h2>
+                    <div
+                        style={{
+                            width: '100%',
+                            display: 'flex',
+                            justifyContent: 'space-around',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <svg
+                            width="64"
+                            height="64"
+                            viewBox="0 0 64 64"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <circle cx="32" cy="32" r="32" fill="#C4C4C4" />
+                        </svg>
+                        <p className="process">
+                            <span>.</span>
+                            <span>.</span>
+                            <span>.</span>
+                            <span>.</span>
+                            <span>.</span>
+                            <span>.</span>
+                        </p>
+
+                        <TonWalletLogo />
+                    </div>
+                </div>
+            )}
+        </div>
+    )
 }
 
 const Spend: React.FC<ISpend> = ({ setStep, account, tonWalletState }) => {
@@ -248,8 +406,8 @@ const RequestContract: React.FC<IRequestContract> = ({ account, tonWalletState, 
     )
 }
 
-const ConnectWallet: React.FC<IConnectWallet> = ({ setStep, account, tonWalletState }) => {
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SPEND)
+const WalletInteract: React.FC<IWalletInteract> = ({ setStep, account, tonWalletState }) => {
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.CONNECT_WALLET)
 
     const [password, setPassword] = useState<string>('')
 
@@ -273,6 +431,9 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ setStep, account, tonWalletSt
             {localStep == LocalStep.SPEND && (
                 <Spend account={account} tonWalletState={tonWalletState} setStep={setStep} />
             )}
+            {localStep == LocalStep.CONNECT_WALLET && (
+                <ConnectWallet account={account} tonWalletState={tonWalletState} />
+            )}
         </>
     )
 }
@@ -283,4 +444,4 @@ const mapStateToProps = (store: { app: AppState }) => ({
     transactions: store.app.transactions,
 })
 
-export default connect(mapStateToProps)(ConnectWallet)
+export default connect(mapStateToProps)(WalletInteract)
