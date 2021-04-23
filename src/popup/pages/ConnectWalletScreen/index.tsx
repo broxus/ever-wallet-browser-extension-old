@@ -90,7 +90,7 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ account, tonWalletState }) =>
                             <UserPicS />
                             <div style={{ padding: '0 12px' }}>
                                 <div className="account-settings-section-account">
-                                    {account.name}
+                                    {account?.name}
                                 </div>
                                 <div className="connect-wallet-select-account__item-value">
                                     {`${convertTons(tonWalletState?.balance || '0')} TON`}
@@ -115,7 +115,7 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ account, tonWalletState }) =>
                                 https://tonbrdige.io
                             </div>
                         </div>
-                        <h2>{`Connected to ${account.name}`}</h2>
+                        <h2>{`Connected to ${account?.name}`}</h2>
                         <div
                             className="connect-wallet-select-account__item-value"
                             style={{ marginBottom: '32px' }}
