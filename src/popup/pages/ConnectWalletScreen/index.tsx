@@ -20,6 +20,8 @@ type IWalletInteract = {
     setStep: (step: Step) => void
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
+    localStep: LocalStep
+    notificationValue: any
 }
 
 enum AssetsTab {
@@ -37,6 +39,7 @@ interface ISpend {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     setStep: (step: Step) => void
+    notificationValue: any
 }
 
 enum ConnectWalletLocalStep {
@@ -90,7 +93,7 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ account, tonWalletState }) =>
                             <UserPicS />
                             <div style={{ padding: '0 12px' }}>
                                 <div className="account-settings-section-account">
-                                    {account.name}
+                                    {account?.name}
                                 </div>
                                 <div className="connect-wallet-select-account__item-value">
                                     {`${convertTons(tonWalletState?.balance || '0')} TON`}
@@ -115,7 +118,7 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ account, tonWalletState }) =>
                                 https://tonbrdige.io
                             </div>
                         </div>
-                        <h2>{`Connected to ${account.name}`}</h2>
+                        <h2>{`Connected to ${account?.name}`}</h2>
                         <div
                             className="connect-wallet-select-account__item-value"
                             style={{ marginBottom: '32px' }}
@@ -196,7 +199,7 @@ const ConnectWallet: React.FC<IConnectWallet> = ({ account, tonWalletState }) =>
     )
 }
 
-const Spend: React.FC<ISpend> = ({ setStep, account, tonWalletState }) => {
+const Spend: React.FC<ISpend> = ({ setStep, account, notificationValue, tonWalletState }) => {
     const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
 
     const [isOpen, setIsOpen] = useState<boolean>(false)
@@ -241,7 +244,7 @@ const Spend: React.FC<ISpend> = ({ setStep, account, tonWalletState }) => {
                             Amount
                         </span>
                         <span className="connect-wallet__details__description-param-value">
-                            12 TON
+                            {notificationValue?.balance} TON
                         </span>
                     </div>
                     <div className="connect-wallet__details__description-param">
@@ -406,9 +409,13 @@ const RequestContract: React.FC<IRequestContract> = ({ account, tonWalletState, 
     )
 }
 
-const WalletInteract: React.FC<IWalletInteract> = ({ setStep, account, tonWalletState }) => {
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.CONNECT_WALLET)
-
+const WalletInteract: React.FC<IWalletInteract> = ({
+    setStep,
+    account,
+    tonWalletState,
+    localStep,
+    notificationValue,
+}) => {
     const [password, setPassword] = useState<string>('')
 
     const onSubmit = async () => {
@@ -429,7 +436,12 @@ const WalletInteract: React.FC<IWalletInteract> = ({ setStep, account, tonWallet
                 />
             )}
             {localStep == LocalStep.SPEND && (
-                <Spend account={account} tonWalletState={tonWalletState} setStep={setStep} />
+                <Spend
+                    account={account}
+                    tonWalletState={tonWalletState}
+                    notificationValue={notificationValue}
+                    setStep={setStep}
+                />
             )}
             {localStep == LocalStep.CONNECT_WALLET && (
                 <ConnectWallet account={account} tonWalletState={tonWalletState} />

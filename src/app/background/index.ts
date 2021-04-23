@@ -58,6 +58,7 @@ const setupController = async () => {
         const isNekotonInternalProcess = nekotonInternalProcessHash[processName]
 
         console.log('On remote connect', processName)
+        console.log('Sender', remotePort.sender?.tab)
 
         if (isNekotonInternalProcess) {
             const portStream = new PortDuplexStream(remotePort)

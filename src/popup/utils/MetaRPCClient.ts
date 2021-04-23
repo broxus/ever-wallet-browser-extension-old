@@ -2,13 +2,18 @@ import { Duplex } from 'readable-stream'
 import { getUniqueId, JsonRpcError, NekotonRpcError, SafeEventEmitter } from '../../shared/utils'
 import { JsonRpcNotification } from '../../shared/jrpc'
 
+import { Approval } from '../../app/background/controllers/ApprovalController'
+
 type MetaRequestCallback<T> = (error: JsonRpcError | undefined, result?: T) => void
 type MetaRequest<A extends unknown[], T> = (...args: [...A, MetaRequestCallback<T>]) => void
 
 export interface IMetaRPCClient {
     onNotification(handler: (data: JsonRpcNotification<unknown>) => void): void
+
     close(): void
-    getState: MetaRequest<[], {}>
+
+    getState: MetaRequest<[string], {}>
+    getApproval: MetaRequest<[string], Approval<{ address: string; balance: string }>>
 }
 
 class MetaRPCClient<T extends Duplex> {

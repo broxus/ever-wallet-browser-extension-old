@@ -52,6 +52,8 @@ export class NekotonController extends EventEmitter {
 
     private _approvalController: ApprovalController
 
+    private _pendingApprovals: { [origin: string]: unknown } = {}
+
     constructor(options: NekotonControllerOptions) {
         super()
 
@@ -99,7 +101,12 @@ export class NekotonController extends EventEmitter {
     }
 
     public getApi() {
+        type ApiCallback<T> = (error: Error | null, result: T) => void
+
         return {
+            getState: (origin: string, cb: ApiCallback<unknown>) => {
+                cb(null, this._pendingApprovals[origin])
+            },
             resolvePendingApproval: nodeify(
                 this._approvalController.resolve,
                 this._approvalController
@@ -190,12 +197,44 @@ export class NekotonController extends EventEmitter {
         }
         engine.push(createLoggerMiddleware({ origin }))
 
-        engine.push((req, res, next, end) => {
-            console.log(req, res, next, end)
-            next()
-        })
+        // temp middleware
+        engine.push((req, res, _next, end) => {
+            if (req.method === 'ton_sendMessage') {
+                const id = nanoid()
+                this._pendingApprovals[origin] = id
 
-        // TODO: add provider
+                this._approvalController
+                    .addAndShowApprovalRequest({
+                        id,
+                        origin,
+                        type: 'sendMessage',
+                        requestData: {
+                            params: req.params,
+                        },
+                    })
+                    .then((pendingTransaction) => {
+                        res.result = pendingTransaction
+                        end()
+                    })
+                    .catch((error) => {
+                        end(error)
+                    })
+                return
+            } else if (req.method === 'getApproval') {
+                res.id = req.id
+                res.jsonrpc = req.jsonrpc
+                res.result = this._pendingApprovals[origin]
+                end()
+                return
+            }
+
+            end(
+                new NekotonRpcError(
+                    RpcErrorCode.METHOD_NOT_FOUND,
+                    `provider "${req.method}" not found`
+                )
+            )
+        })
 
         return engine
     }
@@ -337,7 +376,7 @@ const createMetaRPCHandler = <T extends Duplex>(
             return
         }
 
-        api[data.method as MethodName](
+        ;(api[data.method as MethodName] as any)(
             ...(data.params || []),
             <T>(error: Error | undefined, result: T) => {
                 if (error) {

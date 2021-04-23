@@ -41,8 +41,14 @@ interface IApp {
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({ backgroundConnection, accountLoaded, setupCurrentAccount }) => {
+const App: React.FC<IApp> = ({
+    activeTab,
+    backgroundConnection,
+    accountLoaded,
+    setupCurrentAccount,
+}) => {
     const [step, setStep] = useState<number>(Step.LOADING)
+    const [notificationValue, setNotificationValue] = useState<any>()
 
     useEffect(() => {
         init('index_bg.wasm').then(async () => {
@@ -51,9 +57,23 @@ const App: React.FC<IApp> = ({ backgroundConnection, accountLoaded, setupCurrent
                 setStep(Step.WELCOME)
             }
 
-            backgroundConnection.getState((error) => {
-                console.log(error)
-            })
+            console.log(activeTab)
+
+            window.NEKOTON_PROVIDER.sendAsync(
+                {
+                    jsonrpc: '2.0',
+                    method: 'getApproval',
+                },
+                (error: Error | null, response: string) => {
+                    if (error) {
+                        backgroundConnection.getApproval(response, (error, response) => {
+                            setNotificationValue(response)
+                            console.log(error)
+                        })
+                    }
+                    console.log(error, response)
+                }
+            )
         })
     }, [])
 
@@ -71,7 +91,13 @@ const App: React.FC<IApp> = ({ backgroundConnection, accountLoaded, setupCurrent
             {step == Step.CREATE_NEW_WALLET && <NewAccountPage setStep={setStep} />}
             {step == Step.RESTORE_WALLET && <RestoreAccountPage setStep={setStep} />}
             {step == Step.MAIN && <MainPage setStep={setStep} />}
-            {step == Step.CONNECT_WALLET && <WalletInteract setStep={setStep} />}
+            {step == Step.NOTIFICATION_SEND && (
+                <WalletInteract
+                    localStep={1}
+                    notificationValue={notificationValue}
+                    setStep={setStep}
+                />
+            )}
         </>
     )
 }

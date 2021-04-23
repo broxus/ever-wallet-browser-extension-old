@@ -5,16 +5,15 @@ import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
-import { nanoid } from 'nanoid'
 import pump from 'pump'
 
 import { getEnvironmentType } from '@utils'
 import App, { ActiveTab } from './App'
 import { PortDuplexStream } from '../shared/utils'
 import { ENVIRONMENT_TYPE_POPUP } from '../shared/constants'
-import { JsonRpcId, JsonRpcRequest, JsonRpcResponse } from '../shared/jrpc'
 import { metaRPCClientFactory, IMetaRPCClient } from '@utils/MetaRPCClient'
 import store from '@store'
+import { StreamProvider } from '@utils/StreamProvider'
 
 const start = async () => {
     const windowType = getEnvironmentType()
@@ -106,6 +105,7 @@ const setupWeb3Connection = <T extends Duplex>(connectionStream: T) => {
             console.error(error)
         }
     })
+    window.NEKOTON_PROVIDER = providerStream
 }
 
 const setupControllerConnection = (
@@ -114,52 +114,6 @@ const setupControllerConnection = (
 ) => {
     const backgroundRPC = metaRPCClientFactory(connectionStream)
     callback(undefined, backgroundRPC)
-}
-
-class StreamProvider extends Duplex {
-    private _payloads: {
-        [id: string]: [(error: Error | null, response: unknown) => void, JsonRpcId]
-    } = {}
-
-    constructor() {
-        super({ objectMode: true })
-    }
-
-    send<T>(payload: JsonRpcRequest<T>) {
-        throw new Error(
-            `StreamProvider does not support syncronous RPC calls. called ${payload.method}`
-        )
-    }
-
-    sendAsync(
-        payload: JsonRpcRequest<unknown>,
-        callback: (error: Error | null, response: unknown) => void
-    ) {
-        const originalId = payload.id
-        const id = nanoid()
-        payload.id = id
-        this._payloads[id] = [callback, originalId]
-        this.push(payload)
-    }
-
-    private _onResponse(response: JsonRpcResponse<unknown>) {
-        const id = response.id
-        const data = this._payloads[id as string]
-        const callback = data[0]
-        response.id = data[1]
-        setTimeout(function () {
-            callback(null, response)
-        })
-    }
-
-    _read(_size?: number) {
-        return undefined
-    }
-
-    _write(message: unknown, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-        this._onResponse(message as JsonRpcResponse<unknown>)
-        callback()
-    }
 }
 
 start().catch(console.error)

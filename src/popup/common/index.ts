@@ -10,7 +10,7 @@ export enum Step {
     CREATE_NEW_WALLET,
     RESTORE_WALLET,
     MAIN,
-    CONNECT_WALLET,
+    NOTIFICATION_SEND,
 }
 
 export const DEFAULT_CONTRACT_TYPE: nt.ContractType = 'SafeMultisigWallet'
