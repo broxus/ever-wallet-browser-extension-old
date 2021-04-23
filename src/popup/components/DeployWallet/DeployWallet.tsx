@@ -1,23 +1,33 @@
-import React from 'react'
+import React, { useState } from 'react'
 import './style.scss'
-import { Action, convertAddress, convertTons } from '@utils'
-import Input from '@components/Input'
+import { convertTons } from '@utils'
 import Button from '@components/Button'
 import * as nt from '@nekoton'
 import QRCode from 'react-qr-code'
 import CopyButton from '@components/CopyButton'
+import EnterPassword from '@components/EnterPassword'
+import SlidingPanel from '@components/SlidingPanel'
+import { connect } from 'react-redux'
+import { logOut, prepareDeploy } from '@store/app/actions'
+import { UnsignedMessage } from '@nekoton'
 
 interface IDeployWallet {
     account: nt.AssetsList
-    tonWalletState: nt.AccountState
+    tonWalletState: nt.AccountState | null
+    prepareDeploy: (address: string, password: string) => Promise<UnsignedMessage>
 }
 
-const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState }) => {
-    console.log(tonWalletState.balance, 'balance')
+const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepareDeploy }) => {
+    const [isOpen, setIsOpen] = useState(false)
+
+    const deployWallet = (password: string) => {
+        prepareDeploy(account.tonWallet.address, password)
+    }
+
     return (
         <>
             <h2 className="send-screen__form-title">Deploy your wallet</h2>
-            {tonWalletState?.balance === '0' ? (
+            {tonWalletState?.balance !== '0' ? (
                 <>
                     <p className="deploy-wallet__comment">
                         Funds will be debited from your balance to deploy.
@@ -38,13 +48,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState }) => {
                             </span>
                         </div>
                     </div>
-
-                    <Button
-                        text={'Deploy'}
-                        onClick={async () => {
-                            await console.log('deploying')
-                        }}
-                    />
+                    <Button text={'Deploy'} onClick={() => setIsOpen(true)} />
                 </>
             ) : (
                 <>
@@ -56,20 +60,25 @@ const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState }) => {
                     </h3>
                     <div className="receive-screen__qr-code">
                         <div className="receive-screen__qr-code-code">
-                            <QRCode value={`ton://chat/${account.tonWallet.address}`} size={80} />
+                            <QRCode value={`ton://chat/${account?.tonWallet.address}`} size={80} />
                         </div>
                         <div className="receive-screen__qr-code-address">
-                            {account.tonWallet.address}
+                            {account?.tonWallet.address}
                         </div>
                     </div>
 
-                    <CopyButton text={account.tonWallet.address}>
-                        <Button text={'Copy address'} />
-                    </CopyButton>
+                    {account && (
+                        <CopyButton text={account.tonWallet.address}>
+                            <Button text={'Copy address'} />
+                        </CopyButton>
+                    )}
                 </>
             )}
+            <SlidingPanel isOpen={isOpen} onClose={() => setIsOpen(false)}>
+                <EnterPassword handleNext={deployWallet} handleBack={() => setIsOpen(false)} />
+            </SlidingPanel>
         </>
     )
 }
 
-export default DeployWallet
+export default connect(null, { prepareDeploy })(DeployWallet)

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
 import { AppState } from '@store/app/types'
-import { isDeployed, logOut, startSubscription } from '@store/app/actions'
+import { logOut, startSubscription } from '@store/app/actions'
 import { Step } from '@common'
 import { Action } from '@utils'
 import * as nt from '@nekoton'
