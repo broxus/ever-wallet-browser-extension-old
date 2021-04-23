@@ -86,8 +86,6 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
             {errors.name && <div className="check-seed__content-error">This field is required</div>}
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
                 {window.ObjectExt.entries(tokens).map(([id, token]) => {
-                    console.log(id, token)
-
                     const makeOnToggle = (id: string) => (enabled: boolean) => {
                         if (enabled) {
                             setEnabledTokens([...enabledTokens, id])
