@@ -3,6 +3,7 @@ import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
+import { debounce } from 'lodash'
 import * as nt from '@nekoton'
 
 import {
@@ -78,6 +79,8 @@ export class NekotonController extends EventEmitter {
                 // TODO: start account tracker
             } else {
                 // TODO: stop account tracker
+
+                this._approvalController.clear()
             }
         })
     }
@@ -103,11 +106,7 @@ export class NekotonController extends EventEmitter {
         type ApiCallback<T> = (error: Error | null, result: T) => void
 
         return {
-            getState: (cb: ApiCallback<unknown>) => {
-                cb(null, {
-                    pendingApprovals: this._approvalController.state,
-                })
-            },
+            getState: (cb: ApiCallback<unknown>) => cb(null, this.getState()),
             resolvePendingApproval: nodeify(
                 this._approvalController.resolve,
                 this._approvalController
@@ -116,6 +115,12 @@ export class NekotonController extends EventEmitter {
                 this._approvalController.reject,
                 this._approvalController
             ),
+        }
+    }
+
+    public getState() {
+        return {
+            ...this._approvalController.state,
         }
     }
 
@@ -263,6 +268,12 @@ export class NekotonController extends EventEmitter {
                 engine.emit('notification', getPayload(origin))
             })
         })
+    }
+
+    private _debouncedSendUpdate = debounce(this._sendUpdate.bind(this), 200)
+
+    private _sendUpdate() {
+        this.emit('update', this.getState())
     }
 }
 

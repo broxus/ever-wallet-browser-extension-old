@@ -83,13 +83,9 @@ export const createProviderMiddleware = (
                 )
             )
         } else {
-            ;(providerRequests as { [method: string]: ProviderMethod })[req.method](
-                req,
-                res,
-                next,
-                end,
-                options
-            )
+            ;(providerRequests as { [method: string]: ProviderMethod })
+                [req.method](req, res, next, end, options)
+                .catch(end)
         }
     }
 }
