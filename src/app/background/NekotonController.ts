@@ -22,18 +22,28 @@ import {
     serializeError,
 } from '../../shared/utils'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
-import { ApplicationState } from './ApplicationState'
+import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
+import { ConnectionController } from './controllers/ConnectionController'
+import { PermissionsController } from './controllers/PermissionsController'
 import { createProviderMiddleware } from './providerMiddleware'
+import { StorageConnector } from '../../shared'
 
 interface NekotonControllerOptions {
-    storage: nt.Storage
-    accountsStorage: nt.AccountsStorage
-    keyStore: nt.KeyStore
     showUserConfirmation: () => void
     openPopup: () => void
     getRequestAccountTabIds: () => { [origin: string]: number }
     getOpenNekotonTabIds: () => { [id: number]: true }
+}
+
+interface NekotonControllerComponents {
+    storage: nt.Storage
+    accountsStorage: nt.AccountsStorage
+    keyStore: nt.KeyStore
+    accountController: AccountController
+    approvalController: ApprovalController
+    connectionController: ConnectionController
+    permissionsController: PermissionsController
 }
 
 interface SetupProviderEngineOptions {
@@ -50,11 +60,43 @@ export class NekotonController extends EventEmitter {
     private readonly _connections: { [origin: string]: { [id: string]: { engine: JsonRpcEngine } } }
 
     private _options: NekotonControllerOptions
-    private _applicationState: ApplicationState
+    private _components: NekotonControllerComponents
 
-    private _approvalController: ApprovalController
+    public static async load(options: NekotonControllerOptions) {
+        const storage = new nt.Storage(new StorageConnector())
+        const accountsStorage = await nt.AccountsStorage.load(storage)
+        const keyStore = await nt.KeyStore.load(storage)
 
-    constructor(options: NekotonControllerOptions) {
+        const accountController = new AccountController({
+            storage,
+            accountsStorage,
+            keyStore,
+        })
+        const approvalController = new ApprovalController({
+            showApprovalRequest: options.showUserConfirmation,
+        })
+        const connectionController = new ConnectionController({})
+        await connectionController.initialSync()
+
+        const permissionsController = new PermissionsController({
+            approvals: approvalController,
+        })
+
+        return new NekotonController(options, {
+            storage,
+            accountsStorage,
+            keyStore,
+            accountController,
+            approvalController,
+            connectionController,
+            permissionsController,
+        })
+    }
+
+    private constructor(
+        options: NekotonControllerOptions,
+        components: NekotonControllerComponents
+    ) {
         super()
 
         this._defaultMaxListeners = 20
@@ -63,24 +105,14 @@ export class NekotonController extends EventEmitter {
         this._connections = {}
 
         this._options = options
-
-        this._applicationState = new ApplicationState({
-            storage: options.storage,
-            accountsStorage: options.accountsStorage,
-            keyStore: options.keyStore,
-        })
-
-        this._approvalController = new ApprovalController({
-            showApprovalRequest: options.showUserConfirmation,
-        })
+        this._components = components
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
                 // TODO: start account tracker
             } else {
                 // TODO: stop account tracker
-
-                this._approvalController.clear()
+                this._components.approvalController.clear()
             }
         })
     }
@@ -105,22 +137,18 @@ export class NekotonController extends EventEmitter {
     public getApi() {
         type ApiCallback<T> = (error: Error | null, result: T) => void
 
+        const { approvalController } = this._components
+
         return {
             getState: (cb: ApiCallback<unknown>) => cb(null, this.getState()),
-            resolvePendingApproval: nodeify(
-                this._approvalController.resolve,
-                this._approvalController
-            ),
-            rejectPendingApproval: nodeify(
-                this._approvalController.reject,
-                this._approvalController
-            ),
+            resolvePendingApproval: nodeify(approvalController.resolve, approvalController),
+            rejectPendingApproval: nodeify(approvalController.reject, approvalController),
         }
     }
 
     public getState() {
         return {
-            ...this._approvalController.state,
+            ...this._components.approvalController.state,
         }
     }
 
@@ -194,7 +222,7 @@ export class NekotonController extends EventEmitter {
         })
     }
 
-    private _setupProviderEngine({ origin, tabId }: SetupProviderEngineOptions) {
+    private _setupProviderEngine({ origin, tabId, isInternal }: SetupProviderEngineOptions) {
         const engine = new JsonRpcEngine()
 
         engine.push(createOriginMiddleware({ origin }))
@@ -206,7 +234,10 @@ export class NekotonController extends EventEmitter {
         engine.push(
             createProviderMiddleware({
                 origin,
-                approvals: this._approvalController,
+                isInternal,
+                approvals: this._components.approvalController,
+                connection: this._components.connectionController,
+                permissions: this._components.permissionsController,
             })
         )
 

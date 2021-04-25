@@ -153,11 +153,11 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
 
     private _initializeState = async () => {
         try {
-            const { accounts } = (await this.request({ method: 'nekoton_getProviderState' })) as {
-                accounts: string[]
-            }
+            const { selectedConnection } = (await this.request({
+                method: 'getProviderState',
+            })) as any
 
-            console.log(accounts)
+            console.log(selectedConnection)
         } catch (e) {
             this._log.error('Nekoton: Failed to get initial state', e)
         } finally {

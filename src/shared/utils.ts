@@ -30,6 +30,7 @@ export enum RpcErrorCode {
     INVALID_REQUEST,
     RESOURCE_UNAVAILABLE,
     METHOD_NOT_FOUND,
+    INSUFFICIENT_PERMISSIONS,
 }
 
 export type Maybe<T> = Partial<T> | null | undefined

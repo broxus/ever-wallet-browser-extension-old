@@ -1,19 +1,88 @@
-import { JsonRpcMiddleware, JsonRpcRequest } from '../../shared/jrpc'
 import { ApprovalController } from './controllers/ApprovalController'
-import * as nt from '@nekoton'
+import {
+    PermissionsController,
+    Permission,
+    validatePermission,
+} from './controllers/PermissionsController'
+import { ConnectionController, ConnectionData } from './controllers/ConnectionController'
 import { NekotonRpcError, RpcErrorCode } from '../../shared/utils'
+import { JsonRpcMiddleware, JsonRpcRequest } from '../../shared/jrpc'
+import * as nt from '@nekoton'
 
 const invalidParameter = (req: JsonRpcRequest<unknown>, message: string) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`)
 
 interface CreateProviderMiddlewareOptions {
     origin: string
+    isInternal: boolean
     approvals: ApprovalController
+    permissions: PermissionsController
+    connection: ConnectionController
 }
 
 type ProviderMethod<T = unknown, U = unknown> = (
     ...args: [...Parameters<JsonRpcMiddleware<T, U>>, CreateProviderMiddlewareOptions]
 ) => Promise<void>
+
+// helper method
+const requirePermissions = (
+    { origin, isInternal, permissions: permissionsController }: CreateProviderMiddlewareOptions,
+    permissions: Permission[]
+) => {
+    if (!isInternal) {
+        permissionsController.checkPermissions(origin, permissions)
+    }
+}
+
+interface RequestPermissions {
+    permissions: Permission[]
+}
+
+const requestPermissions: ProviderMethod<RequestPermissions, {}> = async (
+    req,
+    res,
+    _next,
+    end,
+    { origin, isInternal, permissions: permissionsController }
+) => {
+    if (isInternal) {
+        throw invalidParameter(req, 'cannot request permissions for internal streams')
+    }
+
+    if (!req.params || typeof req.params !== 'object') {
+        throw invalidParameter(req, 'must contain params object')
+    }
+
+    const { permissions } = req.params
+    if (!Array.isArray(permissions) || permissions.length === 0) {
+        throw invalidParameter(req, `'permissions' must be a non-empty array`)
+    }
+    permissions.map(validatePermission)
+
+    await permissionsController.requestPermissions(origin, permissions)
+
+    res.result = true
+    end()
+}
+
+interface ProviderState {
+    selectedConnection: ConnectionData
+}
+
+const getProviderState: ProviderMethod<{}, ProviderState> = async (
+    _req,
+    res,
+    _next,
+    end,
+    { connection }
+) => {
+    const { selectedConnection } = connection.state
+
+    res.result = <ProviderState>{
+        selectedConnection,
+    }
+    end()
+}
 
 interface SendMessageParams {
     recipient: string
@@ -27,8 +96,12 @@ const sendMessage: ProviderMethod<SendMessageParams, nt.PendingTransaction> = as
     res,
     _next,
     end,
-    { origin, approvals }
+    ctx
 ) => {
+    requirePermissions(ctx, ['accountInteraction'])
+
+    const { origin, approvals } = ctx
+
     if (!req.params || typeof req.params !== 'object') {
         throw invalidParameter(req, 'must contain params object')
     }
@@ -68,6 +141,8 @@ const sendMessage: ProviderMethod<SendMessageParams, nt.PendingTransaction> = as
 }
 
 const providerRequests = {
+    requestPermissions,
+    getProviderState,
     sendMessage,
 }
 

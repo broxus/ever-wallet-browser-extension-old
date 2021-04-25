@@ -26,14 +26,7 @@ const initialize = async () => {
 const setupController = async () => {
     console.log('Setup controller')
 
-    const storage = new nt.Storage(new StorageConnector())
-    const accountsStorage = await nt.AccountsStorage.load(storage)
-    const keyStore = await nt.KeyStore.load(storage)
-
-    const controller = new NekotonController({
-        storage,
-        accountsStorage,
-        keyStore,
+    const controller = await NekotonController.load({
         showUserConfirmation: triggerUi,
         openPopup,
         getRequestAccountTabIds: () => {

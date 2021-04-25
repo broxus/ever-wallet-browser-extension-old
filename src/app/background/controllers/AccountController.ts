@@ -7,7 +7,17 @@ interface ApplicationStateOptions {
     keyStore: nt.KeyStore
 }
 
-export class ApplicationState extends EventEmitter {
+export interface ITonWalletHandler {
+    onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction): void
+
+    onMessageExpired(pendingTransaction: nt.PendingTransaction): void
+
+    onStateChanged(newState: nt.AccountState): void
+
+    onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
+}
+
+export class AccountController extends EventEmitter {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
@@ -20,5 +30,9 @@ export class ApplicationState extends EventEmitter {
         this.storage = storage
         this.accountsStorage = accountsStorage
         this.keyStore = keyStore
+    }
+
+    public async initialSync() {
+        const currentAccount = await this.accountsStorage.getCurrentAccount()
     }
 }
