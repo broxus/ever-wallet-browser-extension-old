@@ -395,10 +395,7 @@ extern "C" {
 fn make_exported_master_key(data: nt::crypto::DerivedKeyExportOutput) -> JsExportedKey {
     ObjectBuilder::new()
         .set("type", "master_key")
-        .set(
-            "phrase",
-            std::str::from_utf8(data.phrase.unsecure()).unwrap_or_default(),
-        )
+        .set("phrase", data.phrase.unsecure())
         .build()
         .unchecked_into()
 }
@@ -406,10 +403,7 @@ fn make_exported_master_key(data: nt::crypto::DerivedKeyExportOutput) -> JsExpor
 fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> JsExportedKey {
     ObjectBuilder::new()
         .set("type", "encrypted_key")
-        .set(
-            "phrase",
-            std::str::from_utf8(data.phrase.unsecure()).unwrap_or_default(),
-        )
+        .set("phrase", data.phrase.unsecure())
         .set(
             "mnemonicType",
             crate::crypto::make_mnemonic_type(data.mnemonic_type),
