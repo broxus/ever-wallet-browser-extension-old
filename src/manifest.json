@@ -1,9 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "Nekoton",
-  "version": "0.1.0",
+  "name": "TON Crystal Wallet",
+  "version": "0.0.1",
   "browser_action": {
-    "default_title": "Nekoton",
+    "default_title": "TON Crystal Wallet",
     "default_popup": "popup.html"
   },
   "background": {

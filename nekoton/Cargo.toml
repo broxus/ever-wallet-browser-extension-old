@@ -40,8 +40,8 @@ ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
 
 [dependencies.nt]
 package = "nekoton"
-git = "ssh://git@gitlab.dexpa.io/crystal-wallet/nekoton.git"
-branch = "dev"
+git = "https://github.com/broxus/nekoton.git"
+branch = "master"
 features = ["web"]
 
 [target."cfg(debug_assertions)".dependencies]

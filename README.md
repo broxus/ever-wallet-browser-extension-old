@@ -1,5 +1,5 @@
-# nekoton
-Simple TON wallet browser plugin
+## TON Crystal Wallet
+TON Wallet browser extension
 
 ### Requirements
 
@@ -12,6 +12,5 @@ Simple TON wallet browser plugin
 
 ```
 npm install
-npm run build:liteclient
-npm run build:extension
+npm run build
 ```
