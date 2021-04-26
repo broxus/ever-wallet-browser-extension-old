@@ -93,7 +93,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (
                 <EnterNewPassword
-                    onSubmit={async (password) => {
+                    onNext={async (password) => {
                         setPassword(password)
                         await onSubmit()
                     }}

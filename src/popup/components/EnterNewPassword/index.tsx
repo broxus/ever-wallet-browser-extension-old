@@ -7,12 +7,16 @@ import Button from '@components/Button'
 import './style.scss'
 
 type IEnterPasswordScreen = {
-    onSubmit: (password: string) => void
+    onNext: (password: string) => void
     onBack: () => void
 }
 
-const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) => {
+const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onNext, onBack }) => {
     const { register, handleSubmit, errors, watch, getValues } = useForm()
+
+    const onSubmit = (data: any) => {
+        onNext(data.pwd)
+    }
 
     return (
         <div className="enter-new-password__content">
@@ -23,9 +27,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
                 </h3>
                 <form
                     id="password"
-                    onSubmit={handleSubmit(() => {
-                        onSubmit(getValues('pwd'))
-                    })}
+                    onSubmit={handleSubmit(onSubmit)}
                     style={{ position: 'relative' }}
                 >
                     <Input
@@ -60,9 +62,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
             <div className="enter-new-password__content-buttons">
                 <Button
                     text={'Sign in the wallet'}
-                    onClick={handleSubmit(() => {
-                        onSubmit(getValues('pwd'))
-                    })}
+                    onClick={handleSubmit(onSubmit)}
                     form="password"
                 />
                 <Button text={'Back'} white onClick={onBack} />

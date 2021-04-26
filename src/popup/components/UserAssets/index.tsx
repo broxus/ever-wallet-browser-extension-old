@@ -19,7 +19,7 @@ enum Panel {
     ADD_NEW_TOKEN,
 }
 
-const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveContent }) => {
+const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
 
     const closePanel = () => setOpenedPanel(undefined)

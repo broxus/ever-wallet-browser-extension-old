@@ -90,7 +90,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (
                 <EnterNewPassword
-                    onSubmit={async (password) => {
+                    onNext={async (password) => {
                         await onSubmit(password)
                     }}
                     onBack={() => {

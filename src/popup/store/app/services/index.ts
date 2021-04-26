@@ -1,5 +1,6 @@
+import { Mutex } from 'await-semaphore'
+import { GqlSocket, StorageConnector } from '../../../../shared'
 import * as nt from '@nekoton'
-import { GqlSocket, StorageConnector, Mutex } from '../../../../shared'
 
 let storage: nt.Storage | null = null
 export const loadStorage = () => {
@@ -31,7 +32,7 @@ type ConnectionState = {
 }
 
 let connectionPromise: Promise<ConnectionState> | null = null
-const loadConnection = async () => {
+export const loadConnection = async () => {
     if (connectionPromise == null) {
         const socket = new GqlSocket()
 
@@ -70,14 +71,15 @@ export const resetLatestBlock = (address: string) => {
     latestBlocks.delete(address)
 }
 
+const subscriptions = new Map<string, Promise<nt.TonWallet>>()
 const subscribe = async (
     publicKey: string,
     contractType: nt.ContractType,
     handler: ITonWalletHandler
 ) => {
-    const ctx = await loadConnection()
+    const { connection } = await loadConnection()
 
-    const tonWallet = await ctx.connection.subscribeToTonWallet(publicKey, contractType, handler)
+    const tonWallet = await connection.subscribeToTonWallet(publicKey, contractType, handler)
     if (tonWallet == null) {
         throw Error('Failed to subscribe')
     }
@@ -87,11 +89,13 @@ const subscribe = async (
     ;(async () => {
         const address = tonWallet.address
         let pollingMethodChanged = false
-        let lastPollingMethod = tonWallet.pollingMethod
+        let currentPollingMethod = tonWallet.pollingMethod
         let currentBlockId: string | null = null
 
         while (true) {
-            switch (lastPollingMethod) {
+            let nextPollingMethod!: typeof tonWallet.pollingMethod
+
+            switch (currentPollingMethod) {
                 case 'manual': {
                     currentBlockId = null
                     await new Promise<void>((resolve) => {
@@ -99,43 +103,47 @@ const subscribe = async (
                     })
                     console.log('manual refresh')
 
-                    const unlock = await lockSubscription(address)
-                    await tonWallet.refresh()
-                    unlock()
-
+                    await lockSubscription(address).use(async () => {
+                        await tonWallet.refresh()
+                        nextPollingMethod = tonWallet.pollingMethod
+                    })
                     break
                 }
                 case 'reliable': {
                     if (pollingMethodChanged || currentBlockId == null) {
                         currentBlockId =
-                            latestBlocks.get(address) || (await tonWallet.getLatestBlock()).id
+                            latestBlocks.get(address) ||
+                            (await connection.getLatestBlock(address)).id
                     }
 
-                    const nextBlockId: string = await tonWallet.waitForNextBlock(currentBlockId, 60)
-                    console.log(nextBlockId, currentBlockId != nextBlockId)
+                    const nextBlockId: string = await connection.waitForNextBlock(
+                        currentBlockId,
+                        address,
+                        60
+                    )
 
-                    const unlock = await lockSubscription(address)
-                    await tonWallet.handleBlock(nextBlockId)
-                    unlock()
+                    await lockSubscription(address).use(async () => {
+                        await tonWallet.handleBlock(nextBlockId)
+                        nextPollingMethod = tonWallet.pollingMethod
+                    })
 
                     currentBlockId = nextBlockId
                     break
                 }
             }
 
-            const unlock = await lockSubscription(address)
-            const pollingMethod = tonWallet.pollingMethod
-            unlock()
+            pollingMethodChanged = currentPollingMethod != nextPollingMethod
+            currentPollingMethod = nextPollingMethod
 
-            pollingMethodChanged = lastPollingMethod != pollingMethod
-            lastPollingMethod = pollingMethod
+            if (!subscriptions.has(address)) {
+                break
+            }
         }
     })().then((_) => {})
 
     return tonWallet
 }
 
-const subscriptions = new Map<string, Promise<nt.TonWallet>>()
 export const loadSubscription = async (
     publicKey: string,
     contractType: nt.ContractType,
@@ -152,14 +160,20 @@ export const loadSubscription = async (
 }
 
 const subscriptionMutex = new Map<string, Mutex>()
-export const lockSubscription = async (address: string) => {
+export const lockSubscription = (address: string) => {
     let mutex = subscriptionMutex.get(address)
     if (mutex == null) {
         mutex = new Mutex()
         subscriptionMutex.set(address, mutex)
     }
 
-    return await mutex.lock()
+    return mutex
+}
+
+export const clearSubscriptions = () => {
+    subscriptions.clear()
+    subscriptionMutex.clear()
+    latestBlocks.clear()
 }
 
 export const loadAccount = async (address: string) => {

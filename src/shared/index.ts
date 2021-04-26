@@ -301,19 +301,3 @@ export function packData(data: ArrayBuffer): string {
 export function unpackData(data: string): ArrayBuffer {
     return Base64.toByteArray(data)
 }
-
-export class Mutex {
-    current: Promise<void> = Promise.resolve()
-
-    public lock = () => {
-        let resolveChanged: () => void
-        const chained = new Promise<void>((resolve) => {
-            resolveChanged = () => resolve()
-        })
-
-        const result = this.current.then(() => resolveChanged)
-        this.current = chained
-
-        return result
-    }
-}

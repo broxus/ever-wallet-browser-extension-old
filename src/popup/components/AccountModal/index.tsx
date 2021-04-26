@@ -21,10 +21,10 @@ type IAccountModal = {
 const AccountModal: React.FC<IAccountModal> = ({
     account,
     tonWalletState,
-    onOpenConnectedSites,
-    onOpenKeyStore,
-    onOpenWalletSettings,
-    onOpenInformation,
+    //onOpenConnectedSites,
+    //onOpenKeyStore,
+    //onOpenWalletSettings,
+    //onOpenInformation,
     onLogOut,
     onClose,
 }) => {

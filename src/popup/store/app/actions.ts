@@ -1,4 +1,4 @@
-import { AppDispatch } from '../index'
+import { AppDispatch } from '@store'
 import { Locale, MessageToPrepare, AppState } from './types'
 import {
     loadKeyStore,
@@ -8,6 +8,7 @@ import {
     lockSubscription,
     setLatestBlock,
     loadAccount,
+    loadConnection,
 } from './services'
 
 import * as nt from '@nekoton'
@@ -25,6 +26,8 @@ export const Action = {
         draft.selectedAccount = null
         draft.tonWalletState = null
         draft.transactions = []
+        draft.deliveredMessages = []
+        draft.expiredMessages = []
     },
     setTonWalletState: (_address: string, state: nt.AccountState) => (draft: AppState) => {
         draft.tonWalletState = state
@@ -107,6 +110,7 @@ export const logOut = () => async (dispatch: AppDispatch) => {
     try {
         await accountsStorage.clear()
         await keyStore.clear()
+        console.log('Entries:', await keyStore.getKeys())
         updateStore(dispatch, ActionTypes.resetAccounts)
     } catch (e) {
         console.log(e, 'clearing failed')
@@ -133,6 +137,8 @@ export const createAccount = (
     password: string
 ) => async (dispatch: AppDispatch) => {
     const keystore = await loadKeyStore()
+
+    console.log(accountName, password)
 
     const key = await keystore.addKey(`${accountName} key`, <nt.NewKey>{
         type: 'encrypted_key',
@@ -189,63 +195,46 @@ const makeSubscriptionHandler = (dispatch: AppDispatch) => (address: string) => 
 }
 
 export const startSubscription = (address: string) => async (dispatch: AppDispatch) => {
-    try {
-        const accountsStorage = await loadAccountsStorage()
+    const accountsStorage = await loadAccountsStorage()
 
-        const account = await accountsStorage.getAccount(address)
-        console.log('account', account)
-
-        if (account == null) {
-            throw new Error("Selected account doesn't exist")
-        }
-
-        await loadSubscription(
-            account.tonWallet.publicKey,
-            account.tonWallet.contractType,
-            makeSubscriptionHandler(dispatch)
-        )
-    } catch (e) {
-        console.log(e)
+    const account = await accountsStorage.getAccount(address)
+    if (account == null) {
+        throw new Error("Selected account doesn't exist")
     }
+
+    await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
 }
 
 export const prepareDeployMessage = (address: string) => async (dispatch: AppDispatch) => {
-    let unlock: (() => void) | null = null
+    const account = await loadAccount(address)
 
-    try {
-        const account = await loadAccount(address)
-        const tonWallet = await loadSubscription(
-            account.tonWallet.publicKey,
-            account.tonWallet.contractType,
-            makeSubscriptionHandler(dispatch)
-        )
-        unlock = await lockSubscription(tonWallet.address)
+    const tonWallet = await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
 
-        const deploy_msg = tonWallet.prepareDeploy(60)
-        unlock()
-        return deploy_msg
-    } catch (e) {
-        unlock?.()
-        console.log(e, 'error')
-        return null
-    }
+    return lockSubscription(tonWallet.address).use(async () => {
+        return tonWallet.prepareDeploy(60)
+    })
 }
 
 export const prepareMessage = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch
 ) => {
-    let unlock: (() => void) | null = null
-    try {
-        const account = await loadAccount(address)
+    const account = await loadAccount(address)
 
-        const tonWallet = await loadSubscription(
-            account.tonWallet.publicKey,
-            account.tonWallet.contractType,
-            makeSubscriptionHandler(dispatch)
-        )
+    const tonWallet = await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
 
-        unlock = await lockSubscription(tonWallet.address)
-
+    return lockSubscription(tonWallet.address).use(async () => {
         const contractState = await tonWallet.getContractState()
         if (contractState == null) {
             throw new Error('Contract state is empty')
@@ -269,13 +258,8 @@ export const prepareMessage = (address: string, messageToPrepare: MessageToPrepa
             // TODO: show notification with deployment
             throw new Error('Contract must be deployed first')
         }
-
-        unlock()
         return unsignedMessage
-    } catch (e) {
-        unlock?.()
-        throw e
-    }
+    })
 }
 
 export const estimateFees = (address: string, message: nt.SignedMessage) => async (
@@ -289,15 +273,9 @@ export const estimateFees = (address: string, message: nt.SignedMessage) => asyn
         makeSubscriptionHandler(dispatch)
     )
 
-    let unlock = await lockSubscription(tonWallet.address)
-    try {
-        const fees = await tonWallet.estimateFees(message)
-        unlock()
-        return fees
-    } catch (e) {
-        unlock()
-        throw e
-    }
+    return lockSubscription(tonWallet.address).use(async () => {
+        return await tonWallet.estimateFees(message)
+    })
 }
 
 export const sendMessage = (
@@ -309,6 +287,9 @@ export const sendMessage = (
 
     const keyStore = await loadKeyStore()
 
+    console.log('Account: ', account)
+    console.log(await keyStore.getKeys())
+
     message.refreshTimeout()
     const signedMessage = await keyStore.sign(message, {
         type: 'encrypted_key',
@@ -318,24 +299,18 @@ export const sendMessage = (
         },
     })
 
+    const { connection } = await loadConnection()
+
     const tonWallet = await loadSubscription(
         account.tonWallet.publicKey,
         account.tonWallet.contractType,
         makeSubscriptionHandler(dispatch)
     )
-
-    let unlock = await lockSubscription(address)
-    try {
-        const latestBlockId = await tonWallet.getLatestBlock()
+    return lockSubscription(address).use(async () => {
+        const latestBlockId = await connection.getLatestBlock(address)
         setLatestBlock(address, latestBlockId.id)
-
-        const pendingTransaction = await tonWallet.sendMessage(signedMessage)
-        unlock()
-        return pendingTransaction
-    } catch (e) {
-        unlock()
-        throw e
-    }
+        return await tonWallet.sendMessage(signedMessage)
+    })
 }
 
 export const removeDeliveredMessage = (pendingTransaction: nt.PendingTransaction) => async (

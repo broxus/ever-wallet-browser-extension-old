@@ -1,6 +1,5 @@
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use num_bigint::BigUint;
 use wasm_bindgen::prelude::*;
@@ -10,7 +9,6 @@ use wasm_bindgen_futures::*;
 use nt::core::token_wallet;
 use nt::utils::*;
 
-use super::PromiseLatestBlock;
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -135,31 +133,6 @@ impl TokenWallet {
 
             let address = wallet.get_proxy_address().await.handle_error()?;
             Ok(JsValue::from(address.to_string()))
-        }))
-    }
-
-    #[wasm_bindgen(js_name = "getLatestBlock")]
-    pub fn get_latest_block(&self) -> PromiseLatestBlock {
-        let address = self.inner.wallet.lock().trust_me().address().clone();
-        let transport = self.inner.transport.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let latest_block = transport.get_latest_block(&address).await.handle_error()?;
-            Ok(super::make_latest_block(latest_block))
-        }))
-    }
-
-    #[wasm_bindgen(js_name = "waitForNextBlock")]
-    pub fn wait_for_next_block(&self, current: String, timeout: u32) -> PromiseString {
-        let address = self.inner.wallet.lock().trust_me().address().clone();
-        let transport = self.inner.transport.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let next_block = transport
-                .wait_for_next_block(&current, &address, Duration::from_secs(timeout as u64))
-                .await
-                .handle_error()?;
-            Ok(JsValue::from(next_block))
         }))
     }
 

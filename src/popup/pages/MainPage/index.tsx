@@ -99,7 +99,11 @@ const MainPage: React.FC<IMainPage> = ({
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountScreen />}
                     {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
                     {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet account={account} tonWalletState={tonWalletState} />
+                        <DeployWallet
+                            account={account}
+                            tonWalletState={tonWalletState}
+                            onBack={closePanel}
+                        />
                     )}
                 </>
             </SlidingPanel>

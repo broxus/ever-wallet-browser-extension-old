@@ -45,7 +45,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({ minHeight, handleNext, handle
             </div>
             <div className="enter-password__buttons">
                 <Button text={'Back'} onClick={() => handleBack()} white />
-                <Button text={'Next'} type="submit" form="password" />
+                <Button text={'Next'} onClick={() => handleSubmit(onSubmit)} form="password" />
             </div>
         </div>
     )
