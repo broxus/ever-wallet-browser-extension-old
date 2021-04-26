@@ -8,7 +8,7 @@ const CONNECTION_STORE_KEY = 'selectedConnection'
 
 export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
 
-type InitializedConnection = nt.EnumItem<
+export type InitializedConnection = nt.EnumItem<
     'graphql',
     {
         socket: GqlSocket
@@ -82,6 +82,10 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
 
         const release = await this._connectionMutex.acquire()
         return new NetworkSwitchHandle(this, release, params)
+    }
+
+    public get initializedConnection() {
+        return this._initializedConnection
     }
 
     private async _connect(params: ConnectionData) {

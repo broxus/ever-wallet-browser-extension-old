@@ -48,26 +48,3 @@ impl From<nt::core::InternalMessage> for InternalMessage {
         Self { inner }
     }
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const LATEST_BLOCK: &'static str = r#"
-export type LatestBlock = {
-    id: string,
-    endLt: string,
-    genUtime: number,
-};
-"#;
-
-pub fn make_latest_block(latest_block: nt::transport::gql::LatestBlock) -> JsValue {
-    ObjectBuilder::new()
-        .set("id", latest_block.id)
-        .set("endLt", latest_block.end_lt.to_string())
-        .set("genUtime", latest_block.gen_utime)
-        .build()
-}
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<LatestBlock>")]
-    pub type PromiseLatestBlock;
-}
