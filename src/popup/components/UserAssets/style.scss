@@ -1,0 +1,44 @@
+@import "../../styles/colors";
+
+.user-assets {
+    padding: 0 20px;
+
+    &__panel {
+        display: flex;
+        border-bottom: 1px solid #ebedee;
+
+        &__tab {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            color: $inactiveTab;
+            cursor: pointer;
+            line-height: 20px;
+            text-align: center;
+            letter-spacing: 0.25px;
+            padding: 16px 24px;
+            width: 50%;
+
+            &._active {
+                color: $windowBgActive;
+                border-bottom: 2px solid $windowBgActive;
+                margin-bottom: -1px;
+            }
+        }
+    }
+
+    &__assets-list {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+
+        .assets-list-item:last-child {
+            margin-bottom: 20px;
+        }
+
+        &__add-new-btn {
+            margin-bottom: 32px;
+        }
+    }
+}

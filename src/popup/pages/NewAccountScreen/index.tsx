@@ -1,43 +1,44 @@
 import React, { useState } from 'react'
-import { Step, DEFAULT_CONTRACT_TYPE, Action } from '../../common'
-import { generateSeed, createAccount } from '../../store/app/actions'
+import { Action } from '@utils'
+import { Step, DEFAULT_CONTRACT_TYPE } from '@common'
+import { generateSeed, createAccount } from '@store/app/actions'
 import { connect } from 'react-redux'
+import * as nt from '@nekoton'
 
-import * as nt from '../../../../nekoton/pkg'
-
-import SelectContractType from '../../components/SelectContractType'
-import ExportedSeed from '../../components/ExportedSeed'
-import CheckSeed from '../../components/CheckSeed'
-import EnterPasswordScreen from '../../components/EnterPasswordScreen'
-import Modal from '../../components/Modal/Modal'
+import SignPolicy from '@components/SignPolicy'
+import SelectContractType from '@components/SelectContractType'
+import ExportedSeed from '@components/ExportedSeed'
+import { CheckSeedOnCreation } from '@components/CheckSeed'
+import EnterNewPassword from '@components/EnterNewPassword'
+import Modal from '@components/Modal'
 
 import './style.scss'
 
 enum LocalStep {
+    SIGN_POLICY,
     SELECT_CONTRACT_TYPE,
     SHOW_PHRASE,
     CHECK_PHRASE,
     ENTER_PASSWORD,
 }
 
-interface ISetupScreen {
+interface INewAccountPage {
     setStep: (step: Step) => void
     createAccount: Action<typeof createAccount>
 }
 
-const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) => {
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_CONTRACT_TYPE)
+const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) => {
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
     const [error, setError] = useState<string>()
 
     const seed = useState<nt.GeneratedMnemonic>(generateSeed())[0]
 
-    const [password, setPassword] = useState<string>('')
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
-    const onSubmit = async () => {
+    const onSubmit = async (password: string) => {
         try {
             await createAccount('Account 1', contractType, seed, password)
-            setStep(Step.MAIN_PAGE)
+            setStep(Step.MAIN)
         } catch (e) {
             setError(e.toString())
         }
@@ -47,14 +48,23 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
 
     return (
         <>
+            {localStep == LocalStep.SIGN_POLICY && (
+                <SignPolicy
+                    onSubmit={() => {
+                        setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
+                    }}
+                    onBack={() => {
+                        setStep(Step.WELCOME)
+                    }}
+                />
+            )}
             {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
                 <SelectContractType
                     onSubmit={(contractType) => {
                         setContractType(contractType)
                         setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
-                    onReturnBack={() => setStep(Step.WELCOME_PAGE)}
-                    onSkip={() => setStep(Step.MAIN_PAGE)}
+                    onBack={() => setStep(Step.WELCOME)}
                     excludedContracts={['WalletV3']}
                 />
             )}
@@ -70,7 +80,7 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
                 />
             )}
             {localStep == LocalStep.CHECK_PHRASE && (
-                <CheckSeed
+                <CheckSeedOnCreation
                     onSubmit={() => {
                         setLocalStep(LocalStep.ENTER_PASSWORD)
                     }}
@@ -81,10 +91,9 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
                 />
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (
-                <EnterPasswordScreen
-                    onSubmit={async (password) => {
-                        setPassword(password)
-                        await onSubmit()
+                <EnterNewPassword
+                    onNext={async (password) => {
+                        await onSubmit(password)
                     }}
                     onBack={() => {
                         setLocalStep(LocalStep.SHOW_PHRASE)
@@ -110,4 +119,4 @@ const NewAccountScreen: React.FC<ISetupScreen> = ({ setStep, createAccount }) =>
 
 export default connect(null, {
     createAccount,
-})(NewAccountScreen)
+})(NewAccountPage)

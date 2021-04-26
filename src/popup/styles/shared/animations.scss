@@ -1,7 +1,11 @@
 @import "importOnce";
 
 @include exports('animations') {
-  @keyframes ripple {
+  @keyframes button-ripple {
+    from {
+      transform: scale(0);
+    }
+
     to {
       transform: scale(4);
     }

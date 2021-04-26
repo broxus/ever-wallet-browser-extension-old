@@ -1,48 +1,85 @@
 import React, { useEffect, useState } from 'react'
 import { connect } from 'react-redux'
-import WelcomeScreen from './pages/WelcomeScreen/WelcomeScreen'
-import PolicySignScreen from './pages/PolicySignScreen/PolicySignScreen'
-import MainPageScreen from './pages/MainPage/MainPageScreen'
-import NewAccountScreen from './pages/NewAccountScreen'
-import RestoreAccountScreen from './pages/RestoreAccountScreen'
+import { AppState } from '@store/app/types'
+import { setupCurrentAccount } from '@store/app/actions'
+import { Step } from '@common'
+import { Action } from '@utils'
+import { IMetaRPCClient } from '@utils/MetaRPCClient'
+import init from '@nekoton'
 
-import { AppState } from './store/app/types'
-import { checkAccounts } from './store/app/actions'
-import { Step, Action } from './common'
+import WelcomePage from './pages/WelcomePage'
+import MainPage from './pages/MainPage'
+import NewAccountPage from './pages/NewAccountScreen'
 
+import RestoreAccountPage from './pages/RestoreAccountScreen'
+
+import Oval from '@img/oval.svg'
 import './styles/main.scss'
+import WalletInteract from './pages/ConnectWalletScreen'
 
-interface IApp {
-    accountLoaded: boolean
-    checkAccounts: Action<typeof checkAccounts>
+const Loader: React.FC = () => {
+    return (
+        <div className="loader-page">
+            {/*@ts-ignore*/}
+            <Oval className="loader-page__spinner" />
+        </div>
+    )
 }
 
-const App: React.FC<IApp> = ({ accountLoaded, checkAccounts }) => {
-    const [step, setStep] = useState<number>(Step.WELCOME_PAGE)
+export interface ActiveTab {
+    id?: number
+    title?: string
+    origin: string
+    protocol?: string
+    url?: string
+}
+
+interface IApp {
+    activeTab?: ActiveTab
+    backgroundConnection: IMetaRPCClient
+    accountLoaded: boolean
+    setupCurrentAccount: Action<typeof setupCurrentAccount>
+}
+
+const App: React.FC<IApp> = ({ backgroundConnection, accountLoaded, setupCurrentAccount }) => {
+    const [step, setStep] = useState<number>(Step.LOADING)
 
     useEffect(() => {
-        checkAccounts().then(() => {})
+        init('index_bg.wasm').then(async () => {
+            const hasAccount = await setupCurrentAccount()
+            if (!hasAccount) {
+                setStep(Step.WELCOME)
+            }
+
+            backgroundConnection.getState((error) => {
+                console.log(error)
+            })
+        })
     }, [])
 
     useEffect(() => {
         if (accountLoaded) {
-            setStep(Step.MAIN_PAGE)
+            setStep(Step.MAIN)
+            // setStep(Step.CONNECT_WALLET)
         }
     }, [accountLoaded])
 
     return (
         <>
-            {step == Step.WELCOME_PAGE && <WelcomeScreen setStep={setStep} />}
-            {step == Step.POLICY_SIGN_SCREEN && <PolicySignScreen setStep={setStep} />}
-            {step == Step.CREATE_NEW_WALLET && <NewAccountScreen setStep={setStep} />}
-            {step == Step.RESTORE_WALLET && <RestoreAccountScreen setStep={setStep} />}
-            {step == Step.MAIN_PAGE && <MainPageScreen setStep={setStep} />}
+            {step == Step.LOADING && <Loader />}
+            {step == Step.WELCOME && <WelcomePage setStep={setStep} />}
+            {step == Step.CREATE_NEW_WALLET && <NewAccountPage setStep={setStep} />}
+            {step == Step.RESTORE_WALLET && <RestoreAccountPage setStep={setStep} />}
+            {step == Step.MAIN && <MainPage setStep={setStep} />}
+            {step == Step.CONNECT_WALLET && <WalletInteract setStep={setStep} />}
         </>
     )
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({
-    accountLoaded: store.app.accountLoaded,
+    accountLoaded: store.app.selectedAccount != null,
 })
 
-export default connect(mapStateToProps, { checkAccounts })(App)
+export default connect(mapStateToProps, {
+    setupCurrentAccount,
+})(App)

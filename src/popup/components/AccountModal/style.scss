@@ -1,0 +1,79 @@
+@import '../../styles/colors';
+
+.account-settings {
+    background: $windowBg;
+    border: 1px solid $modalBorder;
+    box-shadow: 0px 4px 19px rgba(0, 0, 0, 0.25);
+    border-radius: 2px;
+    //height: 160px;
+    width: 208px;
+    padding: 16px;
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    z-index: 10;
+
+    &-separator {
+        margin-top: 16px;
+        margin-bottom: 16px;
+        border-bottom: 1px solid $modalBorder;
+        width: 100%;
+        display: block;
+    }
+
+    &-section {
+        &-account {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: $windowFg;
+        }
+
+        &-item {
+            color: $windowFg;
+            cursor: pointer;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            margin-bottom: 16px;
+
+            &:hover {
+                color: $activeButtonBg;
+
+                //background-color: #919191;
+            }
+
+            &-log-out {
+                cursor: pointer;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                letter-spacing: 0.25px;
+                line-height: 20px;
+                color: #cc0022;
+                margin-bottom: 0;
+            }
+            //&:not(:first-child) {
+            //    padding: 0 12px;
+            //}
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+
+            &-value {
+                margin-bottom: 16px;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 12px;
+                line-height: 16px;
+                letter-spacing: 0.4px;
+                color: #96a1a7;
+            }
+        }
+    }
+}

@@ -1,0 +1,54 @@
+@import "../../styles/colors";
+
+.transactions-list-item {
+    align-items: center;
+    border-bottom: 1px solid #ebedee;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    padding: 20px 0;
+
+    &__description {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+
+        &__date, &__fees, &__comment {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: $inactiveTab;
+        }
+
+        &__address {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 24px;
+            letter-spacing: 0.5px;
+            color: #000000;
+        }
+
+        &__income {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 20px;
+            text-align: right;
+            letter-spacing: 0.25px;
+            color: #00ac47;
+        }
+
+        &__expense {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 20px;
+            text-align: right;
+            letter-spacing: 0.25px;
+            color: #000000;
+        }
+    }
+}

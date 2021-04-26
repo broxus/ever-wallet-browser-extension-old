@@ -1,201 +1,119 @@
-import { AppDispatch } from '../index'
-import { GqlSocket, StorageConnector } from '../../../background/common'
-import { MessageToPrepare } from './types'
-import Decimal from 'decimal.js'
-import * as nt from '../../../../nekoton/pkg'
+import { AppDispatch } from '@store'
+import { Locale, MessageToPrepare, AppState } from './types'
+import {
+    loadKeyStore,
+    loadSubscription,
+    loadAccountsStorage,
+    ITonWalletHandler,
+    lockSubscription,
+    setLatestBlock,
+    loadAccount,
+    loadConnection,
+    clearSubscriptions,
+} from './services'
 
-Decimal.set({ maxE: 500, minE: -500 })
+import * as nt from '@nekoton'
+import { mergeTransactions } from '../../../shared'
+import { parseTons } from '@utils'
 
-export const ActionTypes = {
-    SETLOCALE: 'app/set-locale',
-    SET_ACCOUNT_LOADED: 'SET_ACCOUNT_LOADED',
-
-    ADD_KEY_SUCCESS: 'ADD_KEY_SUCCESS',
-    ADD_KEY_FAILURE: 'ADD_KEY_FAILURE',
-    RESTORE_ACCOUNT_SUCCESS: 'RESTORE_ACCOUNT_SUCCESS',
-    RESTORE_ACCOUNT_FAILURE: 'RESTORE_ACCOUNT_FAILURE',
-    SET_CURRENT_ACCOUNT_SUCCESS: 'SET_CURRENT_ACCOUNT_SUCCESS',
-    SET_CURRENT_ACCOUNT_FAILURE: 'SET_CURRENT_ACCOUNT_FAILURE',
-    SET_TON_WALLET_STATE: 'SET_TON_WALLET_STATE',
-    ADD_NEW_TRANSACTIONS: 'ADD_NEW_TRANSACTIONS',
-    SET_FEE_CALCULATION_SUCCESS: 'SET_FEE_CALCULATION_SUCCESS',
-    SET_FEE_CALCULATION_FAILURE: 'SET_FEE_CALCULATION_FAILURE',
-    RESET_ACCOUNTS: 'RESET_ACCOUNTS',
-}
-
-let __storage: nt.Storage | null = null
-const loadStorage = () => {
-    if (__storage == null) {
-        __storage = new nt.Storage(new StorageConnector())
-    }
-    return __storage
-}
-
-let __accountsStorage: nt.AccountsStorage | null = null
-const loadAccountsStorage = async () => {
-    if (__accountsStorage == null) {
-        __accountsStorage = await nt.AccountsStorage.load(loadStorage())
-    }
-    return __accountsStorage
-}
-
-let __keystore: nt.KeyStore | null = null
-const loadKeyStore = async () => {
-    if (__keystore == null) {
-        __keystore = await nt.KeyStore.load(loadStorage())
-    }
-    return __keystore
-}
-
-type ConnectionState = {
-    socket: GqlSocket
-    connection: nt.GqlConnection
-}
-
-let __connection: ConnectionState | null = null
-const loadConnection = async () => {
-    if (__connection == null) {
-        const socket = new GqlSocket()
-        const connection = await socket.connect({
-            endpoint: 'https://main.ton.dev/graphql',
-            timeout: 60000, // 60s
+export const Action = {
+    setLocale: (locale: Locale) => (draft: AppState) => {
+        draft.locale = locale
+    },
+    setCurrentAccount: (account: nt.AssetsList) => (draft: AppState) => {
+        draft.selectedAccount = account
+    },
+    resetAccounts: () => (draft: AppState) => {
+        draft.selectedAccount = null
+        draft.tonWalletState = null
+        draft.transactions = []
+        draft.deliveredMessages = []
+        draft.expiredMessages = []
+    },
+    setTonWalletState: (_address: string, state: nt.AccountState) => (draft: AppState) => {
+        draft.tonWalletState = state
+    },
+    addNewTransactions: (
+        _address: string,
+        newTransactions: nt.Transaction[],
+        info: nt.TransactionsBatchInfo
+    ) => (draft: AppState) => {
+        mergeTransactions(draft.transactions, newTransactions, info)
+    },
+    addDeliveredMessage: (
+        pendingTransaction: nt.PendingTransaction,
+        transaction: nt.Transaction
+    ) => (draft: AppState) => {
+        draft.deliveredMessages.push({
+            pendingTransaction,
+            transaction,
         })
-
-        __connection = <ConnectionState>{
-            socket,
-            connection,
-        }
-    }
-    return __connection
-}
-
-class TonWalletHandler {
-    constructor(private dispatch: AppDispatch, private address: string) {}
-
-    onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
-        console.log(pendingTransaction, transaction)
-    }
-
-    onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-        console.log(pendingTransaction)
-    }
-
-    onStateChanged(newState: nt.AccountState) {
-        this.dispatch({
-            type: ActionTypes.SET_TON_WALLET_STATE,
-            payload: { newState, address: this.address },
-        })
-        console.log(newState)
-    }
-
-    onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
-        this.dispatch({
-            type: ActionTypes.ADD_NEW_TRANSACTIONS,
-            payload: {
-                transactions,
-                info,
-                address: this.address,
-            },
-        })
-    }
-}
-
-const __subscriptions = new Map<string, nt.TonWallet>()
-const loadSubscription = async (
-    publicKey: string,
-    contractType: nt.ContractType,
-    dispatch: AppDispatch
-): Promise<nt.TonWallet> => {
-    const address = nt.computeTonWalletAddress(publicKey, contractType, 0)
-
-    let subscription = __subscriptions.get(address)
-    if (subscription == null) {
-        const ctx = await loadConnection()
-        subscription = await ctx.connection.subscribeToTonWallet(
-            publicKey,
-            contractType,
-            new TonWalletHandler(dispatch, address)
+    },
+    removeDeliveredMessage: (pendingTransaction: nt.PendingTransaction) => (draft: AppState) => {
+        const index = draft.deliveredMessages.findIndex(
+            (item) => item.pendingTransaction.bodyHash == pendingTransaction.bodyHash
         )
-        if (subscription == null) {
-            throw Error('Failed to subscribe')
-        }
-
-        const POLLING_INTERVAL = 10000 // 10s
-
-        ;(async () => {
-            let currentBlockId: string | null = null
-            let lastPollingMethod = subscription.pollingMethod
-            for (let i = 0; i < 10; ++i) {
-                switch (lastPollingMethod) {
-                    case 'manual': {
-                        await new Promise<void>((resolve) => {
-                            setTimeout(() => resolve(), POLLING_INTERVAL)
-                        })
-                        console.log('manual refresh')
-                        await subscription.refresh()
-                        break
-                    }
-                    case 'reliable': {
-                        if (lastPollingMethod != 'reliable' || currentBlockId == null) {
-                            currentBlockId = (await subscription.getLatestBlock()).id
-                        }
-
-                        const nextBlockId: string = await subscription.waitForNextBlock(
-                            currentBlockId,
-                            60
-                        )
-                        console.log(nextBlockId, currentBlockId != nextBlockId)
-
-                        await subscription.handleBlock(nextBlockId)
-                        currentBlockId = nextBlockId
-                        break
-                    }
-                }
-
-                lastPollingMethod = subscription.pollingMethod
-            }
-        })().then((_) => {})
-    }
-    return subscription
+        draft.deliveredMessages.splice(index, 1)
+    },
+    addExpiredMessage: (pendingTransaction: nt.PendingTransaction) => (draft: AppState) => {
+        draft.expiredMessages.push(pendingTransaction)
+    },
+    removeExpiredMessage: (pendingTransaction: nt.PendingTransaction) => (draft: AppState) => {
+        const index = draft.expiredMessages.findIndex(
+            (item) => item.bodyHash == pendingTransaction.bodyHash
+        )
+        draft.expiredMessages.splice(index, 1)
+    },
 }
 
-export const setLocale = (locale: any) => async (
-    dispatch: (arg0: { type: string; payload: any }) => void
-) => {
+export const ActionTypes: { [K in keyof typeof Action]: K } = window.ObjectExt.keys(Action).reduce(
+    (state, key) => ({ ...state, [key]: key }),
+    {} as any
+)
+
+// Helper function to infer parameter types
+function updateStore<K extends keyof typeof Action, F extends typeof Action[K]>(
+    dispatch: AppDispatch,
+    type: K,
+    ...args: Parameters<F>
+) {
     dispatch({
-        type: ActionTypes.SETLOCALE,
-        payload: locale,
+        type,
+        // @ts-ignore
+        payload: [...args],
     })
 }
 
-export const checkAccounts = () => async (dispatch: AppDispatch) => {
-    const accountsStorage = await loadAccountsStorage()
-    const accounts = await accountsStorage.getStoredAccounts()
-
-    if (accounts.length === 0) {
-        dispatch({
-            type: ActionTypes.SET_ACCOUNT_LOADED,
-            payload: { loaded: false },
-        })
-    } else {
-        const currentAccount = await accountsStorage.getCurrentAccount()
-        console.log('currentAccount', currentAccount)
-        dispatch({
-            type: ActionTypes.SET_ACCOUNT_LOADED,
-            payload: { loaded: true, currentAccount },
-        })
-    }
+export const setLocale = (locale: Locale) => async (dispatch: AppDispatch) => {
+    updateStore(dispatch, ActionTypes.setLocale, locale)
 }
 
-export const resetAccounts = () => async (dispatch: AppDispatch) => {
+export const setupCurrentAccount = () => async (dispatch: AppDispatch): Promise<boolean> => {
     const accountsStorage = await loadAccountsStorage()
+
+    const currentAccount = await accountsStorage.getCurrentAccount()
+    if (currentAccount == null) {
+        return false
+    }
+
+    const account = await accountsStorage.getAccount(currentAccount)
+    if (account != null) {
+        updateStore(dispatch, ActionTypes.setCurrentAccount, account)
+    }
+
+    return account != null
+}
+
+export const logOut = () => async (dispatch: AppDispatch) => {
+    const accountsStorage = await loadAccountsStorage()
+    const keyStore = await loadKeyStore()
 
     try {
         await accountsStorage.clear()
-        console.log('cleared successfully')
-        dispatch({
-            type: ActionTypes.RESET_ACCOUNTS,
-        })
+        await keyStore.clear()
+        clearSubscriptions()
+        console.log('Entries:', await keyStore.getKeys())
+        updateStore(dispatch, ActionTypes.resetAccounts)
     } catch (e) {
         console.log(e, 'clearing failed')
     }
@@ -213,27 +131,6 @@ export const exportKey = async (params: nt.ExportKey): Promise<nt.ExportedKey> =
     const keyStore = await loadKeyStore()
     return await keyStore.exportKey(params)
 }
-
-// export const getCurrentAccount = (publicKey: string) => async (dispatch: AppDispatch) => {
-//     try {
-//         const accountsStorage = await loadAccountsStorage()
-//
-//         console.log('accountsStorage', accountsStorage)
-//         const address = await accountsStorage.addAccount('Account 1', publicKey, 'SurfWallet', true)
-//         console.log('address', address)
-//         const currentAccount = await accountsStorage.getCurrentAccount()
-//         console.log('currentAccount', currentAccount)
-//         dispatch({
-//             type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
-//             payload: address,
-//         })
-//     } catch (error) {
-//         console.log(error)
-//         dispatch({
-//             type: ActionTypes.SET_CURRENT_ACCOUNT_FAILURE,
-//         })
-//     }
-// }
 
 export const createAccount = (
     accountName: string,
@@ -253,123 +150,177 @@ export const createAccount = (
     })
 
     const accountsStorage = await loadAccountsStorage()
-    console.log('accountsStorage', accountsStorage)
-
     const address = await accountsStorage.addAccount(accountName, key.publicKey, contractType, true)
-    console.log('address', address)
-    dispatch({
-        type: ActionTypes.SET_CURRENT_ACCOUNT_SUCCESS,
-        payload: address,
-    })
+    const account = await accountsStorage.getAccount(address)
+    if (account == null) {
+        throw Error('Failed to create account')
+    }
+
+    updateStore(dispatch, ActionTypes.setCurrentAccount, account)
+}
+
+const makeSubscriptionHandler = (dispatch: AppDispatch) => (address: string) => {
+    class TonWalletHandler implements ITonWalletHandler {
+        constructor(private dispatch: AppDispatch, private address: string) {}
+
+        onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+            updateStore(
+                this.dispatch,
+                ActionTypes.addDeliveredMessage,
+                pendingTransaction,
+                transaction
+            )
+        }
+
+        onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+            updateStore(this.dispatch, ActionTypes.addExpiredMessage, pendingTransaction)
+        }
+
+        onStateChanged(newState: nt.AccountState) {
+            updateStore(this.dispatch, ActionTypes.setTonWalletState, this.address, newState)
+        }
+
+        onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo) {
+            updateStore(
+                this.dispatch,
+                ActionTypes.addNewTransactions,
+                this.address,
+                transactions,
+                info
+            )
+        }
+    }
+
+    return new TonWalletHandler(dispatch, address)
 }
 
 export const startSubscription = (address: string) => async (dispatch: AppDispatch) => {
-    try {
-        // ключи - адреса, значения - assets list
-        const accountsStorage = await loadAccountsStorage()
+    const accountsStorage = await loadAccountsStorage()
 
-        const account = await accountsStorage.getAccount(address)
-        console.log('account', account)
-        if (account == null) {
-            throw new Error("Selected account doesn't exist")
-        }
-        await loadSubscription(
-            account.tonWallet.publicKey,
-            account.tonWallet.contractType,
-            dispatch
-        )
-    } catch (e) {
-        console.log(e)
+    const account = await accountsStorage.getAccount(address)
+    if (account == null) {
+        throw new Error("Selected account doesn't exist")
     }
+
+    await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
 }
 
-export const calculateFee = (address: string, messageToPrepare: MessageToPrepare) => async (
+export const prepareDeployMessage = (address: string) => async (dispatch: AppDispatch) => {
+    const account = await loadAccount(address)
+
+    const tonWallet = await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
+
+    return lockSubscription(tonWallet.address).use(async () => {
+        return tonWallet.prepareDeploy(60)
+    })
+}
+
+export const prepareMessage = (address: string, messageToPrepare: MessageToPrepare) => async (
     dispatch: AppDispatch
 ) => {
-    try {
-        // ключи - адреса, значения - assets list
-        const accountsStorage = await loadAccountsStorage()
+    const account = await loadAccount(address)
 
-        const account = await accountsStorage.getAccount(address)
-        if (account == null) {
-            throw new Error("Selected account doesn't exist")
-        }
+    const tonWallet = await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
 
-        const tonWallet = await loadSubscription(
-            account.tonWallet.publicKey,
-            account.tonWallet.contractType,
-            dispatch
-        )
-
+    return lockSubscription(tonWallet.address).use(async () => {
         const contractState = await tonWallet.getContractState()
         if (contractState == null) {
             throw new Error('Contract state is empty')
         }
 
-        // при старте приложения, тут получаем адрес
-        const myAcc = await accountsStorage.getCurrentAccount()
-
-        //сменить аккаунт
-        const newAcc = await accountsStorage.setCurrentAccount('address')
-
-        // создаем аккаунт, и на него сразу можно переключиться
-        // const acc = await accountsStorage.addAccount()
-
-        const amount = new Decimal(messageToPrepare.amount).mul('1000000000') // TODO: get multiplier from precision table
+        const amount = parseTons(messageToPrepare.amount)
         const bounce = false
-        const expireAt = new Date().getTime() + 60 // expire in 60 seconds
-
-        console.log(amount.ceil())
+        const body =
+            messageToPrepare.comment != null ? nt.encodeComment(messageToPrepare.comment) : ''
+        const expireAt = 60 // seconds
 
         const unsignedMessage = tonWallet.prepareTransfer(
             contractState,
             messageToPrepare.recipient,
-            amount.ceil().toFixed(0),
+            amount,
             bounce,
+            body,
             expireAt
         )
         if (unsignedMessage == null) {
             // TODO: show notification with deployment
             throw new Error('Contract must be deployed first')
         }
-
-        const signedMessage = unsignedMessage.signFake()
-        const totalFees = await tonWallet.estimateFees(signedMessage)
-
-        console.log('Calculated fees:', totalFees)
-
-        dispatch({
-            type: ActionTypes.SET_FEE_CALCULATION_SUCCESS,
-            payload: totalFees,
-        })
-    } catch (error) {
-        console.log(error)
-        dispatch({
-            type: ActionTypes.SET_FEE_CALCULATION_FAILURE,
-        })
-    }
+        return unsignedMessage
+    })
 }
 
-// ;(async () => {
-//     await init('index_bg.wasm')
-//
-//     const phrase = StoredKey.generateMnemonic(AccountType.makeLabs(0))
-//     console.log(phrase.phrase, phrase.accountType)
-//     //
-//     const key = phrase.createKey('Main key', 'test') // `phrase` moved here
-//     console.log(key, 'key')
-//     // Can't use `phrase` here
-//
-//     const publicKey = key.publicKey
-//
-//     const storage = new Storage(new StorageConnector())
-//     const keyStore = await KeyStore.load(storage)
-//
-//     await keyStore.addKey(key)
-//     console.log('Added key to keystore')
-//
-//     const restoredKey = await keyStore.getKey(publicKey)
-//     console.log('Restored key:', restoredKey)
-//
-//     console.log(keyStore.storedKeys)
-// })()
+export const estimateFees = (address: string, message: nt.SignedMessage) => async (
+    dispatch: AppDispatch
+) => {
+    const account = await loadAccount(address)
+
+    const tonWallet = await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
+
+    return lockSubscription(tonWallet.address).use(async () => {
+        return await tonWallet.estimateFees(message)
+    })
+}
+
+export const sendMessage = (
+    address: string,
+    message: nt.UnsignedMessage,
+    password: string
+) => async (dispatch: AppDispatch) => {
+    const account = await loadAccount(address)
+
+    const keyStore = await loadKeyStore()
+
+    console.log('Account: ', account)
+    console.log(await keyStore.getKeys())
+
+    message.refreshTimeout()
+    const signedMessage = await keyStore.sign(message, {
+        type: 'encrypted_key',
+        data: {
+            publicKey: account.tonWallet.publicKey,
+            password,
+        },
+    })
+
+    const { connection } = await loadConnection()
+
+    const tonWallet = await loadSubscription(
+        account.tonWallet.publicKey,
+        account.tonWallet.contractType,
+        makeSubscriptionHandler(dispatch)
+    )
+    return lockSubscription(address).use(async () => {
+        const latestBlockId = await connection.getLatestBlock(address)
+        setLatestBlock(address, latestBlockId.id)
+        return await tonWallet.sendMessage(signedMessage)
+    })
+}
+
+export const removeDeliveredMessage = (pendingTransaction: nt.PendingTransaction) => async (
+    dispatch: AppDispatch
+) => {
+    updateStore(dispatch, ActionTypes.removeDeliveredMessage, pendingTransaction)
+}
+
+export const removeExpiredMessage = (pendingTransaction: nt.PendingTransaction) => async (
+    dispatch: AppDispatch
+) => {
+    updateStore(dispatch, ActionTypes.removeExpiredMessage, pendingTransaction)
+}

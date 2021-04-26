@@ -1,0 +1,162 @@
+@import '../../styles/colors';
+
+$duration: 450ms;
+$tileWidth: 300px;
+$tileHeight: ($tileWidth / (16/9));
+$iconSize: 0px;
+$growFactor: 1.1; // 1.2 times the original size
+
+// / 2
+$moveLeft: -($tileWidth * ($growFactor - 1));
+//$moveLeft: -320px;
+
+$moveRight: $tileWidth * ($growFactor - 1);
+
+// $moveRight : 500px
+
+.contain {
+    width: 100%;
+}
+
+.row {
+    overflow: scroll;
+    width: 100%;
+}
+
+.row__inner {
+    transition: $duration transform;
+    font-size: 0;
+    white-space: nowrap;
+    height: 188px;
+    //margin: ($tileHeight / 2) 0;
+    padding-bottom: 10px; // Account for OS X scroll bar
+}
+
+.tile {
+    position: relative;
+    display: inline-block;
+    width: $tileWidth;
+    //height: $tileHeight;
+    margin-right: 10px;
+    font-size: 20px;
+    top: -30px;
+    cursor: pointer;
+    transition: $duration all;
+    transform-origin: center left;
+}
+
+.tile:hover {
+    opacity: 1;
+}
+
+// We assume when you hover .row, you're also hovering a .tile
+// First, move the whole row towards the left
+.row__inner:hover {
+    transform: translate3d($moveLeft, 0, 0);
+}
+
+.row__inner:hover .tile {
+    // Fade out every tile
+    opacity: 0.3;
+    // And then grow the current tile and make it opaque again
+    &:not(.-active) {
+        &:hover {
+            transform: scale($growFactor);
+            opacity: 1;
+        }
+    }
+}
+
+// And finally move all tiles right of the current tile to the right,
+// so its flush against the hovered tile
+.tile:hover ~ .tile {
+    transform: translate3d($moveRight, 0, 0);
+}
+
+.carousel {
+    &__content {
+        position: relative;
+        overflow: hidden;
+        height: 188px;
+        width: 320px;
+
+        &__slide {
+            position: absolute;
+            right: -320px;
+            height: 188px;
+            width: 320px;
+            -webkit-animation: slide 0.2s forwards;
+            -webkit-animation-delay: 0.2s;
+            animation: slide 0.2s forwards;
+            animation-delay: 0.2s;
+        }
+    }
+
+    &__navigation {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        padding: 12px 0;
+
+        &-dots {
+            display: flex;
+            align-items: center;
+
+            &-elem {
+                width: 6px;
+                height: 6px;
+                background: $accountNavElem;
+                opacity: 0.32;
+                border-radius: 50%;
+                margin-right: 6px;
+
+                &--active {
+                    background: $accountNavElem;
+                    width: 8px;
+                    height: 8px;
+                    opacity: 1;
+                    border-radius: 50%;
+                    margin-right: 6px;
+                }
+            }
+        }
+
+        &-arrows {
+            display: flex;
+            align-items: center;
+
+            &-elem {
+                align-items: center;
+                cursor: pointer;
+                display: flex;
+                justify-content: center;
+                width: 32px;
+                height: 32px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-sizing: border-box;
+                border-radius: 50%;
+
+                &:not(:last-child) {
+                    margin-right: 12px;
+                }
+
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.1);
+                }
+            }
+        }
+    }
+}
+
+@-webkit-keyframes slide {
+    100% {
+        right: 0;
+    }
+}
+
+@keyframes slide {
+    100% {
+        right: 0;
+    }
+}

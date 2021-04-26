@@ -1,0 +1,27 @@
+@import '../../styles/colors';
+
+.check-seed {
+    &__input {
+        display: flex;
+        align-items: center;
+        position: relative;
+        margin-bottom: 20px;
+        cursor: text;
+
+        &-number {
+            font-style: normal;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: $windowFg;
+            position: absolute;
+            left: 20px;
+        }
+
+        &-placeholder {
+            margin: 0;
+            padding: 0 16px 0 58px;
+        }
+    }
+}

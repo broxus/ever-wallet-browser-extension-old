@@ -1,7 +1,6 @@
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -10,7 +9,6 @@ use wasm_bindgen_futures::*;
 use nt::core::ton_wallet;
 use nt::utils::*;
 
-use super::PromiseLatestBlock;
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -90,10 +88,16 @@ impl TonWallet {
         dest: &str,
         amount: &str,
         bounce: bool,
+        body: &str,
         timeout: u32,
     ) -> Result<Option<crate::crypto::UnsignedMessage>, JsValue> {
         let dest = parse_address(dest)?;
         let amount = u64::from_str(amount).handle_error()?;
+        let body = if !body.is_empty() {
+            Some(parse_slice(body)?)
+        } else {
+            None
+        };
 
         let wallet = self.inner.wallet.lock().unwrap();
 
@@ -104,7 +108,7 @@ impl TonWallet {
                     dest,
                     amount,
                     bounce,
-                    None,
+                    body,
                     nt::core::models::Expiration::Timeout(timeout),
                 )
                 .handle_error()?
@@ -176,31 +180,6 @@ impl TonWallet {
                 crate::core::models::make_pending_transaction(pending_transaction),
             ))
         })))
-    }
-
-    #[wasm_bindgen(js_name = "getLatestBlock")]
-    pub fn get_latest_block(&self) -> PromiseLatestBlock {
-        let address = self.inner.wallet.lock().trust_me().address().clone();
-        let transport = self.inner.transport.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let latest_block = transport.get_latest_block(&address).await.handle_error()?;
-            Ok(super::make_latest_block(latest_block))
-        }))
-    }
-
-    #[wasm_bindgen(js_name = "waitForNextBlock")]
-    pub fn wait_for_next_block(&self, current: String, timeout: u32) -> PromiseString {
-        let address = self.inner.wallet.lock().trust_me().address().clone();
-        let transport = self.inner.transport.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let next_block = transport
-                .wait_for_next_block(&current, &address, Duration::from_secs(timeout as u64))
-                .await
-                .handle_error()?;
-            Ok(JsValue::from(next_block))
-        }))
     }
 
     #[wasm_bindgen(js_name = "refresh")]
@@ -403,6 +382,12 @@ impl From<nt::core::ton_wallet::ContractType> for ContractType {
     fn from(c: nt::core::ton_wallet::ContractType) -> Self {
         JsValue::from(c.to_string()).unchecked_into()
     }
+}
+
+#[wasm_bindgen(js_name = "getContractTypeDetails")]
+pub fn get_contract_type_details(contract_type: ContractType) -> Result<TonWalletDetails, JsValue> {
+    let contract_type: nt::core::ton_wallet::ContractType = contract_type.try_into()?;
+    Ok(make_ton_wallet_details(contract_type.details()))
 }
 
 #[wasm_bindgen]

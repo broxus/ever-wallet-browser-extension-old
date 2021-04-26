@@ -1,0 +1,76 @@
+@import 'src/popup/styles/colors';
+
+.exported-seed {
+    &__bg {
+        background-color: $illustrationBg;
+        height: 350px;
+        position: relative;
+        width: 56px;
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 28px 28px;
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 100%;
+
+        &-form {
+            margin-bottom: auto;
+        }
+
+        &-title {
+            margin-bottom: 28px;
+        }
+
+        & ol {
+            counter-reset: my-counter;
+            list-style: none outside none;
+            column-count: 2;
+
+            & li {
+                counter-increment: my-counter;
+
+                &::before {
+                    content: counter(my-counter) '. ';
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 16px;
+                    line-height: 20px;
+                    letter-spacing: 0.25px;
+                    color: #96a1a7;
+                    flex: none;
+                    order: 0;
+                    flex-grow: 0;
+                    margin: 0 0;
+                    width: 3em;
+                    box-sizing: border-box;
+                    display: inline-block;
+                    padding: 0 4px;
+                }
+            }
+        }
+
+        &-word {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            margin-bottom: 12px;
+            white-space: nowrap;
+        }
+
+        &-buttons {
+            display: flex;
+            flex-direction: column;
+
+            & > button:not(:last-child), .panel {
+                margin-bottom: 12px;
+            }
+        }
+    }
+}

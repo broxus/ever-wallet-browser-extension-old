@@ -22,8 +22,10 @@
         &-buttons {
             display: flex;
             flex-direction: column;
-            height: 108px;
-            justify-content: space-around;
+
+            button:not(:last-child) {
+                margin-bottom: 12px;
+            }
         }
     }
 }

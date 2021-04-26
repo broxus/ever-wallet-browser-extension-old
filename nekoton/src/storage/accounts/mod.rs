@@ -11,7 +11,7 @@ use crate::utils::*;
 #[wasm_bindgen]
 pub struct AccountsStorage {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<nt::storage::AccountsStorage>,
+    pub inner: Arc<nt::core::accounts_storage::AccountsStorage>,
 }
 
 #[wasm_bindgen]
@@ -22,9 +22,11 @@ impl AccountsStorage {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                nt::storage::AccountsStorage::load(storage as Arc<dyn nt::external::Storage>)
-                    .await
-                    .handle_error()?,
+                nt::core::accounts_storage::AccountsStorage::load(
+                    storage as Arc<dyn nt::external::Storage>,
+                )
+                .await
+                .handle_error()?,
             );
 
             Ok(JsValue::from(Self { inner }))
@@ -184,7 +186,7 @@ extern "C" {
     pub type AssetsList;
 }
 
-fn make_assets_list(data: nt::storage::AssetsList) -> AssetsList {
+fn make_assets_list(data: nt::core::accounts_storage::AssetsList) -> AssetsList {
     ObjectBuilder::new()
         .set("name", data.name)
         .set("tonWallet", make_ton_wallet_asset(data.ton_wallet))
@@ -223,7 +225,7 @@ extern "C" {
     pub type TonWalletAsset;
 }
 
-fn make_ton_wallet_asset(data: nt::storage::TonWalletAsset) -> TonWalletAsset {
+fn make_ton_wallet_asset(data: nt::core::accounts_storage::TonWalletAsset) -> TonWalletAsset {
     ObjectBuilder::new()
         .set("address", data.address.to_string())
         .set("publicKey", hex::encode(data.public_key.as_bytes()))
@@ -248,7 +250,7 @@ extern "C" {
     pub type TokenWalletAsset;
 }
 
-fn make_token_wallet_asset(data: nt::storage::TokenWalletAsset) -> TokenWalletAsset {
+fn make_token_wallet_asset(data: nt::core::accounts_storage::TokenWalletAsset) -> TokenWalletAsset {
     use crate::core::models::*;
     ObjectBuilder::new()
         .set("symbol", make_symbol(data.symbol))
@@ -269,7 +271,7 @@ extern "C" {
     pub type DePoolAsset;
 }
 
-fn make_depool_asset(data: nt::storage::DePoolAsset) -> DePoolAsset {
+fn make_depool_asset(data: nt::core::accounts_storage::DePoolAsset) -> DePoolAsset {
     ObjectBuilder::new()
         .set("address", data.address.to_string())
         .build()
