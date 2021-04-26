@@ -210,47 +210,24 @@ export const startSubscription = (address: string) => async (dispatch: AppDispat
 }
 
 export const prepareDeployMessage = (address: string) => async (dispatch: AppDispatch) => {
-    try {
-        const account = await loadAccount(address)
-        const tonWallet = await loadSubscription(
-            account.tonWallet.publicKey,
-            account.tonWallet.contractType,
-            makeSubscriptionHandler(dispatch)
-        )
-        const deploy_msg = tonWallet.prepareDeploy(60)
-        return deploy_msg
-    } catch (e) {
-        console.log(e, 'error')
-        return null
-    }
-}
-
-export const prepareDeploy = (address: string, password: string) => async (
-    dispatch: AppDispatch
-) => {
     let unlock: (() => void) | null = null
+
     try {
         const account = await loadAccount(address)
-
         const tonWallet = await loadSubscription(
             account.tonWallet.publicKey,
             account.tonWallet.contractType,
             makeSubscriptionHandler(dispatch)
         )
         unlock = await lockSubscription(tonWallet.address)
-        const deploy_msg = tonWallet.prepareDeploy(60)
-        await sendMessage(address, deploy_msg, password)
-        await tonWallet.refresh()
-        console.log(tonWallet.accountState().isDeployed, 'isDeployed')
 
-        // const timeout = 60
-        //
-        // const unsignedMessage = tonWallet.prepareDeploy(timeout)
-        // unlock()
-        // return unsignedMessage
+        const deploy_msg = tonWallet.prepareDeploy(60)
+        unlock()
+        return deploy_msg
     } catch (e) {
         unlock?.()
-        throw e
+        console.log(e, 'error')
+        return null
     }
 }
 

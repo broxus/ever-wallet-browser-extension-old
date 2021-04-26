@@ -7,7 +7,7 @@ import CopyButton from '@components/CopyButton'
 import EnterPassword from '@components/EnterPassword'
 import SlidingPanel from '@components/SlidingPanel'
 import { connect } from 'react-redux'
-import { estimateFees, prepareDeploy, prepareDeployMessage } from '@store/app/actions'
+import { estimateFees, prepareDeployMessage } from '@store/app/actions'
 import { UnsignedMessage } from '@nekoton'
 import './style.scss'
 
@@ -41,7 +41,8 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     }, [])
 
     const deployWallet = async (password: string) => {
-        await prepareDeploy(account.tonWallet.address, password)
+        // await prepareDeploy(account.tonWallet.address, password)
+
         setIsOpen(false)
     }
 
