@@ -231,6 +231,14 @@ export const prepareDeploy = (address: string, password: string) => async (
         ) {
             console.log('contract type !== walletV3')
             const deploy_msg = tonWallet.prepareDeploy(60)
+            try {
+                const fees = await tonWallet.estimateFees(deploy_msg)
+                console.log('fees', fees)
+            } catch (e) {
+                console.log(e, 'error')
+                throw e
+            }
+
             await sendMessage(address, deploy_msg, password)
             await tonWallet.refresh()
             console.log(tonWallet.accountState().isDeployed, 'isDeployed')
