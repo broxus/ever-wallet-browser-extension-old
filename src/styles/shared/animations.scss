@@ -1,9 +1,0 @@
-@import "importOnce";
-
-@include exports('animations') {
-  @keyframes ripple {
-    to {
-      transform: scale(4);
-    }
-  }
-}

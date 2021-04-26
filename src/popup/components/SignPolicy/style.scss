@@ -1,0 +1,52 @@
+@import 'src/popup/styles/colors';
+
+.policy-sign-page {
+    &__illustration {
+        left: 28px;
+        top: 192px;
+        position: absolute;
+
+        width: 332px;
+        height: 200px;
+
+        background-color: $illustrationBg;
+
+        svg {
+            bottom: 10px;
+            left: -28px;
+            position: absolute;
+        }
+    }
+
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 40px 28px 28px;
+        position: absolute;
+        top: 0;
+        height: 100%;
+
+        &-checkbox {
+            display: flex;
+            margin-top: auto;
+            margin-bottom: 18px;
+
+            &-label {
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                color: #000000;
+
+                &--link {
+                    cursor: pointer;
+                    text-decoration: underline;
+                }
+            }
+        }
+
+        &-button {
+            margin-bottom: 12px;
+        }
+    }
+}

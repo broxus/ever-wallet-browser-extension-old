@@ -1,0 +1,33 @@
+@import '../../styles/colors';
+
+.enter-password {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        top: 0;
+        height: 100%;
+        width: 100%;
+
+        &-pwd-form {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            &-title {
+                margin-bottom: 28px;
+            }
+
+            input {
+                cursor: text;
+            }
+        }
+    }
+    &__buttons {
+        display: flex;
+
+        & > button:not(:last-child) {
+            margin-right: 12px;
+        }
+    }
+}

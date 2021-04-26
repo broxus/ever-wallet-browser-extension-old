@@ -1,0 +1,37 @@
+@import '../../styles/colors';
+
+.create-account-page {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        //padding: 40px 28px 28px;
+        height: 100%;
+        width: 100%;
+
+        &-pwd-title {
+            color: $windowFg;
+        }
+
+        &-pwd-form {
+            display: flex;
+            flex-direction: column;
+            height: 172px;
+            justify-content: space-around;
+        }
+        &-buttons {
+            display: flex;
+            &-back-btn {
+                width: 50%;
+                margin-right: 12px;
+            }
+        }
+
+        &-select-key {
+            min-height: 448px;
+            &-title {
+                margin-bottom: 28px;
+            }
+        }
+    }
+}

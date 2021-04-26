@@ -1,0 +1,42 @@
+@import '../../styles/colors';
+
+.check-seed {
+    &__wrapper {
+        padding: 40px 28px 28px;
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 100%;
+    }
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 448px;
+        height: 100%;
+        width: 100%;
+
+        &-title {
+            margin-bottom: 28px;
+        }
+
+        &-error {
+            display: block;
+            width: 100%;
+            font-size: 12px;
+            line-height: 16px;
+            letter-spacing: 0.4px;
+            color: darkred;
+            margin-bottom: 28px;
+        }
+        &-buttons {
+            display: flex;
+            flex-direction: column;
+
+            & > button:not(:last-child),
+            .panel {
+                margin-bottom: 12px;
+            }
+        }
+    }
+}

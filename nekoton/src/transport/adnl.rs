@@ -3,9 +3,11 @@ use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use libnekoton::transport::adnl;
 use ton_api::ton;
 use wasm_bindgen::prelude::*;
+
+use nt::transport::adnl;
+use nt::utils::*;
 
 use crate::utils::*;
 
@@ -35,7 +37,7 @@ pub struct AdnlConnectionImpl {
 }
 
 #[async_trait]
-impl adnl::AdnlConnection for AdnlConnection {
+impl nt::external::AdnlConnection for AdnlConnection {
     async fn query(&self, request: ton::TLObject) -> AdnlResponse {
         let rx = {
             let mut inner = self.inner.lock().unwrap();
@@ -116,7 +118,7 @@ impl TcpReceiver {
                 Err(QueryError::Uninitialized).handle_error()
             }
             AdnlConnectionState::WaitingInitialization(state) => {
-                let mut state = state.take().expect("Shouldn't fail");
+                let mut state = state.take().trust_me();
                 state.handle_init_response(data);
                 inner.state = AdnlConnectionState::Initialized(state);
                 Ok(())

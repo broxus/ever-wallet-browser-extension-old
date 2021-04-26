@@ -1,0 +1,24 @@
+.panel {
+    display: flex;
+    align-items: center;
+}
+
+.animate {
+    animation: disappear 2s linear;
+}
+
+.copyAlert {
+    opacity: 0;
+}
+
+@keyframes disappear {
+    30% {
+        opacity: 0;
+    }
+    60% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
