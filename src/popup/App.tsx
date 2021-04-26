@@ -30,6 +30,12 @@ const Loader: React.FC = () => {
     )
 }
 
+const closeCurrentWindow = () => {
+    chrome.windows.getCurrent((windowDetails) => {
+        chrome.windows.remove(windowDetails.id)
+    })
+}
+
 export type ActiveTab =
     | nt.EnumItem<
           typeof ENVIRONMENT_TYPE_POPUP,
@@ -45,13 +51,13 @@ export type ActiveTab =
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
 interface IApp {
-    activeTab?: ActiveTab
+    activeTab: ActiveTab
     controllerRpc: IControllerRpcClient
     accountLoaded: boolean
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount }) => {
+const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.LOADING)
     const [controllerState, setControllerState] = useState<any>()
 
@@ -62,9 +68,17 @@ const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount
                 setStep(Step.WELCOME)
             }
 
-            controllerRpc.onNotification((state) => {
-                console.log('Updated state', state)
-                setControllerState(state)
+            controllerRpc.onNotification((data) => {
+                const state = data.params
+
+                if (
+                    activeTab.type === 'notification' &&
+                    Object.keys((state as any).pendingApprovals).length === 0
+                ) {
+                    closeCurrentWindow()
+                } else {
+                    setControllerState(state)
+                }
             })
 
             controllerRpc.getState((error, state) => {
@@ -83,21 +97,15 @@ const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount
     const renderMainPage = () => {
         const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
 
-        console.log('Pending approvals:', pendingApprovals)
-
         if (pendingApprovals.length != 0) {
             return (
                 <ApprovalPage
                     pendingApprovals={pendingApprovals}
                     resolvePendingApproval={async (id, params) => {
-                        controllerRpc.resolvePendingApproval(id, params, () => {
-                            console.log('Done resolve')
-                        })
+                        controllerRpc.resolvePendingApproval(id, params, () => {})
                     }}
                     rejectPendingApproval={async (id, error) => {
-                        controllerRpc.rejectPendingApproval(id, error, () => {
-                            console.log('Done reject')
-                        })
+                        controllerRpc.rejectPendingApproval(id, error, () => {})
                     }}
                 />
             )

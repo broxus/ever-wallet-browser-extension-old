@@ -34,6 +34,11 @@ const requirePermissions = (
     }
 }
 
+const rejectionError = new NekotonRpcError(
+    RpcErrorCode.RESOURCE_UNAVAILABLE,
+    'User rejected this approval'
+)
+
 interface RequestPermissionsParams {
     permissions: Permission[]
 }
@@ -121,16 +126,20 @@ const sendMessage: ProviderMethod<SendMessageParams, nt.PendingTransaction> = as
         throw invalidParameter(req, `'payload' must be a non-empty string if specified`)
     }
 
-    await approvals.addAndShowApprovalRequest({
-        origin,
-        type: 'sendMessage',
-        requestData: {
-            recipient,
-            amount,
-            abi,
-            payload,
-        },
-    })
+    try {
+        await approvals.addAndShowApprovalRequest({
+            origin,
+            type: 'sendMessage',
+            requestData: {
+                recipient,
+                amount,
+                abi,
+                payload,
+            },
+        })
+    } catch (_) {
+        throw rejectionError
+    }
 
     res.result = {
         bodyHash: 'asd',

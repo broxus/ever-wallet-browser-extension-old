@@ -53,13 +53,22 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             return map
         }, {} as { [K in Permission]: boolean })
 
-        await this.config.approvals.addAndShowApprovalRequest({
-            origin,
-            type: 'requestPermissions',
-            requestData: {
-                permissions: Object.keys(originPermissions),
-            },
-        })
+        const rejectionError = new NekotonRpcError(
+            RpcErrorCode.RESOURCE_UNAVAILABLE,
+            'User rejected this approval'
+        )
+
+        try {
+            await this.config.approvals.addAndShowApprovalRequest({
+                origin,
+                type: 'requestPermissions',
+                requestData: {
+                    permissions: Object.keys(originPermissions),
+                },
+            })
+        } catch (e) {
+            throw rejectionError
+        }
 
         const newPermissions = {
             ...this.state[PERMISSIONS_STORE_KEY],

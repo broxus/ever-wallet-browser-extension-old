@@ -63,7 +63,7 @@ const queryCurrentActiveTab = async (windowType: Environment) => {
 }
 
 const initializeUi = (
-    activeTab: ActiveTab | undefined,
+    activeTab: ActiveTab,
     connectionStream: Duplex,
     callback: (error: Error | undefined) => void
 ) => {
@@ -87,10 +87,6 @@ const connectToBackground = (
     connectionStream: Duplex,
     callback: (error: Error | undefined, controllerRpc: IControllerRpcClient) => void
 ) => {
-    connectionStream.on('data', (data) => {
-        console.log('Connection stream data:', data)
-    })
-
     const mux = new ObjectMultiplex()
     pump(connectionStream, mux, connectionStream, (error) => {
         if (error) {
