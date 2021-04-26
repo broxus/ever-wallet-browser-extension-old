@@ -17,7 +17,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onNext, onBack }) =>
     const onSubmit = (data: any) => {
         onNext(data.pwd)
     }
-
+    8
     return (
         <div className="enter-new-password__content">
             <div className="enter-new-password__content-pwd-form">

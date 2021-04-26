@@ -33,10 +33,9 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
 
     const seed = useState<nt.GeneratedMnemonic>(generateSeed())[0]
 
-    const [password, setPassword] = useState<string>('')
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
-    const onSubmit = async () => {
+    const onSubmit = async (password: string) => {
         try {
             await createAccount('Account 1', contractType, seed, password)
             setStep(Step.MAIN)
@@ -94,8 +93,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
             {localStep == LocalStep.ENTER_PASSWORD && (
                 <EnterNewPassword
                     onNext={async (password) => {
-                        setPassword(password)
-                        await onSubmit()
+                        await onSubmit(password)
                     }}
                     onBack={() => {
                         setLocalStep(LocalStep.SHOW_PHRASE)

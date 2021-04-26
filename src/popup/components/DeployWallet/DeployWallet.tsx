@@ -82,11 +82,6 @@ const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
     )
 }
 
-enum LocalStep {
-    CONFIRM,
-    SENDING,
-}
-
 interface IDeployWallet {
     account: nt.AssetsList
     tonWalletState: nt.AccountState | null
@@ -108,7 +103,6 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     sendMessage,
     onBack,
 }) => {
-    const [localStep, setLocalStep] = useState(LocalStep.CONFIRM)
     const [passwordModalVisible, setPasswordModalVisible] = useState(false)
 
     const [fees, setFees] = useState<string>()
@@ -215,7 +209,6 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     const showSendingMessage = (pendingTransaction: nt.PendingTransaction) => {
         const close = () => {
             setPendingTransaction(undefined)
-            setLocalStep(LocalStep.CONFIRM)
             onBack()
         }
 
@@ -238,10 +231,8 @@ const DeployWallet: React.FC<IDeployWallet> = ({
 
     return (
         <>
-            {localStep == LocalStep.CONFIRM && showConfirm()}
-            {localStep == LocalStep.SENDING &&
-                pendingTransaction &&
-                showSendingMessage(pendingTransaction)}
+            {pendingTransaction == null && showConfirm()}
+            {pendingTransaction != null && showSendingMessage(pendingTransaction)}
         </>
     )
 }

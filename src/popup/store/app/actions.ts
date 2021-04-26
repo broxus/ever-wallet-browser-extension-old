@@ -9,6 +9,7 @@ import {
     setLatestBlock,
     loadAccount,
     loadConnection,
+    clearSubscriptions,
 } from './services'
 
 import * as nt from '@nekoton'
@@ -110,6 +111,7 @@ export const logOut = () => async (dispatch: AppDispatch) => {
     try {
         await accountsStorage.clear()
         await keyStore.clear()
+        clearSubscriptions()
         console.log('Entries:', await keyStore.getKeys())
         updateStore(dispatch, ActionTypes.resetAccounts)
     } catch (e) {
@@ -137,8 +139,6 @@ export const createAccount = (
     password: string
 ) => async (dispatch: AppDispatch) => {
     const keystore = await loadKeyStore()
-
-    console.log(accountName, password)
 
     const key = await keystore.addKey(`${accountName} key`, <nt.NewKey>{
         type: 'encrypted_key',
