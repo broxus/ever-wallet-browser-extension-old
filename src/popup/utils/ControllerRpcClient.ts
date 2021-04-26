@@ -54,8 +54,12 @@ class ControllerRpcClient<T extends Duplex> {
         method?: string
         params?: unknown[]
     }) {
+        console.log('Handle response: ', data)
+
         const { id, result, error, method, params } = data
         const callback = id ? this._requests.get(id) : undefined
+
+        console.log(this._requests, callback)
 
         if (method && params && id) {
             // don't handle server-side to client-side requests
@@ -104,6 +108,8 @@ export const makeControllerRpcClient = <T extends Duplex>(
                 ) => void
                 const params = args.slice(0, -1)
                 const id = getUniqueId()
+
+                console.log('Sending request:', property, id, params)
 
                 object._requests.set(id, callback)
                 object._connectionStream.write({

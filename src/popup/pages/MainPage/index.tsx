@@ -13,7 +13,7 @@ import SlidingPanel from '@components/SlidingPanel'
 import Receive from '@components/Receive'
 import Send from '@components/Send'
 import KeyStorage from '@components/KeyStorage'
-import CreateAccountScreen from '../CreateAccount'
+import CreateAccountPage from '../CreateAccountPage'
 import AssetFull from '@components/AssetFull'
 
 import './style.scss'
@@ -92,7 +92,7 @@ const MainPage: React.FC<IMainPage> = ({
                         />
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
-                    {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountScreen />}
+                    {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
                     {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
                     {openedPanel == Panel.DEPLOY && (
                         <DeployWallet account={account} tonWalletState={tonWalletState} />

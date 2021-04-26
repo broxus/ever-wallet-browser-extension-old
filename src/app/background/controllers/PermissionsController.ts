@@ -43,7 +43,7 @@ const defaultState: PermissionsState = {
 
 export class PermissionsController extends BaseController<PermissionsConfig, PermissionsState> {
     constructor(config: PermissionsConfig, state?: PermissionsState) {
-        super(config, state)
+        super(config, state || defaultState)
         this.initialize()
     }
 
@@ -88,7 +88,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     }
 
     public checkPermissions(origin: string, permissions: Permission[]) {
-        const originPermissions = this.state[PERMISSIONS_STORE_KEY]
+        const originPermissions = this.state[PERMISSIONS_STORE_KEY][origin]
         if (originPermissions == null) {
             throw new NekotonRpcError(
                 RpcErrorCode.INSUFFICIENT_PERMISSIONS,

@@ -14,13 +14,12 @@ import init, * as nt from '@nekoton'
 
 import WelcomePage from './pages/WelcomePage'
 import MainPage from './pages/MainPage'
-import NewAccountPage from './pages/NewAccountScreen'
-
-import RestoreAccountPage from './pages/RestoreAccountScreen'
+import NewAccountPage from './pages/NewAccountPage'
+import RestoreAccountPage from './pages/RestoreAccountPage'
+import ApprovalPage from './pages/ApprovalPage'
 
 import Oval from '@img/oval.svg'
 import './styles/main.scss'
-import WalletInteract from './pages/ConnectWalletScreen'
 
 const Loader: React.FC = () => {
     return (
@@ -54,7 +53,7 @@ interface IApp {
 
 const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.LOADING)
-    const [notificationValue, setNotificationValue] = useState<any>()
+    const [controllerState, setControllerState] = useState<any>()
 
     useEffect(() => {
         init('index_bg.wasm').then(async () => {
@@ -63,9 +62,14 @@ const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount
                 setStep(Step.WELCOME)
             }
 
-            controllerRpc.getState((error, response) => {
-                setNotificationValue(response)
-                console.log(error, response)
+            controllerRpc.onNotification((state) => {
+                console.log('Updated state', state)
+                setControllerState(state)
+            })
+
+            controllerRpc.getState((error, state) => {
+                setControllerState(state)
+                console.log(error, state)
             })
         })
     }, [])
@@ -73,9 +77,34 @@ const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount
     useEffect(() => {
         if (accountLoaded) {
             setStep(Step.MAIN)
-            // setStep(Step.CONNECT_WALLET)
         }
     }, [accountLoaded])
+
+    const renderMainPage = () => {
+        const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
+
+        console.log('Pending approvals:', pendingApprovals)
+
+        if (pendingApprovals.length != 0) {
+            return (
+                <ApprovalPage
+                    pendingApprovals={pendingApprovals}
+                    resolvePendingApproval={async (id, params) => {
+                        controllerRpc.resolvePendingApproval(id, params, () => {
+                            console.log('Done resolve')
+                        })
+                    }}
+                    rejectPendingApproval={async (id, error) => {
+                        controllerRpc.rejectPendingApproval(id, error, () => {
+                            console.log('Done reject')
+                        })
+                    }}
+                />
+            )
+        } else {
+            return <MainPage setStep={setStep} />
+        }
+    }
 
     return (
         <>
@@ -83,14 +112,7 @@ const App: React.FC<IApp> = ({ controllerRpc, accountLoaded, setupCurrentAccount
             {step == Step.WELCOME && <WelcomePage setStep={setStep} />}
             {step == Step.CREATE_NEW_WALLET && <NewAccountPage setStep={setStep} />}
             {step == Step.RESTORE_WALLET && <RestoreAccountPage setStep={setStep} />}
-            {step == Step.MAIN && <MainPage setStep={setStep} />}
-            {step == Step.NOTIFICATION_SEND && (
-                <WalletInteract
-                    localStep={1}
-                    notificationValue={notificationValue}
-                    setStep={setStep}
-                />
-            )}
+            {step == Step.MAIN && renderMainPage()}
         </>
     )
 }

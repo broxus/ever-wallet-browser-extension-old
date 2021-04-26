@@ -34,11 +34,11 @@ const requirePermissions = (
     }
 }
 
-interface RequestPermissions {
+interface RequestPermissionsParams {
     permissions: Permission[]
 }
 
-const requestPermissions: ProviderMethod<RequestPermissions, {}> = async (
+const requestPermissions: ProviderMethod<RequestPermissionsParams, {}> = async (
     req,
     res,
     _next,

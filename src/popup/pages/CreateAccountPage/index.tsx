@@ -110,7 +110,7 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
     )
 }
 
-const CreateAccountScreen = () => {
+const CreateAccountPage = () => {
     const [step, setStep] = useState<number>(0)
 
     const createAccountContent = [
@@ -122,4 +122,4 @@ const CreateAccountScreen = () => {
     ]
     return createAccountContent[step]
 }
-export default CreateAccountScreen
+export default CreateAccountPage

@@ -1,11 +1,11 @@
 import Decimal from 'decimal.js'
 import { memoize } from 'lodash'
-import { AppDispatch } from '../store'
+import { AppDispatch } from '@store'
 import {
+    Environment,
+    ENVIRONMENT_TYPE_BACKGROUND,
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_POPUP,
-    ENVIRONMENT_TYPE_BACKGROUND,
-    Environment,
 } from '../../shared/constants'
 
 Decimal.set({ maxE: 500, minE: -500 })
@@ -68,3 +68,14 @@ const getEnvironmentTypeCached = memoize(
 )
 
 export const getEnvironmentType = (url = window.location.href) => getEnvironmentTypeCached(url)
+
+export const getHost = (url: string, defaultProtocol = 'https://') => {
+    const hasProtocol = url && url.match(/^[a-z]*:\/\//)
+    const urlObj = new URL(hasProtocol ? url : `${defaultProtocol}${url}`)
+    const { hostname } = urlObj
+    return hostname
+}
+
+export const getIconUrl = (url: string) => {
+    return `https://api.faviconkit.com/${getHost(url)}/64`
+}

@@ -107,6 +107,10 @@ export class NekotonController extends EventEmitter {
         this._options = options
         this._components = components
 
+        this._components.approvalController.subscribe((_state) => {
+            this._debouncedSendUpdate()
+        })
+
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
                 // TODO: start account tracker
@@ -147,6 +151,7 @@ export class NekotonController extends EventEmitter {
     }
 
     public getState() {
+        console.log('getState:', this._components.approvalController.state)
         return {
             ...this._components.approvalController.state,
         }
@@ -160,11 +165,11 @@ export class NekotonController extends EventEmitter {
 
         outStream.on('data', createMetaRPCHandler(api, outStream))
 
-        const handleUpdate = (update: unknown) => {
-            outStream.push({
+        const handleUpdate = (params: unknown) => {
+            outStream.write({
                 jsonrpc: '2.0',
                 method: 'sendUpdate',
-                params: [update],
+                params,
             })
         }
 
