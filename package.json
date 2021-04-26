@@ -1,7 +1,7 @@
 {
   "name": "nekoton",
   "version": "1.0.0",
-  "description": "Simple TON wallet browser plugin",
+  "description": "TON wallet browser plugin",
   "scripts": {
     "start": "webpack --watch --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js"
