@@ -8,6 +8,7 @@ import {
     lockSubscription,
     setLatestBlock,
     loadAccount,
+    loadConnection,
 } from './services'
 
 import * as nt from '@nekoton'
@@ -331,6 +332,8 @@ export const sendMessage = (
 
     const keyStore = await loadKeyStore()
 
+    const { connection } = await loadConnection()
+
     message.refreshTimeout()
     const signedMessage = await keyStore.sign(message, {
         type: 'encrypted_key',
@@ -348,7 +351,7 @@ export const sendMessage = (
 
     let unlock = await lockSubscription(address)
     try {
-        const latestBlockId = await tonWallet.getLatestBlock()
+        const latestBlockId = await connection.getLatestBlock(address)
         setLatestBlock(address, latestBlockId.id)
 
         const pendingTransaction = await tonWallet.sendMessage(signedMessage)

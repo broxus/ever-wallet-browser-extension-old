@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import cn from 'classnames'
 import { convertAddress, convertTons } from '@utils'
+import { PendingApproval } from '../../../shared/models'
 import * as nt from '@nekoton'
 
 import Button from '@components/Button'
@@ -8,17 +9,8 @@ import Button from '@components/Button'
 import UserPicS from '@img/user-avatar-placeholder-s.svg'
 import Arrow from '@img/arrow.svg'
 
-export interface IContractInteractionApproval {
-    id: string
-    type: 'callContractMethod'
-    origin: string
-    requestData: {
-        address: string
-    }
-}
-
 interface IApproveContractInteraction {
-    approval: IContractInteractionApproval
+    approval: PendingApproval<'callContractMethod'>
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     onSubmit: () => void
@@ -38,7 +30,7 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     onReject,
 }) => {
     const { origin } = approval
-    const { address } = approval.requestData
+    const { address } = approval.requestData!
 
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.DETAILS)
 

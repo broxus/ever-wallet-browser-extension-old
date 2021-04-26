@@ -1,22 +1,22 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { AppState } from '@store/app/types'
+import { Approval, PendingApproval } from '../../../shared/models'
 import * as nt from '@nekoton'
 
-import ApproveContractInteraction, {
-    IContractInteractionApproval,
-} from '@components/ApproveContractInteraction'
-import ApproveRequestPermissions, {
-    IPermissionsApproval,
-} from '@components/ApproveRequestPermissions'
-import ApproveSendMessage, { ISendMessageApproval } from '@components/ApproveSendMessage'
+import ApproveContractInteraction from '@components/ApproveContractInteraction'
+import ApproveRequestPermissions from '@components/ApproveRequestPermissions'
+import ApproveSendMessage from '@components/ApproveSendMessage'
 
 import './style.scss'
 
-type PendingApproval = IContractInteractionApproval | IPermissionsApproval | ISendMessageApproval
+type KnownPendingApproval =
+    | PendingApproval<'requestPermissions'>
+    | PendingApproval<'callContractMethod'>
+    | PendingApproval<'sendMessage'>
 
 interface IApprovalPage {
-    pendingApprovals: PendingApproval[]
+    pendingApprovals: KnownPendingApproval[]
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     resolvePendingApproval: (id: string, params: unknown) => Promise<void>
@@ -47,7 +47,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
         <>
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
-                    approval={approval}
+                    approval={approval as Approval<any>}
                     account={account}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {
@@ -60,7 +60,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             )}
             {approval.type === 'sendMessage' && (
                 <ApproveSendMessage
-                    approval={approval}
+                    approval={approval as Approval<any>}
                     account={account}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {
@@ -73,7 +73,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             )}
             {approval.type === 'callContractMethod' && (
                 <ApproveContractInteraction
-                    approval={approval}
+                    approval={approval as Approval<any>}
                     account={account}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {

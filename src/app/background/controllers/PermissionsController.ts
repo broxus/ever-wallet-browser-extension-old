@@ -1,17 +1,10 @@
+import _ from 'lodash'
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
 import { NekotonRpcError, RpcErrorCode } from '../../../shared/utils'
+import { PERMISSIONS, Permission } from '../../../shared/models'
 
 const PERMISSIONS_STORE_KEY = 'permissions'
-
-const KNOWN_PERMISSIONS = {
-    // Used to communicate with ton
-    tonClient: true,
-    // Used to request user actions
-    accountInteraction: true,
-}
-
-export type Permission = keyof typeof KNOWN_PERMISSIONS
 
 export const validatePermission = (permission: string) => {
     if (typeof (permission as any) !== 'string') {
@@ -21,7 +14,7 @@ export const validatePermission = (permission: string) => {
         )
     }
 
-    if ((KNOWN_PERMISSIONS as any)[permission] !== true) {
+    if ((PERMISSIONS as any)[permission] == null) {
         throw new NekotonRpcError(
             RpcErrorCode.INVALID_REQUEST,
             `Unknown permission "${permission}"`
@@ -34,7 +27,7 @@ export interface PermissionsConfig extends BaseConfig {
 }
 
 export interface PermissionsState extends BaseState {
-    [PERMISSIONS_STORE_KEY]: { [origin: string]: { [K in Permission]: boolean } }
+    [PERMISSIONS_STORE_KEY]: { [origin: string]: Partial<typeof PERMISSIONS> }
 }
 
 const defaultState: PermissionsState = {
@@ -48,27 +41,17 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     }
 
     public async requestPermissions(origin: string, permissions: Permission[]) {
-        const originPermissions = permissions.reduce((map, item) => {
-            map[item] = true
-            return map
-        }, {} as { [K in Permission]: boolean })
+        const uniquePermissions = _.uniq(permissions)
 
-        const rejectionError = new NekotonRpcError(
-            RpcErrorCode.RESOURCE_UNAVAILABLE,
-            'User rejected this approval'
-        )
-
-        try {
-            await this.config.approvals.addAndShowApprovalRequest({
-                origin,
-                type: 'requestPermissions',
-                requestData: {
-                    permissions: Object.keys(originPermissions),
-                },
-            })
-        } catch (e) {
-            throw rejectionError
-        }
+        const originPermissions: Partial<
+            typeof PERMISSIONS
+        > = await this.config.approvals.addAndShowApprovalRequest({
+            origin,
+            type: 'requestPermissions',
+            requestData: {
+                permissions: uniquePermissions,
+            },
+        })
 
         const newPermissions = {
             ...this.state[PERMISSIONS_STORE_KEY],
@@ -106,7 +89,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
 
         for (const permission of permissions) {
-            if ((originPermissions[permission] as any) !== true) {
+            if ((originPermissions[permission] as any) == null) {
                 throw new NekotonRpcError(
                     RpcErrorCode.INSUFFICIENT_PERMISSIONS,
                     `Requested permission "${permission}" not found for origin ${origin}`

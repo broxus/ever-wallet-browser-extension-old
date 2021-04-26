@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { convertAddress, convertTons, getIconUrl } from '@utils'
+import { convertAddress, convertTons } from '@utils'
+import { PendingApproval } from '../../../shared/models'
 import * as nt from '@nekoton'
 
 import Button from '@components/Button'
@@ -9,35 +10,23 @@ import WebsiteIcon from '@components/WebsiteIcon'
 
 import UserPicS from '@img/user-avatar-placeholder-s.svg'
 
-export interface ISendMessageApproval {
-    id: string
-    type: 'sendMessage'
-    origin: string
-    requestData: {
-        recipient: string
-        amount: string
-        abi?: string
-        payload?: string
-    }
-}
-
 interface IApproveSendMessage {
-    approval: ISendMessageApproval
+    approval: PendingApproval<'sendMessage'>
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
-    onSubmit: () => void
     onReject: () => void
+    onSubmit: () => void
 }
 
 const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     approval,
     account,
     tonWalletState,
-    onSubmit,
     onReject,
+    onSubmit,
 }) => {
     const { origin } = approval
-    const { recipient, amount } = approval.requestData
+    const { recipient, amount } = approval.requestData!
 
     const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
 

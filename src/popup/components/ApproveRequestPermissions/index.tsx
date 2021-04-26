@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { convertTons, getIconUrl } from '@utils'
-import { Permission } from '../../../app/background/controllers/PermissionsController'
+import { convertTons } from '@utils'
+import { PendingApproval } from '../../../shared/models'
 import * as nt from '@nekoton'
 
 import Button from '@components/Button'
@@ -10,17 +10,8 @@ import WebsiteIcon from '@components/WebsiteIcon'
 import TonWalletLogo from '@img/ton-wallet-logo.svg'
 import UserPicS from '@img/user-avatar-placeholder-s.svg'
 
-export interface IPermissionsApproval {
-    id: string
-    type: 'requestPermissions'
-    origin: string
-    requestData: {
-        permissions: Permission[]
-    }
-}
-
 interface IApproveRequestPermissions {
-    approval: IPermissionsApproval
+    approval: PendingApproval<'requestPermissions'>
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     onReject: () => void
@@ -40,7 +31,7 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
     onSubmit,
 }) => {
     const { origin } = approval
-    const { permissions } = approval.requestData
+    const { permissions } = approval.requestData!
 
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_ACCOUNT)
 

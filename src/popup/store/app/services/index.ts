@@ -31,7 +31,7 @@ type ConnectionState = {
 }
 
 let connectionPromise: Promise<ConnectionState> | null = null
-const loadConnection = async () => {
+export const loadConnection = async () => {
     if (connectionPromise == null) {
         const socket = new GqlSocket()
 
@@ -75,9 +75,9 @@ const subscribe = async (
     contractType: nt.ContractType,
     handler: ITonWalletHandler
 ) => {
-    const ctx = await loadConnection()
+    const { connection } = await loadConnection()
 
-    const tonWallet = await ctx.connection.subscribeToTonWallet(publicKey, contractType, handler)
+    const tonWallet = await connection.subscribeToTonWallet(publicKey, contractType, handler)
     if (tonWallet == null) {
         throw Error('Failed to subscribe')
     }
@@ -108,10 +108,15 @@ const subscribe = async (
                 case 'reliable': {
                     if (pollingMethodChanged || currentBlockId == null) {
                         currentBlockId =
-                            latestBlocks.get(address) || (await tonWallet.getLatestBlock()).id
+                            latestBlocks.get(address) ||
+                            (await connection.getLatestBlock(address)).id
                     }
 
-                    const nextBlockId: string = await tonWallet.waitForNextBlock(currentBlockId, 60)
+                    const nextBlockId: string = await connection.waitForNextBlock(
+                        currentBlockId,
+                        address,
+                        60
+                    )
                     console.log(nextBlockId, currentBlockId != nextBlockId)
 
                     const unlock = await lockSubscription(address)
