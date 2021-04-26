@@ -237,25 +237,17 @@ export const prepareDeploy = (address: string, password: string) => async (
             account.tonWallet.contractType,
             makeSubscriptionHandler(dispatch)
         )
-
-        if (
-            !tonWallet.accountState().isDeployed &&
-            !(account.tonWallet.contractType === 'WalletV3')
-        ) {
-            console.log('contract type !== walletV3')
-            const deploy_msg = tonWallet.prepareDeploy(60)
-            await sendMessage(address, deploy_msg, password)
-            await tonWallet.refresh()
-            console.log(tonWallet.accountState().isDeployed, 'isDeployed')
-        }
-
         unlock = await lockSubscription(tonWallet.address)
+        const deploy_msg = tonWallet.prepareDeploy(60)
+        await sendMessage(address, deploy_msg, password)
+        await tonWallet.refresh()
+        console.log(tonWallet.accountState().isDeployed, 'isDeployed')
 
-        const timeout = 60
-
-        const unsignedMessage = tonWallet.prepareDeploy(timeout)
-        unlock()
-        return unsignedMessage
+        // const timeout = 60
+        //
+        // const unsignedMessage = tonWallet.prepareDeploy(timeout)
+        // unlock()
+        // return unsignedMessage
     } catch (e) {
         unlock?.()
         throw e
