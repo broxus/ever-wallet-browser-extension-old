@@ -28,7 +28,8 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, setActiveConten
         <div className="user-assets__assets-list">
             {/*TODO remove later*/}
             {tonWalletState && (
-                <div onClick={() => setActiveContent(6)}>
+                // <div onClick={() => setActiveContent(6)}>
+                <div>
                     <AssetsListItem tonWalletState={tonWalletState} />
                 </div>
             )}
