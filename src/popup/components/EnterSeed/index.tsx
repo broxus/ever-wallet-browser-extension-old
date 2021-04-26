@@ -3,11 +3,20 @@ import { useForm } from 'react-hook-form'
 
 import TagsInput from '@components/TagsInput'
 import Button from '@components/Button'
+import CheckSeed from '@components/CheckSeed'
 
 type IEnterSeed = {
     onSubmit: (words: string[]) => void
     onBack: () => void
     wordCount: number
+}
+
+export const EnterSeedLogin: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
+    return (
+        <div className="check-seed__wrapper">
+            <EnterSeed onSubmit={onSubmit} onBack={onBack} wordCount={wordCount} />
+        </div>
+    )
 }
 
 const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {

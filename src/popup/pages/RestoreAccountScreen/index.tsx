@@ -7,7 +7,7 @@ import * as nt from '@nekoton'
 
 import SignPolicy from '@components/SignPolicy'
 import SelectContractType from '@components/SelectContractType'
-import EnterSeed from '@components/EnterSeed'
+import { EnterSeedLogin } from '@components/EnterSeed'
 import EnterNewPassword from '@components/EnterNewPassword'
 import Modal from '@components/Modal'
 
@@ -72,7 +72,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
                 />
             )}
             {localStep == LocalStep.ENTER_PHRASE && (
-                <EnterSeed
+                <EnterSeedLogin
                     onSubmit={(words) => {
                         const phrase = words.join(' ')
 
