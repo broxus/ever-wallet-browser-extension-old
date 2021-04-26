@@ -14,7 +14,6 @@ import './style.scss'
 interface IDeployWallet {
     account: nt.AssetsList
     tonWalletState: nt.AccountState | null
-    prepareDeploy: (address: string, password: string) => Promise<UnsignedMessage>
     prepareDeployMessage: (address: string) => Promise<UnsignedMessage | null>
     estimateFees: Action<typeof estimateFees>
 }
@@ -22,7 +21,6 @@ interface IDeployWallet {
 const DeployWallet: React.FC<IDeployWallet> = ({
     account,
     tonWalletState,
-    prepareDeploy,
     prepareDeployMessage,
     estimateFees,
 }) => {
@@ -103,4 +101,4 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     )
 }
 
-export default connect(null, { prepareDeploy, prepareDeployMessage, estimateFees })(DeployWallet)
+export default connect(null, { prepareDeployMessage, estimateFees })(DeployWallet)

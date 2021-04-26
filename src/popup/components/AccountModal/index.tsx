@@ -48,11 +48,11 @@ const AccountModal: React.FC<IAccountModal> = ({
                         <div className="account-settings-section-item-value">
                             {`${convertTons(tonWalletState?.balance || '0')} TON`}
                         </div>
-                        <div onClick={() => onOpenConnectedSites?.()}>Connected sites</div>
+                        {/*<div onClick={() => onOpenConnectedSites?.()}>Connected sites</div>*/}
                     </div>
                 </div>
-                <div className="account-settings-section-item">Other seeds</div>
-                <div className="account-settings-section-item">Add seed</div>
+                {/*<div className="account-settings-section-item">Other seeds</div>*/}
+                {/*<div className="account-settings-section-item">Add seed</div>*/}
             </div>
             {/*<div className="account-settings-separator" />*/}
             {/*<div className="account-settings-section">*/}
@@ -66,27 +66,27 @@ const AccountModal: React.FC<IAccountModal> = ({
             {/*    </div>*/}
             {/*</div>*/}
             <div className="account-settings-separator" />
-            <div className="account-settings-section">
-                <div className="account-settings-section-item" onClick={() => onOpenKeyStore?.()}>
-                    Seeds preferences
-                </div>
-                <div className="account-settings-section-item" onClick={() => onOpenKeyStore?.()}>
-                    Key storage
-                </div>
-                <div
-                    className="account-settings-section-item"
-                    onClick={() => onOpenWalletSettings?.()}
-                >
-                    Wallet settings
-                </div>
-                <div
-                    className="account-settings-section-item"
-                    onClick={() => onOpenInformation?.()}
-                >
-                    Information and help
-                </div>
-            </div>
-            <div className="account-settings-separator" />
+            {/*<div className="account-settings-section">*/}
+            {/*    <div className="account-settings-section-item" onClick={() => onOpenKeyStore?.()}>*/}
+            {/*        Seeds preferences*/}
+            {/*    </div>*/}
+            {/*    <div className="account-settings-section-item" onClick={() => onOpenKeyStore?.()}>*/}
+            {/*        Key storage*/}
+            {/*    </div>*/}
+            {/*    <div*/}
+            {/*        className="account-settings-section-item"*/}
+            {/*        onClick={() => onOpenWalletSettings?.()}*/}
+            {/*    >*/}
+            {/*        Wallet settings*/}
+            {/*    </div>*/}
+            {/*    <div*/}
+            {/*        className="account-settings-section-item"*/}
+            {/*        onClick={() => onOpenInformation?.()}*/}
+            {/*    >*/}
+            {/*        Information and help*/}
+            {/*    </div>*/}
+            {/*</div>*/}
+            {/*<div className="account-settings-separator" />*/}
             <div className="account-settings-section-item-log-out" onClick={() => onLogOut()}>
                 Log out
             </div>
