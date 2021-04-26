@@ -53,6 +53,10 @@ const MainPage: React.FC<IMainPage> = ({
         }
     }, [])
 
+    useEffect(() => {
+        console.log(account, 'account')
+    }, [account])
+
     if (account == null) {
         return null
     }

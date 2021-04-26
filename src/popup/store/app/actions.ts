@@ -107,8 +107,6 @@ export const logOut = () => async (dispatch: AppDispatch) => {
     try {
         await accountsStorage.clear()
         await keyStore.clear()
-
-        console.log('cleared successfully')
         updateStore(dispatch, ActionTypes.resetAccounts)
     } catch (e) {
         console.log(e, 'clearing failed')
@@ -192,7 +190,6 @@ const makeSubscriptionHandler = (dispatch: AppDispatch) => (address: string) => 
 
 export const startSubscription = (address: string) => async (dispatch: AppDispatch) => {
     try {
-        // ключи - адреса, значения - assets list
         const accountsStorage = await loadAccountsStorage()
 
         const account = await accountsStorage.getAccount(address)
@@ -209,6 +206,22 @@ export const startSubscription = (address: string) => async (dispatch: AppDispat
         )
     } catch (e) {
         console.log(e)
+    }
+}
+
+export const prepareDeployMessage = (address: string) => async (dispatch: AppDispatch) => {
+    try {
+        const account = await loadAccount(address)
+        const tonWallet = await loadSubscription(
+            account.tonWallet.publicKey,
+            account.tonWallet.contractType,
+            makeSubscriptionHandler(dispatch)
+        )
+        const deploy_msg = tonWallet.prepareDeploy(60)
+        return deploy_msg
+    } catch (e) {
+        console.log(e, 'error')
+        return null
     }
 }
 
@@ -231,14 +244,6 @@ export const prepareDeploy = (address: string, password: string) => async (
         ) {
             console.log('contract type !== walletV3')
             const deploy_msg = tonWallet.prepareDeploy(60)
-            try {
-                const fees = await tonWallet.estimateFees(deploy_msg)
-                console.log('fees', fees)
-            } catch (e) {
-                console.log(e, 'error')
-                throw e
-            }
-
             await sendMessage(address, deploy_msg, password)
             await tonWallet.refresh()
             console.log(tonWallet.accountState().isDeployed, 'isDeployed')

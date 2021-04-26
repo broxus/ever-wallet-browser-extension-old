@@ -16,7 +16,6 @@ const EnterPassword: React.FC<IEnterPassword> = ({ minHeight, handleNext, handle
     const { register, handleSubmit, errors } = useForm()
 
     const onSubmit = (data: any) => {
-        console.log('data in onSubmit')
         handleNext(data.pwd)
     }
 

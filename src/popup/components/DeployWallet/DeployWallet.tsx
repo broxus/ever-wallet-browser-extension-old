@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
-import './style.scss'
-import { convertTons } from '@utils'
+import React, { useEffect, useState } from 'react'
+import { Action, convertTons } from '@utils'
 import Button from '@components/Button'
 import * as nt from '@nekoton'
 import QRCode from 'react-qr-code'
@@ -8,17 +7,38 @@ import CopyButton from '@components/CopyButton'
 import EnterPassword from '@components/EnterPassword'
 import SlidingPanel from '@components/SlidingPanel'
 import { connect } from 'react-redux'
-import { logOut, prepareDeploy } from '@store/app/actions'
+import { estimateFees, prepareDeploy, prepareDeployMessage } from '@store/app/actions'
 import { UnsignedMessage } from '@nekoton'
+import './style.scss'
 
 interface IDeployWallet {
     account: nt.AssetsList
     tonWalletState: nt.AccountState | null
     prepareDeploy: (address: string, password: string) => Promise<UnsignedMessage>
+    prepareDeployMessage: (address: string) => Promise<UnsignedMessage | null>
+    estimateFees: Action<typeof estimateFees>
 }
 
-const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepareDeploy }) => {
+const DeployWallet: React.FC<IDeployWallet> = ({
+    account,
+    tonWalletState,
+    prepareDeploy,
+    prepareDeployMessage,
+    estimateFees,
+}) => {
     const [isOpen, setIsOpen] = useState(false)
+    const [fees, setFees] = useState<string>()
+
+    useEffect(() => {
+        ;(async () => {
+            const message = await prepareDeployMessage(account.tonWallet.address)
+            if (message) {
+                const fakeMessage = message.signFake()
+                const fees = await estimateFees(account.tonWallet.address, fakeMessage)
+                setFees(fees)
+            }
+        })()
+    }, [])
 
     const deployWallet = async (password: string) => {
         await prepareDeploy(account.tonWallet.address, password)
@@ -45,11 +65,11 @@ const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepar
                         <div className="send-screen__form-tx-details-param">
                             <span className="send-screen__form-tx-details-param-desc">Fee</span>
                             <span className="send-screen__form-tx-details-param-value">
-                                0.94 TON
+                                {fees ? `${convertTons(fees)} TON` : 'calculating...'}
                             </span>
                         </div>
                     </div>
-                    <Button text={'Deploy'} onClick={() => setIsOpen(true)} />
+                    <Button text={'Deploy'} onClick={() => setIsOpen(true)} disabled={!fees} />
                 </>
             ) : (
                 <>
@@ -82,4 +102,4 @@ const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepar
     )
 }
 
-export default connect(null, { prepareDeploy })(DeployWallet)
+export default connect(null, { prepareDeploy, prepareDeployMessage, estimateFees })(DeployWallet)
