@@ -139,7 +139,10 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            if (tonWalletState?.isDeployed) {
+                            if (
+                                tonWalletState?.isDeployed ||
+                                account.tonWallet.contractType == 'WalletV3'
+                            ) {
                                 onSend?.()
                             } else {
                                 onDeploy?.()
@@ -147,7 +150,8 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         }}
                     >
                         <div className="account-details__controls__button__content">
-                            {tonWalletState?.isDeployed ? (
+                            {tonWalletState?.isDeployed ||
+                            account.tonWallet.contractType == 'WalletV3' ? (
                                 <>
                                     {/*@ts-ignore*/}
                                     <SendIcon style={{ marginRight: '8px' }} />

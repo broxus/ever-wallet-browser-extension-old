@@ -20,8 +20,9 @@ interface IDeployWallet {
 const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepareDeploy }) => {
     const [isOpen, setIsOpen] = useState(false)
 
-    const deployWallet = (password: string) => {
-        prepareDeploy(account.tonWallet.address, password)
+    const deployWallet = async (password: string) => {
+        await prepareDeploy(account.tonWallet.address, password)
+        setIsOpen(false)
     }
 
     return (
@@ -42,7 +43,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepar
                             </span>
                         </div>
                         <div className="send-screen__form-tx-details-param">
-                            <span className="send-screen__form-tx-details-param-desc">Debit</span>
+                            <span className="send-screen__form-tx-details-param-desc">Fee</span>
                             <span className="send-screen__form-tx-details-param-value">
                                 0.94 TON
                             </span>
