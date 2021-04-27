@@ -1,3 +1,6 @@
+use std::str::FromStr;
+
+use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -83,6 +86,23 @@ pub fn make_gen_timings(data: models::GenTimings) -> GenTimings {
         .set("genUtime", gen_utime)
         .build()
         .unchecked_into()
+}
+
+pub fn parse_gen_timings(data: GenTimings) -> Result<models::GenTimings, JsValue> {
+    #[derive(Clone, Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ParsedGenTimings {
+        gen_lt: String,
+        gen_utime: u32,
+    }
+
+    let ParsedGenTimings { gen_lt, gen_utime } =
+        JsValue::into_serde::<ParsedGenTimings>(&data).handle_error()?;
+    let gen_lt = u64::from_str(&gen_lt).handle_error()?;
+    match (gen_lt, gen_utime) {
+        (0, _) | (_, 0) => Ok(models::GenTimings::Unknown),
+        (gen_lt, gen_utime) => Ok(models::GenTimings::Known { gen_lt, gen_utime }),
+    }
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -238,7 +258,7 @@ const LAST_TRANSACTION_ID: &str = r#"
 export type LastTransactionId = {
     isExact: boolean,
     lt: string,
-    hash: string,
+    hash?: string,
 };
 "#;
 
@@ -260,6 +280,31 @@ pub fn make_last_transaction_id(data: models::LastTransactionId) -> LastTransact
         .set("hash", hash)
         .build()
         .unchecked_into()
+}
+
+pub fn parse_last_transaction_id(
+    data: LastTransactionId,
+) -> Result<models::LastTransactionId, JsValue> {
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct ParsedLastTransactionId {
+        is_exact: bool,
+        lt: String,
+        hash: Option<String>,
+    }
+
+    let ParsedLastTransactionId { is_exact, lt, hash } =
+        JsValue::into_serde::<ParsedLastTransactionId>(&data).handle_error()?;
+    let lt = u64::from_str(&lt).handle_error()?;
+
+    Ok(match (is_exact, hash) {
+        (true, Some(hash)) => {
+            let hash = ton_types::UInt256::from_str(&hash).handle_error()?;
+            models::LastTransactionId::Exact(models::TransactionId { lt, hash })
+        }
+        (false, None) => models::LastTransactionId::Inexact { latest_lt: lt },
+        _ => return Err(ModelError::InvalidLastTransactionId).handle_error(),
+    })
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -299,4 +344,10 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "'new' | 'old'")]
     pub type BatchType;
+}
+
+#[derive(thiserror::Error, Debug)]
+enum ModelError {
+    #[error("Invalid last transaction id")]
+    InvalidLastTransactionId,
 }

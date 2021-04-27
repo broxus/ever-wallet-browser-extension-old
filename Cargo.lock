@@ -856,6 +856,7 @@ dependencies = [
  "sha2 0.9.3",
  "syn 1.0.64",
  "thiserror",
+ "ton_abi",
  "ton_api",
  "ton_block",
  "ton_types",
