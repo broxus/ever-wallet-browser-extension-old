@@ -5,6 +5,7 @@ import { NekotonRpcError } from '../../shared/utils'
 import { RpcErrorCode } from '../../shared/errors'
 import { JsonRpcMiddleware, JsonRpcRequest } from '../../shared/jrpc'
 import { ProviderApi, Permission } from '../../shared/models'
+import * as nt from '@nekoton'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`, data)
@@ -121,16 +122,67 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     end()
 }
 
+const getFullAccountState: ProviderMethod<'getFullAccountState'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { address } = req.params
+    requireString(req, req.params, 'address')
+
+    const { connection } = ctx
+
+    const state = await connection.use(
+        async ({ data: { connection } }) => await connection.getFullAccountState(address)
+    )
+
+    res.result = {
+        state,
+    }
+    end()
+}
+
 const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    // TODO
+    const { address, abi, method, input } = req.params
+    requireString(req, req.params, 'address')
+    requireString(req, req.params, 'abi')
+    requireString(req, req.params, 'method')
 
-    res.result = {
-        output: '123', // TODO
+    const { connection } = ctx
+
+    const state = await connection.use(
+        async ({ data: { connection } }) => await connection.getFullAccountState(address)
+    )
+
+    if (state == null) {
+        throw invalidRequest(req, 'Account not found')
     }
-    end()
+
+    try {
+        const output = nt.runLocal(
+            state.genTimings,
+            state.lastTransactionId,
+            state.boc,
+            abi,
+            method,
+            input
+        )
+
+        res.result = {
+            output,
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
 }
 
 const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, ctx) => {
@@ -164,9 +216,10 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     end()
 }
 
-const providerRequests = {
+const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     requestPermissions,
     getProviderState,
+    getFullAccountState,
     runLocal,
     sendMessage,
 }

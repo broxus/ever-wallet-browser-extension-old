@@ -72,15 +72,23 @@ export type ProviderApi = {
             selectedConnection: ConnectionData
         }
     }
+    getFullAccountState: {
+        input: {
+            address: string
+        }
+        output: {
+            state?: nt.FullAccountState
+        }
+    }
     runLocal: {
         input: {
             address: string
             abi: string
             method: string
-            input: string
+            input: nt.TokensObject
         }
         output: {
-            output: string
+            output: nt.TokensObject
         }
     }
     sendMessage: {

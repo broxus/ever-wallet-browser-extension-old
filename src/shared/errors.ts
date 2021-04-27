@@ -6,6 +6,7 @@ export enum RpcErrorCode {
     METHOD_NOT_FOUND,
     INSUFFICIENT_PERMISSIONS,
     REJECTED_BY_USER,
+    CONNECTION_IS_NOT_INITIALIZED,
 }
 
 export const errorMessages: { [K in RpcErrorCode]: string } = {
@@ -16,4 +17,5 @@ export const errorMessages: { [K in RpcErrorCode]: string } = {
     [RpcErrorCode.METHOD_NOT_FOUND]: 'Method not found',
     [RpcErrorCode.INSUFFICIENT_PERMISSIONS]: 'Insufficient permission',
     [RpcErrorCode.REJECTED_BY_USER]: 'Rejected by user',
+    [RpcErrorCode.CONNECTION_IS_NOT_INITIALIZED]: 'Connection is not initialized',
 }

@@ -27,7 +27,7 @@ const defaultState: ConnectionState = {
     [CONNECTION_STORE_KEY]: {
         type: 'graphql',
         data: {
-            endpoint: 'https://main.ton.dev/graphq',
+            endpoint: 'https://main.ton.dev/graphql',
             timeout: 60000, // 60s
         },
     },
@@ -38,9 +38,33 @@ interface INetworkSwitchHandle {
     switch(): Promise<void>
 }
 
+class AcquiredConnection {
+    private readonly _release: () => void
+    private _counter: number = 1
+
+    constructor(release: () => void) {
+        this._release = release
+    }
+
+    public increase() {
+        this._counter += 1
+    }
+
+    public decrease() {
+        this._counter -= 1
+        if (this._counter <= 0) {
+            this._release()
+            return true
+        } else {
+            return false
+        }
+    }
+}
+
 export class ConnectionController extends BaseController<ConnectionConfig, ConnectionState> {
     private _initializedConnection?: InitializedConnection
     private _connectionMutex: Mutex
+    private _acquiredConnection?: AcquiredConnection
 
     constructor(config: ConnectionConfig, state?: ConnectionState) {
         super(config, state || defaultState)
@@ -78,6 +102,7 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
 
             public async switch() {
                 await this._controller._connect(this._params)
+                this._release()
             }
         }
 
@@ -85,8 +110,23 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
         return new NetworkSwitchHandle(this, release, params)
     }
 
-    public get initializedConnection() {
-        return this._initializedConnection
+    public async use<T>(f: (connection: InitializedConnection) => Promise<T>): Promise<T> {
+        if (this._initializedConnection == null) {
+            throw new NekotonRpcError(
+                RpcErrorCode.CONNECTION_IS_NOT_INITIALIZED,
+                'Connection is not initialized'
+            )
+        }
+        await this._acquireConnection()
+        return f(this._initializedConnection)
+            .then((res) => {
+                this._releaseConnection()
+                return res
+            })
+            .catch((err) => {
+                this._releaseConnection()
+                throw err
+            })
     }
 
     private async _connect(params: ConnectionData) {
@@ -128,5 +168,25 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
             },
             true
         )
+    }
+
+    private async _acquireConnection() {
+        console.log(this._acquiredConnection)
+
+        if (this._acquiredConnection) {
+            console.log('_acquireConnection -> increase')
+            this._acquiredConnection.increase()
+        } else {
+            console.log('_acquireConnection -> await')
+            const release = await this._connectionMutex.acquire()
+            console.log('_acquireConnection -> create')
+            this._acquiredConnection = new AcquiredConnection(release)
+        }
+    }
+
+    private _releaseConnection() {
+        if (this._acquiredConnection?.decrease()) {
+            this._acquiredConnection = undefined
+        }
     }
 }
