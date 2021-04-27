@@ -85,10 +85,22 @@ export type ProviderApi = {
             address: string
             abi: string
             method: string
-            input: nt.TokensObject
+            params: nt.TokensObject
         }
         output: {
             output: nt.TokensObject
+        }
+    }
+    getExpectedAddress: {
+        input: {
+            tvc: string
+            abi: string
+            workchain?: number
+            publicKey?: string
+            initParams: nt.TokensObject
+        }
+        output: {
+            address: string
         }
     }
     sendMessage: {

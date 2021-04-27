@@ -73,6 +73,13 @@ function requireNumber<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: 
     }
 }
 
+function requireOptionalNumber<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    const property = object[key]
+    if (property != null && typeof property !== 'number') {
+        throw invalidRequest(req, `'${key}' must be a number if provider`)
+    }
+}
+
 function requireArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     const property = object[key]
     if (!Array.isArray(property)) {
@@ -148,10 +155,10 @@ const getFullAccountState: ProviderMethod<'getFullAccountState'> = async (
 }
 
 const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['accountInteraction'])
+    requirePermissions(ctx, ['tonClient'])
     requireParams(req)
 
-    const { address, abi, method, input } = req.params
+    const { address, abi, method, params } = req.params
     requireString(req, req.params, 'address')
     requireString(req, req.params, 'abi')
     requireString(req, req.params, 'method')
@@ -173,11 +180,39 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
             state.boc,
             abi,
             method,
-            input
+            params
         )
 
         res.result = {
             output,
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { tvc, abi, workchain, publicKey, initParams } = req.params
+    requireString(req, req.params, 'tvc')
+    requireString(req, req.params, 'abi')
+    requireOptionalNumber(req, req.params, 'workchain')
+    requireOptionalString(req, req.params, 'publicKey')
+
+    try {
+        const address = nt.getExpectedAddress(tvc, abi, workchain || 0, publicKey, initParams)
+
+        res.result = {
+            address,
         }
         end()
     } catch (e) {
@@ -221,6 +256,7 @@ const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     getProviderState,
     getFullAccountState,
     runLocal,
+    getExpectedAddress,
     sendMessage,
 }
 

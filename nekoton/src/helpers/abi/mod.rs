@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
-use ton_block::MsgAddressInt;
+use ton_block::{Deserializable, GetRepresentationHash, MsgAddressInt, Serializable};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -12,7 +12,7 @@ use nt::utils::*;
 use crate::utils::*;
 
 #[wasm_bindgen(js_name = "runLocal")]
-pub fn contract_run_local(
+pub fn run_local(
     gen_timings: crate::core::models::GenTimings,
     last_transaction_id: crate::core::models::LastTransactionId,
     account_stuff_boc: &str,
@@ -25,11 +25,8 @@ pub fn contract_run_local(
     let gen_timings = parse_gen_timings(gen_timings)?;
     let last_transaction_id = parse_last_transaction_id(last_transaction_id)?;
     let account_stuff = parse_account_stuff(account_stuff_boc)?;
-
-    let contract_abi =
-        ton_abi::Contract::load(&mut std::io::Cursor::new(contract_abi)).handle_error()?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
     let method = contract_abi.function(method).handle_error()?;
-
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
     let output = method
@@ -37,6 +34,34 @@ pub fn contract_run_local(
         .handle_error()?;
 
     make_tokens_object(&output)
+}
+
+#[wasm_bindgen(js_name = "getExpectedAddress")]
+pub fn get_expected_address(
+    tvc: &str,
+    contract_abi: &str,
+    workchain_id: i8,
+    public_key: Option<String>,
+    init_data: TokensObject,
+) -> Result<String, JsValue> {
+    let mut state_init = ton_block::StateInit::construct_from_base64(tvc).handle_error()?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let public_key = public_key.as_deref().map(parse_public_key).transpose()?;
+
+    state_init.data = if let Some(data) = state_init.data.take() {
+        Some(insert_init_data(&contract_abi, data.into(), &public_key, init_data)?.into_cell())
+    } else {
+        None
+    };
+
+    let hash = state_init.hash().trust_me();
+
+    Ok(MsgAddressInt::AddrStd(ton_block::MsgAddrStd {
+        anycast: None,
+        workchain_id,
+        address: hash.into(),
+    })
+    .to_string())
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -363,6 +388,10 @@ fn parse_tokens_object(
     params: &[ton_abi::Param],
     tokens: TokensObject,
 ) -> Result<Vec<ton_abi::Token>, AbiError> {
+    if params.is_empty() {
+        return Ok(Default::default());
+    }
+
     if !tokens.is_object() {
         return Err(AbiError::ExpectedObject);
     }
@@ -375,6 +404,50 @@ fn parse_tokens_object(
     }
 
     Ok(result)
+}
+
+fn insert_init_data(
+    contract_abi: &ton_abi::Contract,
+    data: ton_types::SliceData,
+    public_key: &Option<ed25519_dalek::PublicKey>,
+    tokens: TokensObject,
+) -> Result<ton_types::SliceData, JsValue> {
+    let mut map = ton_types::HashmapE::with_hashmap(
+        ton_abi::Contract::DATA_MAP_KEYLEN,
+        data.reference_opt(0),
+    );
+
+    if let Some(public_key) = public_key {
+        map.set_builder(
+            0u64.write_to_new_cell().trust_me().into(),
+            &ton_types::BuilderData::new()
+                .append_raw(public_key.as_bytes(), 256)
+                .trust_me(),
+        )
+        .handle_error()?;
+    }
+
+    if !contract_abi.data().is_empty() {
+        if !tokens.is_object() {
+            return Err(AbiError::ExpectedObject).handle_error();
+        }
+
+        for (param_name, param) in contract_abi.data() {
+            let value = js_sys::Reflect::get(&tokens, &JsValue::from_str(param_name.as_str()))
+                .map_err(|_| AbiError::TuplePropertyNotFound)
+                .handle_error()?;
+
+            let builder = parse_token_value(&param.value.kind, value)
+                .handle_error()?
+                .pack_into_chain(2)
+                .handle_error()?;
+
+            map.set_builder(param.key.write_to_new_cell().trust_me().into(), &builder)
+                .handle_error()?;
+        }
+    }
+
+    map.write_to_new_cell().map(From::from).handle_error()
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -413,6 +486,10 @@ enum AbiError {
     InvalidMappingKey,
     #[error("Tuple property not found")]
     TuplePropertyNotFound,
+}
+
+fn parse_contract_abi(contract_abi: &str) -> Result<ton_abi::Contract, JsValue> {
+    ton_abi::Contract::load(&mut std::io::Cursor::new(contract_abi)).handle_error()
 }
 
 #[wasm_bindgen]
