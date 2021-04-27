@@ -26,7 +26,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     onSubmit,
 }) => {
     const { origin } = approval
-    const { recipient, amount } = approval.requestData!
+    const { recipient, amount } = approval.requestData
 
     const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
 

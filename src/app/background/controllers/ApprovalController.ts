@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { BaseController, BaseConfig, BaseState } from './BaseController'
-import { NekotonRpcError, RpcErrorCode } from '../../../shared/utils'
+import { NekotonRpcError } from '../../../shared/utils'
+import { RpcErrorCode } from '../../../shared/errors'
 
 const APPROVALS_STORE_KEY = 'pendingApprovals'
 const APPROVAL_COUNT_STORE_KEY = 'pendingApprovalCount'

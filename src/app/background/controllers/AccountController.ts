@@ -1,7 +1,8 @@
 import { EventEmitter } from 'events'
 import { Mutex } from 'await-semaphore'
 import { InitializedConnection } from './ConnectionController'
-import { NekotonRpcError, RpcErrorCode } from '../../../shared/utils'
+import { NekotonRpcError } from '../../../shared/utils'
+import { RpcErrorCode } from '../../../shared/errors'
 import * as nt from '@nekoton'
 
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s

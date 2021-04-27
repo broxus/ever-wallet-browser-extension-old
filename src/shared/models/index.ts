@@ -1,211 +1,95 @@
-import { createSchema as S, TsjsonParser, Validated } from 'ts-json-validator'
+import { UniqueArray } from '../utils'
+import * as nt from '@nekoton'
+import { GqlSocketParams } from '../index'
+
+export type AccountInteractionItem = {
+    address: string
+    publicKey: string
+    contractType: nt.ContractType
+}
 
 export const PERMISSIONS = {
     // Used to communicate with ton
     tonClient: true,
     // Used to request user actions
-    accountInteraction: {
-        address: 'unknown',
-    },
+    accountInteraction: [] as AccountInteractionItem[],
 }
 
 export type Permission = keyof typeof PERMISSIONS
 export type PermissionData<T extends Permission> = typeof PERMISSIONS[T]
 
-export interface Approval<T> {
+export interface Approval<T extends string, D> {
     id: string
     origin: string
     time: number
-    type: string
-    requestData?: T
+    type: T
+    requestData?: D
 }
 
-const typePengingTransaction = new TsjsonParser(
-    S({
-        type: 'object',
-        properties: {
-            src: S({
-                type: 'string',
-                minLength: 1,
-            }),
-            bodyHash: S({
-                type: 'string',
-            }),
-            expireAt: S({
-                type: 'number',
-            }),
-        },
-        required: ['bodyHash', 'expireAt'],
-    })
-)
+export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
 
-export const APPROVAL_API = {
+export type ApprovalApi = {
     requestPermissions: {
-        input: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    permissions: S({
-                        type: 'array',
-                        items: [
-                            S({
-                                type: 'string',
-                            }),
-                        ],
-                        minItems: 1,
-                    }),
-                },
-                required: ['permissions'],
-            })
-        ),
-        output: new TsjsonParser(
-            S({
-                type: 'array',
-                items: S({
-                    type: 'object',
-                }),
-                minItems: 1,
-            })
-        ),
-    },
+        input: {
+            permissions: Permission[]
+        }
+        output: Partial<typeof PERMISSIONS>
+    }
     callContractMethod: {
-        input: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    address: S({
-                        type: 'string',
-                        minLength: 1,
-                    }),
-                },
-                required: ['address'],
-            })
-        ),
-        output: new TsjsonParser(
-            S({
-                type: 'null', // TODO
-            })
-        ),
-    },
+        input: {
+            address: string
+        }
+        output: null
+    }
     sendMessage: {
-        input: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    recipient: S({
-                        type: 'string',
-                    }),
-                    amount: S({
-                        type: 'string',
-                    }),
-                    abi: S({
-                        type: 'string',
-                    }),
-                    payload: S({
-                        type: 'string',
-                    }),
-                },
-                required: ['recipient', 'amount'],
-            })
-        ),
-        output: new TsjsonParser(
-            S({
-                type: 'null', // TODO: pass signer data
-            })
-        ),
-    },
+        input: {
+            recipient: string
+            amount: string
+            abi?: string
+            payload?: string
+        }
+        output: null
+    }
 }
 
-export type PendingApproval<T extends keyof typeof APPROVAL_API> = Approval<
-    ReturnType<typeof APPROVAL_API[T]['input']['parse']>
->
+export type PendingApproval<T> = T extends keyof ApprovalApi
+    ? ApprovalApi[T]['input'] extends undefined
+        ? Approval<T, undefined>
+        : Approval<T, {}> & { requestData: ApprovalApi[T]['input'] }
+    : never
 
-export const PROVIDER_API = {
+export type ApprovalOutput<T extends keyof ApprovalApi> = ApprovalApi[T]['output']
+
+export type ProviderApi = {
     requestPermissions: {
-        input: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    permissions: S({
-                        type: 'array',
-                        items: S({
-                            type: 'string',
-                        }),
-                        minItems: 1,
-                    }),
-                },
-                required: ['permissions'],
-            })
-        ),
-        output: new TsjsonParser(
-            S({
-                type: 'null', // TODO
-            })
-        ),
-    },
+        input: {
+            permissions: UniqueArray<Permission>[]
+        }
+        output: {}
+    }
     getProviderState: {
-        output: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    selectedConnection: S({
-                        type: 'object',
-                    }),
-                },
-                required: ['selectedConnection'],
-            })
-        ),
-    },
+        output: {
+            selectedConnection: ConnectionData
+        }
+    }
     runLocal: {
-        permissions: ['tonClient'] as Permission[],
-        input: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    abi: S({
-                        type: 'string',
-                        minLength: 1,
-                    }),
-                    method: S({
-                        type: 'string',
-                        minLength: 1,
-                    }),
-                },
-                required: ['abi', 'method'],
-            })
-        ),
-        output: new TsjsonParser(
-            S({
-                type: 'object',
-            })
-        ),
-    },
+        input: {
+            address: string
+            abi: string
+            method: string
+            input: string
+        }
+        output: {
+            output: string
+        }
+    }
     sendMessage: {
-        permissions: ['accountInteraction'] as Permission[],
-        input: new TsjsonParser(
-            S({
-                type: 'object',
-                properties: {
-                    recipient: S({
-                        type: 'string',
-                        minLength: 1,
-                    }),
-                    amount: S({
-                        type: 'string',
-                        minLength: 1,
-                    }),
-                    abi: S({
-                        type: 'string',
-                    }),
-                    payload: S({
-                        type: 'string',
-                    }),
-                },
-                required: ['recipient', 'amount'],
-            })
-        ),
-        output: typePengingTransaction,
-    },
+        input: {
+            recipient: string
+            amount: string
+            abi?: string
+            payload?: string
+        }
+        output: nt.PendingTransaction
+    }
 }
-
-export default PROVIDER_API

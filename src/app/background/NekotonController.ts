@@ -14,13 +14,8 @@ import {
     JsonRpcRequest,
     JsonRpcSuccess,
 } from '../../shared/jrpc'
-import {
-    createEngineStream,
-    NekotonRpcError,
-    nodeify,
-    RpcErrorCode,
-    serializeError,
-} from '../../shared/utils'
+import { createEngineStream, NekotonRpcError, nodeify, serializeError } from '../../shared/utils'
+import { RpcErrorCode } from '../../shared/errors'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'

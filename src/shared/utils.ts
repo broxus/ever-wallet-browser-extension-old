@@ -5,6 +5,8 @@ import { EventEmitter } from 'events'
 import { Duplex } from 'readable-stream'
 import promiseToCallback from 'promise-to-callback'
 
+import { RpcErrorCode } from './errors'
+
 import {
     JsonRpcEngineNextCallback,
     JsonRpcEngineEndCallback,
@@ -22,15 +24,6 @@ let idCounter = Math.floor(Math.random() * MAX)
 export const getUniqueId = (): number => {
     idCounter = (idCounter + 1) % MAX
     return idCounter
-}
-
-export enum RpcErrorCode {
-    INTERNAL,
-    TRY_AGAIN_LATER,
-    INVALID_REQUEST,
-    RESOURCE_UNAVAILABLE,
-    METHOD_NOT_FOUND,
-    INSUFFICIENT_PERMISSIONS,
 }
 
 export type Maybe<T> = Partial<T> | null | undefined
@@ -480,3 +473,17 @@ const assignOriginalError = (error: unknown): unknown => {
 const hasKey = (obj: Record<string, unknown>, key: string) => {
     return Object.prototype.hasOwnProperty.call(obj, key)
 }
+
+export type UniqueArray<T> = T extends readonly [infer X, ...infer Rest]
+    ? InArray<Rest, X> extends true
+        ? ['Encountered value with duplicates:', X]
+        : readonly [X, ...UniqueArray<Rest>]
+    : T
+
+export type InArray<T, X> = T extends readonly [X, ...infer _Rest]
+    ? true
+    : T extends readonly [X]
+    ? true
+    : T extends readonly [infer _, ...infer Rest]
+    ? InArray<Rest, X>
+    : false

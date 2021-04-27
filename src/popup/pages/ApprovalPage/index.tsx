@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
 import { AppState } from '@store/app/types'
-import { Approval, PendingApproval } from '../../../shared/models'
+import { ApprovalApi, PendingApproval } from '../../../shared/models'
+import { NekotonRpcError, serializeError } from '../../../shared/utils'
+import { RpcErrorCode } from '../../../shared/errors'
 import * as nt from '@nekoton'
 
 import ApproveContractInteraction from '@components/ApproveContractInteraction'
@@ -10,13 +12,12 @@ import ApproveSendMessage from '@components/ApproveSendMessage'
 
 import './style.scss'
 
-type KnownPendingApproval =
-    | PendingApproval<'requestPermissions'>
-    | PendingApproval<'callContractMethod'>
-    | PendingApproval<'sendMessage'>
+const rejectedByUser = serializeError(
+    new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, 'Rejected by user')
+)
 
 interface IApprovalPage {
-    pendingApprovals: KnownPendingApproval[]
+    pendingApprovals: PendingApproval<keyof ApprovalApi>[]
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     resolvePendingApproval: (id: string, params: unknown) => Promise<void>
@@ -47,40 +48,40 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
         <>
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
-                    approval={approval as Approval<any>}
+                    approval={approval}
                     account={account}
                     tonWalletState={tonWalletState}
-                    onSubmit={() => {
-                        resolvePendingApproval(approval.id, {}).then(() => {})
+                    onSubmit={(params) => {
+                        resolvePendingApproval(approval.id, params).then(() => {})
                     }}
                     onReject={() => {
-                        rejectPendingApproval(approval.id, {}).then(() => {})
+                        rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
                     }}
                 />
             )}
             {approval.type === 'sendMessage' && (
                 <ApproveSendMessage
-                    approval={approval as Approval<any>}
+                    approval={approval}
                     account={account}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {
                         resolvePendingApproval(approval.id, {}).then(() => {})
                     }}
                     onReject={() => {
-                        rejectPendingApproval(approval.id, {}).then(() => {})
+                        rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
                     }}
                 />
             )}
             {approval.type === 'callContractMethod' && (
                 <ApproveContractInteraction
-                    approval={approval as Approval<any>}
+                    approval={approval}
                     account={account}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {
                         resolvePendingApproval(approval.id, {}).then(() => {})
                     }}
                     onReject={() => {
-                        rejectPendingApproval(approval.id, {}).then(() => {})
+                        rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
                     }}
                 />
             )}

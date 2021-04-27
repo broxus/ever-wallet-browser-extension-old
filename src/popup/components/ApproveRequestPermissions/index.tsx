@@ -1,6 +1,11 @@
 import React, { useState } from 'react'
 import { convertTons } from '@utils'
-import { PendingApproval } from '../../../shared/models'
+import {
+    AccountInteractionItem,
+    ApprovalOutput,
+    PendingApproval,
+    PermissionData,
+} from '../../../shared/models'
 import * as nt from '@nekoton'
 
 import Button from '@components/Button'
@@ -14,8 +19,8 @@ interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
+    onSubmit: (data: ApprovalOutput<'requestPermissions'>) => void
     onReject: () => void
-    onSubmit: () => void
 }
 
 enum LocalStep {
@@ -31,12 +36,20 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
     onSubmit,
 }) => {
     const { origin } = approval
-    const { permissions } = approval.requestData!
+    const { permissions } = approval.requestData
 
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_ACCOUNT)
+    const shouldSelectAccount = permissions.includes('accountInteraction')
 
-    const [checked, setChecked] = useState(false)
-    const [confirmChecked, setConfirmChecked] = useState(true)
+    const [localStep, setLocalStep] = useState<LocalStep>(
+        shouldSelectAccount ? LocalStep.SELECT_ACCOUNT : LocalStep.CONFIRM
+    )
+
+    const [selectedAccount, setSelectedAccount] = useState<nt.AssetsList>()
+    const [confirmChecked, setConfirmChecked] = useState(false)
+
+    if (account == null) {
+        return null
+    }
 
     return (
         <div className="connect-wallet-select-account">
@@ -54,7 +67,12 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             className="connect-wallet-select-account__item"
                             style={{ paddingBottom: '32px' }}
                         >
-                            <Checkbox checked={checked} setChecked={setChecked} />
+                            <Checkbox
+                                checked={selectedAccount != null}
+                                setChecked={(checked) => {
+                                    setSelectedAccount(checked ? account : undefined)
+                                }}
+                            />
                             <span className="connect-wallet-select-account__item-select">
                                 Select all
                             </span>
@@ -63,7 +81,12 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             className="connect-wallet-select-account__item"
                             style={{ display: 'flex' }}
                         >
-                            <Checkbox checked={checked} setChecked={setChecked} />
+                            <Checkbox
+                                checked={selectedAccount != null}
+                                setChecked={(checked) => {
+                                    setSelectedAccount(checked ? account : undefined)
+                                }}
+                            />
 
                             <UserPicS />
                             <div style={{ padding: '0 12px' }}>
@@ -79,7 +102,7 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                     <Button
                         type="submit"
                         text="Next"
-                        disabled={!checked}
+                        disabled={selectedAccount == null}
                         onClick={() => setLocalStep(LocalStep.CONFIRM)}
                     />
                 </>
@@ -112,19 +135,37 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                         </div>
                     </div>
                     <div style={{ display: 'flex' }}>
-                        <div style={{ width: '50%', marginRight: '12px' }}>
-                            <Button
-                                text={'Back'}
-                                onClick={() => setLocalStep(LocalStep.SELECT_ACCOUNT)}
-                                white
-                            />
-                        </div>
+                        {shouldSelectAccount && (
+                            <div style={{ width: '50%', marginRight: '12px' }}>
+                                <Button
+                                    text={'Back'}
+                                    onClick={() => setLocalStep(LocalStep.SELECT_ACCOUNT)}
+                                    white
+                                />
+                            </div>
+                        )}
                         <Button
                             text={'Connect'}
                             disabled={!confirmChecked}
                             onClick={() => {
                                 setLocalStep(LocalStep.CONNECTING)
-                                onSubmit()
+
+                                const originPermissions: ApprovalOutput<'requestPermissions'> = {}
+                                if (shouldSelectAccount) {
+                                    originPermissions.accountInteraction = [
+                                        {
+                                            address: account.tonWallet.address,
+                                            publicKey: account.tonWallet.publicKey,
+                                            contractType: account.tonWallet.contractType,
+                                        },
+                                    ]
+                                }
+
+                                if (permissions.includes('tonClient')) {
+                                    originPermissions.tonClient = true
+                                }
+
+                                onSubmit(originPermissions)
                             }}
                         />
                     </div>

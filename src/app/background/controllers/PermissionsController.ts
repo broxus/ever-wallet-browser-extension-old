@@ -1,7 +1,8 @@
 import _ from 'lodash'
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
-import { NekotonRpcError, RpcErrorCode } from '../../../shared/utils'
+import { NekotonRpcError } from '../../../shared/utils'
+import { RpcErrorCode } from '../../../shared/errors'
 import { PERMISSIONS, Permission } from '../../../shared/models'
 
 const PERMISSIONS_STORE_KEY = 'permissions'

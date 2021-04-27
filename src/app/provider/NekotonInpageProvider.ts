@@ -17,10 +17,10 @@ import {
     logStreamDisconnectWarning,
     Maybe,
     NekotonRpcError,
-    RpcErrorCode,
     SafeEventEmitter,
 } from '../../shared/utils'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
+import { RpcErrorCode } from '../../shared/errors'
 import pump from 'pump'
 
 interface UnvalidatedJsonRpcRequest {

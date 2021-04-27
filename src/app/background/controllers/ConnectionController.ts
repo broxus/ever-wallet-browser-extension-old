@@ -1,6 +1,7 @@
 import { Mutex } from 'await-semaphore'
 import { BaseController, BaseConfig, BaseState } from './BaseController'
-import { NekotonRpcError, RpcErrorCode } from '../../../shared/utils'
+import { NekotonRpcError } from '../../../shared/utils'
+import { RpcErrorCode } from '../../../shared/errors'
 import { GqlSocket, GqlSocketParams } from '../../../shared'
 import * as nt from '@nekoton'
 
