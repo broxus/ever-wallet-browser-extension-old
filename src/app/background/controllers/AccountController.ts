@@ -25,7 +25,6 @@ interface SendMessageCallback {
 }
 
 export interface SendMessageRequest {
-    id: string
     expireAt: number
     boc: string
 }
@@ -45,7 +44,7 @@ export interface AccountControllerState extends BaseState {
     [SELECTED_ACCOUNT]: nt.AssetsList | undefined
     [ACCOUNT_STATES_STORE_KEY]: { [address: string]: nt.AccountState }
     [ACCOUNT_TRANSACTIONS_STORE_KEY]: { [address: string]: nt.Transaction[] }
-    [PENDING_MESSAGES_STORE_KEY]: { [address: string]: StoredSendMessageRequest[] }
+    [PENDING_MESSAGES_STORE_KEY]: { [address: string]: { [id: string]: StoredSendMessageRequest } }
 }
 
 const defaultState: AccountControllerState = {
@@ -60,83 +59,175 @@ export class AccountController extends BaseController<
     AccountControllerState
 > {
     private readonly _tonWalletSubscriptions: Map<string, TonWalletSubscription> = new Map()
+    private readonly _sendMessageRequests: Map<string, Map<string, SendMessageCallback>> = new Map()
+    private readonly _accountsMutex = new Mutex()
 
     constructor(config: AccountControllerConfig, state?: AccountControllerState) {
         super(config, state || defaultState)
+
+        this.initialize()
     }
 
-    public async initialSync() {
-        if (this._tonWalletSubscriptions.size != 0) {
-            throw new Error('Must not sync twice')
-        }
-
-        const address = await this.config.accountsStorage.getCurrentAccount()
-        if (address == null) {
-            return
-        }
-
-        const selectedAccount = await this.config.accountsStorage.getAccount(address)
-        if (selectedAccount == null) {
-            return
-        }
-
-        class TonWalletHandler implements ITonWalletHandler {
-            private readonly _address: string
-            private readonly _controller: AccountController
-
-            constructor(address: string, controller: AccountController) {
-                this._address = address
-                this._controller = controller
+    public async startSubscriptions() {
+        await this._accountsMutex.use(async () => {
+            if (this._tonWalletSubscriptions.size != 0) {
+                throw new Error('Subscriptions are already running')
             }
 
-            onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-                this._controller._rejectMessageRequest(this._address, pendingTransaction)
+            const address = await this.config.accountsStorage.getCurrentAccount()
+            console.log('Current address', address)
+            if (address == null) {
+                return
             }
 
-            onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
-                this._controller._resolveMessageRequest(
-                    this._address,
-                    pendingTransaction,
-                    transaction
-                )
+            const selectedAccount = await this.config.accountsStorage.getAccount(address)
+            console.log('Selected account', selectedAccount)
+            if (selectedAccount == null) {
+                return
             }
 
-            onStateChanged(newState: nt.AccountState) {
-                this._controller._updateTonWalletState(this._address, newState)
+            class TonWalletHandler implements ITonWalletHandler {
+                private readonly _address: string
+                private readonly _controller: AccountController
+
+                constructor(address: string, controller: AccountController) {
+                    this._address = address
+                    this._controller = controller
+                }
+
+                onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+                    this._controller._rejectMessageRequest(
+                        this._address,
+                        pendingTransaction.bodyHash,
+                        new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
+                    )
+                }
+
+                onMessageSent(
+                    pendingTransaction: nt.PendingTransaction,
+                    transaction: nt.Transaction
+                ) {
+                    this._controller._resolveMessageRequest(
+                        this._address,
+                        pendingTransaction.bodyHash,
+                        transaction
+                    )
+                }
+
+                onStateChanged(newState: nt.AccountState) {
+                    this._controller._updateTonWalletState(this._address, newState)
+                }
+
+                onTransactionsFound(
+                    transactions: Array<nt.Transaction>,
+                    info: nt.TransactionsBatchInfo
+                ) {
+                    this._controller._updateTransactions(this._address, transactions, info)
+                }
             }
 
-            onTransactionsFound(
-                transactions: Array<nt.Transaction>,
-                info: nt.TransactionsBatchInfo
-            ) {
-                this._controller._updateTransactions(this._address, transactions, info)
-            }
-        }
+            const subscription = await TonWalletSubscription.subscribe(
+                this.config.connectionController,
+                selectedAccount.tonWallet.address,
+                selectedAccount.tonWallet.publicKey,
+                selectedAccount.tonWallet.contractType,
+                new TonWalletHandler(address, this)
+            )
 
-        const subscription = await TonWalletSubscription.subscribe(
-            this.config.connectionController,
-            selectedAccount.tonWallet.address,
-            selectedAccount.tonWallet.publicKey,
-            selectedAccount.tonWallet.contractType,
-            new TonWalletHandler(address, this)
-        )
+            this._tonWalletSubscriptions.set(address, subscription)
+            this.update({
+                [SELECTED_ACCOUNT]: selectedAccount,
+            })
 
-        this._tonWalletSubscriptions.set(address, subscription)
-        this.update({
-            [SELECTED_ACCOUNT]: selectedAccount,
+            console.log('Started subscription', selectedAccount)
+            subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
+            await subscription.start()
         })
     }
 
-    private _rejectMessageRequest(_address: string, _pendingTransaction: nt.PendingTransaction) {
-        // TODO
+    public async stopSubscriptions() {
+        await this._accountsMutex.use(async () => {
+            await this._stopSubscriptions()
+        })
     }
 
-    private _resolveMessageRequest(
-        _address: string,
-        _pendingTransaction: nt.PendingTransaction,
-        _transaction: nt.Transaction
-    ) {
-        // TODO
+    public async logOut() {
+        await this._accountsMutex.use(async () => {
+            await this._stopSubscriptions()
+            await this.config.accountsStorage.clear()
+            await this.config.keyStore.clear()
+        })
+    }
+
+    private async _stopSubscriptions() {
+        await Promise.all(
+            Array.from(this._tonWalletSubscriptions.values()).map(async (item) => {
+                await item.stop()
+            })
+        )
+        this._tonWalletSubscriptions.clear()
+        this._clearSendMessageRequests()
+    }
+
+    private _clearSendMessageRequests() {
+        const rejectionError = new NekotonRpcError(
+            RpcErrorCode.RESOURCE_UNAVAILABLE,
+            'The request was rejected; please try again'
+        )
+
+        const addresses = Array.from(this._sendMessageRequests.keys())
+        for (const address of addresses) {
+            const ids = Array.from(this._sendMessageRequests.get(address)?.keys() || [])
+            for (const id of ids) {
+                this._rejectMessageRequest(address, id, rejectionError)
+            }
+        }
+        this._sendMessageRequests.clear()
+    }
+
+    private _rejectMessageRequest(address: string, id: string, error: Error) {
+        this._deleteMessageRequestAndGetCallback(address, id).reject(error)
+    }
+
+    private _resolveMessageRequest(address: string, id: string, transaction: nt.Transaction) {
+        this._deleteMessageRequestAndGetCallback(address, id).resolve(transaction)
+    }
+
+    private _deleteMessageRequestAndGetCallback(address: string, id: string): SendMessageCallback {
+        const callbacks = this._sendMessageRequests.get(address)?.get(id)
+        if (!callbacks) {
+            throw new Error(`SendMessage request with id "${id}" not found`)
+        }
+
+        this._deleteMessageRequest(address, id)
+        return callbacks
+    }
+
+    private _deleteMessageRequest(address: string, id: string) {
+        const accountMessageRequests = this._sendMessageRequests.get(address)
+        if (!accountMessageRequests) {
+            return
+        }
+        accountMessageRequests.delete(id)
+        if (accountMessageRequests.size === 0) {
+            this._sendMessageRequests.delete(address)
+        }
+
+        const currentPendingMessages = this.state[PENDING_MESSAGES_STORE_KEY]
+
+        const newAccountPendingMessages = { ...currentPendingMessages[address] }
+        delete newAccountPendingMessages[id]
+
+        const newPendingMessages = { ...currentPendingMessages }
+        if (accountMessageRequests.size > 0) {
+            newPendingMessages[address] = newAccountPendingMessages
+        } else {
+            delete newPendingMessages[address]
+        }
+
+        this.update({
+            [PENDING_MESSAGES_STORE_KEY]: newPendingMessages,
+        })
     }
 
     private _updateTonWalletState(address: string, state: nt.AccountState) {
@@ -183,7 +274,7 @@ class TonWalletSubscription {
     private readonly _tonWalletMutex: Mutex = new Mutex()
     private _releaseConnection?: () => void
     private _loopPromise?: Promise<void>
-    private _refreshTimer?: number
+    private _refreshTimer?: [number, () => void]
     private _pollingInterval: number = BACKGROUND_POLLING_INTERVAL
     private _currentPollingMethod: typeof nt.TonWallet.prototype.pollingMethod
     private _isRunning: boolean = false
@@ -234,6 +325,10 @@ class TonWalletSubscription {
         this._currentPollingMethod = this._tonWallet.pollingMethod
     }
 
+    public setPollingInterval(interval: number) {
+        this._pollingInterval = interval
+    }
+
     public async start() {
         if (this._releaseConnection == null) {
             throw new NekotonRpcError(
@@ -243,31 +338,47 @@ class TonWalletSubscription {
         }
 
         if (this._loopPromise) {
+            console.log('TonWalletSubscription -> awaiting loop promise')
             await this._loopPromise
         }
 
+        console.log('TonWalletSubscription -> loop started')
+
         this._loopPromise = new Promise<void>(async (resolve) => {
+            this._isRunning = true
             outer: while (this._isRunning) {
                 switch (this._currentPollingMethod) {
                     case 'manual': {
                         this._currentBlockId = undefined
+
+                        console.log('TonWalletSubscription -> manual -> waiting begins')
+
                         await new Promise<void>((resolve) => {
-                            this._refreshTimer = window.setTimeout(
-                                () => resolve(),
-                                this._pollingInterval
-                            )
+                            const timerHandle = window.setTimeout(() => {
+                                this._refreshTimer = undefined
+                                resolve()
+                            }, this._pollingInterval)
+                            this._refreshTimer = [timerHandle, resolve]
                         })
+
+                        console.log('TonWalletSubscription -> manual -> waining ends')
+
                         if (!this._isRunning) {
                             break outer
                         }
 
+                        console.log('TonWalletSubscription -> manual -> refreshing begins')
                         await this._tonWalletMutex.use(async () => {
                             await this._tonWallet.refresh()
                             this._currentPollingMethod = this._tonWallet.pollingMethod
                         })
+                        console.log('TonWalletSubscription -> manual -> refreshing ends')
+
                         break
                     }
                     case 'reliable': {
+                        console.log('TonWalletSubscription -> reliable start')
+
                         let nextBlockId: string
                         if (this._currentBlockId == null) {
                             console.warn('Starting reliable connection with unknown block')
@@ -287,9 +398,12 @@ class TonWalletSubscription {
                             this._currentPollingMethod = this._tonWallet.pollingMethod
                             this._currentBlockId = nextBlockId
                         })
+                        break
                     }
                 }
             }
+
+            console.log('TonWalletSubscription -> loop finished')
 
             resolve()
         })
@@ -302,7 +416,8 @@ class TonWalletSubscription {
 
         this._isRunning = false
 
-        window.clearTimeout(this._refreshTimer)
+        window.clearTimeout(this._refreshTimer?.[0])
+        this._refreshTimer?.[1]()
         this._refreshTimer = undefined
 
         await this._loopPromise

@@ -23,6 +23,8 @@ interface IMainPage {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
     transactions: nt.Transaction[]
+    network: string
+    onToggleNetwork: () => void
     setStep: (step: Step) => void
     startSubscription: Action<typeof startSubscription>
     logOut: Action<typeof logOut>
@@ -41,6 +43,8 @@ const MainPage: React.FC<IMainPage> = ({
     account,
     tonWalletState,
     transactions,
+    network,
+    onToggleNetwork,
     setStep,
     startSubscription,
     logOut,
@@ -64,6 +68,8 @@ const MainPage: React.FC<IMainPage> = ({
             <AccountDetails
                 account={account}
                 tonWalletState={tonWalletState}
+                network={network}
+                onToggleNetwork={onToggleNetwork}
                 onLogOut={async () => {
                     await logOut()
                     setStep(Step.WELCOME)

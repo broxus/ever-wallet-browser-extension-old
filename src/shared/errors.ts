@@ -7,6 +7,7 @@ export enum RpcErrorCode {
     INSUFFICIENT_PERMISSIONS,
     REJECTED_BY_USER,
     CONNECTION_IS_NOT_INITIALIZED,
+    MESSAGE_EXPIRED,
 }
 
 export const errorMessages: { [K in RpcErrorCode]: string } = {
@@ -18,4 +19,5 @@ export const errorMessages: { [K in RpcErrorCode]: string } = {
     [RpcErrorCode.INSUFFICIENT_PERMISSIONS]: 'Insufficient permission',
     [RpcErrorCode.REJECTED_BY_USER]: 'Rejected by user',
     [RpcErrorCode.CONNECTION_IS_NOT_INITIALIZED]: 'Connection is not initialized',
+    [RpcErrorCode.MESSAGE_EXPIRED]: 'Message expired',
 }

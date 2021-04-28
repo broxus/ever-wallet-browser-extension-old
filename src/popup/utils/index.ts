@@ -10,11 +10,6 @@ import {
 
 Decimal.set({ maxE: 500, minE: -500 })
 
-window.ObjectExt = {
-    keys: Object.keys,
-    entries: Object.entries,
-}
-
 export type Action<F extends Function> = F extends (
     ...args: infer A
 ) => (app: AppDispatch) => Promise<infer R>

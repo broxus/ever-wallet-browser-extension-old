@@ -178,7 +178,7 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
     }
 
     private async _acquireConnection() {
-        console.log(this._acquiredConnection)
+        console.log('_acquireConnection')
 
         if (this._acquiredConnection) {
             console.log('_acquireConnection -> increase')
@@ -192,7 +192,10 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
     }
 
     private _releaseConnection() {
+        console.log('_releaseConnection')
+
         if (this._acquiredConnection?.decrease()) {
+            console.log('_releaseConnection -> release')
             this._acquiredConnection = undefined
         }
     }

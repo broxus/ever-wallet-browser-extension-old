@@ -10,6 +10,7 @@ import {
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_BACKGROUND,
 } from '../shared/constants'
+import { ConnectionData } from '../shared/models'
 import init, * as nt from '@nekoton'
 
 import WelcomePage from './pages/WelcomePage'
@@ -57,9 +58,39 @@ interface IApp {
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
+enum Network {
+    Mainnet,
+    Testnet,
+}
+
+// temp
+const NETWORK_PARAMS: { [K in Network]: { name: string; params: ConnectionData } } = {
+    [Network.Mainnet]: {
+        name: 'Mainnet',
+        params: {
+            type: 'graphql',
+            data: {
+                endpoint: 'https://main.ton.dev/graphql',
+                timeout: 60000,
+            },
+        },
+    },
+    [Network.Testnet]: {
+        name: 'Testnet',
+        params: {
+            type: 'graphql',
+            data: {
+                endpoint: 'https://net.ton.dev/graphql',
+                timeout: 60000,
+            },
+        },
+    },
+}
+
 const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.LOADING)
     const [controllerState, setControllerState] = useState<any>()
+    const [network, setNetwork] = useState<Network>(Network.Mainnet)
 
     useEffect(() => {
         init('index_bg.wasm').then(async () => {
@@ -77,6 +108,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCur
                 ) {
                     closeCurrentWindow()
                 } else {
+                    console.log('Got state', state)
                     setControllerState(state)
                 }
             })
@@ -94,6 +126,15 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCur
         }
     }, [accountLoaded])
 
+    const onToggleNetwork = async () => {
+        const nextNetwork = network == Network.Mainnet ? Network.Testnet : Network.Mainnet
+        await controllerRpc.changeNetwork(NETWORK_PARAMS[nextNetwork].params, (error) => {
+            if (!error) {
+                setNetwork(nextNetwork)
+            }
+        })
+    }
+
     const renderMainPage = () => {
         const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
 
@@ -110,7 +151,15 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCur
                 />
             )
         } else {
-            return <MainPage setStep={setStep} />
+            const networkParams = NETWORK_PARAMS[network]
+
+            return (
+                <MainPage
+                    network={networkParams.name}
+                    onToggleNetwork={onToggleNetwork}
+                    setStep={setStep}
+                />
+            )
         }
     }
 

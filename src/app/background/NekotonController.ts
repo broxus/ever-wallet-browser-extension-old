@@ -19,7 +19,7 @@ import { RpcErrorCode } from '../../shared/errors'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
-import { ConnectionController } from './controllers/ConnectionController'
+import { ConnectionController, ConnectionData } from './controllers/ConnectionController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { createProviderMiddleware } from './providerMiddleware'
 import { StorageConnector } from '../../shared'
@@ -54,8 +54,8 @@ export class NekotonController extends EventEmitter {
     private _activeControllerConnections: number
     private readonly _connections: { [origin: string]: { [id: string]: { engine: JsonRpcEngine } } }
 
-    private _options: NekotonControllerOptions
-    private _components: NekotonControllerComponents
+    private readonly _options: NekotonControllerOptions
+    private readonly _components: NekotonControllerComponents
 
     public static async load(options: NekotonControllerOptions) {
         const storage = new nt.Storage(new StorageConnector())
@@ -63,8 +63,6 @@ export class NekotonController extends EventEmitter {
         const keyStore = await nt.KeyStore.load(storage)
 
         const connectionController = new ConnectionController({})
-        await connectionController.initialSync()
-
         const accountController = new AccountController({
             storage,
             accountsStorage,
@@ -74,10 +72,12 @@ export class NekotonController extends EventEmitter {
         const approvalController = new ApprovalController({
             showApprovalRequest: options.showUserConfirmation,
         })
-
         const permissionsController = new PermissionsController({
             approvals: approvalController,
         })
+
+        await connectionController.initialSync()
+        await accountController.startSubscriptions()
 
         return new NekotonController(options, {
             storage,
@@ -105,6 +105,10 @@ export class NekotonController extends EventEmitter {
         this._components = components
 
         this._components.approvalController.subscribe((_state) => {
+            this._debouncedSendUpdate()
+        })
+
+        this._components.accountController.subscribe((_state) => {
             this._debouncedSendUpdate()
         })
 
@@ -136,21 +140,26 @@ export class NekotonController extends EventEmitter {
     }
 
     public getApi() {
-        type ApiCallback<T> = (error: Error | null, result: T) => void
+        type ApiCallback<T> = (error: Error | null, result?: T) => void
 
         const { approvalController } = this._components
 
         return {
             getState: (cb: ApiCallback<unknown>) => cb(null, this.getState()),
+            changeNetwork: (params: ConnectionData, cb: ApiCallback<{}>) =>
+                (async () =>
+                    this._changeNetwork(params)
+                        .then(() => cb(null, {}))
+                        .catch((e) => cb(e)))(),
             resolvePendingApproval: nodeify(approvalController.resolve, approvalController),
             rejectPendingApproval: nodeify(approvalController.reject, approvalController),
         }
     }
 
     public getState() {
-        console.log('getState:', this._components.approvalController.state)
         return {
             ...this._components.approvalController.state,
+            ...this._components.accountController.state,
         }
     }
 
@@ -307,6 +316,14 @@ export class NekotonController extends EventEmitter {
 
     private _sendUpdate() {
         this.emit('update', this.getState())
+    }
+
+    private async _changeNetwork(params: ConnectionData) {
+        await this._components.accountController.stopSubscriptions()
+        await this._components.connectionController
+            .startSwitchingNetwork(params)
+            .then((handle) => handle.switch())
+        await this._components.accountController.startSubscriptions()
     }
 }
 

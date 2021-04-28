@@ -19,6 +19,8 @@ import './style.scss'
 type AccountDetailsParams = {
     account: nt.AssetsList | null
     tonWalletState: nt.AccountState | null
+    network: string
+    onToggleNetwork: () => void
     onSend: () => void
     onReceive: () => void
     onDeploy: () => void
@@ -49,6 +51,8 @@ const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc })
 const AccountDetails: React.FC<AccountDetailsParams> = ({
     account,
     tonWalletState,
+    network,
+    onToggleNetwork,
     onLogOut,
     onReceive,
     onSend,
@@ -72,7 +76,9 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
             <div className="account-details">
                 <div className="account-details__top-panel">
                     <Notifications />
-                    <div className="account-details__network">Mainnet</div>
+                    <div className="account-details__network" onClick={onToggleNetwork}>
+                        {network}
+                    </div>
                     <div
                         onClick={() => setModalVisible(true)}
                         style={{ cursor: 'pointer', position: 'relative' }}

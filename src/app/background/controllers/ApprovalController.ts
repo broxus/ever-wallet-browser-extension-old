@@ -157,7 +157,7 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
     public clear() {
         const rejectionError = new NekotonRpcError(
             RpcErrorCode.RESOURCE_UNAVAILABLE,
-            'The request was rejected; prease try again'
+            'The request was rejected; please try again'
         )
 
         const ids = Array.from(this._approvals.keys())
