@@ -1,5 +1,5 @@
 import { Mutex } from 'await-semaphore'
-import { ConnectionController, InitializedConnection } from './ConnectionController'
+import { ConnectionController } from './ConnectionController'
 import { NekotonRpcError } from '../../../shared/utils'
 import { RpcErrorCode } from '../../../shared/errors'
 import * as nt from '@nekoton'
@@ -149,6 +149,17 @@ export class AccountController extends BaseController<
         await this._accountsMutex.use(async () => {
             await this._stopSubscriptions()
         })
+    }
+
+    public async useSubscription<T>(address: string, f: (wallet: nt.TonWallet) => Promise<T>) {
+        const subscription = this._tonWalletSubscriptions.get(address)
+        if (!subscription) {
+            throw new NekotonRpcError(
+                RpcErrorCode.RESOURCE_UNAVAILABLE,
+                `There is no subscription for address ${address}`
+            )
+        }
+        return subscription.use(f)
     }
 
     public async logOut() {
@@ -439,5 +450,18 @@ class TonWalletSubscription {
 
     public async prepareReliablePolling() {
         this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
+    }
+
+    public async use<T>(f: (wallet: nt.TonWallet) => Promise<T>) {
+        const release = await this._tonWalletMutex.acquire()
+        return f(this._tonWallet)
+            .then((res) => {
+                release()
+                return res
+            })
+            .catch((err) => {
+                release()
+                throw err
+            })
     }
 }

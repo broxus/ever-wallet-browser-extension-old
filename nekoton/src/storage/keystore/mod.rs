@@ -355,7 +355,7 @@ enum ParsedChangeKeyPassword {
 const EXPORT_KEY: &str = r#"
 export type ExportKey =
     | EnumItem<'master_key', { password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: String }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -422,7 +422,7 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
     | EnumItem<'master_key', { publicKey: string, password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: String }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
 "#;
 
 #[wasm_bindgen]

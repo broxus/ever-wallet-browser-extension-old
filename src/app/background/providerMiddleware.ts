@@ -1,10 +1,11 @@
 import { ApprovalController } from './controllers/ApprovalController'
 import { PermissionsController, validatePermission } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
-import { NekotonRpcError } from '../../shared/utils'
+import { AccountController } from './controllers/AccountController'
+import { NekotonRpcError, UniqueArray } from '../../shared/utils'
 import { RpcErrorCode } from '../../shared/errors'
 import { JsonRpcMiddleware, JsonRpcRequest } from '../../shared/jrpc'
-import { ProviderApi, Permission } from '../../shared/models'
+import { ProviderApi, Permission, Permissions } from '../../shared/models'
 import * as nt from '@nekoton'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
@@ -13,9 +14,10 @@ const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: un
 interface CreateProviderMiddlewareOptions {
     origin: string
     isInternal: boolean
-    approvals: ApprovalController
-    permissions: PermissionsController
-    connection: ConnectionController
+    approvalController: ApprovalController
+    accountController: AccountController
+    permissionsController: PermissionsController
+    connectionController: ConnectionController
 }
 
 type ProviderMethod<T extends keyof ProviderApi> = ProviderApi[T] extends {
@@ -35,10 +37,10 @@ type ProviderMethod<T extends keyof ProviderApi> = ProviderApi[T] extends {
 // helper methods:
 //
 
-const requirePermissions = (
-    { origin, isInternal, permissions: permissionsController }: CreateProviderMiddlewareOptions,
-    permissions: Permission[]
-) => {
+function requirePermissions<P extends Permission>(
+    { origin, isInternal, permissionsController }: CreateProviderMiddlewareOptions,
+    permissions: UniqueArray<P>[]
+) {
     if (!isInternal) {
         permissionsController.checkPermissions(origin, permissions)
     }
@@ -49,6 +51,20 @@ type WithParams<P, T> = P & { params: T }
 function requireParams<T>(req: JsonRpcRequest<T>): asserts req is WithParams<typeof req, T> {
     if (req.params == null || typeof req.params !== 'object') {
         throw invalidRequest(req, 'required params object')
+    }
+}
+
+function requireObject<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    const property = object[key]
+    if (typeof property !== 'object') {
+        throw invalidRequest(req, `'${key}' must be an object`)
+    }
+}
+
+function requireOptionalObject<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    const property = object[key]
+    if (property != null && typeof property !== 'object') {
+        throw invalidRequest(req, `'${key}' must be an object if specified`)
     }
 }
 
@@ -102,7 +118,7 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
     res,
     _next,
     end,
-    { origin, isInternal, permissions: permissionsController }
+    { origin, isInternal, permissionsController }
 ) => {
     if (isInternal) {
         throw invalidRequest(req, 'cannot request permissions for internal streams')
@@ -126,12 +142,14 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res,
     _next,
     end,
-    { connection }
+    { origin, connectionController, permissionsController }
 ) => {
-    const { selectedConnection } = connection.state
+    const { selectedConnection } = connectionController.state
+    const permissions = permissionsController.getPermissions(origin)
 
     res.result = {
-        selectedConnection,
+        selectedConnection: selectedConnection.name,
+        permissions,
     }
     end()
 }
@@ -149,9 +167,9 @@ const getFullAccountState: ProviderMethod<'getFullAccountState'> = async (
     const { address } = req.params
     requireString(req, req.params, 'address')
 
-    const { connection } = ctx
+    const { connectionController } = ctx
 
-    const state = await connection.use(
+    const state = await connectionController.use(
         async ({ data: { connection } }) => await connection.getFullAccountState(address)
     )
 
@@ -170,9 +188,9 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requireString(req, req.params, 'abi')
     requireString(req, req.params, 'method')
 
-    const { connection } = ctx
+    const { connectionController } = ctx
 
-    const state = await connection.use(
+    const state = await connectionController.use(
         async ({ data: { connection } }) => await connection.getFullAccountState(address)
     )
 
@@ -293,35 +311,149 @@ const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end
     }
 }
 
-const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, ctx) => {
+const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { recipient, amount, abi, payload } = req.params
+    const { recipient, amount, payload } = req.params
     requireString(req, req.params, 'recipient')
     requireString(req, req.params, 'amount')
-    requireOptionalString(req, req.params, 'abi')
-    requireOptionalString(req, req.params, 'payload')
+    requireOptionalObject(req, req.params, 'payload')
+    if (payload != null) {
+        requireOptionalString(req, payload, 'abi')
+        requireOptionalString(req, payload, 'method')
+    }
 
-    const { origin, approvals } = ctx
+    const { origin, permissionsController, accountController } = ctx
 
-    const _password = await approvals.addAndShowApprovalRequest({
-        origin,
-        type: 'sendMessage',
-        requestData: {
+    const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
+    if (allowedAccounts.length === 0) {
+        throw invalidRequest(req, 'No allowed accounts available')
+    }
+    const { address } = allowedAccounts[0]
+
+    let body: string = ''
+    if (payload != null) {
+        try {
+            body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
+        } catch (e) {
+            throw invalidRequest(req, e.toString())
+        }
+    }
+
+    const fees = await accountController.useSubscription(address, async (wallet) => {
+        const contractState = await wallet.getContractState()
+        if (contractState == null) {
+            throw invalidRequest(req, `Failed to get contract state for ${address}`)
+        }
+
+        const unsignedMessage = wallet.prepareTransfer(
+            contractState,
             recipient,
             amount,
-            abi,
-            payload,
-        },
+            false,
+            body,
+            60
+        )
+        if (unsignedMessage == null) {
+            throw invalidRequest(req, 'Contract must be deployed first')
+        }
+
+        try {
+            const signedMessage = unsignedMessage.signFake()
+            return await wallet.estimateFees(signedMessage)
+        } catch (e) {
+            throw invalidRequest(req, e.toString())
+        } finally {
+            unsignedMessage.free()
+        }
     })
 
     res.result = {
-        bodyHash: 'asd',
-        expireAt: 123,
+        fees,
+    }
+    end()
+}
+
+const sendMessage: ProviderMethod<'sendMessage'> = async (req, _res, _next, _end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { recipient, amount, bounce, payload } = req.params
+    requireString(req, req.params, 'recipient')
+    requireString(req, req.params, 'amount')
+    requireBoolean(req, req.params, 'bounce')
+    requireOptionalObject(req, req.params, 'payload')
+    if (payload != null) {
+        requireOptionalString(req, payload, 'abi')
+        requireOptionalString(req, payload, 'method')
     }
 
-    end()
+    const { origin, permissionsController, accountController, approvalController } = ctx
+
+    const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
+    if (allowedAccounts.length === 0) {
+        throw invalidRequest(req, 'No allowed accounts available')
+    }
+    const { address: sender } = allowedAccounts[0]
+
+    let body: string = ''
+    if (payload != null) {
+        try {
+            body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
+        } catch (e) {
+            throw invalidRequest(req, e.toString())
+        }
+    }
+
+    const { unsignedMessage, fees } = await accountController.useSubscription(
+        sender,
+        async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw invalidRequest(req, `Failed to get contract state for ${sender}`)
+            }
+
+            const unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                recipient,
+                amount,
+                bounce,
+                body,
+                60
+            )
+            if (unsignedMessage == null) {
+                throw invalidRequest(req, 'Contract must be deployed first')
+            }
+
+            try {
+                const signedMessage = unsignedMessage.signFake()
+                const fees = await wallet.estimateFees(signedMessage)
+
+                return {
+                    unsignedMessage,
+                    fees,
+                }
+            } catch (e) {
+                throw invalidRequest(req, e.toString())
+            }
+        }
+    )
+
+    const _password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        type: 'sendMessage',
+        requestData: {
+            sender,
+            recipient,
+            amount,
+            bounce,
+            payload: payload?.params,
+        },
+    })
+
+    // TODO
+    throw invalidRequest(req, 'Unimplemented')
 }
 
 const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
@@ -333,6 +465,7 @@ const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     encodeInternalInput,
     decodeInput,
     decodeOutput,
+    estimateFees,
     sendMessage,
 }
 

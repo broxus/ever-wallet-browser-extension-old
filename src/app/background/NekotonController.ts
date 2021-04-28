@@ -19,10 +19,11 @@ import { RpcErrorCode } from '../../shared/errors'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
-import { ConnectionController, ConnectionData } from './controllers/ConnectionController'
+import { ConnectionController } from './controllers/ConnectionController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { createProviderMiddleware } from './providerMiddleware'
 import { StorageConnector } from '../../shared'
+import { NamedConnectionData } from '../../shared/models'
 
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
@@ -142,13 +143,20 @@ export class NekotonController extends EventEmitter {
     public getApi() {
         type ApiCallback<T> = (error: Error | null, result?: T) => void
 
-        const { approvalController } = this._components
+        const { approvalController, connectionController } = this._components
 
         return {
             getState: (cb: ApiCallback<unknown>) => cb(null, this.getState()),
-            changeNetwork: (params: ConnectionData, cb: ApiCallback<{}>) =>
+            getAvailableNetworks: (cb: ApiCallback<NamedConnectionData[]>) =>
+                cb(null, connectionController.getAvailableNetworks()),
+            changeNetwork: (params: NamedConnectionData, cb: ApiCallback<{}>) =>
                 (async () =>
                     this._changeNetwork(params)
+                        .then(() => cb(null, {}))
+                        .catch((e) => cb(e)))(),
+            logOut: (cb: ApiCallback<{}>) =>
+                (async () =>
+                    this._logOut()
                         .then(() => cb(null, {}))
                         .catch((e) => cb(e)))(),
             resolvePendingApproval: nodeify(approvalController.resolve, approvalController),
@@ -160,6 +168,7 @@ export class NekotonController extends EventEmitter {
         return {
             ...this._components.approvalController.state,
             ...this._components.accountController.state,
+            ...this._components.connectionController.state,
         }
     }
 
@@ -246,9 +255,10 @@ export class NekotonController extends EventEmitter {
             createProviderMiddleware({
                 origin,
                 isInternal,
-                approvals: this._components.approvalController,
-                connection: this._components.connectionController,
-                permissions: this._components.permissionsController,
+                approvalController: this._components.approvalController,
+                accountController: this._components.accountController,
+                connectionController: this._components.connectionController,
+                permissionsController: this._components.permissionsController,
             })
         )
 
@@ -318,12 +328,16 @@ export class NekotonController extends EventEmitter {
         this.emit('update', this.getState())
     }
 
-    private async _changeNetwork(params: ConnectionData) {
+    private async _changeNetwork(params: NamedConnectionData) {
         await this._components.accountController.stopSubscriptions()
         await this._components.connectionController
             .startSwitchingNetwork(params)
             .then((handle) => handle.switch())
         await this._components.accountController.startSubscriptions()
+    }
+
+    private async _logOut() {
+        await this._components.accountController.logOut()
     }
 }
 

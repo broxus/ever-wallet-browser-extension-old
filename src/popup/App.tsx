@@ -58,39 +58,10 @@ interface IApp {
     setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-enum Network {
-    Mainnet,
-    Testnet,
-}
-
-// temp
-const NETWORK_PARAMS: { [K in Network]: { name: string; params: ConnectionData } } = {
-    [Network.Mainnet]: {
-        name: 'Mainnet',
-        params: {
-            type: 'graphql',
-            data: {
-                endpoint: 'https://main.ton.dev/graphql',
-                timeout: 60000,
-            },
-        },
-    },
-    [Network.Testnet]: {
-        name: 'Testnet',
-        params: {
-            type: 'graphql',
-            data: {
-                endpoint: 'https://net.ton.dev/graphql',
-                timeout: 60000,
-            },
-        },
-    },
-}
-
 const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCurrentAccount }) => {
     const [step, setStep] = useState<number>(Step.LOADING)
     const [controllerState, setControllerState] = useState<any>()
-    const [network, setNetwork] = useState<Network>(Network.Mainnet)
+    const [network, setNetwork] = useState<string>()
 
     useEffect(() => {
         init('index_bg.wasm').then(async () => {

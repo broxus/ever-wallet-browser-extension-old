@@ -3,7 +3,7 @@ import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
 import { NekotonRpcError } from '../../../shared/utils'
 import { RpcErrorCode } from '../../../shared/errors'
-import { PERMISSIONS, Permission } from '../../../shared/models'
+import { PERMISSIONS, Permission, Permissions } from '../../../shared/models'
 
 const PERMISSIONS_STORE_KEY = 'permissions'
 
@@ -28,7 +28,7 @@ export interface PermissionsConfig extends BaseConfig {
 }
 
 export interface PermissionsState extends BaseState {
-    [PERMISSIONS_STORE_KEY]: { [origin: string]: Partial<typeof PERMISSIONS> }
+    [PERMISSIONS_STORE_KEY]: { [origin: string]: Partial<Permissions> }
 }
 
 const defaultState: PermissionsState = {
@@ -44,15 +44,15 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
 
-        const originPermissions: Partial<
-            typeof PERMISSIONS
-        > = await this.config.approvals.addAndShowApprovalRequest({
-            origin,
-            type: 'requestPermissions',
-            requestData: {
-                permissions: uniquePermissions,
-            },
-        })
+        const originPermissions: Partial<Permissions> = await this.config.approvals.addAndShowApprovalRequest(
+            {
+                origin,
+                type: 'requestPermissions',
+                requestData: {
+                    permissions: uniquePermissions,
+                },
+            }
+        )
 
         const newPermissions = {
             ...this.state[PERMISSIONS_STORE_KEY],
@@ -65,6 +65,10 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             },
             true
         )
+    }
+
+    public getPermissions(origin: string): Partial<Permissions> {
+        return this.state[PERMISSIONS_STORE_KEY][origin] || {}
     }
 
     public removeOrigin(origin: string) {
@@ -90,7 +94,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
 
         for (const permission of permissions) {
-            if ((originPermissions[permission] as any) == null) {
+            if ((originPermissions as any)[permission] == null) {
                 throw new NekotonRpcError(
                     RpcErrorCode.INSUFFICIENT_PERMISSIONS,
                     `Requested permission "${permission}" not found for origin ${origin}`

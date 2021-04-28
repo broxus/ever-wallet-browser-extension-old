@@ -2,12 +2,33 @@ import { Mutex } from 'await-semaphore'
 import { BaseController, BaseConfig, BaseState } from './BaseController'
 import { NekotonRpcError } from '../../../shared/utils'
 import { RpcErrorCode } from '../../../shared/errors'
-import { GqlSocket, GqlSocketParams } from '../../../shared'
+import { GqlSocket } from '../../../shared'
+import { ConnectionData, NamedConnectionData } from '../../../shared/models'
 import * as nt from '@nekoton'
 
 const CONNECTION_STORE_KEY = 'selectedConnection'
 
-export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
+const NETWORK_PRESETS = {
+    ['Mainnet']: {
+        type: 'graphql',
+        data: {
+            endpoint: 'https://main.ton.dev/graphql',
+            timeout: 60000,
+        },
+    } as ConnectionData,
+    ['Testnet']: {
+        type: 'graphql',
+        data: {
+            endpoint: 'https://net.ton.dev/graphql',
+            timeout: 60000,
+        },
+    } as ConnectionData,
+}
+
+const getPreset = <T extends keyof typeof NETWORK_PRESETS>(name: T): NamedConnectionData => ({
+    ...NETWORK_PRESETS[name],
+    name,
+})
 
 export type InitializedConnection = nt.EnumItem<
     'graphql',
@@ -20,17 +41,11 @@ export type InitializedConnection = nt.EnumItem<
 export interface ConnectionConfig extends BaseConfig {}
 
 export interface ConnectionState extends BaseState {
-    [CONNECTION_STORE_KEY]: ConnectionData
+    [CONNECTION_STORE_KEY]: NamedConnectionData
 }
 
 const defaultState: ConnectionState = {
-    [CONNECTION_STORE_KEY]: {
-        type: 'graphql',
-        data: {
-            endpoint: 'https://main.ton.dev/graphql',
-            timeout: 60000, // 60s
-        },
-    },
+    [CONNECTION_STORE_KEY]: getPreset('Mainnet'),
 }
 
 interface INetworkSwitchHandle {
@@ -85,16 +100,16 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
         )
     }
 
-    public async startSwitchingNetwork(params: ConnectionData): Promise<INetworkSwitchHandle> {
+    public async startSwitchingNetwork(params: NamedConnectionData): Promise<INetworkSwitchHandle> {
         class NetworkSwitchHandle implements INetworkSwitchHandle {
             private readonly _controller: ConnectionController
             private readonly _release: () => void
-            private readonly _params: ConnectionData
+            private readonly _params: NamedConnectionData
 
             constructor(
                 controller: ConnectionController,
                 release: () => void,
-                params: ConnectionData
+                params: NamedConnectionData
             ) {
                 this._controller = controller
                 this._release = release
@@ -136,7 +151,14 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
             })
     }
 
-    private async _connect(params: ConnectionData) {
+    public getAvailableNetworks(): NamedConnectionData[] {
+        return window.ObjectExt.entries(NETWORK_PRESETS).map(([name, value]) => ({
+            ...(value as ConnectionData),
+            name,
+        }))
+    }
+
+    private async _connect(params: NamedConnectionData) {
         if (this._initializedConnection) {
             if (this._initializedConnection.type === 'graphql') {
                 this._initializedConnection.data.connection.free()

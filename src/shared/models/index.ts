@@ -1,6 +1,6 @@
 import { UniqueArray } from '../utils'
-import * as nt from '@nekoton'
 import { GqlSocketParams } from '../index'
+import * as nt from '@nekoton'
 
 export type AccountInteractionItem = {
     address: string
@@ -15,7 +15,8 @@ export const PERMISSIONS = {
     accountInteraction: [] as AccountInteractionItem[],
 }
 
-export type Permission = keyof typeof PERMISSIONS
+export type Permissions = typeof PERMISSIONS
+export type Permission = keyof Permissions
 export type PermissionData<T extends Permission> = typeof PERMISSIONS[T]
 
 export interface Approval<T extends string, D> {
@@ -27,13 +28,14 @@ export interface Approval<T extends string, D> {
 }
 
 export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
+export type NamedConnectionData = { name: string } & ConnectionData
 
 export type ApprovalApi = {
     requestPermissions: {
         input: {
             permissions: Permission[]
         }
-        output: Partial<typeof PERMISSIONS>
+        output: Partial<Permissions>
     }
     callContractMethod: {
         input: {
@@ -43,12 +45,14 @@ export type ApprovalApi = {
     }
     sendMessage: {
         input: {
+            sender: string
             recipient: string
             amount: string
-            abi?: string
-            payload?: string
+            bounce: boolean
+            payload?: nt.TokensObject
+            fees: string
         }
-        output: null
+        output: nt.KeyPassword
     }
 }
 
@@ -60,6 +64,12 @@ export type PendingApproval<T> = T extends keyof ApprovalApi
 
 export type ApprovalOutput<T extends keyof ApprovalApi> = ApprovalApi[T]['output']
 
+export type InternalMessageParams = {
+    abi: string
+    method: string
+    params: nt.TokensObject
+}
+
 export type ProviderApi = {
     requestPermissions: {
         input: {
@@ -69,7 +79,8 @@ export type ProviderApi = {
     }
     getProviderState: {
         output: {
-            selectedConnection: ConnectionData
+            selectedConnection: string
+            permissions: Partial<Permissions>
         }
     }
     getFullAccountState: {
@@ -134,13 +145,26 @@ export type ProviderApi = {
             output: nt.TokensObject
         }
     }
+    estimateFees: {
+        input: {
+            recipient: string
+            amount: string
+            payload?: InternalMessageParams
+        }
+        output: {
+            fees: string
+        }
+    }
     sendMessage: {
         input: {
             recipient: string
             amount: string
-            abi?: string
-            payload?: string
+            bounce: boolean
+            payload?: InternalMessageParams
         }
-        output: nt.PendingTransaction
+        output: {
+            transaction: nt.Transaction
+            output?: nt.TokensObject
+        }
     }
 }
