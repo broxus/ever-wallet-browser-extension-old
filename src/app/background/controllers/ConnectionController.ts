@@ -63,14 +63,15 @@ class AcquiredConnection {
 
 export class ConnectionController extends BaseController<ConnectionConfig, ConnectionState> {
     private _initializedConnection?: InitializedConnection
-    private _connectionMutex: Mutex
+    // Used to prevent network switch during some working subscriptions
+    private _networkMutex: Mutex
     private _acquiredConnection?: AcquiredConnection
 
     constructor(config: ConnectionConfig, state?: ConnectionState) {
         super(config, state || defaultState)
 
         this._initializedConnection = undefined
-        this._connectionMutex = new Mutex()
+        this._networkMutex = new Mutex()
         this.initialize()
     }
 
@@ -106,18 +107,24 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
             }
         }
 
-        const release = await this._connectionMutex.acquire()
+        const release = await this._networkMutex.acquire()
         return new NetworkSwitchHandle(this, release, params)
     }
 
-    public async use<T>(f: (connection: InitializedConnection) => Promise<T>): Promise<T> {
-        if (this._initializedConnection == null) {
-            throw new NekotonRpcError(
-                RpcErrorCode.CONNECTION_IS_NOT_INITIALIZED,
-                'Connection is not initialized'
-            )
-        }
+    public async acquire() {
+        requireInitializedConnection(this._initializedConnection)
         await this._acquireConnection()
+
+        return {
+            connection: this._initializedConnection,
+            release: () => this._releaseConnection(),
+        }
+    }
+
+    public async use<T>(f: (connection: InitializedConnection) => Promise<T>): Promise<T> {
+        requireInitializedConnection(this._initializedConnection)
+        await this._acquireConnection()
+
         return f(this._initializedConnection)
             .then((res) => {
                 this._releaseConnection()
@@ -178,7 +185,7 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
             this._acquiredConnection.increase()
         } else {
             console.log('_acquireConnection -> await')
-            const release = await this._connectionMutex.acquire()
+            const release = await this._networkMutex.acquire()
             console.log('_acquireConnection -> create')
             this._acquiredConnection = new AcquiredConnection(release)
         }
@@ -188,5 +195,16 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
         if (this._acquiredConnection?.decrease()) {
             this._acquiredConnection = undefined
         }
+    }
+}
+
+function requireInitializedConnection(
+    connection?: InitializedConnection
+): asserts connection is InitializedConnection {
+    if (connection == null) {
+        throw new NekotonRpcError(
+            RpcErrorCode.CONNECTION_IS_NOT_INITIALIZED,
+            'Connection is not initialized'
+        )
     }
 }

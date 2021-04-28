@@ -62,16 +62,18 @@ export class NekotonController extends EventEmitter {
         const accountsStorage = await nt.AccountsStorage.load(storage)
         const keyStore = await nt.KeyStore.load(storage)
 
+        const connectionController = new ConnectionController({})
+        await connectionController.initialSync()
+
         const accountController = new AccountController({
             storage,
             accountsStorage,
             keyStore,
+            connectionController,
         })
         const approvalController = new ApprovalController({
             showApprovalRequest: options.showUserConfirmation,
         })
-        const connectionController = new ConnectionController({})
-        await connectionController.initialSync()
 
         const permissionsController = new PermissionsController({
             approvals: approvalController,

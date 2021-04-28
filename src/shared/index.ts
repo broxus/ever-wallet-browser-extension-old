@@ -8,12 +8,12 @@ export function mergeTransactions(
 ) {
     if (info.batchType == 'old') {
         knownTransactions.push(...newTransactions)
-        return
+        return knownTransactions
     }
 
     if (knownTransactions.length === 0) {
         knownTransactions.push(...newTransactions)
-        return
+        return knownTransactions
     }
 
     // Example:
@@ -32,6 +32,7 @@ export function mergeTransactions(
 
     // 2. Insert new transactions
     knownTransactions.splice(i, 0, ...newTransactions)
+    return knownTransactions
 }
 
 export class StorageConnector {
