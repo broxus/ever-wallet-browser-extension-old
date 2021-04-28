@@ -64,6 +64,53 @@ pub fn get_expected_address(
     .to_string())
 }
 
+#[wasm_bindgen(js_name = "encodeInternalInput")]
+pub fn encode_internal_input(
+    contract_abi: &str,
+    method: &str,
+    input: TokensObject,
+) -> Result<String, JsValue> {
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let method = contract_abi.function(method).handle_error()?;
+    let input = parse_tokens_object(&method.inputs, input).handle_error()?;
+
+    let body = method
+        .encode_input(&Default::default(), &input, true, None)
+        .and_then(|value| value.into_cell())
+        .handle_error()?;
+    let body = ton_types::serialize_toc(&body).handle_error()?;
+    Ok(base64::encode(&body))
+}
+
+#[wasm_bindgen(js_name = "decodeInput")]
+pub fn decode_input(
+    message_body: &str,
+    contract_abi: &str,
+    method: &str,
+    internal: bool,
+) -> Result<TokensObject, JsValue> {
+    let message_body = parse_slice(message_body)?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let method = contract_abi.function(method).handle_error()?;
+
+    let output = method.decode_input(message_body, internal).handle_error()?;
+    make_tokens_object(&output)
+}
+
+#[wasm_bindgen(js_name = "decodeOutput")]
+pub fn decode_output(
+    message_body: &str,
+    contract_abi: &str,
+    method: &str,
+) -> Result<TokensObject, JsValue> {
+    let message_body = parse_slice(message_body)?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let method = contract_abi.function(method).handle_error()?;
+
+    let output = method.decode_output(message_body, true).handle_error()?;
+    make_tokens_object(&output)
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const TOKEN: &str = r#"
 export type AbiToken =

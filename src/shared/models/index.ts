@@ -103,6 +103,37 @@ export type ProviderApi = {
             address: string
         }
     }
+    encodeInternalInput: {
+        input: {
+            abi: string
+            method: string
+            params: nt.TokensObject
+        }
+        output: {
+            boc: string
+        }
+    }
+    decodeInput: {
+        input: {
+            body: string
+            abi: string
+            method: string
+            internal: boolean
+        }
+        output: {
+            output: nt.TokensObject
+        }
+    }
+    decodeOutput: {
+        input: {
+            body: string
+            abi: string
+            method: string
+        }
+        output: {
+            output: nt.TokensObject
+        }
+    }
     sendMessage: {
         input: {
             recipient: string

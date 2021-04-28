@@ -52,6 +52,13 @@ function requireParams<T>(req: JsonRpcRequest<T>): asserts req is WithParams<typ
     }
 }
 
+function requireBoolean<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    const property = object[key]
+    if (typeof property !== 'boolean') {
+        throw invalidRequest(req, `'${key}' must be a boolean`)
+    }
+}
+
 function requireString<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     const property = object[key]
     if (typeof property !== 'string' || property.length === 0) {
@@ -220,6 +227,72 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
     }
 }
 
+const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { abi, method, params } = req.params
+    requireString(req, req.params, 'abi')
+    requireString(req, req.params, 'method')
+
+    try {
+        const boc = nt.encodeInternalInput(abi, method, params)
+        res.result = {
+            boc,
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { body, abi, method, internal } = req.params
+    requireString(req, req.params, 'body')
+    requireString(req, req.params, 'abi')
+    requireString(req, req.params, 'method')
+    requireBoolean(req, req.params, 'internal')
+
+    try {
+        const output = nt.decodeInput(body, abi, method, internal)
+        res.result = {
+            output,
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { body, abi, method } = req.params
+    requireString(req, req.params, 'body')
+    requireString(req, req.params, 'abi')
+    requireString(req, req.params, 'method')
+
+    try {
+        const output = nt.decodeOutput(body, abi, method)
+        res.result = {
+            output,
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
@@ -257,6 +330,9 @@ const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     getFullAccountState,
     runLocal,
     getExpectedAddress,
+    encodeInternalInput,
+    decodeInput,
+    decodeOutput,
     sendMessage,
 }
 
