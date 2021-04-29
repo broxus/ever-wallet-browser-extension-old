@@ -456,7 +456,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     let signedMessage: nt.SignedMessage
     try {
         unsignedMessage.refreshTimeout()
-        signedMessage = await accountController.sign(unsignedMessage, password)
+        signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
     } catch (e) {
         throw invalidRequest(req, e.toString())
     } finally {

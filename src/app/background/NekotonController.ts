@@ -160,6 +160,9 @@ export class NekotonController extends EventEmitter {
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             logOut: nodeifyAsync(this, 'logOut'),
+            estimateFees: nodeifyAsync(accountController, 'estimateFees'),
+            prepareMessage: nodeifyAsync(accountController, 'prepareMessage'),
+            sendMessage: nodeifyAsync(accountController, 'sendMessage'),
             resolvePendingApproval: nodeify(approvalController, 'resolve'),
             rejectPendingApproval: nodeify(approvalController, 'reject'),
         }

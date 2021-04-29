@@ -10,9 +10,3 @@ export type Action = {
     type: string
     payload?: any
 }
-
-export type MessageToPrepare = {
-    amount: string
-    recipient: string
-    comment?: string
-}

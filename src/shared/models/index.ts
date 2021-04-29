@@ -9,6 +9,12 @@ export type AccountToCreate = {
     password: string
 }
 
+export type MessageToPrepare = {
+    amount: string
+    recipient: string
+    payload?: string
+}
+
 export type AccountInteractionItem = {
     address: string
     publicKey: string

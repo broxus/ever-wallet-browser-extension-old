@@ -5,7 +5,7 @@ import { RpcErrorCode } from '../../../shared/errors'
 import * as nt from '@nekoton'
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { mergeTransactions } from '../../../shared'
-import { AccountToCreate } from '../../../shared/models'
+import { AccountToCreate, MessageToPrepare } from '../../../shared/models'
 
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s
 const BACKGROUND_POLLING_INTERVAL = 120000 // 2m
@@ -190,7 +190,91 @@ export class AccountController extends BaseController<
         return this.config.keyStore.check_password(password)
     }
 
-    public async sign(unsignedMessage: nt.UnsignedMessage, password: nt.KeyPassword) {
+    public async estimateFees(address: string, params: MessageToPrepare) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            const unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                params.recipient,
+                params.amount,
+                false,
+                params.payload || '',
+                60
+            )
+            if (unsignedMessage == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    'Contract must be deployed first'
+                )
+            }
+
+            try {
+                const signedMessage = unsignedMessage.signFake()
+                return await wallet.estimateFees(signedMessage)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage.free()
+            }
+        })
+    }
+
+    public async prepareMessage(
+        address: string,
+        params: MessageToPrepare,
+        password: nt.KeyPassword
+    ) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            const unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                params.recipient,
+                params.amount,
+                false,
+                params.payload || '',
+                60
+            )
+            if (unsignedMessage == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    'Contract must be deployed first'
+                )
+            }
+
+            try {
+                return await this.config.keyStore.sign(unsignedMessage, password)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage.free()
+            }
+        })
+    }
+
+    public async signPreparedMessage(
+        unsignedMessage: nt.UnsignedMessage,
+        password: nt.KeyPassword
+    ) {
         return this.config.keyStore.sign(unsignedMessage, password)
     }
 
@@ -208,9 +292,11 @@ export class AccountController extends BaseController<
             const id = signedMessage.bodyHash
             accountMessageRequests!.set(id, { resolve, reject })
 
+            await subscription.prepareReliablePolling()
             await this.useSubscription(address, async (wallet) => {
                 try {
                     await wallet.sendMessage(signedMessage)
+                    subscription.skipRefreshTimer()
                 } catch (e) {
                     throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
                 }
@@ -452,6 +538,11 @@ class TonWalletSubscription {
                     case 'reliable': {
                         console.log('TonWalletSubscription -> reliable start')
 
+                        if (this._suggestedBlockId != null) {
+                            this._currentBlockId = this._suggestedBlockId
+                            this._suggestedBlockId = undefined
+                        }
+
                         let nextBlockId: string
                         if (this._currentBlockId == null) {
                             console.warn('Starting reliable connection with unknown block')
@@ -482,6 +573,12 @@ class TonWalletSubscription {
         })
     }
 
+    public skipRefreshTimer() {
+        window.clearTimeout(this._refreshTimer?.[0])
+        this._refreshTimer?.[1]()
+        this._refreshTimer = undefined
+    }
+
     public async pause() {
         if (!this._isRunning) {
             return
@@ -489,9 +586,7 @@ class TonWalletSubscription {
 
         this._isRunning = false
 
-        window.clearTimeout(this._refreshTimer?.[0])
-        this._refreshTimer?.[1]()
-        this._refreshTimer = undefined
+        this.skipRefreshTimer()
 
         await this._loopPromise
         this._loopPromise = undefined

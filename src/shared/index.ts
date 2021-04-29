@@ -5,7 +5,7 @@ export function mergeTransactions(
     knownTransactions: Array<nt.Transaction>,
     newTransactions: Array<nt.Transaction>,
     info: nt.TransactionsBatchInfo
-) {
+): nt.Transaction[] {
     if (info.batchType == 'old') {
         knownTransactions.push(...newTransactions)
         return knownTransactions

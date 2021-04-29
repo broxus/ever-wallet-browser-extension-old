@@ -1,6 +1,5 @@
 import React, { useState } from 'react'
 import { connect } from 'react-redux'
-import { exportKey } from '@store/app/actions'
 
 import Modal from '@components/Modal'
 import Button from '@components/Button'
@@ -99,6 +98,4 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey }) => {
     )
 }
 
-export default connect(null, {
-    exportKey,
-})(KeyStorage)
+export default KeyStorage

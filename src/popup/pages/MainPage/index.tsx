@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@utils/ControllerRpcClient'
+import { MessageToPrepare } from '../../../shared/models'
 import * as nt from '@nekoton'
 
 import AccountDetails from '@components/AccountDetails'
@@ -55,6 +56,18 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         await controllerRpc.logOut()
     }
 
+    const estimateFees = async (params: MessageToPrepare) => {
+        return await controllerRpc.estimateFees(accountAddress, params)
+    }
+
+    const prepareMessage = async (params: MessageToPrepare, password: nt.KeyPassword) => {
+        return controllerRpc.prepareMessage(accountAddress, params, password)
+    }
+
+    const sendMessage = async (message: nt.SignedMessage) => {
+        return controllerRpc.sendMessage(accountAddress, message)
+    }
+
     return (
         <>
             <AccountDetails
@@ -86,6 +99,9 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             account={selectedAccount}
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
+                            estimateFees={estimateFees}
+                            prepareMessage={prepareMessage}
+                            sendMessage={sendMessage}
                         />
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
