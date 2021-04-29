@@ -1,4 +1,4 @@
-import { checkForError } from './utils'
+import { checkForError } from '@shared/utils'
 
 const NOTIFICATION_HEIGHT = 600
 const NOTIFICATION_WIDTH = 360

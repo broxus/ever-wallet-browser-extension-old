@@ -1,18 +1,19 @@
 import React, { useState } from 'react'
-import { ControllerState, IControllerRpcClient } from '@utils/ControllerRpcClient'
-import { MessageToPrepare } from '../../../shared/models'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { MessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import AccountDetails from '@components/AccountDetails'
-import UserAssets from '@components/UserAssets'
+import AccountDetails from '@popup/components/AccountDetails'
+import UserAssets from '@popup/components/UserAssets'
 
-import SlidingPanel from '@components/SlidingPanel'
-import Receive from '@components/Receive'
-import Send from '@components/Send'
-import KeyStorage from '@components/KeyStorage'
-import CreateAccountPage from '../CreateAccountPage'
-import AssetFull from '@components/AssetFull'
-import DeployWallet from '@components/DeployWallet/DeployWallet'
+import SlidingPanel from '@popup/components/SlidingPanel'
+import Receive from '@popup/components/Receive'
+import Send from '@popup/components/Send'
+import KeyStorage from '@popup/components/KeyStorage'
+import AssetFull from '@popup/components/AssetFull'
+import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
+
+import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
 

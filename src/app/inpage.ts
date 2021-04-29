@@ -21,8 +21,8 @@ cleanContextForImports()
 
 import '../polyfills'
 import LocalMessageDuplexStream from 'post-message-stream'
+import { CONTENT_SCRIPT, INPAGE_SCRIPT } from '@shared/constants'
 import { initializeProvider } from './provider'
-import { CONTENT_SCRIPT, INPAGE_SCRIPT } from '../shared/constants'
 
 restoreContextAfterImports()
 

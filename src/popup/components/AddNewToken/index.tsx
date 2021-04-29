@@ -1,13 +1,12 @@
-import React, { Dispatch, SetStateAction, useState } from 'react'
-import _ from 'lodash'
+import React, { useState } from 'react'
 import cn from 'classnames'
 import { useForm } from 'react-hook-form'
 
-import Button from '@components/Button'
-import Input from '@components/Input'
-import Tumbler from '@components/Tumbler'
+import Button from '@popup/components/Button'
+import Input from '@popup/components/Input'
+import Tumbler from '@popup/components/Tumbler'
 
-import TonLogo from '@img/ton-logo.svg'
+import TonLogo from '@popup/img/ton-logo.svg'
 
 import './style.scss'
 

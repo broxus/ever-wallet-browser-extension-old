@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
-import * as nt from '@nekoton'
 import _ from 'lodash'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
-import { formatSeed } from '@utils'
+import { formatSeed } from '@popup/utils'
+import * as nt from '@nekoton'
 
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import TextField from '@material-ui/core/TextField'

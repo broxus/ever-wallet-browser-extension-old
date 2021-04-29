@@ -1,10 +1,10 @@
 import React from 'react'
+import { useForm } from 'react-hook-form'
 
-import Input from '@components/Input'
-import Button from '@components/Button'
+import Input from '@popup/components/Input'
+import Button from '@popup/components/Button'
 
 import './style.scss'
-import { useForm } from 'react-hook-form'
 
 interface IEnterPassword {
     minHeight?: string

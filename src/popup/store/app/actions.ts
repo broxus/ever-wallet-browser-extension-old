@@ -1,4 +1,4 @@
-import { AppDispatch } from '@store'
+import { AppDispatch } from '@popup/store'
 import { Locale, AppState } from './types'
 import * as nt from '@nekoton'
 

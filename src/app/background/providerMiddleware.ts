@@ -1,3 +1,4 @@
+import { ProviderApi, Permission } from 'ton-inpage-provider'
 import { ApprovalController } from './controllers/ApprovalController'
 import { PermissionsController, validatePermission } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
@@ -5,7 +6,6 @@ import { AccountController } from './controllers/AccountController'
 import { NekotonRpcError, UniqueArray } from '../../shared/utils'
 import { RpcErrorCode } from '../../shared/errors'
 import { JsonRpcMiddleware, JsonRpcRequest } from '../../shared/jrpc'
-import { ProviderApi, Permission, Permissions } from '../../shared/models'
 import * as nt from '@nekoton'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
@@ -315,13 +315,13 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { recipient, amount, payload } = req.params
-    requireString(req, req.params, 'recipient')
+    const { address, amount, payload } = req.params
+    requireString(req, req.params, 'address')
     requireString(req, req.params, 'amount')
     requireOptionalObject(req, req.params, 'payload')
     if (payload != null) {
-        requireOptionalString(req, payload, 'abi')
-        requireOptionalString(req, payload, 'method')
+        requireString(req, payload, 'abi')
+        requireString(req, payload, 'method')
     }
 
     const { origin, permissionsController, accountController } = ctx
@@ -330,7 +330,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     if (allowedAccounts.length === 0) {
         throw invalidRequest(req, 'No allowed accounts available')
     }
-    const { address } = allowedAccounts[0]
+    const { address: selectedAddress } = allowedAccounts[0]
 
     let body: string = ''
     if (payload != null) {
@@ -341,15 +341,15 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         }
     }
 
-    const fees = await accountController.useSubscription(address, async (wallet) => {
+    const fees = await accountController.useSubscription(selectedAddress, async (wallet) => {
         const contractState = await wallet.getContractState()
         if (contractState == null) {
-            throw invalidRequest(req, `Failed to get contract state for ${address}`)
+            throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
         }
 
         const unsignedMessage = wallet.prepareTransfer(
             contractState,
-            recipient,
+            address,
             amount,
             false,
             body,
@@ -379,14 +379,14 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { recipient, amount, bounce, payload } = req.params
-    requireString(req, req.params, 'recipient')
+    const { address, amount, bounce, payload } = req.params
+    requireString(req, req.params, 'address')
     requireString(req, req.params, 'amount')
     requireBoolean(req, req.params, 'bounce')
     requireOptionalObject(req, req.params, 'payload')
     if (payload != null) {
-        requireOptionalString(req, payload, 'abi')
-        requireOptionalString(req, payload, 'method')
+        requireString(req, payload, 'abi')
+        requireString(req, payload, 'method')
     }
 
     const { origin, permissionsController, accountController, approvalController } = ctx
@@ -416,7 +416,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
-                recipient,
+                address,
                 amount,
                 bounce,
                 body,
@@ -445,10 +445,10 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         type: 'sendMessage',
         requestData: {
             sender,
-            recipient,
+            recipient: address,
             amount,
             bounce,
-            payload: payload?.params,
+            payload,
             fees,
         },
     })

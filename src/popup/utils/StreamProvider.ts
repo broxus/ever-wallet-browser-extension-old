@@ -1,6 +1,6 @@
 import { Duplex } from 'readable-stream'
 import { nanoid } from 'nanoid'
-import { JsonRpcId, JsonRpcRequest, JsonRpcResponse } from '../../shared/jrpc'
+import { JsonRpcId, JsonRpcRequest, JsonRpcResponse } from '@shared/jrpc'
 
 export class StreamProvider extends Duplex {
     private _payloads: {

@@ -1,11 +1,11 @@
 import { Mutex } from 'await-semaphore'
-import { ConnectionController } from './ConnectionController'
-import { NekotonRpcError } from '../../../shared/utils'
-import { RpcErrorCode } from '../../../shared/errors'
+import { NekotonRpcError } from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
+import { AccountToCreate, MessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
+
 import { BaseConfig, BaseController, BaseState } from './BaseController'
-import { mergeTransactions } from '../../../shared'
-import { AccountToCreate, MessageToPrepare } from '../../../shared/models'
+import { ConnectionController } from './ConnectionController'
 
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s
 const BACKGROUND_POLLING_INTERVAL = 120000 // 2m
@@ -132,7 +132,7 @@ export class AccountController extends BaseController<
             })
 
             console.log('Started subscription', selectedAccount)
-            subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
+            subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
             await subscription.start()
         })
     }
@@ -303,6 +303,21 @@ export class AccountController extends BaseController<
             }).catch((e) => {
                 this._rejectMessageRequest(address, id, e)
             })
+        })
+    }
+
+    public enableIntensivePolling() {
+        console.log('Enable intensive polling')
+        this._tonWalletSubscriptions.forEach((subscription) => {
+            subscription.skipRefreshTimer()
+            subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
+        })
+    }
+
+    public disableIntensivePolling() {
+        console.log('Disable intensive polling')
+        this._tonWalletSubscriptions.forEach((subscription) => {
+            subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
         })
     }
 
@@ -625,4 +640,38 @@ class TonWalletSubscription {
                 throw err
             })
     }
+}
+
+function mergeTransactions(
+    knownTransactions: Array<nt.Transaction>,
+    newTransactions: Array<nt.Transaction>,
+    info: nt.TransactionsBatchInfo
+): nt.Transaction[] {
+    if (info.batchType == 'old') {
+        knownTransactions.push(...newTransactions)
+        return knownTransactions
+    }
+
+    if (knownTransactions.length === 0) {
+        knownTransactions.push(...newTransactions)
+        return knownTransactions
+    }
+
+    // Example:
+    // known lts: [N, N-1, N-2, N-3, (!) N-10,...]
+    // new lts: [N-4, N-5]
+    // batch info: { minLt: N-5, maxLt: N-4, batchType: 'new' }
+
+    // 1. Skip indices until known transaction lt is greater than the biggest in the batch
+    let i = 0
+    while (
+        i < knownTransactions.length &&
+        knownTransactions[i].id.lt.localeCompare(info.maxLt) >= 0
+    ) {
+        ++i
+    }
+
+    // 2. Insert new transactions
+    knownTransactions.splice(i, 0, ...newTransactions)
+    return knownTransactions
 }

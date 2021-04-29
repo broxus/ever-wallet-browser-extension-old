@@ -1,11 +1,11 @@
 import React from 'react'
-import { convertAddress } from '@utils'
+import { convertAddress } from '@popup/utils'
 
 import ReactTooltip from 'react-tooltip'
 import CopyToClipboard from 'react-copy-to-clipboard'
 
-import Pattern from '../../img/ton-pattern.svg'
-import Ellipsis from '../../img/ellipsis.svg'
+import Pattern from '@popup/img/ton-pattern.svg'
+import Ellipsis from '@popup/img/ellipsis.svg'
 
 import './style.scss'
 

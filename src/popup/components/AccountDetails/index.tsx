@@ -1,18 +1,18 @@
 import React, { useState } from 'react'
-import { convertTons } from '@utils'
-import { createRipple, removeRipple } from '@common'
-
+import { convertTons } from '@popup/utils'
+import { createRipple, removeRipple } from '@popup/common'
 import * as nt from '@nekoton'
-import AccountModal from '@components/AccountModal'
 
-import ReceiveIcon from '@img/receive.svg'
-import SendIcon from '@img/send.svg'
-import DeployIcon from '@img/deploy-icon.svg'
-import Notifications from '@img/notifications.svg'
-import Profile from '@img/profile.svg'
-import AddAccount from '@img/add-account.svg'
-import AccountCard from '@components/AccountCard'
-import Carousel from '@components/Carousel'
+import AccountModal from '@popup/components/AccountModal'
+import AccountCard from '@popup/components/AccountCard'
+import Carousel from '@popup/components/Carousel'
+
+import ReceiveIcon from '@popup/img/receive.svg'
+import SendIcon from '@popup/img/send.svg'
+import DeployIcon from '@popup/img/deploy-icon.svg'
+import Notifications from '@popup/img/notifications.svg'
+import Profile from '@popup/img/profile.svg'
+import AddAccount from '@popup/img/add-account.svg'
 
 import './style.scss'
 

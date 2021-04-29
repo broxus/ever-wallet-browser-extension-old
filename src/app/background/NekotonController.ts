@@ -13,23 +13,23 @@ import {
     JsonRpcMiddleware,
     JsonRpcRequest,
     JsonRpcSuccess,
-} from '../../shared/jrpc'
+} from '@shared/jrpc'
 import {
     createEngineStream,
     NekotonRpcError,
     nodeify,
     nodeifyAsync,
     serializeError,
-} from '../../shared/utils'
-import { RpcErrorCode } from '../../shared/errors'
-import { NEKOTON_PROVIDER } from '../../shared/constants'
-import { AccountController, AccountControllerState } from './controllers/AccountController'
-import { ApprovalController, ApprovalControllerState } from './controllers/ApprovalController'
-import { ConnectionController, ConnectionControllerState } from './controllers/ConnectionController'
+} from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
+import { NEKOTON_PROVIDER } from '@shared/constants'
+import { NamedConnectionData } from '@shared/approvalApi'
+
+import { AccountController } from './controllers/AccountController'
+import { ApprovalController } from './controllers/ApprovalController'
+import { ConnectionController } from './controllers/ConnectionController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { createProviderMiddleware } from './providerMiddleware'
-import { StorageConnector } from '../../shared'
-import { AccountToCreate, NamedConnectionData } from '../../shared/models'
 
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
@@ -121,9 +121,9 @@ export class NekotonController extends EventEmitter {
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
-                // TODO: start account tracker
+                this._components.accountController.enableIntensivePolling()
             } else {
-                // TODO: stop account tracker
+                this._components.accountController.disableIntensivePolling()
                 this._components.approvalController.clear()
             }
         })
@@ -342,6 +342,34 @@ export class NekotonController extends EventEmitter {
 
     private _sendUpdate() {
         this.emit('update', this.getState())
+    }
+}
+
+export class StorageConnector {
+    get(key: string, handler: nt.StorageQueryResultHandler) {
+        chrome.storage.local.get(key, (items) => {
+            handler.onResult(items[key])
+        })
+    }
+
+    set(key: string, value: string, handler: nt.StorageQueryHandler) {
+        chrome.storage.local.set({ [key]: value }, () => {
+            handler.onResult()
+        })
+    }
+
+    setUnchecked(key: string, value: string) {
+        chrome.storage.local.set({ [key]: value }, () => {})
+    }
+
+    remove(key: string, handler: nt.StorageQueryHandler) {
+        chrome.storage.local.remove([key], () => {
+            handler.onResult()
+        })
+    }
+
+    removeUnchecked(key: string) {
+        chrome.storage.local.remove([key], () => {})
     }
 }
 

@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
-import { AccountToCreate } from '../../../shared/models'
+import { AccountToCreate } from '@shared/approvalApi'
 
-import Button from '@components/Button'
-import NewAccountPage from '../NewAccountPage'
-import RestoreAccountPage from '../RestoreAccountPage'
+import Button from '@popup/components/Button'
+import NewAccountPage from '@popup/pages/NewAccountPage'
+import RestoreAccountPage from '@popup/pages/RestoreAccountPage'
 
-import SittingMan from '@img/welcome.svg'
+import SittingMan from '@popup/img/welcome.svg'
 
 import './style.scss'
 

@@ -8,8 +8,6 @@ import {
 } from './utils'
 import { RpcErrorCode } from './errors'
 
-export type Json = boolean | number | string | null | { [property: string]: Json } | Json[]
-
 export type JsonRpcVersion = '2.0'
 export type JsonRpcId = number | string | void
 

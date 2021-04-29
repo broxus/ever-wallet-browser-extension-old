@@ -1,5 +1,3 @@
-import * as nt from '@nekoton'
-
 export type Locale = 'en_US' | 'ru_RU'
 
 export type AppState = {

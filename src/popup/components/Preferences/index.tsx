@@ -1,11 +1,11 @@
 import React, { Dispatch, SetStateAction } from 'react'
-import { selectStyles } from '../../constants/selectStyle'
+import { selectStyles } from '@popup/constants/selectStyle'
 
 import Select from 'react-select'
-import Input from '@components/Input'
-import Button from '@components/Button'
+import Input from '@popup/components/Input'
+import Button from '@popup/components/Button'
 
-import UserPic from '@img/user-avatar-placeholder.svg'
+import UserPic from '@popup/img/user-avatar-placeholder.svg'
 
 import './send.scss'
 

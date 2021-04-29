@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
-import './style.scss'
-import { convertTons } from '@utils'
-import Button from '@components/Button'
+import { convertTons } from '@popup/utils'
 import * as nt from '@nekoton'
+
 import QRCode from 'react-qr-code'
-import CopyButton from '@components/CopyButton'
-import EnterPassword from '@components/EnterPassword'
-import SlidingPanel from '@components/SlidingPanel'
-import { UnsignedMessage } from '@nekoton'
+
+import Button from '@popup/components/Button'
+import CopyButton from '@popup/components/CopyButton'
+import EnterPassword from '@popup/components/EnterPassword'
+import SlidingPanel from '@popup/components/SlidingPanel'
+
+import './style.scss'
 
 interface IDeployWallet {
     account: nt.AssetsList

@@ -1,9 +1,15 @@
 import _ from 'lodash'
+import { Permissions, Permission } from 'ton-inpage-provider'
+import { NekotonRpcError } from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
+
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
-import { NekotonRpcError } from '../../../shared/utils'
-import { RpcErrorCode } from '../../../shared/errors'
-import { PERMISSIONS, Permission, Permissions } from '../../../shared/models'
+
+const PERMISSIONS: Permissions = {
+    tonClient: true,
+    accountInteraction: [],
+}
 
 export const validatePermission = (permission: string) => {
     if (typeof (permission as any) !== 'string') {

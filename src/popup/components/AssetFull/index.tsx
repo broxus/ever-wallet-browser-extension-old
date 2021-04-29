@@ -1,11 +1,11 @@
 import React from 'react'
-import { createRipple, removeRipple } from '@common'
+import { createRipple, removeRipple } from '@popup/common'
 
-import TransactionsList from '@components/TransactionsList'
+import TransactionsList from '@popup/components/TransactionsList'
 
-import ReceiveIcon from '@img/receive-dark-blue.svg'
-import SendIcon from '@img/send-dark-blue.svg'
-import TonLogo from '@img/ton-logo.svg'
+import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
+import SendIcon from '@popup/img/send-dark-blue.svg'
+import TonLogo from '@popup/img/ton-logo.svg'
 
 import './style.scss'
 

@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import cn from 'classnames'
 import * as nt from '@nekoton'
 
-import SlidingPanel from '@components/SlidingPanel'
-import AddNewToken from '@components/AddNewToken'
-import Button from '@components/Button'
-import AssetsListItem from '@components/AssetsListItem'
-import TransactionsList from '@components/TransactionsList'
+import SlidingPanel from '@popup/components/SlidingPanel'
+import AddNewToken from '@popup/components/AddNewToken'
+import Button from '@popup/components/Button'
+import AssetsListItem from '@popup/components/AssetsListItem'
+import TransactionsList from '@popup/components/TransactionsList'
 
 import './style.scss'
 

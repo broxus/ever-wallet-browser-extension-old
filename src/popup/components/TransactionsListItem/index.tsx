@@ -1,9 +1,9 @@
 import React from 'react'
-import { convertAddress, convertTons } from '@utils'
+import { convertAddress, convertTons } from '@popup/utils'
 import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
-import TonLogoS from '@img/ton-logo-s.svg'
+import TonLogoS from '@popup/img/ton-logo-s.svg'
 
 import './style.scss'
 

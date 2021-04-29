@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { DEFAULT_CONTRACT_TYPE } from '@common'
-import { validateMnemonic } from '@store/app/actions'
-import { AccountToCreate } from '../../../shared/models'
+import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
+import { validateMnemonic } from '@popup/store/app/actions'
+import { AccountToCreate } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import SignPolicy from '@components/SignPolicy'
-import SelectContractType from '@components/SelectContractType'
-import EnterSeed from '@components/EnterSeed'
-import EnterNewPassword from '@components/EnterNewPassword'
-import Modal from '@components/Modal'
+import SignPolicy from '@popup/components/SignPolicy'
+import SelectContractType from '@popup/components/SelectContractType'
+import EnterSeed from '@popup/components/EnterSeed'
+import EnterNewPassword from '@popup/components/EnterNewPassword'
+import Modal from '@popup/components/Modal'
 
 import './style.scss'
 

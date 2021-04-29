@@ -1,19 +1,14 @@
 import React, { useState } from 'react'
-import { convertTons } from '@utils'
-import {
-    AccountInteractionItem,
-    ApprovalOutput,
-    PendingApproval,
-    PermissionData,
-} from '../../../shared/models'
+import { convertTons } from '@popup/utils'
+import { ApprovalOutput, PendingApproval } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import Button from '@components/Button'
-import Checkbox from '@components/Checkbox'
-import WebsiteIcon from '@components/WebsiteIcon'
+import Button from '@popup/components/Button'
+import Checkbox from '@popup/components/Checkbox'
+import WebsiteIcon from '@popup/components/WebsiteIcon'
 
-import TonWalletLogo from '@img/ton-wallet-logo.svg'
-import UserPicS from '@img/user-avatar-placeholder-s.svg'
+import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
+import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 
 interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>

@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react'
-import { ControllerState, IControllerRpcClient } from '@utils/ControllerRpcClient'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_BACKGROUND,
-} from '../shared/constants'
+} from '@shared/constants'
 import init, * as nt from '@nekoton'
 
-import WelcomePage from './pages/WelcomePage'
-import MainPage from './pages/MainPage'
-import ApprovalPage from './pages/ApprovalPage'
+import WelcomePage from '@popup/pages/WelcomePage'
+import MainPage from '@popup/pages/MainPage'
+import ApprovalPage from '@popup/pages/ApprovalPage'
 
-import Oval from '@img/oval.svg'
+import Oval from '@popup/img/oval.svg'
+
 import './styles/main.scss'
 
 const Loader: React.FC = () => {
@@ -42,12 +43,6 @@ export type ActiveTab =
       >
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
-
-enum LocalStep {
-    WELCOME,
-    MAIN,
-    APPROVAL,
-}
 
 interface IApp {
     activeTab: ActiveTab

@@ -2,9 +2,10 @@ import '../polyfills'
 
 import LocalMessageDuplexStream from 'post-message-stream'
 import ObjectMultiplex from 'obj-multiplex'
-import { PortDuplexStream } from '../shared/utils'
 import pump from 'pump'
-import { CONTENT_SCRIPT, INPAGE_SCRIPT, NEKOTON_PROVIDER } from '../shared/constants'
+
+import { PortDuplexStream } from '@shared/utils'
+import { CONTENT_SCRIPT, INPAGE_SCRIPT, NEKOTON_PROVIDER } from '@shared/constants'
 
 const logStreamDisconnectWarning = (remoteLabel: string, error?: Error) => {
     console.debug(`Nekoton: Content script lost connection to "${remoteLabel}"`, error)

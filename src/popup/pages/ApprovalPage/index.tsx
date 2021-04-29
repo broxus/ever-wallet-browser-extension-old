@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { ApprovalApi, PendingApproval } from '../../../shared/models'
-import { JsonRpcError, NekotonRpcError, serializeError } from '../../../shared/utils'
-import { RpcErrorCode } from '../../../shared/errors'
+import { ApprovalApi, PendingApproval } from '@shared/approvalApi'
+import { JsonRpcError, NekotonRpcError, serializeError } from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
 import * as nt from '@nekoton'
 
-import ApproveContractInteraction from '@components/ApproveContractInteraction'
-import ApproveRequestPermissions from '@components/ApproveRequestPermissions'
-import ApproveSendMessage from '@components/ApproveSendMessage'
+import ApproveContractInteraction from '@popup/components/ApproveContractInteraction'
+import ApproveRequestPermissions from '@popup/components/ApproveRequestPermissions'
+import ApproveSendMessage from '@popup/components/ApproveSendMessage'
 
 import './style.scss'
 

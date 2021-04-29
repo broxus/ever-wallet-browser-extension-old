@@ -151,6 +151,26 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         this._rpcRequest(payload, callback)
     }
 
+    public addListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.addListener(eventName, listener)
+    }
+
+    public on(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.on(eventName, listener)
+    }
+
+    public once(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.once(eventName, listener)
+    }
+
+    public prependListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.prependListener(eventName, listener)
+    }
+
+    public prependOnceListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.prependOnceListener(eventName, listener)
+    }
+
     private _initializeState = async () => {
         try {
             const { selectedConnection } = (await this.request({

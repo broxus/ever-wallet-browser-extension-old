@@ -1,5 +1,5 @@
 import React from 'react'
-import { getIconUrl } from '@utils'
+import { getIconUrl } from '@popup/utils'
 
 import './style.scss'
 

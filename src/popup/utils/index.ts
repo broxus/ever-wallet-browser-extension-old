@@ -1,20 +1,13 @@
 import Decimal from 'decimal.js'
 import { memoize } from 'lodash'
-import { AppDispatch } from '@store'
 import {
     Environment,
     ENVIRONMENT_TYPE_BACKGROUND,
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_POPUP,
-} from '../../shared/constants'
+} from '@shared/constants'
 
 Decimal.set({ maxE: 500, minE: -500 })
-
-export type Action<F extends Function> = F extends (
-    ...args: infer A
-) => (app: AppDispatch) => Promise<infer R>
-    ? (...args: A) => Promise<R>
-    : never
 
 export const ONE_TON = '1000000000'
 

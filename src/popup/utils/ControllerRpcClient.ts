@@ -1,6 +1,6 @@
 import { Duplex } from 'readable-stream'
-import { getUniqueId, JsonRpcError, NekotonRpcError, SafeEventEmitter } from '../../shared/utils'
-import { JsonRpcNotification } from '../../shared/jrpc'
+import { getUniqueId, JsonRpcError, NekotonRpcError, SafeEventEmitter } from '@shared/utils'
+import { JsonRpcNotification } from '@shared/jrpc'
 
 import { NekotonController } from '../../app/background/NekotonController'
 

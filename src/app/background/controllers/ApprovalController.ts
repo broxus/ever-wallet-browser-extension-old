@@ -1,8 +1,9 @@
 import { nanoid } from 'nanoid'
+import { ApprovalApi, Approval } from '@shared/approvalApi'
+import { NekotonRpcError } from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
+
 import { BaseController, BaseConfig, BaseState } from './BaseController'
-import { NekotonRpcError } from '../../../shared/utils'
-import { RpcErrorCode } from '../../../shared/errors'
-import { ApprovalApi, Approval } from '../../../shared/models'
 
 type ApprovalPromiseResolve<T> = (value?: T) => void
 type ApprovalPromiseReject = (error?: Error) => void

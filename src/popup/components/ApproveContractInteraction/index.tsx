@@ -1,13 +1,13 @@
 import React, { useState } from 'react'
 import cn from 'classnames'
-import { convertAddress, convertTons } from '@utils'
-import { PendingApproval } from '../../../shared/models'
+import { convertAddress, convertTons } from '@popup/utils'
+import { PendingApproval } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import Button from '@components/Button'
+import Button from '@popup/components/Button'
 
-import UserPicS from '@img/user-avatar-placeholder-s.svg'
-import Arrow from '@img/arrow.svg'
+import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
+import Arrow from '@popup/img/arrow.svg'
 
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>

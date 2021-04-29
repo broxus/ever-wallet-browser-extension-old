@@ -1,10 +1,10 @@
 import { Mutex } from 'await-semaphore'
-import { BaseController, BaseConfig, BaseState } from './BaseController'
-import { NekotonRpcError } from '../../../shared/utils'
-import { RpcErrorCode } from '../../../shared/errors'
-import { GqlSocket } from '../../../shared'
-import { ConnectionData, NamedConnectionData } from '../../../shared/models'
+import { NekotonRpcError } from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
+import { ConnectionData, GqlSocketParams, NamedConnectionData } from '@shared/approvalApi'
 import * as nt from '@nekoton'
+
+import { BaseController, BaseConfig, BaseState } from './BaseController'
 
 const NETWORK_PRESETS = {
     ['Mainnet']: {
@@ -232,5 +232,37 @@ function requireInitializedConnection(
             RpcErrorCode.CONNECTION_IS_NOT_INITIALIZED,
             'Connection is not initialized'
         )
+    }
+}
+
+export class GqlSocket {
+    public async connect(params: GqlSocketParams): Promise<nt.GqlConnection> {
+        class GqlSender {
+            private readonly params: GqlSocketParams
+
+            constructor(params: GqlSocketParams) {
+                this.params = params
+            }
+
+            send(data: string, handler: nt.GqlQuery) {
+                ;(async () => {
+                    try {
+                        const response = await fetch(this.params.endpoint, {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: data,
+                        }).then((response) => response.text())
+                        handler.onReceive(response)
+                    } catch (e) {
+                        console.log(e)
+                        handler.onError(e)
+                    }
+                })()
+            }
+        }
+
+        return new nt.GqlConnection(new GqlSender(params))
     }
 }

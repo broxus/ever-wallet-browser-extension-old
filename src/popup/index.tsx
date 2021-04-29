@@ -7,17 +7,14 @@ import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 
-import { getEnvironmentType } from '@utils'
+import { getEnvironmentType } from '@popup/utils'
+import { PortDuplexStream } from '@shared/utils'
+import { Environment, ENVIRONMENT_TYPE_BACKGROUND, ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
+import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { StreamProvider } from '@popup/utils/StreamProvider'
+import store from '@popup/store'
+
 import App, { ActiveTab } from './App'
-import { PortDuplexStream } from '../shared/utils'
-import {
-    Environment,
-    ENVIRONMENT_TYPE_BACKGROUND,
-    ENVIRONMENT_TYPE_POPUP,
-} from '../shared/constants'
-import { IControllerRpcClient, makeControllerRpcClient } from '@utils/ControllerRpcClient'
-import store from '@store'
-import { StreamProvider } from '@utils/StreamProvider'
 
 const start = async () => {
     const windowType = getEnvironmentType()
