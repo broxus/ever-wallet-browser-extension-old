@@ -88,12 +88,13 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
                 selectedAccount={controllerState.selectedAccount}
                 tonWalletStates={controllerState.accountStates}
                 pendingApprovals={pendingApprovals}
-                resolvePendingApproval={async (id, params) => {
+                checkPassword={async (password) => await controllerRpc.checkPassword(password)}
+                resolvePendingApproval={async (id, params) =>
                     await controllerRpc.resolvePendingApproval(id, params)
-                }}
-                rejectPendingApproval={async (id, error) => {
-                    controllerRpc.rejectPendingApproval(id, error as any)
-                }}
+                }
+                rejectPendingApproval={async (id, error) =>
+                    await controllerRpc.rejectPendingApproval(id, error as any)
+                }
             />
         )
     }

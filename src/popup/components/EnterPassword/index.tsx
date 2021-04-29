@@ -8,11 +8,19 @@ import './style.scss'
 
 interface IEnterPassword {
     minHeight?: string
+    disabled: boolean
+    error?: string
     handleNext: (password: string) => void
     handleBack: () => void
 }
 
-const EnterPassword: React.FC<IEnterPassword> = ({ minHeight, handleNext, handleBack }) => {
+const EnterPassword: React.FC<IEnterPassword> = ({
+    minHeight,
+    disabled,
+    error,
+    handleNext,
+    handleBack,
+}) => {
     const { register, handleSubmit, errors } = useForm()
 
     const onSubmit = (data: any) => {
@@ -32,20 +40,22 @@ const EnterPassword: React.FC<IEnterPassword> = ({ minHeight, handleNext, handle
                                 minLength: 6,
                             })}
                             label={'Password...'}
+                            disabled={disabled}
                             autoFocus
                             type={'password'}
                         />
-                        {errors.pwd && (
+                        {(errors.pwd || error) && (
                             <div className="check-seed__content-error">
-                                The password is required
+                                {errors.pwd && 'The password is required'}
+                                {error}
                             </div>
                         )}
                     </form>
                 </div>
             </div>
             <div className="enter-password__buttons">
-                <Button text={'Back'} onClick={() => handleBack()} white />
-                <Button text={'Next'} type="submit" form="password" />
+                <Button text={'Back'} disabled={disabled} onClick={() => handleBack()} white />
+                <Button text={'Next'} disabled={disabled} type="submit" form="password" />
             </div>
         </div>
     )

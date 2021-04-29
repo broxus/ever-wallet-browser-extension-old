@@ -12,16 +12,18 @@ import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
-    account: nt.AssetsList | null
+    account: nt.AssetsList
     tonWalletState: nt.AccountState | null
+    checkPassword: (password: nt.KeyPassword) => Promise<boolean>
+    onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
-    onSubmit: () => void
 }
 
 const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     approval,
     account,
     tonWalletState,
+    checkPassword,
     onReject,
     onSubmit,
 }) => {
@@ -30,7 +32,33 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
 
     const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
 
+    const [inProcess, setInProcess] = useState(false)
+    const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
+
+    const trySubmit = async (password: string) => {
+        setInProcess(true)
+        try {
+            const keyPassword: nt.KeyPassword = {
+                type: 'encrypted_key',
+                data: {
+                    publicKey: account.tonWallet.publicKey,
+                    password,
+                },
+            }
+
+            const isValid = await checkPassword(keyPassword)
+            if (isValid) {
+                onSubmit(keyPassword)
+            } else {
+                setError('Invalid password')
+            }
+        } catch (e) {
+            setError(e.toString())
+        } finally {
+            setInProcess(false)
+        }
+    }
 
     return (
         <div className="connect-wallet">
@@ -104,7 +132,9 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                 onClose={() => setPasswordModalVisible(false)}
             >
                 <EnterPassword
-                    handleNext={onSubmit}
+                    disabled={inProcess}
+                    error={error}
+                    handleNext={trySubmit}
                     handleBack={() => setPasswordModalVisible(false)}
                 />
             </SlidingPanel>

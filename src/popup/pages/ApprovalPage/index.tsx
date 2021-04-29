@@ -18,6 +18,7 @@ interface IApprovalPage {
     pendingApprovals: PendingApproval<keyof ApprovalApi>[]
     selectedAccount: nt.AssetsList
     tonWalletStates: { [address: string]: nt.AccountState }
+    checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     resolvePendingApproval: (id: string, params: any) => Promise<void>
     rejectPendingApproval: (id: string, params: JsonRpcError) => Promise<void>
 }
@@ -26,6 +27,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
     pendingApprovals,
     selectedAccount,
     tonWalletStates,
+    checkPassword,
     resolvePendingApproval,
     rejectPendingApproval,
 }) => {
@@ -66,8 +68,9 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
                     approval={approval}
                     account={selectedAccount}
                     tonWalletState={tonWalletState}
-                    onSubmit={() => {
-                        resolvePendingApproval(approval.id, {}).then(() => {})
+                    checkPassword={checkPassword}
+                    onSubmit={(password) => {
+                        resolvePendingApproval(approval.id, password).then(() => {})
                     }}
                     onReject={() => {
                         rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
