@@ -5,11 +5,7 @@ import { RpcErrorCode } from '../../../shared/errors'
 import * as nt from '@nekoton'
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { mergeTransactions } from '../../../shared'
-
-const SELECTED_ACCOUNT = 'selectedAccount'
-const ACCOUNT_STATES_STORE_KEY = 'accountStates'
-const ACCOUNT_TRANSACTIONS_STORE_KEY = 'accountTransactions'
-const PENDING_MESSAGES_STORE_KEY = 'accountPendingMessages'
+import { AccountToCreate } from '../../../shared/models'
 
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s
 const BACKGROUND_POLLING_INTERVAL = 120000 // 2m
@@ -29,10 +25,6 @@ export interface SendMessageRequest {
     boc: string
 }
 
-interface StoredSendMessageRequest extends SendMessageRequest {
-    transaction: nt.PendingTransaction
-}
-
 export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
@@ -41,17 +33,17 @@ export interface AccountControllerConfig extends BaseConfig {
 }
 
 export interface AccountControllerState extends BaseState {
-    [SELECTED_ACCOUNT]: nt.AssetsList | undefined
-    [ACCOUNT_STATES_STORE_KEY]: { [address: string]: nt.AccountState }
-    [ACCOUNT_TRANSACTIONS_STORE_KEY]: { [address: string]: nt.Transaction[] }
-    [PENDING_MESSAGES_STORE_KEY]: { [address: string]: { [id: string]: StoredSendMessageRequest } }
+    selectedAccount: nt.AssetsList | undefined
+    accountStates: { [address: string]: nt.AccountState }
+    accountTransactions: { [address: string]: nt.Transaction[] }
+    accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
 }
 
 const defaultState: AccountControllerState = {
-    [SELECTED_ACCOUNT]: undefined,
-    [ACCOUNT_STATES_STORE_KEY]: {},
-    [ACCOUNT_TRANSACTIONS_STORE_KEY]: {},
-    [PENDING_MESSAGES_STORE_KEY]: {},
+    selectedAccount: undefined,
+    accountStates: {},
+    accountTransactions: {},
+    accountPendingMessages: {},
 }
 
 export class AccountController extends BaseController<
@@ -136,7 +128,7 @@ export class AccountController extends BaseController<
 
             this._tonWalletSubscriptions.set(address, subscription)
             this.update({
-                [SELECTED_ACCOUNT]: selectedAccount,
+                selectedAccount: selectedAccount,
             })
 
             console.log('Started subscription', selectedAccount)
@@ -167,6 +159,64 @@ export class AccountController extends BaseController<
             await this._stopSubscriptions()
             await this.config.accountsStorage.clear()
             await this.config.keyStore.clear()
+        })
+    }
+
+    public async createAccount({
+        name,
+        contractType,
+        seed,
+        password,
+    }: AccountToCreate): Promise<string> {
+        const { keyStore, accountsStorage } = this.config
+
+        try {
+            const key = await keyStore.addKey(`${name} key`, <nt.NewKey>{
+                type: 'encrypted_key',
+                data: {
+                    password,
+                    phrase: seed.phrase,
+                    mnemonicType: seed.mnemonicType,
+                },
+            })
+
+            return accountsStorage.addAccount(name, key.publicKey, contractType, true)
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async checkPassword(password: nt.KeyPassword) {
+        return this.config.keyStore.check_password(password)
+    }
+
+    public async sign(unsignedMessage: nt.UnsignedMessage, password: nt.KeyPassword) {
+        return this.config.keyStore.sign(unsignedMessage, password)
+    }
+
+    public async sendMessage(address: string, signedMessage: nt.SignedMessage) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        let accountMessageRequests = await this._sendMessageRequests.get(address)
+        if (accountMessageRequests == null) {
+            accountMessageRequests = new Map()
+            this._sendMessageRequests.set(address, accountMessageRequests)
+        }
+
+        return new Promise<nt.Transaction>(async (resolve, reject) => {
+            const id = signedMessage.bodyHash
+            accountMessageRequests!.set(id, { resolve, reject })
+
+            await this.useSubscription(address, async (wallet) => {
+                try {
+                    await wallet.sendMessage(signedMessage)
+                } catch (e) {
+                    throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+                }
+            }).catch((e) => {
+                this._rejectMessageRequest(address, id, e)
+            })
         })
     }
 
@@ -224,7 +274,7 @@ export class AccountController extends BaseController<
             this._sendMessageRequests.delete(address)
         }
 
-        const currentPendingMessages = this.state[PENDING_MESSAGES_STORE_KEY]
+        const currentPendingMessages = this.state.accountPendingMessages
 
         const newAccountPendingMessages = { ...currentPendingMessages[address] }
         delete newAccountPendingMessages[id]
@@ -237,18 +287,18 @@ export class AccountController extends BaseController<
         }
 
         this.update({
-            [PENDING_MESSAGES_STORE_KEY]: newPendingMessages,
+            accountPendingMessages: newPendingMessages,
         })
     }
 
     private _updateTonWalletState(address: string, state: nt.AccountState) {
-        const currentStates = this.state[ACCOUNT_STATES_STORE_KEY]
+        const currentStates = this.state.accountStates
         const newStates = {
             ...currentStates,
             [address]: state,
         }
         this.update({
-            [ACCOUNT_STATES_STORE_KEY]: newStates,
+            accountStates: newStates,
         })
     }
 
@@ -257,14 +307,26 @@ export class AccountController extends BaseController<
         transactions: nt.Transaction[],
         info: nt.TransactionsBatchInfo
     ) {
-        const currentTransactions = this.state[ACCOUNT_TRANSACTIONS_STORE_KEY]
+        const currentTransactions = this.state.accountTransactions
         const newTransactions = {
             ...currentTransactions,
             [address]: mergeTransactions(currentTransactions[address] || [], transactions, info),
         }
         this.update({
-            [ACCOUNT_TRANSACTIONS_STORE_KEY]: newTransactions,
+            accountTransactions: newTransactions,
         })
+    }
+}
+
+function requireSubscription(
+    address: string,
+    subscription?: TonWalletSubscription
+): asserts subscription is TonWalletSubscription {
+    if (!subscription) {
+        throw new NekotonRpcError(
+            RpcErrorCode.RESOURCE_UNAVAILABLE,
+            `There is no subscription for address ${address}`
+        )
     }
 }
 
@@ -449,7 +511,11 @@ class TonWalletSubscription {
     }
 
     public async prepareReliablePolling() {
-        this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
+        try {
+            this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+        }
     }
 
     public async use<T>(f: (wallet: nt.TonWallet) => Promise<T>) {

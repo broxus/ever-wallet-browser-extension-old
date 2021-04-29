@@ -1,16 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { connect } from 'react-redux'
-import { AppState, DeliveredMessage, MessageToPrepare } from '@store/app/types'
+import { MessageToPrepare } from '@store/app/types'
 import { selectStyles } from '../../constants/selectStyle'
 import { Action, convertAddress, convertTons } from '@utils'
-import {
-    prepareMessage,
-    sendMessage,
-    estimateFees,
-    removeDeliveredMessage,
-    removeExpiredMessage,
-} from '@store/app/actions'
 import * as nt from '@nekoton'
 
 import Lottie from 'react-lottie-player'
@@ -106,9 +98,8 @@ const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
 type IEnterPassword = {
     account: nt.AssetsList
     params: MessageToPrepare
-    prepareMessage: Action<typeof prepareMessage>
-    estimateFees: Action<typeof estimateFees>
-    sendMessage: Action<typeof sendMessage>
+    fees?: string
+    checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (pendingTransaction: nt.PendingTransaction) => void
     onBack: () => void
 }
@@ -116,9 +107,8 @@ type IEnterPassword = {
 const EnterPassword: React.FC<IEnterPassword> = ({
     account,
     params,
-    prepareMessage,
-    estimateFees,
-    sendMessage,
+    fees,
+    checkPassword,
     onSubmit,
     onBack,
 }) => {
@@ -265,22 +255,14 @@ const EnterAddress: React.FC<IEnterAddress> = ({ account, tonWalletState, onSubm
 interface IAddNewToken {
     account: nt.AssetsList
     tonWalletState: nt.AccountState
-    deliveredMessages: DeliveredMessage[]
-    expiredMessages: nt.PendingTransaction[]
-    prepareMessage: Action<typeof prepareMessage>
-    estimateFees: Action<typeof estimateFees>
-    sendMessage: Action<typeof sendMessage>
-    removeDeliveredMessage: Action<typeof removeDeliveredMessage>
-    removeExpiredMessage: Action<typeof removeExpiredMessage>
+    estimateFees: (messageToPrepare: MessageToPrepare) => Promise<string>
+    sendMessage: (messageToPrepare: MessageToPrepare) => Promise<nt.Transaction>
     onBack: () => void
 }
 
 const Send: React.FC<IAddNewToken> = ({
     account,
     tonWalletState,
-    deliveredMessages,
-    expiredMessages,
-    prepareMessage,
     estimateFees,
     sendMessage,
     onBack,
@@ -349,15 +331,4 @@ const Send: React.FC<IAddNewToken> = ({
     )
 }
 
-const mapStateToProps = (store: { app: AppState }) => ({
-    deliveredMessages: store.app.deliveredMessages,
-    expiredMessages: store.app.expiredMessages,
-})
-
-export default connect(mapStateToProps, {
-    prepareMessage,
-    estimateFees,
-    sendMessage,
-    removeDeliveredMessage,
-    removeExpiredMessage,
-})(Send)
+export default Send

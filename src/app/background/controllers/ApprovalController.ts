@@ -2,48 +2,36 @@ import { nanoid } from 'nanoid'
 import { BaseController, BaseConfig, BaseState } from './BaseController'
 import { NekotonRpcError } from '../../../shared/utils'
 import { RpcErrorCode } from '../../../shared/errors'
-
-const APPROVALS_STORE_KEY = 'pendingApprovals'
-const APPROVAL_COUNT_STORE_KEY = 'pendingApprovalCount'
+import { ApprovalApi, Approval } from '../../../shared/models'
 
 type ApprovalPromiseResolve<T> = (value?: T) => void
 type ApprovalPromiseReject = (error?: Error) => void
-
-type RequestData<T> = Record<string, T>
 
 interface ApprovalCallbacks<T> {
     resolve: ApprovalPromiseResolve<T>
     reject: ApprovalPromiseReject
 }
 
-export interface Approval<T> {
-    id: string
-    origin: string
-    time: number
-    type: string
-    requestData?: RequestData<T>
-}
-
 export interface ApprovalConfig extends BaseConfig {
     showApprovalRequest: () => void
 }
 
-export interface ApprovalState extends BaseState {
-    [APPROVALS_STORE_KEY]: { [approvalId: string]: Approval<unknown> }
-    [APPROVAL_COUNT_STORE_KEY]: number
+export interface ApprovalControllerState extends BaseState {
+    pendingApprovals: { [approvalId: string]: Approval<string, unknown> }
+    pendingApprovalCount: number
 }
 
-const defaultState: ApprovalState = {
-    [APPROVALS_STORE_KEY]: {},
-    [APPROVAL_COUNT_STORE_KEY]: 0,
+const defaultState: ApprovalControllerState = {
+    pendingApprovals: {},
+    pendingApprovalCount: 0,
 }
 
-export class ApprovalController extends BaseController<ApprovalConfig, ApprovalState> {
+export class ApprovalController extends BaseController<ApprovalConfig, ApprovalControllerState> {
     private _approvals: Map<string, ApprovalCallbacks<unknown>>
     private _origins: Map<string, Set<string>>
     private readonly _showApprovalRequest: () => void
 
-    constructor(config: ApprovalConfig, state?: ApprovalState) {
+    constructor(config: ApprovalConfig, state?: ApprovalControllerState) {
         const { showApprovalRequest } = config
         if (typeof showApprovalRequest !== 'function') {
             throw new Error('Must specify function showApprovalRequest')
@@ -57,13 +45,13 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         this.initialize()
     }
 
-    public addAndShowApprovalRequest<T, U>(options: {
+    public addAndShowApprovalRequest<T extends keyof ApprovalApi>(options: {
         id?: string
         origin: string
-        type: string
-        requestData?: RequestData<T>
-    }): Promise<U> {
-        const promise = this._add<T, U>(
+        type: T
+        requestData: ApprovalApi[T]['input']
+    }): Promise<ApprovalApi[T]['output']> {
+        const promise = this._add<T, ApprovalApi[T]['input'], ApprovalApi[T]['output']>(
             options.origin,
             options.type,
             options.id,
@@ -73,23 +61,28 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         return promise
     }
 
-    public add<T, U>(options: {
+    public add<T extends keyof ApprovalApi>(options: {
         id?: string
         origin: string
-        type: string
-        requestData?: RequestData<T>
-    }): Promise<U> {
-        return this._add<T, U>(options.origin, options.type, options.id, options.requestData)
+        type: T
+        requestData: ApprovalApi[T]['input']
+    }): Promise<ApprovalApi[T]['output']> {
+        return this._add<T, ApprovalApi[T]['input'], ApprovalApi[T]['output']>(
+            options.origin,
+            options.type,
+            options.id,
+            options.requestData
+        )
     }
 
-    public get(id: string): Approval<unknown> | undefined {
-        const info = this.state[APPROVALS_STORE_KEY][id]
+    public get(id: string): Approval<string, unknown> | undefined {
+        const info = this.state.pendingApprovals[id]
         return info ? { ...info } : undefined
     }
 
     public getApprovalCount(options: { origin?: string; type?: string } = {}): number {
         if (!options.origin && !options.type) {
-            return this.state[APPROVAL_COUNT_STORE_KEY]
+            return this.state.pendingApprovalCount
         }
         const { origin, type } = options
 
@@ -102,7 +95,7 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         }
 
         let count = 0
-        for (const approval of Object.values(this.state[APPROVALS_STORE_KEY])) {
+        for (const approval of Object.values(this.state.pendingApprovals)) {
             if (approval.type === type) {
                 count += 1
             }
@@ -135,7 +128,7 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         }
 
         if (type) {
-            for (const approval of Object.values(this.state[APPROVALS_STORE_KEY])) {
+            for (const approval of Object.values(this.state.pendingApprovals)) {
                 if (approval.type === type) {
                     return true
                 }
@@ -146,7 +139,7 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         throw new Error('Must specify non-empty string id, origin, or type')
     }
 
-    public resolve<U>(id: string, value?: U) {
+    public resolve<O>(id: string, value?: Exclude<O, Function>) {
         this._deleteApprovalAndGetCallback(id).resolve(value)
     }
 
@@ -168,12 +161,12 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         this.update(defaultState, true)
     }
 
-    private _add<T, U>(
+    private _add<T extends string, I, O>(
         origin: string,
-        type: string,
+        type: T,
         id: string = nanoid(),
-        requestData?: RequestData<T>
-    ): Promise<U> {
+        requestData?: I
+    ): Promise<O> {
         this._validateAddParams(id, origin, type, requestData)
 
         if (this._origins.get(origin)?.has(type)) {
@@ -183,19 +176,14 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
             )
         }
 
-        return new Promise<U>((resolve, reject) => {
+        return new Promise<O>((resolve, reject) => {
             this._approvals.set(id, { resolve: resolve as ApprovalPromiseResolve<unknown>, reject })
             this._addPendingApprovalOrigin(origin, type)
-            this._addToStore(id, origin, type, requestData)
+            this._addToStore<T, I>(id, origin, type, requestData)
         })
     }
 
-    private _validateAddParams<T>(
-        id: string,
-        origin: string,
-        type: string,
-        requestData?: RequestData<T>
-    ) {
+    private _validateAddParams<T>(id: string, origin: string, type: string, requestData?: T) {
         let errorMessage = null
         if (!id || typeof (id as any) !== 'string') {
             errorMessage = 'Must specify non-empty string id'
@@ -223,21 +211,21 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         }
     }
 
-    private _addToStore<T>(id: string, origin: string, type: string, requestData?: RequestData<T>) {
-        const approval: Approval<T> = { id, origin, type, time: Date.now() }
+    private _addToStore<T extends string, I>(id: string, origin: string, type: T, requestData?: I) {
+        const approval: Approval<T, I> = { id, origin, type, time: Date.now() }
         if (requestData) {
             approval.requestData = requestData
         }
 
         const approvals = {
-            ...this.state[APPROVALS_STORE_KEY],
+            ...this.state.pendingApprovals,
             [id]: approval,
         }
 
         this.update(
             {
-                [APPROVALS_STORE_KEY]: approvals,
-                [APPROVAL_COUNT_STORE_KEY]: Object.keys(approvals).length,
+                pendingApprovals: approvals,
+                pendingApprovalCount: Object.keys(approvals).length,
             },
             true
         )
@@ -246,7 +234,7 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
     private _delete(id: string) {
         this._approvals.delete(id)
 
-        const approvals = this.state[APPROVALS_STORE_KEY]
+        const approvals = this.state.pendingApprovals
         const { origin, type } = approvals[id]
 
         ;(this._origins.get(origin) as Set<string>).delete(type)
@@ -258,8 +246,8 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalS
         delete newApprovals[id]
         this.update(
             {
-                [APPROVALS_STORE_KEY]: newApprovals,
-                [APPROVAL_COUNT_STORE_KEY]: Object.keys(newApprovals).length,
+                pendingApprovals: newApprovals,
+                pendingApprovalCount: Object.keys(newApprovals).length,
             },
             true
         )

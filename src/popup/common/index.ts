@@ -4,14 +4,6 @@ export * from './ripple'
 
 import * as nt from '@nekoton'
 
-export enum Step {
-    LOADING,
-    WELCOME,
-    CREATE_NEW_WALLET,
-    RESTORE_WALLET,
-    MAIN,
-}
-
 export const DEFAULT_CONTRACT_TYPE: nt.ContractType = 'SafeMultisigWallet'
 
 export const hideModalOnClick = (ref: React.MutableRefObject<null>, onClose: () => void) => {

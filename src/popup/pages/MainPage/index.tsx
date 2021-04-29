@@ -1,9 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
-import { AppState } from '@store/app/types'
-import { logOut, startSubscription } from '@store/app/actions'
-import { Step } from '@common'
-import { Action } from '@utils'
+import React, { useState } from 'react'
+import { ControllerState, IControllerRpcClient } from '@utils/ControllerRpcClient'
 import * as nt from '@nekoton'
 
 import AccountDetails from '@components/AccountDetails'
@@ -15,19 +11,13 @@ import Send from '@components/Send'
 import KeyStorage from '@components/KeyStorage'
 import CreateAccountPage from '../CreateAccountPage'
 import AssetFull from '@components/AssetFull'
-
-import './style.scss'
 import DeployWallet from '@components/DeployWallet/DeployWallet'
 
+import './style.scss'
+
 interface IMainPage {
-    account: nt.AssetsList | null
-    tonWalletState: nt.AccountState | null
-    transactions: nt.Transaction[]
-    network: string
-    onToggleNetwork: () => void
-    setStep: (step: Step) => void
-    startSubscription: Action<typeof startSubscription>
-    logOut: Action<typeof logOut>
+    controllerState: ControllerState
+    controllerRpc: IControllerRpcClient
 }
 
 enum Panel {
@@ -39,40 +29,41 @@ enum Panel {
     DEPLOY,
 }
 
-const MainPage: React.FC<IMainPage> = ({
-    account,
-    tonWalletState,
-    transactions,
-    network,
-    onToggleNetwork,
-    setStep,
-    startSubscription,
-    logOut,
-}) => {
+const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
 
-    useEffect(() => {
-        if (account != null) {
-            startSubscription(account.tonWallet.address).then(() => {})
-        }
-    }, [])
-
-    if (account == null) {
+    if (controllerState.selectedAccount == null) {
         return null
     }
 
     const closePanel = () => setOpenedPanel(undefined)
 
+    const { selectedAccount, selectedConnection } = controllerState
+
+    const accountName = selectedAccount.name
+    const accountAddress = selectedAccount.tonWallet.address
+
+    const tonWalletState = controllerState.accountStates[accountAddress] as nt.AccountState | null
+    const transactions = controllerState.accountTransactions[accountAddress] || []
+    const network = selectedConnection.name
+
+    const toggleNetwork = () => {
+        // TODO
+    }
+
+    const logOut = async () => {
+        await controllerRpc.logOut()
+    }
+
     return (
         <>
             <AccountDetails
-                account={account}
+                account={controllerState.selectedAccount}
                 tonWalletState={tonWalletState}
                 network={network}
-                onToggleNetwork={onToggleNetwork}
+                onToggleNetwork={toggleNetwork}
                 onLogOut={async () => {
                     await logOut()
-                    setStep(Step.WELCOME)
                 }}
                 onReceive={() => setOpenedPanel(Panel.RECEIVE)}
                 onSend={() => setOpenedPanel(Panel.SEND)}
@@ -88,11 +79,11 @@ const MainPage: React.FC<IMainPage> = ({
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <>
                     {openedPanel == Panel.RECEIVE && (
-                        <Receive accountName={account.name} address={account.tonWallet.address} />
+                        <Receive accountName={accountName} address={accountAddress} />
                     )}
                     {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
-                            account={account}
+                            account={selectedAccount}
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
                         />
@@ -101,7 +92,7 @@ const MainPage: React.FC<IMainPage> = ({
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
                     {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
                     {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet account={account} tonWalletState={tonWalletState} />
+                        <DeployWallet account={selectedAccount} tonWalletState={tonWalletState} />
                     )}
                 </>
             </SlidingPanel>
@@ -109,13 +100,4 @@ const MainPage: React.FC<IMainPage> = ({
     )
 }
 
-const mapStateToProps = (store: { app: AppState }) => ({
-    account: store.app.selectedAccount,
-    tonWalletState: store.app.tonWalletState,
-    transactions: store.app.transactions,
-})
-
-export default connect(mapStateToProps, {
-    startSubscription,
-    logOut,
-})(MainPage)
+export default MainPage

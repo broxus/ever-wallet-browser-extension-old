@@ -6,8 +6,6 @@ import { GqlSocket } from '../../../shared'
 import { ConnectionData, NamedConnectionData } from '../../../shared/models'
 import * as nt from '@nekoton'
 
-const CONNECTION_STORE_KEY = 'selectedConnection'
-
 const NETWORK_PRESETS = {
     ['Mainnet']: {
         type: 'graphql',
@@ -40,12 +38,12 @@ export type InitializedConnection = nt.EnumItem<
 
 export interface ConnectionConfig extends BaseConfig {}
 
-export interface ConnectionState extends BaseState {
-    [CONNECTION_STORE_KEY]: NamedConnectionData
+export interface ConnectionControllerState extends BaseState {
+    selectedConnection: NamedConnectionData
 }
 
-const defaultState: ConnectionState = {
-    [CONNECTION_STORE_KEY]: getPreset('Mainnet'),
+const defaultState: ConnectionControllerState = {
+    selectedConnection: getPreset('Mainnet'),
 }
 
 interface INetworkSwitchHandle {
@@ -76,13 +74,16 @@ class AcquiredConnection {
     }
 }
 
-export class ConnectionController extends BaseController<ConnectionConfig, ConnectionState> {
+export class ConnectionController extends BaseController<
+    ConnectionConfig,
+    ConnectionControllerState
+> {
     private _initializedConnection?: InitializedConnection
     // Used to prevent network switch during some working subscriptions
     private _networkMutex: Mutex
     private _acquiredConnection?: AcquiredConnection
 
-    constructor(config: ConnectionConfig, state?: ConnectionState) {
+    constructor(config: ConnectionConfig, state?: ConnectionControllerState) {
         super(config, state || defaultState)
 
         this._initializedConnection = undefined
@@ -95,7 +96,7 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
             throw new Error('Must not sync twice')
         }
 
-        await this.startSwitchingNetwork(this.state[CONNECTION_STORE_KEY]).then((handle) =>
+        await this.startSwitchingNetwork(this.state.selectedConnection).then((handle) =>
             handle.switch()
         )
     }
@@ -193,7 +194,7 @@ export class ConnectionController extends BaseController<ConnectionConfig, Conne
 
         this.update(
             {
-                [CONNECTION_STORE_KEY]: params,
+                selectedConnection: params,
             },
             true
         )

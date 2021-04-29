@@ -1,22 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { connect } from 'react-redux'
-import { AppState } from '@store/app/types'
-import { setupCurrentAccount } from '@store/app/actions'
-import { Step } from '@common'
-import { Action } from '@utils'
-import { IControllerRpcClient } from '@utils/ControllerRpcClient'
+import { ControllerState, IControllerRpcClient } from '@utils/ControllerRpcClient'
 import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_BACKGROUND,
 } from '../shared/constants'
-import { ConnectionData } from '../shared/models'
 import init, * as nt from '@nekoton'
 
 import WelcomePage from './pages/WelcomePage'
 import MainPage from './pages/MainPage'
-import NewAccountPage from './pages/NewAccountPage'
-import RestoreAccountPage from './pages/RestoreAccountPage'
 import ApprovalPage from './pages/ApprovalPage'
 
 import Oval from '@img/oval.svg'
@@ -51,25 +43,22 @@ export type ActiveTab =
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
+enum LocalStep {
+    WELCOME,
+    MAIN,
+    APPROVAL,
+}
+
 interface IApp {
     activeTab: ActiveTab
     controllerRpc: IControllerRpcClient
-    accountLoaded: boolean
-    setupCurrentAccount: Action<typeof setupCurrentAccount>
 }
 
-const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCurrentAccount }) => {
-    const [step, setStep] = useState<number>(Step.LOADING)
-    const [controllerState, setControllerState] = useState<any>()
-    const [network, setNetwork] = useState<string>()
+const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
+    const [controllerState, setControllerState] = useState<ControllerState>()
 
     useEffect(() => {
         init('index_bg.wasm').then(async () => {
-            const hasAccount = await setupCurrentAccount()
-            if (!hasAccount) {
-                setStep(Step.WELCOME)
-            }
-
             controllerRpc.onNotification((data) => {
                 const state = data.params
 
@@ -80,75 +69,41 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, accountLoaded, setupCur
                     closeCurrentWindow()
                 } else {
                     console.log('Got state', state)
-                    setControllerState(state)
+                    setControllerState(state as any)
                 }
             })
 
-            controllerRpc.getState((error, state) => {
-                setControllerState(state)
-                console.log(error, state)
-            })
+            const state = await controllerRpc.getState()
+            setControllerState(state)
         })
     }, [])
 
-    useEffect(() => {
-        if (accountLoaded) {
-            setStep(Step.MAIN)
-        }
-    }, [accountLoaded])
-
-    const onToggleNetwork = async () => {
-        const nextNetwork = network == Network.Mainnet ? Network.Testnet : Network.Mainnet
-        await controllerRpc.changeNetwork(NETWORK_PARAMS[nextNetwork].params, (error) => {
-            if (!error) {
-                setNetwork(nextNetwork)
-            }
-        })
+    if (controllerState == null) {
+        return <Loader />
     }
 
-    const renderMainPage = () => {
-        const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
-
-        if (pendingApprovals.length != 0) {
-            return (
-                <ApprovalPage
-                    pendingApprovals={pendingApprovals}
-                    resolvePendingApproval={async (id, params) => {
-                        controllerRpc.resolvePendingApproval(id, params, () => {})
-                    }}
-                    rejectPendingApproval={async (id, error) => {
-                        controllerRpc.rejectPendingApproval(id, error, () => {})
-                    }}
-                />
-            )
-        } else {
-            const networkParams = NETWORK_PARAMS[network]
-
-            return (
-                <MainPage
-                    network={networkParams.name}
-                    onToggleNetwork={onToggleNetwork}
-                    setStep={setStep}
-                />
-            )
-        }
+    if (controllerState.selectedAccount == null) {
+        return <WelcomePage createAccount={async (params) => controllerRpc.createAccount(params)} />
     }
 
-    return (
-        <>
-            {step == Step.LOADING && <Loader />}
-            {step == Step.WELCOME && <WelcomePage setStep={setStep} />}
-            {step == Step.CREATE_NEW_WALLET && <NewAccountPage setStep={setStep} />}
-            {step == Step.RESTORE_WALLET && <RestoreAccountPage setStep={setStep} />}
-            {step == Step.MAIN && renderMainPage()}
-        </>
-    )
+    const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
+    if (pendingApprovals.length > 0) {
+        return (
+            <ApprovalPage
+                selectedAccount={controllerState.selectedAccount}
+                tonWalletStates={controllerState.accountStates}
+                pendingApprovals={pendingApprovals}
+                resolvePendingApproval={async (id, params) => {
+                    await controllerRpc.resolvePendingApproval(id, params)
+                }}
+                rejectPendingApproval={async (id, error) => {
+                    controllerRpc.rejectPendingApproval(id, error as any)
+                }}
+            />
+        )
+    }
+
+    return <MainPage controllerState={controllerState} controllerRpc={controllerRpc} />
 }
 
-const mapStateToProps = (store: { app: AppState }) => ({
-    accountLoaded: store.app.selectedAccount != null,
-})
-
-export default connect(mapStateToProps, {
-    setupCurrentAccount,
-})(App)
+export default App

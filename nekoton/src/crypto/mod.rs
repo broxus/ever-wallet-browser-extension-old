@@ -44,6 +44,7 @@ impl UnsignedMessage {
 #[wasm_bindgen(typescript_custom_section)]
 const SIGNED_MESSAGE: &str = r#"
 export type SignedMessage = {
+    bodyHash: string,
     expireAt: number,
     boc: string,
 };
@@ -62,6 +63,14 @@ pub fn make_signed_message(data: nt::crypto::SignedMessage) -> Result<JsSignedMe
     };
 
     Ok(ObjectBuilder::new()
+        .set(
+            "bodyHash",
+            data.message
+                .body()
+                .map(|body| body.into_cell().repr_hash())
+                .unwrap_or_default()
+                .to_hex_string(),
+        )
         .set("expireAt", data.expire_at)
         .set("boc", boc)
         .build()

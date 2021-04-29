@@ -5,7 +5,16 @@ import { JsonRpcNotification } from '../../shared/jrpc'
 import { NekotonController } from '../../app/background/NekotonController'
 
 type ApiHandlers = ReturnType<typeof NekotonController.prototype.getApi>
-type ApiMethods = keyof ApiHandlers
+
+export type ApiMethodName = keyof ApiHandlers
+export type ApiMethodParam<T> = T extends Error ? JsonRpcError : T
+export type ApiMethod<P extends ApiMethodName> = ApiHandlers[P] extends (
+    ...args: [...infer T, (error: Error | null, result?: infer U) => void]
+) => void
+    ? (...args: [...ApiMethodParam<T>]) => Promise<U>
+    : never
+
+export type ControllerState = ReturnType<typeof NekotonController.prototype.getState>
 
 type ClientMethods = {
     onNotification(handler: (data: JsonRpcNotification<unknown>) => void): void
@@ -13,7 +22,7 @@ type ClientMethods = {
 }
 
 type ControllerRpcMethods = {
-    [P in ApiMethods]: ApiHandlers[P]
+    [P in ApiMethodName]: ApiMethod<P>
 }
 
 export type IControllerRpcClient = {
@@ -97,22 +106,24 @@ export const makeControllerRpcClient = <T extends Duplex>(
                 return object[property]
             }
 
-            return (...args: unknown[]) => {
-                const callback = args[args.length - 1] as (
-                    error: Error | undefined,
-                    result?: unknown
-                ) => void
-                const params = args.slice(0, -1)
-                const id = getUniqueId()
+            return (...args: unknown[]) =>
+                new Promise<unknown>((resolve, reject) => {
+                    const id = getUniqueId()
 
-                object._requests.set(id, callback)
-                object._connectionStream.write({
-                    jsonrpc: '2.0',
-                    method: property,
-                    params,
-                    id,
+                    object._requests.set(id, (error: Error | undefined, result?: unknown) => {
+                        if (error != null) {
+                            reject(error)
+                        } else {
+                            resolve(result)
+                        }
+                    })
+                    object._connectionStream.write({
+                        jsonrpc: '2.0',
+                        method: property,
+                        params: args,
+                        id,
+                    })
                 })
-            }
         },
     }) as unknown) as IControllerRpcClient
 }

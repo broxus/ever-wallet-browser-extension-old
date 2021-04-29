@@ -123,7 +123,7 @@ extern "C" {
 pub fn make_pending_transaction(data: models::PendingTransaction) -> PendingTransaction {
     ObjectBuilder::new()
         .set("src", data.src.as_ref().map(ToString::to_string))
-        .set("bodyHash", hex::encode(data.body_hash.as_slice()))
+        .set("bodyHash", data.body_hash.to_hex_string())
         .set("expireAt", data.expire_at)
         .build()
         .unchecked_into()

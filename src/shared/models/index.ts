@@ -2,6 +2,13 @@ import { UniqueArray } from '../utils'
 import { GqlSocketParams } from '../index'
 import * as nt from '@nekoton'
 
+export type AccountToCreate = {
+    name: string
+    contractType: nt.ContractType
+    seed: nt.GeneratedMnemonic
+    password: string
+}
+
 export type AccountInteractionItem = {
     address: string
     publicKey: string

@@ -7,21 +7,18 @@ import QRCode from 'react-qr-code'
 import CopyButton from '@components/CopyButton'
 import EnterPassword from '@components/EnterPassword'
 import SlidingPanel from '@components/SlidingPanel'
-import { connect } from 'react-redux'
-import { logOut, prepareDeploy } from '@store/app/actions'
 import { UnsignedMessage } from '@nekoton'
 
 interface IDeployWallet {
     account: nt.AssetsList
     tonWalletState: nt.AccountState | null
-    prepareDeploy: (address: string, password: string) => Promise<UnsignedMessage>
 }
 
-const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepareDeploy }) => {
+const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState }) => {
     const [isOpen, setIsOpen] = useState(false)
 
-    const deployWallet = (password: string) => {
-        prepareDeploy(account.tonWallet.address, password)
+    const deployWallet = (_password: string) => {
+        // TODO
     }
 
     return (
@@ -81,4 +78,4 @@ const DeployWallet: React.FC<IDeployWallet> = ({ account, tonWalletState, prepar
     )
 }
 
-export default connect(null, { prepareDeploy })(DeployWallet)
+export default DeployWallet

@@ -5,8 +5,6 @@ import { NekotonRpcError } from '../../../shared/utils'
 import { RpcErrorCode } from '../../../shared/errors'
 import { PERMISSIONS, Permission, Permissions } from '../../../shared/models'
 
-const PERMISSIONS_STORE_KEY = 'permissions'
-
 export const validatePermission = (permission: string) => {
     if (typeof (permission as any) !== 'string') {
         throw new NekotonRpcError(
@@ -28,11 +26,11 @@ export interface PermissionsConfig extends BaseConfig {
 }
 
 export interface PermissionsState extends BaseState {
-    [PERMISSIONS_STORE_KEY]: { [origin: string]: Partial<Permissions> }
+    permissions: { [origin: string]: Partial<Permissions> }
 }
 
 const defaultState: PermissionsState = {
-    [PERMISSIONS_STORE_KEY]: {},
+    permissions: {},
 }
 
 export class PermissionsController extends BaseController<PermissionsConfig, PermissionsState> {
@@ -55,37 +53,37 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         )
 
         const newPermissions = {
-            ...this.state[PERMISSIONS_STORE_KEY],
+            ...this.state.permissions,
             [origin]: originPermissions,
         }
 
         this.update(
             {
-                [PERMISSIONS_STORE_KEY]: newPermissions,
+                permissions: newPermissions,
             },
             true
         )
     }
 
     public getPermissions(origin: string): Partial<Permissions> {
-        return this.state[PERMISSIONS_STORE_KEY][origin] || {}
+        return this.state.permissions[origin] || {}
     }
 
     public removeOrigin(origin: string) {
-        const permissions = this.state[PERMISSIONS_STORE_KEY]
+        const permissions = this.state.permissions
         const newPermissions = { ...permissions }
         delete newPermissions[origin]
 
         this.update(
             {
-                [PERMISSIONS_STORE_KEY]: newPermissions,
+                permissions: newPermissions,
             },
             true
         )
     }
 
     public checkPermissions(origin: string, permissions: Permission[]) {
-        const originPermissions = this.state[PERMISSIONS_STORE_KEY][origin]
+        const originPermissions = this.state.permissions[origin]
         if (originPermissions == null) {
             throw new NekotonRpcError(
                 RpcErrorCode.INSUFFICIENT_PERMISSIONS,

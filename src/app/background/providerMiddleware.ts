@@ -375,7 +375,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     end()
 }
 
-const sendMessage: ProviderMethod<'sendMessage'> = async (req, _res, _next, _end, ctx) => {
+const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
@@ -440,7 +440,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, _res, _next, _end
         }
     )
 
-    const _password = await approvalController.addAndShowApprovalRequest({
+    const password = await approvalController.addAndShowApprovalRequest({
         origin,
         type: 'sendMessage',
         requestData: {
@@ -449,11 +449,25 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, _res, _next, _end
             amount,
             bounce,
             payload: payload?.params,
+            fees,
         },
     })
 
-    // TODO
-    throw invalidRequest(req, 'Unimplemented')
+    let signedMessage: nt.SignedMessage
+    try {
+        unsignedMessage.refreshTimeout()
+        signedMessage = await accountController.sign(unsignedMessage, password)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    } finally {
+        unsignedMessage.free()
+    }
+
+    const transaction = await accountController.sendMessage(sender, signedMessage)
+    res.result = {
+        transaction,
+    }
+    end()
 }
 
 const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {

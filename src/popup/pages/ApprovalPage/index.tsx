@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux'
-import { AppState } from '@store/app/types'
 import { ApprovalApi, PendingApproval } from '../../../shared/models'
-import { NekotonRpcError, serializeError } from '../../../shared/utils'
+import { JsonRpcError, NekotonRpcError, serializeError } from '../../../shared/utils'
 import { RpcErrorCode } from '../../../shared/errors'
 import * as nt from '@nekoton'
 
@@ -18,16 +16,16 @@ const rejectedByUser = serializeError(
 
 interface IApprovalPage {
     pendingApprovals: PendingApproval<keyof ApprovalApi>[]
-    account: nt.AssetsList | null
-    tonWalletState: nt.AccountState | null
-    resolvePendingApproval: (id: string, params: unknown) => Promise<void>
-    rejectPendingApproval: (id: string, params: unknown) => Promise<void>
+    selectedAccount: nt.AssetsList
+    tonWalletStates: { [address: string]: nt.AccountState }
+    resolvePendingApproval: (id: string, params: any) => Promise<void>
+    rejectPendingApproval: (id: string, params: JsonRpcError) => Promise<void>
 }
 
 const ApprovalPage: React.FC<IApprovalPage> = ({
     pendingApprovals,
-    account,
-    tonWalletState,
+    selectedAccount,
+    tonWalletStates,
     resolvePendingApproval,
     rejectPendingApproval,
 }) => {
@@ -44,12 +42,16 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
 
     const approval = pendingApprovals[normalizedApprovalIndex]
 
+    const tonWalletState = tonWalletStates[
+        selectedAccount.tonWallet.address
+    ] as nt.AccountState | null
+
     return (
         <>
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
                     approval={approval}
-                    account={account}
+                    account={selectedAccount}
                     tonWalletState={tonWalletState}
                     onSubmit={(params) => {
                         resolvePendingApproval(approval.id, params).then(() => {})
@@ -62,7 +64,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             {approval.type === 'sendMessage' && (
                 <ApproveSendMessage
                     approval={approval}
-                    account={account}
+                    account={selectedAccount}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {
                         resolvePendingApproval(approval.id, {}).then(() => {})
@@ -75,7 +77,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             {approval.type === 'callContractMethod' && (
                 <ApproveContractInteraction
                     approval={approval}
-                    account={account}
+                    account={selectedAccount}
                     tonWalletState={tonWalletState}
                     onSubmit={() => {
                         resolvePendingApproval(approval.id, {}).then(() => {})
@@ -89,9 +91,4 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
     )
 }
 
-const mapStateToProps = (store: { app: AppState }) => ({
-    account: store.app.selectedAccount,
-    tonWalletState: store.app.tonWalletState,
-})
-
-export default connect(mapStateToProps)(ApprovalPage)
+export default ApprovalPage

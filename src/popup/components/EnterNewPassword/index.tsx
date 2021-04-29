@@ -7,12 +7,17 @@ import Button from '@components/Button'
 import './style.scss'
 
 type IEnterPasswordScreen = {
+    disabled: boolean
     onSubmit: (password: string) => void
     onBack: () => void
 }
 
-const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) => {
-    const { register, handleSubmit, errors, watch, getValues } = useForm()
+const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, onBack }) => {
+    const { register, handleSubmit, errors, watch } = useForm()
+
+    const trySubmit = (data: any) => {
+        !disabled && onSubmit(data.pwd)
+    }
 
     return (
         <div className="enter-new-password__content">
@@ -23,14 +28,13 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
                 </h3>
                 <form
                     id="password"
-                    onSubmit={handleSubmit(() => {
-                        onSubmit(getValues('pwd'))
-                    })}
+                    onSubmit={handleSubmit(trySubmit)}
                     style={{ position: 'relative' }}
                 >
                     <Input
                         label={'Your password'}
                         autoFocus
+                        disabled={disabled}
                         type={'password'}
                         name="pwd"
                         register={register({
@@ -42,6 +46,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
                         label={'Confirm password'}
                         type={'password'}
                         name="pwdConfirm"
+                        disabled={disabled}
                         register={register({
                             required: true,
                             validate: (value) => value === watch('pwd'),
@@ -60,12 +65,11 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onSubmit, onBack }) 
             <div className="enter-new-password__content-buttons">
                 <Button
                     text={'Sign in the wallet'}
-                    onClick={handleSubmit(() => {
-                        onSubmit(getValues('pwd'))
-                    })}
+                    disabled={disabled}
+                    onClick={handleSubmit(trySubmit)}
                     form="password"
                 />
-                <Button text={'Back'} white onClick={onBack} />
+                <Button text={'Back'} white disabled={disabled} onClick={onBack} />
             </div>
         </div>
     )

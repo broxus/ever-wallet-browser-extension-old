@@ -111,8 +111,45 @@ const callbackNoop = (error?: Error) => {
     }
 }
 
-export const nodeify = <C>(fn: Function, context: C) => {
-    return function (...args: unknown[]) {
+type NodeifyAsyncResult<F> = F extends (...args: infer T) => Promise<infer U>
+    ? (...args: [...T, (error: Error | null, result?: U) => void]) => void
+    : never
+
+export const nodeifyAsync = <C extends {}, M extends keyof C>(
+    context: C,
+    method: M
+): NodeifyAsyncResult<C[M]> => {
+    const fn = (context[method] as unknown) as (...args: any[]) => Promise<any>
+    return (function (...args: any[]) {
+        const lastArg = args[args.length - 1]
+        const lastArgIsCallback = typeof lastArg === 'function'
+
+        let callback
+        if (lastArgIsCallback) {
+            callback = lastArg
+            args.pop()
+        } else {
+            callback = callbackNoop
+        }
+
+        promiseToCallback(fn.apply(context, args))(callback)
+    } as unknown) as NodeifyAsyncResult<C[M]>
+}
+
+type NodeifyResult<F> = F extends (
+    ...args: [...infer T, (error: Error | null, result?: infer U) => void]
+) => void
+    ? (...args: [...T, (error: Error | null, result?: U) => void]) => void
+    : F extends (...args: infer T) => void
+    ? (...args: [...T, (error: Error | null, result: undefined) => void]) => void
+    : never
+
+export const nodeify = <C extends {}, M extends keyof C>(
+    context: C,
+    method: M
+): NodeifyResult<C[M]> => {
+    const fn = (context[method] as unknown) as Function
+    return (function (...args: any[]) {
         const lastArg = args[args.length - 1]
         const lastArgIsCallback = typeof lastArg === 'function'
 
@@ -131,7 +168,7 @@ export const nodeify = <C>(fn: Function, context: C) => {
             result = Promise.reject(e)
         }
         promiseToCallback(result)(callback)
-    }
+    } as unknown) as NodeifyResult<C[M]>
 }
 
 export class PortDuplexStream extends Duplex {
@@ -487,3 +524,9 @@ export type InArray<T, X> = T extends readonly [X, ...infer _Rest]
     : T extends readonly [infer _, ...infer Rest]
     ? InArray<Rest, X>
     : false
+
+export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (
+    ...args: any
+) => Promise<infer R>
+    ? R
+    : any
