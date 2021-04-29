@@ -1,5 +1,5 @@
 import React, { useRef } from 'react'
-import { convertTons } from '@popup/utils'
+import { convertTons } from '@shared/utils'
 import { hideModalOnClick } from '@popup/common'
 import * as nt from '@nekoton'
 

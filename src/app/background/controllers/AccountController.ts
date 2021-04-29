@@ -1,14 +1,21 @@
 import { Mutex } from 'await-semaphore'
-import { NekotonRpcError } from '@shared/utils'
+import {
+    convertAddress,
+    convertTons,
+    extractTransactionAddress,
+    extractTransactionValue,
+    NekotonRpcError,
+} from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { AccountToCreate, MessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ConnectionController } from './ConnectionController'
+import { NotificationController } from './NotificationController'
 
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s
-const BACKGROUND_POLLING_INTERVAL = 120000 // 2m
+const BACKGROUND_POLLING_INTERVAL = 60000 // 1m
 
 const NEXT_BLOCK_TIMEOUT = 60 // 60s
 
@@ -30,6 +37,7 @@ export interface AccountControllerConfig extends BaseConfig {
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
     connectionController: ConnectionController
+    notificationController: NotificationController
 }
 
 export interface AccountControllerState extends BaseState {
@@ -114,6 +122,27 @@ export class AccountController extends BaseController<
                     transactions: Array<nt.Transaction>,
                     info: nt.TransactionsBatchInfo
                 ) {
+                    if (info.batchType == 'new') {
+                        let body = ''
+                        for (const transaction of transactions) {
+                            const value = extractTransactionValue(transaction)
+                            const address = extractTransactionAddress(transaction)
+
+                            if (value.greaterThan('0')) {
+                                body += `${convertTons(value.toString())} TON from ${convertAddress(
+                                    address
+                                )}\n`
+                            }
+                        }
+
+                        if (body.length !== 0) {
+                            this._controller.config.notificationController.showNotification(
+                                'New transactions found',
+                                body
+                            )
+                        }
+                    }
+
                     this._controller._updateTransactions(this._address, transactions, info)
                 }
             }
@@ -159,6 +188,10 @@ export class AccountController extends BaseController<
             await this._stopSubscriptions()
             await this.config.accountsStorage.clear()
             await this.config.keyStore.clear()
+
+            this.update({
+                selectedAccount: undefined,
+            })
         })
     }
 
@@ -180,7 +213,9 @@ export class AccountController extends BaseController<
                 },
             })
 
-            return accountsStorage.addAccount(name, key.publicKey, contractType, true)
+            const address = accountsStorage.addAccount(name, key.publicKey, contractType, true)
+            await this.startSubscriptions()
+            return address
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
-import { shuffleArray } from '@popup/utils'
+import { shuffleArray } from '@shared/utils'
 
 import CheckSeedInput from '@popup/components/CheckSeedInput'
 import Button from '@popup/components/Button'

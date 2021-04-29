@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { convertTons } from '@popup/utils'
+import { convertTons } from '@shared/utils'
 import { createRipple, removeRipple } from '@popup/common'
 import * as nt from '@nekoton'
 

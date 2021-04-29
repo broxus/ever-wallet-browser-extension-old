@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import cn from 'classnames'
-import { convertAddress, convertTons } from '@popup/utils'
+import { convertAddress, convertTons } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 

@@ -4,9 +4,9 @@ import safeStringify from 'fast-safe-stringify'
 import { EventEmitter } from 'events'
 import { Duplex } from 'readable-stream'
 import promiseToCallback from 'promise-to-callback'
+import Decimal from 'decimal.js'
 
 import { RpcErrorCode } from './errors'
-
 import {
     JsonRpcEngineNextCallback,
     JsonRpcEngineEndCallback,
@@ -16,6 +16,9 @@ import {
     PendingJsonRpcResponse,
     JsonRpcEngine,
 } from './jrpc'
+import * as nt from '@nekoton'
+
+export const ONE_TON = '1000000000'
 
 const MAX = 4294967295
 
@@ -541,3 +544,56 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extend
 ) => Promise<infer R>
     ? R
     : any
+
+export const shuffleArray = <T>(array: T[]) => {
+    let currentIndex = array.length
+    let temporaryValue: T
+    let randomIndex: number
+
+    while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex)
+        currentIndex -= 1
+
+        temporaryValue = array[currentIndex]
+        array[currentIndex] = array[randomIndex]
+        array[randomIndex] = temporaryValue
+    }
+
+    return array
+}
+
+export const extractTransactionValue = (transaction: nt.Transaction) => {
+    const outgoing = transaction.outMessages.reduce(
+        (total, msg) => total.add(msg.value),
+        new Decimal(0)
+    )
+    return new Decimal(transaction.inMessage.value).sub(outgoing)
+}
+
+export const extractTransactionAddress = (transaction: nt.Transaction) => {
+    if (transaction.outMessages.length > 0) {
+        for (const item of transaction.outMessages) {
+            if (item.dst != null) {
+                return item.dst
+            }
+        }
+        return undefined
+    } else if (transaction.inMessage.src != null) {
+        return transaction.inMessage.src
+    } else {
+        return transaction.inMessage.dst
+    }
+}
+
+export const convertAddress = (address: string | undefined) =>
+    address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
+
+export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toString()
+
+export const estimateUsd = (amount: string) => {
+    return `${new Decimal(amount || '0').div(ONE_TON).mul('0.6').toFixed(2).toString()}`
+}
+
+export const parseTons = (amount: string) => {
+    return new Decimal(amount).mul(ONE_TON).ceil().toFixed(0)
+}

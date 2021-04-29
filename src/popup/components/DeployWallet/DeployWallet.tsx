@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { convertTons } from '@popup/utils'
+import { convertTons } from '@shared/utils'
 import * as nt from '@nekoton'
 
 import QRCode from 'react-qr-code'

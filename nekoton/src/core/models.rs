@@ -233,6 +233,8 @@ export type TransactionsBatchInfo = {
     maxLt: string,
     batchType: TransactionsBatchType,
 };
+
+export type TransactionsBatchType = 'old' | 'new';
 "#;
 
 #[wasm_bindgen]
@@ -240,7 +242,7 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "TransactionsBatchInfo")]
     pub type TransactionsBatchInfo;
 
-    #[wasm_bindgen(typescript_type = "'old' | 'new'")]
+    #[wasm_bindgen(typescript_type = "TransactionsBatchType")]
     pub type TransactionsBatchType;
 }
 

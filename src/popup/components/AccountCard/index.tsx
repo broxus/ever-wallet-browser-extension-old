@@ -1,5 +1,5 @@
 import React from 'react'
-import { convertAddress } from '@popup/utils'
+import { convertAddress } from '@shared/utils'
 
 import ReactTooltip from 'react-tooltip'
 import CopyToClipboard from 'react-copy-to-clipboard'

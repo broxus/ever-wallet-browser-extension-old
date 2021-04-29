@@ -1,5 +1,5 @@
 import React from 'react'
-import { convertTons, estimateUsd } from '@popup/utils'
+import { convertTons, estimateUsd } from '@shared/utils'
 import * as nt from '@nekoton'
 
 import TonLogo from '@popup/img/ton-logo.svg'

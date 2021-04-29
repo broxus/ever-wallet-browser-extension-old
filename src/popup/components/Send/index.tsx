@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Decimal from 'decimal.js'
 import { selectStyles } from '@popup/constants/selectStyle'
-import { convertAddress, convertTons, parseTons } from '@popup/utils'
+import { convertAddress, convertTons, parseTons } from '@shared/utils'
 import { MessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 

@@ -28,7 +28,7 @@ export const validatePermission = (permission: string) => {
 }
 
 export interface PermissionsConfig extends BaseConfig {
-    approvals: ApprovalController
+    approvalController: ApprovalController
 }
 
 export interface PermissionsState extends BaseState {
@@ -48,7 +48,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
 
-        const originPermissions: Partial<Permissions> = await this.config.approvals.addAndShowApprovalRequest(
+        const originPermissions: Partial<Permissions> = await this.config.approvalController.addAndShowApprovalRequest(
             {
                 origin,
                 type: 'requestPermissions',

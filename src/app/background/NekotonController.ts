@@ -28,6 +28,7 @@ import { NamedConnectionData } from '@shared/approvalApi'
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
 import { ConnectionController } from './controllers/ConnectionController'
+import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { createProviderMiddleware } from './providerMiddleware'
 
@@ -45,6 +46,7 @@ interface NekotonControllerComponents {
     accountController: AccountController
     approvalController: ApprovalController
     connectionController: ConnectionController
+    notificationController: NotificationController
     permissionsController: PermissionsController
 }
 
@@ -70,21 +72,29 @@ export class NekotonController extends EventEmitter {
         const keyStore = await nt.KeyStore.load(storage)
 
         const connectionController = new ConnectionController({})
+
+        const notificationController = new NotificationController({
+            disabled: true,
+        })
+
         const accountController = new AccountController({
             storage,
             accountsStorage,
             keyStore,
             connectionController,
+            notificationController,
         })
         const approvalController = new ApprovalController({
             showApprovalRequest: options.showUserConfirmation,
         })
         const permissionsController = new PermissionsController({
-            approvals: approvalController,
+            approvalController,
         })
 
         await connectionController.initialSync()
         await accountController.startSubscriptions()
+
+        notificationController.setHidden(false)
 
         return new NekotonController(options, {
             storage,
@@ -93,6 +103,7 @@ export class NekotonController extends EventEmitter {
             accountController,
             approvalController,
             connectionController,
+            notificationController,
             permissionsController,
         })
     }
@@ -122,9 +133,11 @@ export class NekotonController extends EventEmitter {
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
                 this._components.accountController.enableIntensivePolling()
+                this._components.notificationController.setHidden(true)
             } else {
                 this._components.accountController.disableIntensivePolling()
                 this._components.approvalController.clear()
+                this._components.notificationController.setHidden(false)
             }
         })
     }

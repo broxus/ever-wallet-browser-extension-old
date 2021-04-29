@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { convertTons } from '@popup/utils'
+import { convertTons } from '@shared/utils'
 import { ApprovalOutput, PendingApproval } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
