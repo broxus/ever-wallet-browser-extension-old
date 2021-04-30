@@ -8,7 +8,7 @@ import './style.scss'
 
 interface IEnterPassword {
     minHeight?: string
-    disabled: boolean
+    disabled?: boolean
     error?: string
     handleNext: (password: string) => void
     handleBack: () => void

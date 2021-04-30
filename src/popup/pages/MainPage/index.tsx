@@ -25,10 +25,10 @@ interface IMainPage {
 enum Panel {
     RECEIVE,
     SEND,
+    DEPLOY,
     KEY_STORAGE,
     CREATE_ACCOUNT,
     ASSET,
-    DEPLOY,
 }
 
 const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
@@ -57,12 +57,8 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         await controllerRpc.logOut()
     }
 
-    const estimateFees = async (params: MessageToPrepare) => {
-        return await controllerRpc.estimateFees(accountAddress, params)
-    }
-
-    const prepareMessage = async (params: MessageToPrepare, password: nt.KeyPassword) => {
-        return controllerRpc.prepareMessage(accountAddress, params, password)
+    const prepareDeployMessage = async (address: string, password: nt.KeyPassword) => {
+        return controllerRpc.prepareMessage
     }
 
     const sendMessage = async (message: nt.SignedMessage) => {
@@ -100,17 +96,32 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             account={selectedAccount}
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
-                            estimateFees={estimateFees}
-                            prepareMessage={prepareMessage}
+                            estimateFees={async (params) =>
+                                await controllerRpc.estimateFees(accountAddress, params)
+                            }
+                            prepareMessage={async (params, password) =>
+                                controllerRpc.prepareMessage(accountAddress, params, password)
+                            }
+                            sendMessage={sendMessage}
+                        />
+                    )}
+                    {openedPanel == Panel.DEPLOY && (
+                        <DeployWallet
+                            account={selectedAccount}
+                            tonWalletState={tonWalletState}
+                            onBack={closePanel}
+                            estimateFees={async () =>
+                                await controllerRpc.estimateDeploymentFees(accountAddress)
+                            }
+                            prepareDeployMessage={async (password) =>
+                                controllerRpc.prepareDeploymentMessage(accountAddress, password)
+                            }
                             sendMessage={sendMessage}
                         />
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
                     {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
-                    {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet account={selectedAccount} tonWalletState={tonWalletState} />
-                    )}
                 </>
             </SlidingPanel>
         </>

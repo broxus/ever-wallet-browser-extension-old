@@ -33,20 +33,27 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
 }) => {
     const [approvalIndex, setApprovalIndex] = useState(0)
 
-    if (pendingApprovals.length === 0) {
-        return null
-    }
-
-    const normalizedApprovalIndex = Math.min(pendingApprovals.length - 1, approvalIndex)
-    if (approvalIndex != normalizedApprovalIndex) {
-        setApprovalIndex(normalizedApprovalIndex)
-    }
-
-    const approval = pendingApprovals[normalizedApprovalIndex]
-
     const tonWalletState = tonWalletStates[
         selectedAccount.tonWallet.address
     ] as nt.AccountState | null
+
+    const selectNextApproval = () => {
+        if (pendingApprovals.length === 0) {
+            return null
+        }
+
+        const normalizedApprovalIndex = Math.min(pendingApprovals.length - 1, approvalIndex)
+        if (approvalIndex != normalizedApprovalIndex) {
+            setApprovalIndex(normalizedApprovalIndex)
+        }
+
+        return pendingApprovals[normalizedApprovalIndex]
+    }
+
+    const approval = selectNextApproval()
+    if (approval == null) {
+        return null
+    }
 
     return (
         <>

@@ -264,6 +264,32 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async estimateDeploymentFees(address: string) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            const unsignedMessage = wallet.prepareDeploy(60)
+
+            try {
+                const signedMessage = unsignedMessage.signFake()
+                return await wallet.estimateFees(signedMessage)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage.free()
+            }
+        })
+    }
+
     public async prepareMessage(
         address: string,
         params: MessageToPrepare,
@@ -296,6 +322,30 @@ export class AccountController extends BaseController<
                 )
             }
 
+            try {
+                return await this.config.keyStore.sign(unsignedMessage, password)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage.free()
+            }
+        })
+    }
+
+    public async prepareDeploymentMessage(address: string, password: nt.KeyPassword) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            const unsignedMessage = wallet.prepareDeploy(60)
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
             } catch (e) {

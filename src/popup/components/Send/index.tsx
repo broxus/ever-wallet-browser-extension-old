@@ -6,14 +6,11 @@ import { convertAddress, convertTons, parseTons } from '@shared/utils'
 import { MessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import Lottie from 'react-lottie-player'
 import Select from 'react-select'
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
+import TransactionProgress from '@popup/components/TransactionProgress'
 
-import MoneyAnimation from '@popup/img/lottie/money.json'
-import DoneAnimation from '@popup/img/lottie/done.json'
-import FailedAnimation from '@popup/img/lottie/failed.json'
 import UserPic from '@popup/img/user-avatar-placeholder.svg'
 
 import './style.scss'
@@ -27,79 +24,9 @@ const options = [
     */
 ]
 
-enum LocalStep {
-    PREPARE,
-    SENDING,
-    SENT,
-    FAILED,
-}
-
 enum PrepareStep {
     ENTER_ADDRESS,
     ENTER_PASSWORD,
-}
-
-type ITransactionExpired = {
-    onBack: () => void
-}
-
-const TransactionExpired: React.FC<ITransactionExpired> = ({ onBack }) => {
-    return (
-        <>
-            <h2 className="send-screen__form-title">Transaction expired</h2>
-            <div className="send-screen__tx-sending">
-                <Lottie
-                    loop
-                    animationData={FailedAnimation}
-                    play
-                    style={{ width: 150, height: 150 }}
-                />
-            </div>
-            <Button text={'OK'} type={'button'} onClick={onBack} />
-        </>
-    )
-}
-
-type ITransactionSent = {
-    onBack: () => void
-}
-
-const TransactionSent: React.FC<ITransactionSent> = ({ onBack }) => {
-    return (
-        <>
-            <h2 className="send-screen__form-title">Transaction has been sent</h2>
-            <div className="send-screen__tx-sending">
-                <Lottie
-                    loop
-                    animationData={DoneAnimation}
-                    play
-                    style={{ width: 150, height: 150 }}
-                />
-            </div>
-            <Button text={'OK'} type={'button'} onClick={onBack} />
-        </>
-    )
-}
-
-export type ITransactionSending = {
-    onBack: () => void
-}
-
-const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
-    return (
-        <>
-            <h2 className="send-screen__form-title">Transaction is sending...</h2>
-            <div className="send-screen__tx-sending">
-                <Lottie
-                    loop
-                    animationData={MoneyAnimation}
-                    play
-                    style={{ width: 150, height: 150 }}
-                />
-            </div>
-            <Button text={'OK'} type={'button'} onClick={onBack} />
-        </>
-    )
 }
 
 type IEnterPassword = {
@@ -377,43 +304,28 @@ const Send: React.FC<ISend> = ({
     sendMessage,
     onBack,
 }) => {
-    const [localStep, setLocalStep] = useState(LocalStep.PREPARE)
-
-    const close = () => {
-        setLocalStep(LocalStep.PREPARE)
-        onBack()
-    }
+    const [pendingResponse, setPendingResponse] = useState<Promise<nt.Transaction>>()
 
     const trySendMessage = async (message: nt.SignedMessage) => {
-        setLocalStep(LocalStep.SENDING)
-        try {
-            await sendMessage(message)
-            setLocalStep(LocalStep.SENT)
-        } catch (e) {
-            console.error(e)
-            setLocalStep(LocalStep.FAILED)
-        }
+        setPendingResponse(sendMessage(message))
     }
 
-    return (
-        <>
-            {localStep == LocalStep.PREPARE && (
-                <PrepareMessage
-                    account={account}
-                    tonWalletState={tonWalletState}
-                    prepareMessage={prepareMessage}
-                    estimateFees={estimateFees}
-                    onBack={onBack}
-                    onSubmit={(message) => {
-                        trySendMessage(message).then(() => {})
-                    }}
-                />
-            )}
-            {localStep == LocalStep.SENDING && <TransactionSending onBack={close} />}
-            {localStep == LocalStep.SENT && <TransactionSent onBack={close} />}
-            {localStep == LocalStep.FAILED && <TransactionExpired onBack={close} />}
-        </>
-    )
+    if (pendingResponse == null) {
+        return (
+            <PrepareMessage
+                account={account}
+                tonWalletState={tonWalletState}
+                prepareMessage={prepareMessage}
+                estimateFees={estimateFees}
+                onBack={onBack}
+                onSubmit={(message) => {
+                    trySendMessage(message).then(() => {})
+                }}
+            />
+        )
+    } else {
+        return <TransactionProgress pendingResponse={pendingResponse} onBack={onBack} />
+    }
 }
 
 export default Send
