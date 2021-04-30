@@ -1,5 +1,5 @@
 {
-  "name": "TON Crystal Wallet",
+  "name": "ton-crystal-wallet",
   "version": "0.0.2",
   "description": "Simple TON wallet browser plugin",
   "scripts": {
