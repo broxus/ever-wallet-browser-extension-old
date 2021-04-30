@@ -1,9 +1,9 @@
 import React from 'react'
-import { convertTons, estimateUsd } from '@utils'
+import { convertTons, estimateUsd } from '@shared/utils'
 import * as nt from '@nekoton'
 
-import TonLogo from '@img/ton-logo.svg'
-import Arrow from '@img/arrow.svg'
+import TonLogo from '@popup/img/ton-logo.svg'
+import Arrow from '@popup/img/arrow.svg'
 
 import './style.scss'
 

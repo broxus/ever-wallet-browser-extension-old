@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react'
-import RightArrow from '../../img/right-arrow.svg'
-import LeftArrow from '../../img/left-arrow.svg'
+import React from 'react'
 import { useState } from 'react'
+
+import RightArrow from '@popup/img/right-arrow.svg'
+import LeftArrow from '@popup/img/left-arrow.svg'
+
 import './style.scss'
 
 interface ICarousel {

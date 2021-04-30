@@ -1,6 +1,6 @@
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React from 'react'
 import cn from 'classnames'
-import { createRipple, removeRipple } from '@common'
+import { createRipple, removeRipple } from '@popup/common'
 
 import './style.scss'
 

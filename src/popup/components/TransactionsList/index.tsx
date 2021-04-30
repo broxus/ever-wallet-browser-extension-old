@@ -1,8 +1,9 @@
 import React from 'react'
 import * as nt from '@nekoton'
-import './style.scss'
 
-import TransactionListItem from '@components/TransactionsListItem'
+import TransactionListItem from '@popup/components/TransactionsListItem'
+
+import './style.scss'
 
 type TransactionListProps = {
     transactions: nt.Transaction[]

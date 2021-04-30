@@ -5,16 +5,16 @@ import ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
-import { nanoid } from 'nanoid'
 import pump from 'pump'
 
-import { getEnvironmentType } from '@utils'
+import { getEnvironmentType } from '@popup/utils'
+import { PortDuplexStream } from '@shared/utils'
+import { Environment, ENVIRONMENT_TYPE_BACKGROUND, ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
+import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { StreamProvider } from '@popup/utils/StreamProvider'
+import store from '@popup/store'
+
 import App, { ActiveTab } from './App'
-import { PortDuplexStream } from '../shared/utils'
-import { ENVIRONMENT_TYPE_POPUP } from '../shared/constants'
-import { JsonRpcId, JsonRpcRequest, JsonRpcResponse } from '../shared/jrpc'
-import { metaRPCClientFactory, IMetaRPCClient } from '@utils/MetaRPCClient'
-import store from '@store'
 
 const start = async () => {
     const windowType = getEnvironmentType()
@@ -37,10 +37,10 @@ const start = async () => {
     })
 }
 
-const queryCurrentActiveTab = async (windowType: string) => {
-    return new Promise<ActiveTab | undefined>((resolve) => {
+const queryCurrentActiveTab = async (windowType: Environment) => {
+    return new Promise<ActiveTab>((resolve) => {
         if (windowType !== ENVIRONMENT_TYPE_POPUP) {
-            return resolve(undefined)
+            return resolve({ type: windowType } as any)
         }
 
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -51,16 +51,16 @@ const queryCurrentActiveTab = async (windowType: string) => {
                 : { origin: undefined, protocol: undefined }
 
             if (!origin || origin == 'null') {
-                return resolve(undefined)
+                return resolve({ type: ENVIRONMENT_TYPE_BACKGROUND } as any)
             }
 
-            resolve({ id, title, origin, protocol, url })
+            resolve({ type: ENVIRONMENT_TYPE_POPUP, data: { id, title, origin, protocol, url } })
         })
     })
 }
 
 const initializeUi = (
-    activeTab: ActiveTab | undefined,
+    activeTab: ActiveTab,
     connectionStream: Duplex,
     callback: (error: Error | undefined) => void
 ) => {
@@ -72,7 +72,7 @@ const initializeUi = (
         ReactDOM.render(
             <React.StrictMode>
                 <Provider store={store}>
-                    <App activeTab={activeTab} backgroundConnection={backgroundConnection} />
+                    <App activeTab={activeTab} controllerRpc={backgroundConnection} />
                 </Provider>
             </React.StrictMode>,
             document.getElementById('root')
@@ -82,12 +82,8 @@ const initializeUi = (
 
 const connectToBackground = (
     connectionStream: Duplex,
-    cb: (error: Error | undefined, backgroundRpc: IMetaRPCClient) => void
+    callback: (error: Error | undefined, controllerRpc: IControllerRpcClient) => void
 ) => {
-    connectionStream.on('data', (data) => {
-        console.log('Connection stream data:', data)
-    })
-
     const mux = new ObjectMultiplex()
     pump(connectionStream, mux, connectionStream, (error) => {
         if (error) {
@@ -95,7 +91,7 @@ const connectToBackground = (
         }
     })
 
-    setupControllerConnection((mux.createStream('controller') as unknown) as Duplex, cb)
+    setupControllerConnection((mux.createStream('controller') as unknown) as Duplex, callback)
     setupWeb3Connection(mux.createStream('provider'))
 }
 
@@ -110,56 +106,10 @@ const setupWeb3Connection = <T extends Duplex>(connectionStream: T) => {
 
 const setupControllerConnection = (
     connectionStream: Duplex,
-    callback: (error: Error | undefined, backgroundRpc: IMetaRPCClient) => void
+    callback: (error: Error | undefined, controllerRpc: IControllerRpcClient) => void
 ) => {
-    const backgroundRPC = metaRPCClientFactory(connectionStream)
-    callback(undefined, backgroundRPC)
-}
-
-class StreamProvider extends Duplex {
-    private _payloads: {
-        [id: string]: [(error: Error | null, response: unknown) => void, JsonRpcId]
-    } = {}
-
-    constructor() {
-        super({ objectMode: true })
-    }
-
-    send<T>(payload: JsonRpcRequest<T>) {
-        throw new Error(
-            `StreamProvider does not support syncronous RPC calls. called ${payload.method}`
-        )
-    }
-
-    sendAsync(
-        payload: JsonRpcRequest<unknown>,
-        callback: (error: Error | null, response: unknown) => void
-    ) {
-        const originalId = payload.id
-        const id = nanoid()
-        payload.id = id
-        this._payloads[id] = [callback, originalId]
-        this.push(payload)
-    }
-
-    private _onResponse(response: JsonRpcResponse<unknown>) {
-        const id = response.id
-        const data = this._payloads[id as string]
-        const callback = data[0]
-        response.id = data[1]
-        setTimeout(function () {
-            callback(null, response)
-        })
-    }
-
-    _read(_size?: number) {
-        return undefined
-    }
-
-    _write(message: unknown, _encoding: BufferEncoding, callback: (error?: Error | null) => void) {
-        this._onResponse(message as JsonRpcResponse<unknown>)
-        callback()
-    }
+    const controllerRpc = makeControllerRpcClient(connectionStream)
+    callback(undefined, controllerRpc)
 }
 
 start().catch(console.error)

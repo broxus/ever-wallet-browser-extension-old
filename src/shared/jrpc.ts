@@ -1,14 +1,12 @@
 import {
     SafeEventEmitter,
     Maybe,
-    RpcErrorCode,
     serializeError,
     NekotonRpcError,
     jsonify,
     JsonRpcError,
 } from './utils'
-
-export type Json = boolean | number | string | null | { [property: string]: Json } | Json[]
+import { RpcErrorCode } from './errors'
 
 export type JsonRpcVersion = '2.0'
 export type JsonRpcId = number | string | void

@@ -6,6 +6,7 @@ interface ISimpleInput {
     className?: string
     label?: string
     autoFocus?: boolean
+    disabled?: boolean
     type?:
         | 'text'
         | 'none'
@@ -42,6 +43,7 @@ const Input: React.FC<ISimpleInput> = ({
     className,
     label,
     autoFocus = false,
+    disabled,
     type = 'number',
     register,
     name = '',
@@ -62,6 +64,7 @@ const Input: React.FC<ISimpleInput> = ({
             id={id}
             ref={register}
             autoFocus={autoFocus}
+            disabled={disabled}
             placeholder={label}
             type={type}
             autoComplete={autocomplete}

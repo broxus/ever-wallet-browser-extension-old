@@ -1,15 +1,14 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux'
-import { Action } from '@utils'
-import { Step, DEFAULT_CONTRACT_TYPE } from '@common'
-import { createAccount, validateMnemonic } from '@store/app/actions'
+import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
+import { validateMnemonic } from '@popup/store/app/actions'
+import { AccountToCreate } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import SignPolicy from '@components/SignPolicy'
-import SelectContractType from '@components/SelectContractType'
-import { EnterSeedLogin } from '@components/EnterSeed'
-import EnterNewPassword from '@components/EnterNewPassword'
-import Modal from '@components/Modal'
+import SignPolicy from '@popup/components/SignPolicy'
+import SelectContractType from '@popup/components/SelectContractType'
+import EnterSeed from '@popup/components/EnterSeed'
+import EnterNewPassword from '@popup/components/EnterNewPassword'
+import Modal from '@popup/components/Modal'
 
 import './style.scss'
 
@@ -21,11 +20,13 @@ enum LocalStep {
 }
 
 interface IRestoreAccountPage {
-    setStep: (step: Step) => void
-    createAccount: Action<typeof createAccount>
+    name: string
+    createAccount: (params: AccountToCreate) => Promise<string>
+    onBack: () => void
 }
 
-const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAccount }) => {
+const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ name, createAccount, onBack }) => {
+    const [inProcess, setInProcess] = useState<boolean>(false)
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
     const [error, setError] = useState<string>()
 
@@ -35,13 +36,14 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
 
     const onSubmit = async (password: string) => {
         try {
+            setInProcess(true)
             if (seed == null) {
                 throw Error('Seed must be specified')
             }
 
-            await createAccount('Account 1', contractType, seed, password)
-            setStep(Step.MAIN)
+            await createAccount({ name, contractType, seed, password })
         } catch (e) {
+            setInProcess(false)
             setError(e.toString())
         }
     }
@@ -57,9 +59,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
                     onSubmit={() => {
                         setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
                     }}
-                    onBack={() => {
-                        setStep(Step.WELCOME)
-                    }}
+                    onBack={onBack}
                 />
             )}
             {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
@@ -68,11 +68,11 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
                         setContractType(contractType)
                         setLocalStep(LocalStep.ENTER_PHRASE)
                     }}
-                    onBack={() => setStep(Step.WELCOME)}
+                    onBack={onBack}
                 />
             )}
             {localStep == LocalStep.ENTER_PHRASE && (
-                <EnterSeedLogin
+                <EnterSeed
                     onSubmit={(words) => {
                         const phrase = words.join(' ')
 
@@ -90,7 +90,8 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (
                 <EnterNewPassword
-                    onNext={async (password) => {
+                    disabled={inProcess}
+                    onSubmit={async (password) => {
                         await onSubmit(password)
                     }}
                     onBack={() => {
@@ -115,6 +116,4 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ setStep, createAcco
     )
 }
 
-export default connect(null, {
-    createAccount,
-})(RestoreAccountPage)
+export default RestoreAccountPage

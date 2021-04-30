@@ -1,7 +1,7 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React from 'react'
 import cn from 'classnames'
 
-import CloseIcon from '@components/CloseIcon'
+import CloseIcon from '@popup/components/CloseIcon'
 
 import './style.scss'
 
@@ -14,7 +14,7 @@ interface ISlidingPanel {
 const SlidingPanel: React.FC<ISlidingPanel> = ({ isOpen, onClose, children }) => {
     return (
         <>
-            {isOpen && <div className="sliding-panel__fade-in"></div>}
+            {isOpen && <div className="sliding-panel__fade-in" />}
             <div className={cn('sliding-panel__wrapper', { _active: isOpen })}>
                 <div className="sliding-panel__wrapper__background" onClick={onClose} />
                 <div className={cn('sliding-panel__content')}>

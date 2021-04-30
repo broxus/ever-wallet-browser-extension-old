@@ -1,16 +1,15 @@
 import React, { useState } from 'react'
-import { Action } from '@utils'
-import { Step, DEFAULT_CONTRACT_TYPE } from '@common'
-import { generateSeed, createAccount } from '@store/app/actions'
-import { connect } from 'react-redux'
+import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
+import { generateSeed } from '@popup/store/app/actions'
+import { AccountToCreate } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
-import SignPolicy from '@components/SignPolicy'
-import SelectContractType from '@components/SelectContractType'
-import ExportedSeed from '@components/ExportedSeed'
-import { CheckSeedOnCreation } from '@components/CheckSeed'
-import EnterNewPassword from '@components/EnterNewPassword'
-import Modal from '@components/Modal'
+import SignPolicy from '@popup/components/SignPolicy'
+import SelectContractType from '@popup/components/SelectContractType'
+import ExportedSeed from '@popup/components/ExportedSeed'
+import { CheckSeedOnCreation } from '@popup/components/CheckSeed'
+import EnterNewPassword from '@popup/components/EnterNewPassword'
+import Modal from '@popup/components/Modal'
 
 import './style.scss'
 
@@ -23,11 +22,13 @@ enum LocalStep {
 }
 
 interface INewAccountPage {
-    setStep: (step: Step) => void
-    createAccount: Action<typeof createAccount>
+    name: string
+    createAccount: (params: AccountToCreate) => Promise<string>
+    onBack: () => void
 }
 
-const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) => {
+const NewAccountPage: React.FC<INewAccountPage> = ({ name, createAccount, onBack }) => {
+    const [inProcess, setInProcess] = useState<boolean>(false)
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
     const [error, setError] = useState<string>()
 
@@ -37,9 +38,10 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
 
     const onSubmit = async (password: string) => {
         try {
-            await createAccount('Account 1', contractType, seed, password)
-            setStep(Step.MAIN)
+            setInProcess(true)
+            await createAccount({ name, contractType, seed, password })
         } catch (e) {
+            setInProcess(false)
             setError(e.toString())
         }
     }
@@ -53,9 +55,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
                     onSubmit={() => {
                         setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
                     }}
-                    onBack={() => {
-                        setStep(Step.WELCOME)
-                    }}
+                    onBack={onBack}
                 />
             )}
             {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
@@ -64,7 +64,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
                         setContractType(contractType)
                         setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
-                    onBack={() => setStep(Step.WELCOME)}
+                    onBack={onBack}
                     excludedContracts={['WalletV3']}
                 />
             )}
@@ -92,7 +92,8 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (
                 <EnterNewPassword
-                    onNext={async (password) => {
+                    disabled={inProcess}
+                    onSubmit={async (password) => {
                         await onSubmit(password)
                     }}
                     onBack={() => {
@@ -117,6 +118,4 @@ const NewAccountPage: React.FC<INewAccountPage> = ({ setStep, createAccount }) =
     )
 }
 
-export default connect(null, {
-    createAccount,
-})(NewAccountPage)
+export default NewAccountPage

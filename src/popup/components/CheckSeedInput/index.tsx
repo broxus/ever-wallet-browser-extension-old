@@ -1,7 +1,7 @@
 import React from 'react'
 import { CustomElement, FieldElement, FieldValues, Ref } from 'react-hook-form'
 
-import Input from '../Input'
+import Input from '@popup/components/Input'
 
 import './style.scss'
 

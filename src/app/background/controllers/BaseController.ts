@@ -37,7 +37,7 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
         return this.internalConfig
     }
 
-    get state() {
+    get state(): S {
         return this.internalState
     }
 

@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use anyhow::Error;
 use futures::channel::oneshot;
-use ton_block::MsgAddressInt;
+use ton_block::{Deserializable, MsgAddressInt};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
 
@@ -88,6 +88,10 @@ pub fn parse_slice(boc: &str) -> Result<ton_types::SliceData, JsValue> {
     Ok(cell.into())
 }
 
+pub fn parse_account_stuff(boc: &str) -> Result<ton_block::AccountStuff, JsValue> {
+    ton_block::AccountStuff::construct_from_base64(boc).handle_error()
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const GENERAL_STUFF: &str = r#"
 export type EnumItem<T extends string, D> = { type: T, data: D };
@@ -97,6 +101,9 @@ export type EnumItem<T extends string, D> = { type: T, data: D };
 extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<void>")]
     pub type PromiseVoid;
+
+    #[wasm_bindgen(typescript_type = "Promise<boolean>")]
+    pub type PromiseBool;
 
     #[wasm_bindgen(typescript_type = "Promise<string>")]
     pub type PromiseString;

@@ -3,6 +3,7 @@ import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
+import { debounce } from 'lodash'
 import * as nt from '@nekoton'
 
 import {
@@ -12,26 +13,41 @@ import {
     JsonRpcMiddleware,
     JsonRpcRequest,
     JsonRpcSuccess,
-} from '../../shared/jrpc'
+} from '@shared/jrpc'
 import {
     createEngineStream,
     NekotonRpcError,
     nodeify,
-    RpcErrorCode,
+    nodeifyAsync,
     serializeError,
-} from '../../shared/utils'
-import { NEKOTON_PROVIDER } from '../../shared/constants'
-import { ApplicationState } from './ApplicationState'
+} from '@shared/utils'
+import { RpcErrorCode } from '@shared/errors'
+import { NEKOTON_PROVIDER } from '@shared/constants'
+import { NamedConnectionData } from '@shared/approvalApi'
+
+import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
+import { ConnectionController } from './controllers/ConnectionController'
+import { NotificationController } from './controllers/NotificationController'
+import { PermissionsController } from './controllers/PermissionsController'
+import { createProviderMiddleware } from './providerMiddleware'
 
 interface NekotonControllerOptions {
-    storage: nt.Storage
-    accountsStorage: nt.AccountsStorage
-    keyStore: nt.KeyStore
     showUserConfirmation: () => void
     openPopup: () => void
     getRequestAccountTabIds: () => { [origin: string]: number }
     getOpenNekotonTabIds: () => { [id: number]: true }
+}
+
+interface NekotonControllerComponents {
+    storage: nt.Storage
+    accountsStorage: nt.AccountsStorage
+    keyStore: nt.KeyStore
+    accountController: AccountController
+    approvalController: ApprovalController
+    connectionController: ConnectionController
+    notificationController: NotificationController
+    permissionsController: PermissionsController
 }
 
 interface SetupProviderEngineOptions {
@@ -47,12 +63,55 @@ export class NekotonController extends EventEmitter {
     private _activeControllerConnections: number
     private readonly _connections: { [origin: string]: { [id: string]: { engine: JsonRpcEngine } } }
 
-    private _options: NekotonControllerOptions
-    private _applicationState: ApplicationState
+    private readonly _options: NekotonControllerOptions
+    private readonly _components: NekotonControllerComponents
 
-    private _approvalController: ApprovalController
+    public static async load(options: NekotonControllerOptions) {
+        const storage = new nt.Storage(new StorageConnector())
+        const accountsStorage = await nt.AccountsStorage.load(storage)
+        const keyStore = await nt.KeyStore.load(storage)
 
-    constructor(options: NekotonControllerOptions) {
+        const connectionController = new ConnectionController({})
+
+        const notificationController = new NotificationController({
+            disabled: true,
+        })
+
+        const accountController = new AccountController({
+            storage,
+            accountsStorage,
+            keyStore,
+            connectionController,
+            notificationController,
+        })
+        const approvalController = new ApprovalController({
+            showApprovalRequest: options.showUserConfirmation,
+        })
+        const permissionsController = new PermissionsController({
+            approvalController,
+        })
+
+        await connectionController.initialSync()
+        await accountController.startSubscriptions()
+
+        notificationController.setHidden(false)
+
+        return new NekotonController(options, {
+            storage,
+            accountsStorage,
+            keyStore,
+            accountController,
+            approvalController,
+            connectionController,
+            notificationController,
+            permissionsController,
+        })
+    }
+
+    private constructor(
+        options: NekotonControllerOptions,
+        components: NekotonControllerComponents
+    ) {
         super()
 
         this._defaultMaxListeners = 20
@@ -61,22 +120,24 @@ export class NekotonController extends EventEmitter {
         this._connections = {}
 
         this._options = options
+        this._components = components
 
-        this._applicationState = new ApplicationState({
-            storage: options.storage,
-            accountsStorage: options.accountsStorage,
-            keyStore: options.keyStore,
+        this._components.approvalController.subscribe((_state) => {
+            this._debouncedSendUpdate()
         })
 
-        this._approvalController = new ApprovalController({
-            showApprovalRequest: options.showUserConfirmation,
+        this._components.accountController.subscribe((_state) => {
+            this._debouncedSendUpdate()
         })
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
-                // TODO: start account tracker
+                this._components.accountController.enableIntensivePolling()
+                this._components.notificationController.setHidden(true)
             } else {
-                // TODO: stop account tracker
+                this._components.accountController.disableIntensivePolling()
+                this._components.approvalController.clear()
+                this._components.notificationController.setHidden(false)
             }
         })
     }
@@ -99,16 +160,47 @@ export class NekotonController extends EventEmitter {
     }
 
     public getApi() {
+        type ApiCallback<T> = (error: Error | null, result?: T) => void
+
+        const { approvalController, accountController, connectionController } = this._components
+
         return {
-            resolvePendingApproval: nodeify(
-                this._approvalController.resolve,
-                this._approvalController
-            ),
-            rejectPendingApproval: nodeify(
-                this._approvalController.reject,
-                this._approvalController
-            ),
+            getState: (cb: ApiCallback<ReturnType<typeof NekotonController.prototype.getState>>) =>
+                cb(null, this.getState()),
+            getAvailableNetworks: (cb: ApiCallback<NamedConnectionData[]>) =>
+                cb(null, connectionController.getAvailableNetworks()),
+            changeNetwork: nodeifyAsync(this, 'changeNetwork'),
+            checkPassword: nodeifyAsync(accountController, 'checkPassword'),
+            createAccount: nodeifyAsync(accountController, 'createAccount'),
+            logOut: nodeifyAsync(this, 'logOut'),
+            estimateFees: nodeifyAsync(accountController, 'estimateFees'),
+            estimateDeploymentFees: nodeifyAsync(accountController, 'estimateDeploymentFees'),
+            prepareMessage: nodeifyAsync(accountController, 'prepareMessage'),
+            prepareDeploymentMessage: nodeifyAsync(accountController, 'prepareDeploymentMessage'),
+            sendMessage: nodeifyAsync(accountController, 'sendMessage'),
+            resolvePendingApproval: nodeify(approvalController, 'resolve'),
+            rejectPendingApproval: nodeify(approvalController, 'reject'),
         }
+    }
+
+    public getState() {
+        return {
+            ...this._components.approvalController.state,
+            ...this._components.accountController.state,
+            ...this._components.connectionController.state,
+        }
+    }
+
+    public async changeNetwork(params: NamedConnectionData) {
+        await this._components.accountController.stopSubscriptions()
+        await this._components.connectionController
+            .startSwitchingNetwork(params)
+            .then((handle) => handle.switch())
+        await this._components.accountController.startSubscriptions()
+    }
+
+    public async logOut() {
+        await this._components.accountController.logOut()
     }
 
     private _setupControllerConnection<T extends Duplex>(outStream: T) {
@@ -119,11 +211,11 @@ export class NekotonController extends EventEmitter {
 
         outStream.on('data', createMetaRPCHandler(api, outStream))
 
-        const handleUpdate = (update: unknown) => {
-            outStream.push({
+        const handleUpdate = (params: unknown) => {
+            outStream.write({
                 jsonrpc: '2.0',
                 method: 'sendUpdate',
-                params: [update],
+                params,
             })
         }
 
@@ -181,7 +273,7 @@ export class NekotonController extends EventEmitter {
         })
     }
 
-    private _setupProviderEngine({ origin, tabId }: SetupProviderEngineOptions) {
+    private _setupProviderEngine({ origin, tabId, isInternal }: SetupProviderEngineOptions) {
         const engine = new JsonRpcEngine()
 
         engine.push(createOriginMiddleware({ origin }))
@@ -190,12 +282,16 @@ export class NekotonController extends EventEmitter {
         }
         engine.push(createLoggerMiddleware({ origin }))
 
-        engine.push((req, res, next, end) => {
-            console.log(req, res, next, end)
-            next()
-        })
-
-        // TODO: add provider
+        engine.push(
+            createProviderMiddleware({
+                origin,
+                isInternal,
+                approvalController: this._components.approvalController,
+                accountController: this._components.accountController,
+                connectionController: this._components.connectionController,
+                permissionsController: this._components.permissionsController,
+            })
+        )
 
         return engine
     }
@@ -255,6 +351,40 @@ export class NekotonController extends EventEmitter {
                 engine.emit('notification', getPayload(origin))
             })
         })
+    }
+
+    private _debouncedSendUpdate = debounce(this._sendUpdate.bind(this), 200)
+
+    private _sendUpdate() {
+        this.emit('update', this.getState())
+    }
+}
+
+export class StorageConnector {
+    get(key: string, handler: nt.StorageQueryResultHandler) {
+        chrome.storage.local.get(key, (items) => {
+            handler.onResult(items[key])
+        })
+    }
+
+    set(key: string, value: string, handler: nt.StorageQueryHandler) {
+        chrome.storage.local.set({ [key]: value }, () => {
+            handler.onResult()
+        })
+    }
+
+    setUnchecked(key: string, value: string) {
+        chrome.storage.local.set({ [key]: value }, () => {})
+    }
+
+    remove(key: string, handler: nt.StorageQueryHandler) {
+        chrome.storage.local.remove([key], () => {
+            handler.onResult()
+        })
+    }
+
+    removeUnchecked(key: string) {
+        chrome.storage.local.remove([key], () => {})
     }
 }
 
@@ -337,7 +467,7 @@ const createMetaRPCHandler = <T extends Duplex>(
             return
         }
 
-        api[data.method as MethodName](
+        ;(api[data.method as MethodName] as any)(
             ...(data.params || []),
             <T>(error: Error | undefined, result: T) => {
                 if (error) {

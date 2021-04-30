@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 
-import Button from '@components/Button'
-import Checkbox from '@components/Checkbox'
+import Button from '@popup/components/Button'
+import Checkbox from '@popup/components/Checkbox'
 
-import Signature from '@img/policy-sign.svg'
+import Signature from '@popup/img/policy-sign.svg'
 
 import './style.scss'
 

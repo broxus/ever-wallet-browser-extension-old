@@ -1,9 +1,8 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 
-import TagsInput from '@components/TagsInput'
-import Button from '@components/Button'
-import CheckSeed from '@components/CheckSeed'
+import TagsInput from '@popup/components/TagsInput'
+import Button from '@popup/components/Button'
 
 type IEnterSeed = {
     onSubmit: (words: string[]) => void

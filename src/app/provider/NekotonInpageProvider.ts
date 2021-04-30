@@ -17,10 +17,10 @@ import {
     logStreamDisconnectWarning,
     Maybe,
     NekotonRpcError,
-    RpcErrorCode,
     SafeEventEmitter,
 } from '../../shared/utils'
 import { NEKOTON_PROVIDER } from '../../shared/constants'
+import { RpcErrorCode } from '../../shared/errors'
 import pump from 'pump'
 
 interface UnvalidatedJsonRpcRequest {
@@ -151,13 +151,33 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         this._rpcRequest(payload, callback)
     }
 
+    public addListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.addListener(eventName, listener)
+    }
+
+    public on(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.on(eventName, listener)
+    }
+
+    public once(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.once(eventName, listener)
+    }
+
+    public prependListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.prependListener(eventName, listener)
+    }
+
+    public prependOnceListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.prependOnceListener(eventName, listener)
+    }
+
     private _initializeState = async () => {
         try {
-            const { accounts } = (await this.request({ method: 'nekoton_getProviderState' })) as {
-                accounts: string[]
-            }
+            const { selectedConnection } = (await this.request({
+                method: 'getProviderState',
+            })) as any
 
-            console.log(accounts)
+            console.log(selectedConnection)
         } catch (e) {
             this._log.error('Nekoton: Failed to get initial state', e)
         } finally {
