@@ -1,9 +1,10 @@
 import React, { useRef } from 'react'
-import { convertTons } from '@utils'
-import { hideModalOnClick } from '@common'
+import { convertTons } from '@shared/utils'
+import { hideModalOnClick } from '@popup/common'
 import * as nt from '@nekoton'
 
-import UserPicS from '@img/user-avatar-placeholder-s.svg'
+import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
+
 import './style.scss'
 
 type IAccountModal = {

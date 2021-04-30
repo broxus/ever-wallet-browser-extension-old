@@ -1,12 +1,10 @@
 import React, { useState } from 'react'
-import { connect } from 'react-redux'
-import { exportKey } from '@store/app/actions'
 
-import Modal from '@components/Modal'
-import Button from '@components/Button'
+import Modal from '@popup/components/Modal'
+import Button from '@popup/components/Button'
 
-import ThreeDots from '@img/three-dots.svg'
-import UserPicS from '@img/user-avatar-placeholder-s.svg'
+import ThreeDots from '@popup/img/three-dots.svg'
+import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 
 import './style.scss'
 
@@ -99,6 +97,4 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey }) => {
     )
 }
 
-export default connect(null, {
-    exportKey,
-})(KeyStorage)
+export default KeyStorage

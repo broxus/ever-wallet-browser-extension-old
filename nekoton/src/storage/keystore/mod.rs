@@ -167,13 +167,27 @@ impl KeyStore {
     }
 
     #[wasm_bindgen]
+    pub fn check_password(&self, key_password: JsKeyPassword) -> Result<PromiseBool, JsValue> {
+        let inner = self.inner.clone();
+        let key_password =
+            JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let hash = ton_types::UInt256::default();
+            Ok(JsValue::from(
+                sign_data(&inner, key_password, hash.as_slice())
+                    .await
+                    .is_ok(),
+            ))
+        })))
+    }
+
+    #[wasm_bindgen]
     pub fn sign(
         &self,
         message: &crate::crypto::UnsignedMessage,
         key_password: JsKeyPassword,
     ) -> Result<PromiseSignedMessage, JsValue> {
-        use nt::crypto::*;
-
         let message = message.inner.clone();
         let inner = self.inner.clone();
         let key_password =
@@ -181,32 +195,7 @@ impl KeyStore {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let hash = nt::crypto::UnsignedMessage::hash(message.as_ref());
-
-            let signature = match key_password {
-                ParsedKeyPassword::MasterKey {
-                    public_key,
-                    password,
-                } => {
-                    let public_key = parse_public_key(&public_key)?;
-                    let input = DerivedKeySignParams::ByPublicKey {
-                        public_key,
-                        password: password.into(),
-                    };
-                    inner.sign::<DerivedKeySigner>(hash, input).await
-                }
-                ParsedKeyPassword::EncryptedKey {
-                    public_key,
-                    password,
-                } => {
-                    let public_key = parse_public_key(&public_key)?;
-                    let input = EncryptedKeyPassword {
-                        public_key,
-                        password: password.into(),
-                    };
-                    inner.sign::<EncryptedKeySigner>(hash, input).await
-                }
-            }
-            .handle_error()?;
+            let signature = sign_data(&inner, key_password, hash).await?;
 
             let message = message.sign(&signature).handle_error()?;
 
@@ -252,6 +241,40 @@ impl KeyStore {
                 .unchecked_into())
         }))
     }
+}
+
+async fn sign_data(
+    key_store: &nt::core::keystore::KeyStore,
+    key_password: ParsedKeyPassword,
+    data: &[u8],
+) -> Result<[u8; 64], JsValue> {
+    use nt::crypto::*;
+
+    match key_password {
+        ParsedKeyPassword::MasterKey {
+            public_key,
+            password,
+        } => {
+            let public_key = parse_public_key(&public_key)?;
+            let input = DerivedKeySignParams::ByPublicKey {
+                public_key,
+                password: password.into(),
+            };
+            key_store.sign::<DerivedKeySigner>(data, input).await
+        }
+        ParsedKeyPassword::EncryptedKey {
+            public_key,
+            password,
+        } => {
+            let public_key = parse_public_key(&public_key)?;
+            let input = EncryptedKeyPassword {
+                public_key,
+                password: password.into(),
+            };
+            key_store.sign::<EncryptedKeySigner>(data, input).await
+        }
+    }
+    .handle_error()
 }
 
 #[wasm_bindgen]
@@ -355,7 +378,7 @@ enum ParsedChangeKeyPassword {
 const EXPORT_KEY: &str = r#"
 export type ExportKey =
     | EnumItem<'master_key', { password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: String }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -416,7 +439,7 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
     | EnumItem<'master_key', { publicKey: string, password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: String }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
 "#;
 
 #[wasm_bindgen]

@@ -1,23 +1,24 @@
 import React from 'react'
 import { useForm } from 'react-hook-form'
 
-import Input from '@components/Input'
-import Button from '@components/Button'
+import Input from '@popup/components/Input'
+import Button from '@popup/components/Button'
 
 import './style.scss'
 
 type IEnterPasswordScreen = {
-    onNext: (password: string) => void
+    disabled: boolean
+    onSubmit: (password: string) => void
     onBack: () => void
 }
 
-const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onNext, onBack }) => {
-    const { register, handleSubmit, errors, watch, getValues } = useForm()
+const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, onBack }) => {
+    const { register, handleSubmit, errors, watch } = useForm()
 
-    const onSubmit = (data: any) => {
-        onNext(data.pwd)
+    const trySubmit = (data: any) => {
+        !disabled && onSubmit(data.pwd)
     }
-    8
+
     return (
         <div className="enter-new-password__content">
             <div className="enter-new-password__content-pwd-form">
@@ -27,12 +28,13 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onNext, onBack }) =>
                 </h3>
                 <form
                     id="password"
-                    onSubmit={handleSubmit(onSubmit)}
+                    onSubmit={handleSubmit(trySubmit)}
                     style={{ position: 'relative' }}
                 >
                     <Input
                         label={'Your password'}
                         autoFocus
+                        disabled={disabled}
                         type={'password'}
                         name="pwd"
                         register={register({
@@ -44,6 +46,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onNext, onBack }) =>
                         label={'Confirm password'}
                         type={'password'}
                         name="pwdConfirm"
+                        disabled={disabled}
                         register={register({
                             required: true,
                             validate: (value) => value === watch('pwd'),
@@ -62,10 +65,11 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ onNext, onBack }) =>
             <div className="enter-new-password__content-buttons">
                 <Button
                     text={'Sign in the wallet'}
-                    onClick={handleSubmit(onSubmit)}
+                    disabled={disabled}
+                    onClick={handleSubmit(trySubmit)}
                     form="password"
                 />
-                <Button text={'Back'} white onClick={onBack} />
+                <Button text={'Back'} white disabled={disabled} onClick={onBack} />
             </div>
         </div>
     )

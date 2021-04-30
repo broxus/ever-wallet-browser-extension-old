@@ -1,12 +1,12 @@
 import React, { Dispatch, SetStateAction, useState } from 'react'
-import { selectStyles } from '../../constants/selectStyle'
-import walletOptions from '../../constants/walletTypes'
+import { selectStyles } from '@popup/constants/selectStyle'
+import walletOptions from '@popup/constants/walletTypes'
 
 import Select from 'react-select'
-import Input from '@components/Input'
-import EnterPassword from '@components/EnterPassword'
-import CheckSeed from '@components/CheckSeed'
-import Button from '@components/Button'
+import Input from '@popup/components/Input'
+import EnterPassword from '@popup/components/EnterPassword'
+import CheckSeed from '@popup/components/CheckSeed'
+import Button from '@popup/components/Button'
 
 import './style.scss'
 
@@ -110,7 +110,7 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
     )
 }
 
-const CreateAccountScreen = () => {
+const CreateAccountPage = () => {
     const [step, setStep] = useState<number>(0)
 
     const createAccountContent = [
@@ -122,4 +122,4 @@ const CreateAccountScreen = () => {
     ]
     return createAccountContent[step]
 }
-export default CreateAccountScreen
+export default CreateAccountPage

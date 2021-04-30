@@ -8,8 +8,9 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use nt::transport::gql;
+use nt::transport::{gql, Transport};
 
+use super::{PromiseOptionFullAccountState, PromiseTokenWallet, PromiseTonWallet};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -138,6 +139,24 @@ impl GqlConnection {
             Ok(JsValue::from(next_block))
         })))
     }
+
+    #[wasm_bindgen(js_name = "getFullAccountState")]
+    pub fn get_full_account_state(
+        &self,
+        address: &str,
+    ) -> Result<PromiseOptionFullAccountState, JsValue> {
+        let address = parse_address(address)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            super::make_full_account_state(
+                transport
+                    .get_contract_state(&address)
+                    .await
+                    .handle_error()?,
+            )
+        })))
+    }
 }
 
 impl GqlConnection {
@@ -217,12 +236,6 @@ fn make_latest_block(latest_block: nt::transport::gql::LatestBlock) -> JsValue {
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<TonWallet>")]
-    pub type PromiseTonWallet;
-
-    #[wasm_bindgen(typescript_type = "Promise<TokenWallet>")]
-    pub type PromiseTokenWallet;
-
     #[wasm_bindgen(typescript_type = "Promise<LatestBlock>")]
     pub type PromiseLatestBlock;
 }

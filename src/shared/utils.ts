@@ -4,7 +4,9 @@ import safeStringify from 'fast-safe-stringify'
 import { EventEmitter } from 'events'
 import { Duplex } from 'readable-stream'
 import promiseToCallback from 'promise-to-callback'
+import Decimal from 'decimal.js'
 
+import { RpcErrorCode } from './errors'
 import {
     JsonRpcEngineNextCallback,
     JsonRpcEngineEndCallback,
@@ -14,6 +16,9 @@ import {
     PendingJsonRpcResponse,
     JsonRpcEngine,
 } from './jrpc'
+import * as nt from '@nekoton'
+
+export const ONE_TON = '1000000000'
 
 const MAX = 4294967295
 
@@ -22,14 +27,6 @@ let idCounter = Math.floor(Math.random() * MAX)
 export const getUniqueId = (): number => {
     idCounter = (idCounter + 1) % MAX
     return idCounter
-}
-
-export enum RpcErrorCode {
-    INTERNAL,
-    TRY_AGAIN_LATER,
-    INVALID_REQUEST,
-    RESOURCE_UNAVAILABLE,
-    METHOD_NOT_FOUND,
 }
 
 export type Maybe<T> = Partial<T> | null | undefined
@@ -117,8 +114,45 @@ const callbackNoop = (error?: Error) => {
     }
 }
 
-export const nodeify = <C>(fn: Function, context: C) => {
-    return function (...args: unknown[]) {
+type NodeifyAsyncResult<F> = F extends (...args: infer T) => Promise<infer U>
+    ? (...args: [...T, (error: Error | null, result?: U) => void]) => void
+    : never
+
+export const nodeifyAsync = <C extends {}, M extends keyof C>(
+    context: C,
+    method: M
+): NodeifyAsyncResult<C[M]> => {
+    const fn = (context[method] as unknown) as (...args: any[]) => Promise<any>
+    return (function (...args: any[]) {
+        const lastArg = args[args.length - 1]
+        const lastArgIsCallback = typeof lastArg === 'function'
+
+        let callback
+        if (lastArgIsCallback) {
+            callback = lastArg
+            args.pop()
+        } else {
+            callback = callbackNoop
+        }
+
+        promiseToCallback(fn.apply(context, args))(callback)
+    } as unknown) as NodeifyAsyncResult<C[M]>
+}
+
+type NodeifyResult<F> = F extends (
+    ...args: [...infer T, (error: Error | null, result?: infer U) => void]
+) => void
+    ? (...args: [...T, (error: Error | null, result?: U) => void]) => void
+    : F extends (...args: infer T) => void
+    ? (...args: [...T, (error: Error | null, result: undefined) => void]) => void
+    : never
+
+export const nodeify = <C extends {}, M extends keyof C>(
+    context: C,
+    method: M
+): NodeifyResult<C[M]> => {
+    const fn = (context[method] as unknown) as Function
+    return (function (...args: any[]) {
         const lastArg = args[args.length - 1]
         const lastArgIsCallback = typeof lastArg === 'function'
 
@@ -137,7 +171,7 @@ export const nodeify = <C>(fn: Function, context: C) => {
             result = Promise.reject(e)
         }
         promiseToCallback(result)(callback)
-    }
+    } as unknown) as NodeifyResult<C[M]>
 }
 
 export class PortDuplexStream extends Duplex {
@@ -184,6 +218,17 @@ export class PortDuplexStream extends Duplex {
         }
         return callback()
     }
+}
+
+export const checkForError = () => {
+    const { lastError } = chrome.runtime
+    if (!lastError) {
+        return undefined
+    }
+    if ((lastError as any).stack && lastError.message) {
+        return lastError
+    }
+    return new Error(lastError.message)
 }
 
 export const logStreamDisconnectWarning = (
@@ -478,4 +523,77 @@ const assignOriginalError = (error: unknown): unknown => {
 
 const hasKey = (obj: Record<string, unknown>, key: string) => {
     return Object.prototype.hasOwnProperty.call(obj, key)
+}
+
+export type UniqueArray<T> = T extends readonly [infer X, ...infer Rest]
+    ? InArray<Rest, X> extends true
+        ? ['Encountered value with duplicates:', X]
+        : readonly [X, ...UniqueArray<Rest>]
+    : T
+
+export type InArray<T, X> = T extends readonly [X, ...infer _Rest]
+    ? true
+    : T extends readonly [X]
+    ? true
+    : T extends readonly [infer _, ...infer Rest]
+    ? InArray<Rest, X>
+    : false
+
+export type AsyncReturnType<T extends (...args: any) => Promise<any>> = T extends (
+    ...args: any
+) => Promise<infer R>
+    ? R
+    : any
+
+export const shuffleArray = <T>(array: T[]) => {
+    let currentIndex = array.length
+    let temporaryValue: T
+    let randomIndex: number
+
+    while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex)
+        currentIndex -= 1
+
+        temporaryValue = array[currentIndex]
+        array[currentIndex] = array[randomIndex]
+        array[randomIndex] = temporaryValue
+    }
+
+    return array
+}
+
+export const extractTransactionValue = (transaction: nt.Transaction) => {
+    const outgoing = transaction.outMessages.reduce(
+        (total, msg) => total.add(msg.value),
+        new Decimal(0)
+    )
+    return new Decimal(transaction.inMessage.value).sub(outgoing)
+}
+
+export const extractTransactionAddress = (transaction: nt.Transaction) => {
+    if (transaction.outMessages.length > 0) {
+        for (const item of transaction.outMessages) {
+            if (item.dst != null) {
+                return item.dst
+            }
+        }
+        return undefined
+    } else if (transaction.inMessage.src != null) {
+        return transaction.inMessage.src
+    } else {
+        return transaction.inMessage.dst
+    }
+}
+
+export const convertAddress = (address: string | undefined) =>
+    address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
+
+export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toString()
+
+export const estimateUsd = (amount: string) => {
+    return `${new Decimal(amount || '0').div(ONE_TON).mul('0.6').toFixed(2).toString()}`
+}
+
+export const parseTons = (amount: string) => {
+    return new Decimal(amount).mul(ONE_TON).ceil().toFixed(0)
 }
