@@ -1,6 +1,6 @@
 {
-  "name": "nekoton",
-  "version": "1.0.0",
+  "name": "TON Crystal Wallet",
+  "version": "0.0.2",
   "description": "Simple TON wallet browser plugin",
   "scripts": {
     "start": "webpack --watch --config webpack.dev.js",
