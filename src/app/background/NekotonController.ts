@@ -4,6 +4,7 @@ import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
 import { debounce } from 'lodash'
+import { ProviderEvent, ProviderEventCall } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
 import {
@@ -35,7 +36,6 @@ import { createProviderMiddleware } from './providerMiddleware'
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
     openPopup: () => void
-    getRequestAccountTabIds: () => { [origin: string]: number }
     getOpenNekotonTabIds: () => { [id: number]: true }
 }
 
@@ -130,6 +130,10 @@ export class NekotonController extends EventEmitter {
             this._debouncedSendUpdate()
         })
 
+        this._components.permissionsController.config.notifyDomain = this._notifyConnections.bind(
+            this
+        )
+
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
                 this._components.accountController.enableIntensivePolling()
@@ -178,6 +182,7 @@ export class NekotonController extends EventEmitter {
             prepareMessage: nodeifyAsync(accountController, 'prepareMessage'),
             prepareDeploymentMessage: nodeifyAsync(accountController, 'prepareDeploymentMessage'),
             sendMessage: nodeifyAsync(accountController, 'sendMessage'),
+            preloadTransactions: nodeifyAsync(accountController, 'preloadTransactions'),
             resolvePendingApproval: nodeify(approvalController, 'resolve'),
             rejectPendingApproval: nodeify(approvalController, 'reject'),
         }
@@ -197,10 +202,22 @@ export class NekotonController extends EventEmitter {
             .startSwitchingNetwork(params)
             .then((handle) => handle.switch())
         await this._components.accountController.startSubscriptions()
+
+        this._notifyAllConnections({
+            method: 'networkChanged',
+            params: {
+                selectedConnection: params.name,
+            },
+        })
     }
 
     public async logOut() {
         await this._components.accountController.logOut()
+
+        this._notifyAllConnections({
+            method: 'loggedOut',
+            params: {},
+        })
     }
 
     private _setupControllerConnection<T extends Duplex>(outStream: T) {
@@ -326,7 +343,10 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    private _notifyConnections<T>(origin: string, payload: T) {
+    private _notifyConnections<T extends ProviderEvent>(
+        origin: string,
+        payload: ProviderEventCall<T>
+    ) {
         const connections = this._connections[origin]
         if (connections) {
             Object.values(connections).forEach(({ engine }) => {
@@ -335,15 +355,17 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    private _notifyAllConnections<T extends {}>(
-        payload: ((origin: { [id: string]: { engine: JsonRpcEngine } }) => T) | T
+    private _notifyAllConnections<T extends ProviderEvent>(
+        payload:
+            | ((origin: { [id: string]: { engine: JsonRpcEngine } }) => ProviderEventCall<T>)
+            | ProviderEventCall<T>
     ) {
         const getPayload =
             typeof payload === 'function'
                 ? (origin: { [id: string]: { engine: JsonRpcEngine } }) =>
-                      (payload as (origin: { [id: string]: { engine: JsonRpcEngine } }) => T)(
-                          origin
-                      )
+                      (payload as (origin: {
+                          [id: string]: { engine: JsonRpcEngine }
+                      }) => ProviderEventCall<T>)(origin)
                 : () => payload
 
         Object.values(this._connections).forEach((origin) => {

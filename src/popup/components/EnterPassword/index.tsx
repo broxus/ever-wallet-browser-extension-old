@@ -21,10 +21,10 @@ const EnterPassword: React.FC<IEnterPassword> = ({
     handleNext,
     handleBack,
 }) => {
-    const { register, handleSubmit, errors } = useForm()
+    const { register, handleSubmit, errors } = useForm<{ password: string }>()
 
-    const onSubmit = (data: any) => {
-        handleNext(data.pwd)
+    const onSubmit = ({ password }: { password: string }) => {
+        handleNext(password)
     }
 
     return (
@@ -34,7 +34,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                     <h2 className="enter-password__content-pwd-form-title">Enter your password</h2>
                     <form id="password" onSubmit={handleSubmit(onSubmit)}>
                         <Input
-                            name="pwd"
+                            name="password"
                             register={register({
                                 required: true,
                                 minLength: 6,
@@ -44,9 +44,9 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                             autoFocus
                             type={'password'}
                         />
-                        {(errors.pwd || error) && (
+                        {(errors.password || error) && (
                             <div className="check-seed__content-error">
-                                {errors.pwd && 'The password is required'}
+                                {errors.password && 'The password is required'}
                                 {error}
                             </div>
                         )}
@@ -55,7 +55,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
             </div>
             <div className="enter-password__buttons">
                 <Button text={'Back'} disabled={disabled} onClick={() => handleBack()} white />
-                <Button text={'Next'} disabled={disabled} onClick={() => handleSubmit(onSubmit)} />
+                <Button text={'Next'} disabled={disabled} onClick={handleSubmit(onSubmit)} />
             </div>
         </div>
     )

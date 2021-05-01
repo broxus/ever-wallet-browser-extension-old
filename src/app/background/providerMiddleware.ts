@@ -234,16 +234,17 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
 
     permissions.map(validatePermission)
 
-    await permissionsController.requestPermissions(origin, permissions as Permission[])
-
-    res.result = {}
+    res.result = await permissionsController.requestPermissions(origin, permissions as Permission[])
     end()
 }
 
-const disconnect: ProviderMethod<'disconnect'> = async (_req, _res, _next, end, ctx) => {
+const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
     requirePermissions(ctx, [])
 
-    // TODO: disconnect
+    const { origin, permissionsController } = ctx
+
+    permissionsController.removeOrigin(origin)
+    res.result = {}
     end()
 }
 

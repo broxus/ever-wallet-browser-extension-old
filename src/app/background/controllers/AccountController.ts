@@ -391,6 +391,19 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async preloadTransactions(address: string, lt: string, hash: string) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        await subscription.use(async (wallet) => {
+            try {
+                await wallet.preloadTransactions(lt, hash)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+            }
+        })
+    }
+
     public enableIntensivePolling() {
         console.log('Enable intensive polling')
         this._tonWalletSubscriptions.forEach((subscription) => {

@@ -14,7 +14,6 @@ window.NEKOTON_NOTIFIER = notificationManager
 let popupIsOpen: boolean = false
 let notificationIsOpen: boolean = false
 let uiIsTriggering: boolean = false
-const requestAccountTabIds: { [id: string]: number } = {}
 const openNekotonTabsIDs: { [id: number]: true } = {}
 
 const initialize = async () => {
@@ -28,9 +27,6 @@ const setupController = async () => {
     const controller = await NekotonController.load({
         showUserConfirmation: triggerUi,
         openPopup,
-        getRequestAccountTabIds: () => {
-            return requestAccountTabIds
-        },
         getOpenNekotonTabIds: () => {
             return openNekotonTabsIDs
         },
@@ -64,17 +60,6 @@ const setupController = async () => {
                 endOfStream(portStream, () => (notificationIsOpen = false))
             }
         } else {
-            if (remotePort.sender && remotePort.sender.tab && remotePort.sender.url) {
-                const tabId = remotePort.sender.tab.id
-                const url = new URL(remotePort.sender.url)
-                const { origin } = url
-
-                remotePort.onMessage.addListener((msg) => {
-                    if (tabId && msg.data && msg.data.method === 'ton_requestAccounts') {
-                        requestAccountTabIds[origin] = tabId
-                    }
-                })
-            }
             connectExternal(remotePort)
         }
     }
