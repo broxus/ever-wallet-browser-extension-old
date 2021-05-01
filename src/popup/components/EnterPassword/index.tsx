@@ -55,7 +55,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
             </div>
             <div className="enter-password__buttons">
                 <Button text={'Back'} disabled={disabled} onClick={() => handleBack()} white />
-                <Button text={'Next'} disabled={disabled} onClick={() => handleSubmit(onSubmit)} form="password" />
+                <Button text={'Next'} disabled={disabled} onClick={() => handleSubmit(onSubmit)} />
             </div>
         </div>
     )

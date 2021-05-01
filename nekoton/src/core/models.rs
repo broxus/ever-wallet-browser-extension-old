@@ -183,6 +183,7 @@ export type Message = {
     value: string,
     bounce: boolean,
     bounced: boolean,
+    body?: string,
     bodyHash?: string,
 };
 "#;
@@ -194,13 +195,20 @@ extern "C" {
 }
 
 pub fn make_message(data: models::Message) -> Message {
+    let (body, body_hash) = if let Some(body) = data.body {
+        (Some(body.data), Some(body.hash.to_hex_string()))
+    } else {
+        (None, None)
+    };
+
     ObjectBuilder::new()
         .set("src", data.src.as_ref().map(ToString::to_string))
         .set("dst", data.dst.as_ref().map(ToString::to_string))
         .set("value", data.value.to_string())
         .set("bounce", data.bounce)
         .set("bounced", data.bounced)
-        .set("bodyHash", data.body.map(|body| body.hash.to_hex_string()))
+        .set("body", body)
+        .set("bodyHash", body_hash)
         .build()
         .unchecked_into()
 }

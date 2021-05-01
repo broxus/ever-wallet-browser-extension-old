@@ -30,7 +30,7 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     onReject,
 }) => {
     const { origin } = approval
-    const { address } = approval.requestData
+    const { recipient } = approval.requestData
 
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.DETAILS)
 

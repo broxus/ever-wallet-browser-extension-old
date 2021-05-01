@@ -35,7 +35,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     const [fees, setFees] = useState<string>()
 
     useEffect(() => {
-        if (tonWalletState != null) {
+        if (tonWalletState != null && !tonWalletState.isDeployed) {
             estimateFees()
                 .then((fees) => {
                     setFees(fees)

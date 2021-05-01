@@ -19,7 +19,7 @@ pub fn run_local(
     contract_abi: &str,
     method: &str,
     input: TokensObject,
-) -> Result<TokensObject, JsValue> {
+) -> Result<ExecutionOutput, JsValue> {
     use crate::core::models::*;
 
     let gen_timings = parse_gen_timings(gen_timings)?;
@@ -33,7 +33,7 @@ pub fn run_local(
         .run_local(account_stuff, gen_timings, &last_transaction_id, &input)
         .handle_error()?;
 
-    make_tokens_object(&output)
+    make_execution_output(&output)
 }
 
 #[wasm_bindgen(js_name = "getExpectedAddress")]
@@ -109,6 +109,99 @@ pub fn decode_output(
 
     let output = method.decode_output(message_body, true).handle_error()?;
     make_tokens_object(&output)
+}
+
+#[wasm_bindgen(js_name = "decodeTransaction")]
+pub fn decode_transaction(
+    transaction: crate::core::models::Transaction,
+    contract_abi: &str,
+    method: &str,
+) -> Result<DecodedTransaction, JsValue> {
+    let transaction: JsValue = transaction.unchecked_into();
+    if !transaction.is_object() {
+        return Err(AbiError::ExpectedObject).handle_error();
+    }
+
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let method = contract_abi.function(method).handle_error()?;
+
+    let in_msg = js_sys::Reflect::get(&transaction, &JsValue::from_str("inMessage"))?;
+    if !in_msg.is_object() {
+        return Err(AbiError::ExpectedMessage).handle_error();
+    }
+    let internal = js_sys::Reflect::get(&in_msg, &JsValue::from_str("src"))?.is_string();
+
+    let body_key = JsValue::from_str("body");
+    let in_msg_body = js_sys::Reflect::get(&in_msg, &body_key)?
+        .as_string()
+        .ok_or(AbiError::ExpectedMessageBody)
+        .handle_error()
+        .and_then(|body| parse_slice(&body))?;
+
+    let input = method.decode_input(in_msg_body, internal).handle_error()?;
+
+    let out_msgs = js_sys::Reflect::get(&transaction, &JsValue::from_str("outMessages"))?;
+    if !js_sys::Array::is_array(&out_msgs) {
+        return Err(AbiError::ExpectedArray).handle_error();
+    }
+
+    let dst_key = JsValue::from_str("dst");
+    let ext_out_msgs = out_msgs
+        .unchecked_into::<js_sys::Array>()
+        .iter()
+        .filter_map(|message| {
+            match js_sys::Reflect::get(&message, &body_key) {
+                Ok(dst) if dst.is_string() => return None,
+                Err(error) => return Some(Err(error)),
+                _ => {}
+            };
+
+            Some(
+                match js_sys::Reflect::get(&message, &dst_key).map(|item| item.as_string()) {
+                    Ok(Some(body)) => parse_slice(&body),
+                    Ok(None) => Err(AbiError::ExpectedMessageBody).handle_error(),
+                    Err(error) => Err(error),
+                },
+            )
+        })
+        .collect::<Result<Vec<_>, JsValue>>()?;
+
+    let output = nt::helpers::abi::process_raw_outputs(&ext_out_msgs, method).handle_error()?;
+
+    Ok(ObjectBuilder::new()
+        .set("input", make_tokens_object(&input)?)
+        .set("output", make_tokens_object(&output)?)
+        .build()
+        .unchecked_into())
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const DECODED_TRANSACTION: &str = r#"
+export type DecodedTransaction = {
+    input: TokensObject,
+    output: TokensObject,
+};
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const EXECUTION_OUTPUT: &str = r#"
+export type ExecutionOutput = {
+    output?: TokensObject,
+    code: number,
+};
+"#;
+
+fn make_execution_output(
+    data: &nt::helpers::abi::ExecutionOutput,
+) -> Result<ExecutionOutput, JsValue> {
+    Ok(ObjectBuilder::new()
+        .set(
+            "output",
+            data.tokens.as_deref().map(make_tokens_object).transpose()?,
+        )
+        .set("code", data.result_code)
+        .build()
+        .unchecked_into())
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -515,6 +608,10 @@ enum AbiError {
     ExpectedMapItem,
     #[error("Expected object")]
     ExpectedObject,
+    #[error("Expected message")]
+    ExpectedMessage,
+    #[error("Expected message body")]
+    ExpectedMessageBody,
     #[error("Invalid array length")]
     InvalidArrayLength,
     #[error("Invalid number")]
@@ -546,4 +643,10 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "TokensObject")]
     pub type TokensObject;
+
+    #[wasm_bindgen(typescript_type = "ExecutionOutput")]
+    pub type ExecutionOutput;
+
+    #[wasm_bindgen(typescript_type = "DecodedTransaction")]
+    pub type DecodedTransaction;
 }
