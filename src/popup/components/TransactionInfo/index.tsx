@@ -3,7 +3,24 @@ import './style.scss'
 import { convertAddress } from '@shared/utils'
 import Button from '@popup/components/Button'
 
-const TransactionInfo = ({ date, sender, recipient }) => {
+interface ITransactionInfo {
+    date: string
+    sender: string
+    recipient: string
+    amount: string
+    fee: string
+    total: string
+    address: string
+}
+const TransactionInfo: React.FC<ITransactionInfo> = ({
+    date,
+    sender,
+    recipient,
+    amount,
+    fee,
+    total,
+    address,
+}) => {
     return (
         <>
             <h2 className="send-screen__form-title">Transaction information</h2>
@@ -34,14 +51,17 @@ const TransactionInfo = ({ date, sender, recipient }) => {
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Total amount</span>
-                    <span className="send-screen__form-tx-details-param-value">{amount}</span>
+                    <span className="send-screen__form-tx-details-param-value">{total}</span>
                 </div>
             </div>
-            <Button white>
-                <a target="_blank" href={`https://ton-explorer.com/accounts/${address}`}>
-                    Open in explorer
-                </a>
-            </Button>
+            <Button
+                white
+                text={
+                    <a target="_blank" href={`https://ton-explorer.com/accounts/${address}`}>
+                        Open in explorer
+                    </a>
+                }
+            />
         </>
     )
 }
