@@ -56,6 +56,7 @@ type IUserAssets = {
 enum AssetsTab {
     ASSETS,
     TRANSACTIONS,
+    ACTIVITY,
 }
 
 const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setActiveContent }) => {
@@ -80,6 +81,14 @@ const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setAc
                         onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}
                     >
                         Transactions
+                    </div>
+                    <div
+                        className={cn('user-assets__panel__tab', {
+                            _active: activeTab == AssetsTab.ACTIVITY,
+                        })}
+                        onClick={() => setActiveTab(AssetsTab.ACTIVITY)}
+                    >
+                        Activity
                     </div>
                 </div>
                 {activeTab == AssetsTab.ASSETS && (
