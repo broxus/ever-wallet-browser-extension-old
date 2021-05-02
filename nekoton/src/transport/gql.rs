@@ -12,7 +12,9 @@ use wasm_bindgen_futures::*;
 
 use nt::transport::{gql, Transport};
 
-use super::{PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet};
+use super::{
+    PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
+};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -48,6 +50,32 @@ impl GqlConnection {
                 sender: Arc::new(sender),
             }),
         }
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToGenericContract")]
+    pub fn subscribe_to_generic_contract_wallet(
+        &self,
+        address: &str,
+        handler: crate::core::generic_contract::GenericContractSubscriptionHandlerImpl,
+    ) -> Result<PromiseGenericContract, JsValue> {
+        use crate::core::generic_contract::*;
+
+        let address = parse_address(address)?;
+
+        let transport = Arc::new(self.make_transport());
+        let handler = Arc::new(GenericContractSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::generic_contract::GenericContract::subscribe(
+                transport.clone() as Arc<dyn nt::transport::Transport>,
+                address,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(GenericContract::new(transport, wallet)))
+        })))
     }
 
     #[wasm_bindgen(js_name = "subscribeToTonWallet")]

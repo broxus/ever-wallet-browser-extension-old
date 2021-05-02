@@ -1,10 +1,12 @@
-import { Mutex } from 'await-semaphore'
+import { Mutex } from '@broxus/await-semaphore'
 import {
     convertAddress,
     convertTons,
     extractTransactionAddress,
     extractTransactionValue,
     NekotonRpcError,
+    SendMessageCallback,
+    SendMessageRequest,
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { AccountToCreate, MessageToPrepare } from '@shared/approvalApi'
@@ -18,19 +20,6 @@ const DEFAULT_POLLING_INTERVAL = 10000 // 10s
 const BACKGROUND_POLLING_INTERVAL = 60000 // 1m
 
 const NEXT_BLOCK_TIMEOUT = 60 // 60s
-
-type SendMessagePromiseResolve = (transaction: nt.Transaction) => void
-type SendMessagePromiseReject = (error?: Error) => void
-
-interface SendMessageCallback {
-    resolve: SendMessagePromiseResolve
-    reject: SendMessagePromiseReject
-}
-
-export interface SendMessageRequest {
-    expireAt: number
-    boc: string
-}
 
 export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
@@ -714,6 +703,7 @@ class TonWalletSubscription {
 
     public async stop() {
         await this.pause()
+        this._tonWallet.free()
         this._releaseConnection?.()
         this._releaseConnection = undefined
     }

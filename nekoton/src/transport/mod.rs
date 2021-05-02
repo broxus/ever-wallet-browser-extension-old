@@ -54,6 +54,9 @@ pub fn make_full_contract_state(
 
 #[wasm_bindgen]
 extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<GenericContract>")]
+    pub type PromiseGenericContract;
+
     #[wasm_bindgen(typescript_type = "Promise<TonWallet>")]
     pub type PromiseTonWallet;
 

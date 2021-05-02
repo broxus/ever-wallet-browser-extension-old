@@ -15,6 +15,7 @@ import { ApprovalController } from './controllers/ApprovalController'
 import { PermissionsController, validatePermission } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { AccountController } from './controllers/AccountController'
+import { SubscriptionController } from './controllers/SubscriptionController'
 import { LastTransactionId } from '@nekoton'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
@@ -22,11 +23,13 @@ const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: un
 
 interface CreateProviderMiddlewareOptions {
     origin: string
+    tabId?: number
     isInternal: boolean
     approvalController: ApprovalController
     accountController: AccountController
     permissionsController: PermissionsController
     connectionController: ConnectionController
+    subscriptionsController: SubscriptionController
 }
 
 type ProviderMethod<T extends keyof ProviderApi> = ProviderApi[T] extends {
@@ -142,6 +145,15 @@ function requireOptional<T, O, P extends keyof O>(
     }
 }
 
+function requireTabid<T>(
+    req: JsonRpcRequest<T>,
+    tabId: number | undefined
+): asserts tabId is number {
+    if (tabId == null) {
+        throw invalidRequest(req, 'Invalid tab id')
+    }
+}
+
 function requireLastTransactionId<T, O, P extends keyof O>(
     req: JsonRpcRequest<T>,
     object: O,
@@ -248,7 +260,7 @@ const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, c
     end()
 }
 
-const subscribe: ProviderMethod<'subscribe'> = async (req, _res, _next, end, ctx) => {
+const subscribe: ProviderMethod<'subscribe'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
 
@@ -256,25 +268,44 @@ const subscribe: ProviderMethod<'subscribe'> = async (req, _res, _next, end, ctx
     requireString(req, req.params, 'address')
     requireOptionalObject(req, req.params, 'subscriptions')
 
-    // TODO: subscribe to contract
+    if (!nt.checkAddress(address)) {
+        throw invalidRequest(req, 'Invalid address')
+    }
+
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
+
+    res.result = await subscriptionsController.subscribeToContract(tabId, address, subscriptions)
     end()
 }
 
-const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, _res, _next, end, ctx) => {
+const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, [])
     requireParams(req)
 
     const { address } = req.params
     requireString(req, req.params, 'address')
 
-    // TODO: unsubscribe from contract
+    if (!nt.checkAddress(address)) {
+        throw invalidRequest(req, 'Invalid address')
+    }
+
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
+
+    await subscriptionsController.unsubscribeFromContract(tabId, address)
+    res.result = {}
     end()
 }
 
-const unsubscribeAll: ProviderMethod<'unsubscribeAll'> = async (_req, _res, _next, end, ctx) => {
+const unsubscribeAll: ProviderMethod<'unsubscribeAll'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, [])
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
 
-    // TODO: unsubscribe from all contract
+    await subscriptionsController.unsubscribeFromAllContracts(tabId)
+
+    res.result = {}
     end()
 }
 
@@ -283,7 +314,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res,
     _next,
     end,
-    { origin, connectionController, permissionsController }
+    { origin, tabId, connectionController, permissionsController, subscriptionsController }
 ) => {
     const { selectedConnection } = connectionController.state
     const permissions = permissionsController.getPermissions(origin)
@@ -291,7 +322,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res.result = {
         selectedConnection: selectedConnection.name,
         permissions,
-        subscriptions: {}, // TODO
+        subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
     end()
 }
@@ -666,9 +697,9 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
 
 const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     req,
-    res,
+    _res,
     _next,
-    end,
+    _end,
     ctx
 ) => {
     requirePermissions(ctx, ['accountInteraction'])

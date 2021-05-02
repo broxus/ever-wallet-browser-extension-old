@@ -18,6 +18,21 @@ pub struct GenericContract {
     pub inner: Arc<GenericContractImpl>,
 }
 
+impl GenericContract {
+    pub fn new(
+        transport: Arc<nt::transport::gql::GqlTransport>,
+        contract: generic_contract::GenericContract,
+    ) -> Self {
+        Self {
+            address: contract.address().to_string(),
+            inner: Arc::new(GenericContractImpl {
+                transport,
+                contract: Mutex::new(contract),
+            }),
+        }
+    }
+}
+
 #[wasm_bindgen]
 impl GenericContract {
     #[wasm_bindgen(getter, js_name = "address")]
