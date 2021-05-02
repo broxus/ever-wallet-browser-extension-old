@@ -1,4 +1,4 @@
-@import "../../styles/colors";
+@import '../../styles/colors';
 
 .user-assets {
     padding: 0 20px;
@@ -16,8 +16,8 @@
             line-height: 20px;
             text-align: center;
             letter-spacing: 0.25px;
-            padding: 16px 24px;
-            width: 50%;
+            padding: 16px 0;
+            width: 33%;
 
             &._active {
                 color: $windowBgActive;
