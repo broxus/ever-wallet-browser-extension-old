@@ -117,7 +117,7 @@ type MessageParams = {
 
 type IPrepareMessage = {
     account: nt.AssetsList
-    tonWalletState: nt.AccountState
+    tonWalletState: nt.ContractState
     estimateFees: (params: MessageToPrepare) => Promise<string>
     prepareMessage: (
         params: MessageToPrepare,
@@ -286,7 +286,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
 
 interface ISend {
     account: nt.AssetsList
-    tonWalletState: nt.AccountState
+    tonWalletState: nt.ContractState
     estimateFees: (params: MessageToPrepare) => Promise<string>
     prepareMessage: (
         params: MessageToPrepare,

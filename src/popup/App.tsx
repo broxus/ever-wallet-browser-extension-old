@@ -86,7 +86,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
         return (
             <ApprovalPage
                 selectedAccount={controllerState.selectedAccount}
-                tonWalletStates={controllerState.accountStates}
+                tonWalletStates={controllerState.accountContractStates}
                 pendingApprovals={pendingApprovals}
                 checkPassword={async (password) => await controllerRpc.checkPassword(password)}
                 resolvePendingApproval={async (id, params) =>

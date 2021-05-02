@@ -11,7 +11,7 @@ import TransactionsList from '@popup/components/TransactionsList'
 import './style.scss'
 
 type AssetsListProps = {
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     setActiveContent: (arg0: number) => void
 }
 
@@ -48,7 +48,7 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState }) => {
 }
 
 type IUserAssets = {
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     transactions: nt.Transaction[]
     setActiveContent: (arg0: number) => void
 }

@@ -42,14 +42,14 @@ export interface AccountControllerConfig extends BaseConfig {
 
 export interface AccountControllerState extends BaseState {
     selectedAccount: nt.AssetsList | undefined
-    accountStates: { [address: string]: nt.AccountState }
+    accountContractStates: { [address: string]: nt.ContractState }
     accountTransactions: { [address: string]: nt.Transaction[] }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
 }
 
 const defaultState: AccountControllerState = {
     selectedAccount: undefined,
-    accountStates: {},
+    accountContractStates: {},
     accountTransactions: {},
     accountPendingMessages: {},
 }
@@ -114,7 +114,7 @@ export class AccountController extends BaseController<
                     )
                 }
 
-                onStateChanged(newState: nt.AccountState) {
+                onStateChanged(newState: nt.ContractState) {
                     this._controller._updateTonWalletState(this._address, newState)
                 }
 
@@ -490,14 +490,14 @@ export class AccountController extends BaseController<
         })
     }
 
-    private _updateTonWalletState(address: string, state: nt.AccountState) {
-        const currentStates = this.state.accountStates
+    private _updateTonWalletState(address: string, state: nt.ContractState) {
+        const currentStates = this.state.accountContractStates
         const newStates = {
             ...currentStates,
             [address]: state,
         }
         this.update({
-            accountStates: newStates,
+            accountContractStates: newStates,
         })
     }
 
@@ -534,7 +534,7 @@ interface ITonWalletHandler {
 
     onMessageExpired(pendingTransaction: nt.PendingTransaction): void
 
-    onStateChanged(newState: nt.AccountState): void
+    onStateChanged(newState: nt.ContractState): void
 
     onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
 }

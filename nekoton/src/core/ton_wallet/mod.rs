@@ -65,10 +65,10 @@ impl TonWallet {
         make_ton_wallet_details(self.details)
     }
 
-    #[wasm_bindgen(js_name = "accountState")]
-    pub fn account_state(&self) -> crate::core::models::AccountState {
+    #[wasm_bindgen(js_name = "contractState")]
+    pub fn contract_state(&self) -> crate::core::models::ContractState {
         let inner = self.inner.wallet.lock().trust_me();
-        crate::core::models::make_account_state(inner.account_state().clone())
+        crate::core::models::make_contract_state(inner.contract_state().clone())
     }
 
     #[wasm_bindgen(js_name = "prepareDeploy")]
@@ -84,7 +84,7 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "prepareTransfer")]
     pub fn prepare_transfer(
         &self,
-        current_state: &ContractState,
+        raw_current_state: &RawContractState,
         dest: &str,
         amount: &str,
         bounce: bool,
@@ -104,7 +104,7 @@ impl TonWallet {
         Ok(
             match wallet
                 .prepare_transfer(
-                    &current_state.inner,
+                    &raw_current_state.inner,
                     dest,
                     amount,
                     bounce,
@@ -122,7 +122,7 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "getContractState")]
-    pub fn get_contract_state(&self) -> PromiseOptionContractState {
+    pub fn get_contract_state(&self) -> PromiseOptionRawContractState {
         use nt::transport::models;
         use nt::transport::Transport;
 
@@ -136,10 +136,10 @@ impl TonWallet {
                 .handle_error()?;
 
             Ok(match contract_state {
-                models::ContractState::Exists(state) => JsValue::from(ContractState {
+                models::RawContractState::Exists(state) => JsValue::from(RawContractState {
                     inner: state.account,
                 }),
-                models::ContractState::NotExists => JsValue::undefined(),
+                models::RawContractState::NotExists => JsValue::undefined(),
             })
         }))
     }
@@ -164,7 +164,7 @@ impl TonWallet {
     pub fn send_message(
         &self,
         message: crate::crypto::JsSignedMessage,
-    ) -> Result<PromisePendingTransaction, JsValue> {
+    ) -> Result<crate::core::models::PromisePendingTransaction, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(message)?;
 
@@ -259,7 +259,7 @@ extern "C" {
     #[wasm_bindgen(method, js_name = "onStateChanged")]
     pub fn on_state_changed(
         this: &TonWalletSubscriptionHandlerImpl,
-        new_state: crate::core::models::AccountState,
+        new_state: crate::core::models::ContractState,
     );
 
     #[wasm_bindgen(method, js_name = "onTransactionsFound")]
@@ -303,9 +303,9 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
             .on_message_expired(make_pending_transaction(pending_transaction));
     }
 
-    fn on_state_changed(&self, new_state: nt::core::models::AccountState) {
+    fn on_state_changed(&self, new_state: nt::core::models::ContractState) {
         use crate::core::models::*;
-        self.inner.on_state_changed(make_account_state(new_state));
+        self.inner.on_state_changed(make_contract_state(new_state));
     }
 
     fn on_transactions_found(
@@ -351,7 +351,7 @@ fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonW
 }
 
 #[wasm_bindgen]
-pub struct ContractState {
+pub struct RawContractState {
     #[wasm_bindgen(skip)]
     pub inner: ton_block::AccountStuff,
 }
@@ -395,9 +395,6 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "ContractType")]
     pub type ContractType;
 
-    #[wasm_bindgen(typescript_type = "Promise<ContractState | null>")]
-    pub type PromiseOptionContractState;
-
-    #[wasm_bindgen(typescript_type = "Promise<PendingTransaction>")]
-    pub type PromisePendingTransaction;
+    #[wasm_bindgen(typescript_type = "Promise<RawContractState | null>")]
+    pub type PromiseOptionRawContractState;
 }

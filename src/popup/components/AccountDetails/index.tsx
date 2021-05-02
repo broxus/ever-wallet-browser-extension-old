@@ -18,7 +18,7 @@ import './style.scss'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | null
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     network: string
     onToggleNetwork: () => void
     onSend: () => void

@@ -13,7 +13,7 @@ import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>
     account: nt.AssetsList | null
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     onSubmit: (data: ApprovalOutput<'requestPermissions'>) => void
     onReject: () => void
 }

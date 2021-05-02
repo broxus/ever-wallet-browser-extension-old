@@ -12,7 +12,7 @@ import Arrow from '@popup/img/arrow.svg'
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
     account: nt.AssetsList | null
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     onSubmit: () => void
     onReject: () => void
 }

@@ -12,7 +12,7 @@ use wasm_bindgen_futures::*;
 
 use nt::transport::{gql, Transport};
 
-use super::{PromiseOptionFullAccountState, PromiseTokenWallet, PromiseTonWallet};
+use super::{PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -142,16 +142,16 @@ impl GqlConnection {
         })))
     }
 
-    #[wasm_bindgen(js_name = "getFullAccountState")]
+    #[wasm_bindgen(js_name = "getFullContractState")]
     pub fn get_full_account_state(
         &self,
         address: &str,
-    ) -> Result<PromiseOptionFullAccountState, JsValue> {
+    ) -> Result<PromiseOptionFullContractState, JsValue> {
         let address = parse_address(address)?;
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            super::make_full_account_state(
+            super::make_full_contract_state(
                 transport
                     .get_contract_state(&address)
                     .await

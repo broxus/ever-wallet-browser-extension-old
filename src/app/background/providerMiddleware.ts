@@ -314,7 +314,7 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
     try {
         res.result = {
             state: await connectionController.use(
-                async ({ data: { connection } }) => await connection.getFullAccountState(address)
+                async ({ data: { connection } }) => await connection.getFullContractState(address)
             ),
         }
         end()
@@ -369,7 +369,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
 
     if (contractState == null) {
         contractState = await connectionController.use(
-            async ({ data: { connection } }) => await connection.getFullAccountState(address)
+            async ({ data: { connection } }) => await connection.getFullContractState(address)
         )
     }
 

@@ -9,7 +9,7 @@ import './style.scss'
 
 type IAccountModal = {
     account: nt.AssetsList
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     onOpenConnectedSites?: () => void
     onCreateAccount?: () => void
     onOpenKeyStore?: () => void

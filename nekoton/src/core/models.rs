@@ -34,7 +34,7 @@ pub fn make_symbol(data: models::Symbol) -> Symbol {
 
 #[wasm_bindgen(typescript_custom_section)]
 const ACCOUNT_STATE: &str = r#"
-export type AccountState = {
+export type ContractState = {
     balance: string,
     genTimings: GenTimings,
     lastTransactionId?: LastTransactionId,
@@ -45,10 +45,10 @@ export type AccountState = {
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "AccountState")]
-    pub type AccountState;
+    pub type ContractState;
 }
 
-pub fn make_account_state(data: models::AccountState) -> AccountState {
+pub fn make_contract_state(data: models::ContractState) -> ContractState {
     ObjectBuilder::new()
         .set("balance", data.balance.to_string())
         .set("genTimings", make_gen_timings(data.gen_timings))
@@ -354,6 +354,9 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "'new' | 'old'")]
     pub type BatchType;
+
+    #[wasm_bindgen(typescript_type = "Promise<PendingTransaction>")]
+    pub type PromisePendingTransaction;
 }
 
 #[derive(thiserror::Error, Debug)]

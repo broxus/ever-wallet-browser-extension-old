@@ -8,8 +8,8 @@ use wasm_bindgen::JsCast;
 use crate::utils::*;
 
 #[wasm_bindgen(typescript_custom_section)]
-const FULL_ACCOUNT_STATE: &'static str = r#"
-export type FullAccountState = {
+const FULL_CONTRACT_STATE: &'static str = r#"
+export type FullContractState = {
     balance: string,
     genTimings: GenTimings,
     lastTransactionId: LastTransactionId,
@@ -18,13 +18,13 @@ export type FullAccountState = {
 };
 "#;
 
-pub fn make_full_account_state(
-    contract_state: nt::transport::models::ContractState,
+pub fn make_full_contract_state(
+    contract_state: nt::transport::models::RawContractState,
 ) -> Result<JsValue, JsValue> {
     use crate::core::models::*;
 
     match contract_state {
-        nt::transport::models::ContractState::Exists(state) => {
+        nt::transport::models::RawContractState::Exists(state) => {
             let account_cell = state.account.serialize().handle_error()?;
             let boc = ton_types::serialize_toc(&account_cell)
                 .map(base64::encode)
@@ -48,7 +48,7 @@ pub fn make_full_account_state(
                 .build()
                 .unchecked_into())
         }
-        nt::transport::models::ContractState::NotExists => Ok(JsValue::undefined()),
+        nt::transport::models::RawContractState::NotExists => Ok(JsValue::undefined()),
     }
 }
 
@@ -60,6 +60,6 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<TokenWallet>")]
     pub type PromiseTokenWallet;
 
-    #[wasm_bindgen(typescript_type = "Promise<FullAccountState | undefined>")]
-    pub type PromiseOptionFullAccountState;
+    #[wasm_bindgen(typescript_type = "Promise<FullContractState | undefined>")]
+    pub type PromiseOptionFullContractState;
 }
