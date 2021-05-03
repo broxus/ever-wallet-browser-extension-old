@@ -5,7 +5,7 @@ import TagsInput from '@popup/components/TagsInput'
 import Button from '@popup/components/Button'
 
 type IEnterSeed = {
-    onSubmit: (words: string[]) => void
+    onSubmit: (words: string[]) => void | any
     onBack: () => void
     wordCount: number
 }
@@ -41,7 +41,7 @@ const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
                 <Button
                     text={'Confirm'}
                     disabled={words.length != wordCount}
-                    onClick={handleSubmit(onSubmit)}
+                    type="submit"
                     form="password"
                 />
                 <Button text={'Back'} white onClick={onBack} />
