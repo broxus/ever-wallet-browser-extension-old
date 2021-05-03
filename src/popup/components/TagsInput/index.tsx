@@ -22,10 +22,11 @@ const useStyles = makeStyles((theme: Theme) =>
 )
 
 interface ITagsInput {
+    words: string[]
     setWords: (words: string[]) => void
 }
 
-const TagsInput: React.FC<ITagsInput> = ({ setWords }) => {
+const TagsInput: React.FC<ITagsInput> = ({ setWords, words }) => {
     const classes = useStyles()
     const [hints, setHints] = useState<string[]>([])
 
@@ -54,6 +55,7 @@ const TagsInput: React.FC<ITagsInput> = ({ setWords }) => {
                 id="tags-standard"
                 options={hints}
                 getOptionLabel={(option) => option}
+                value={words}
                 onInputChange={(event, values) => onInputChange(event, values)}
                 onChange={(event, values) => onSelectTag(event, values)}
                 renderInput={(params) => (

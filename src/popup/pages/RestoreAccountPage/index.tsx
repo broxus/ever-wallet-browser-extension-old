@@ -75,7 +75,6 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ name, createAccount
                 <EnterSeedLogin
                     onSubmit={(words) => {
                         const phrase = words.join(' ')
-
                         try {
                             validateMnemonic(phrase, mnemonicType)
                             setSeed({ phrase, mnemonicType })
