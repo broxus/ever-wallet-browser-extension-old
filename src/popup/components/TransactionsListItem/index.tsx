@@ -1,16 +1,17 @@
-import React, { useEffect } from 'react'
+import React, { useState } from 'react'
 import {
     extractTransactionValue,
     extractTransactionAddress,
     convertAddress,
     convertTons,
-    logStreamDisconnectWarning,
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
 import TonLogoS from '@popup/img/ton-logo-s.svg'
 
 import './style.scss'
+import TransactionInfo from '@popup/components/TransactionInfo'
+import SlidingPanel from '@popup/components/SlidingPanel'
 
 type ITransactionsListItem = {
     transaction: nt.Transaction
@@ -18,17 +19,16 @@ type ITransactionsListItem = {
 }
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, additionalInfo }) => {
+    const [detailsPanelOpen, setDetailsPanelOpen] = useState(false)
     const value = extractTransactionValue(transaction)
     const address = extractTransactionAddress(transaction)
+    const total = value.add(transaction.totalFees)
 
-    useEffect(() => {
-        console.log(transaction, 'transaction')
-        console.log(additionalInfo, 'additionalInfo')
-    }, [transaction, additionalInfo])
+    console.log(transaction, 'transaction')
 
     return (
         <>
-            <div className="transactions-list-item" onClick={() => console.log('clicked')}>
+            <div className="transactions-list-item" onClick={() => setDetailsPanelOpen(true)}>
                 <div style={{ display: 'flex', width: '100%' }}>
                     <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
                         <TonLogoS />
@@ -67,6 +67,18 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
                     </div>
                 </div>
             </div>
+            <SlidingPanel isOpen={detailsPanelOpen} onClose={() => setDetailsPanelOpen(false)}>
+                <TransactionInfo
+                    date={new Date(transaction.createdAt * 1000).toLocaleTimeString()}
+                    sender={'tt'}
+                    recipient={'tt'}
+                    amount={convertTons(value.toString())}
+                    fee={convertTons(transaction.totalFees)}
+                    total={convertTons(total.toString())}
+                    address={address || ''}
+                    txHash={transaction.id.hash}
+                />
+            </SlidingPanel>
         </>
     )
 }

@@ -22,8 +22,13 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
             {!(transactions.length > 0) && (
                 <p className="transactions-list-empty">History is empty</p>
             )}
-            {transactions?.map((transaction) => {
-                return <TransactionListItem key={transaction.id.lt} transaction={transaction} />
+            {transactions?.map((transaction, i) => {
+                return (
+                    <TransactionListItem
+                        key={`${transaction.id.lt}${i}`}
+                        transaction={transaction}
+                    />
+                )
             })}
         </div>
     )
