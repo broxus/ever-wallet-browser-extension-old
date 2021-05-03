@@ -588,7 +588,7 @@ export const extractTransactionAddress = (transaction: nt.Transaction) => {
 export const convertAddress = (address: string | undefined) =>
     address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
 
-export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toString()
+export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toFixed()
 
 export const estimateUsd = (amount: string) => {
     return `${new Decimal(amount || '0').div(ONE_TON).mul('0.6').toFixed(2).toString()}`

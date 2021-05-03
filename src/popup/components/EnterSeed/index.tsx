@@ -33,7 +33,6 @@ const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
                     onClick={() => onSubmit(words)}
                     text={'Confirm'}
                     disabled={words.length != wordCount}
-                    type="button"
                 />
                 <Button text={'Back'} white onClick={onBack} />
             </div>
