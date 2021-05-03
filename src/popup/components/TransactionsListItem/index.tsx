@@ -19,7 +19,7 @@ type ITransactionsListItem = {
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, additionalInfo }) => {
     const value = extractTransactionValue(transaction)
-    const address = extractTransactionAddress(transaction)
+    const { address } = extractTransactionAddress(transaction)
 
     useEffect(() => {
         console.log(transaction, 'transaction')

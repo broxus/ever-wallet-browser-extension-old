@@ -115,12 +115,12 @@ export class AccountController extends BaseController<
                         let body = ''
                         for (const transaction of transactions) {
                             const value = extractTransactionValue(transaction)
-                            const address = extractTransactionAddress(transaction)
+                            const { address, direction } = extractTransactionAddress(transaction)
 
                             if (value.greaterThan('0')) {
-                                body += `${convertTons(value.toString())} TON from ${convertAddress(
-                                    address
-                                )}\n`
+                                body += `${convertTons(
+                                    value.toString()
+                                )} TON ${direction} ${convertAddress(address)}\n`
                             }
                         }
 
