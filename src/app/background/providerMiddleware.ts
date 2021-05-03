@@ -191,6 +191,13 @@ function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, ob
     requireObject(req, property, 'params')
 }
 
+function requireMethodOrArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    const property = object[key]
+    if (typeof property !== 'string' && !Array.isArray(property)) {
+        throw invalidRequest(req, `'${key}' must be a method name or an array of possible names`)
+    }
+}
+
 function findPreferredAccount<T, K>(
     req: JsonRpcRequest<T>,
     allowedAccounts: AccountInteractionItem[],
@@ -483,11 +490,11 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     const { body, abi, method, internal } = req.params
     requireString(req, req.params, 'body')
     requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
+    requireMethodOrArray(req, req.params, 'method')
     requireBoolean(req, req.params, 'internal')
 
     try {
-        res.result = nt.decodeInput(body, abi, method, internal) || {}
+        res.result = nt.decodeInput(body, abi, method, internal) || null
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -501,10 +508,10 @@ const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end
     const { body, abi, method } = req.params
     requireString(req, req.params, 'body')
     requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
+    requireMethodOrArray(req, req.params, 'method')
 
     try {
-        res.result = nt.decodeOutput(body, abi, method) || {}
+        res.result = nt.decodeOutput(body, abi, method) || null
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -523,10 +530,10 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
 
     const { transaction, abi, method } = req.params
     requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
+    requireMethodOrArray(req, req.params, 'method')
 
     try {
-        res.result = nt.decodeTransaction(transaction, abi, method) || {}
+        res.result = nt.decodeTransaction(transaction, abi, method) || null
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
