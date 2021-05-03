@@ -15,6 +15,7 @@ import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
+import TransactionInfo from '@popup/components/TransactionInfo'
 
 interface IMainPage {
     controllerState: ControllerState
@@ -47,6 +48,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const tonWalletState = controllerState.accountContractStates[
         accountAddress
     ] as nt.ContractState | null
+
     const transactions = controllerState.accountTransactions[accountAddress] || []
     const network = selectedConnection.name
 

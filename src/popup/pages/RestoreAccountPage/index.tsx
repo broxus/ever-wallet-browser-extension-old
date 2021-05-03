@@ -6,7 +6,7 @@ import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'
 import SelectContractType from '@popup/components/SelectContractType'
-import EnterSeed from '@popup/components/EnterSeed'
+import { EnterSeedLogin } from '@popup/components/EnterSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
 
@@ -72,10 +72,9 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ name, createAccount
                 />
             )}
             {localStep == LocalStep.ENTER_PHRASE && (
-                <EnterSeed
+                <EnterSeedLogin
                     onSubmit={(words) => {
                         const phrase = words.join(' ')
-
                         try {
                             validateMnemonic(phrase, mnemonicType)
                             setSeed({ phrase, mnemonicType })

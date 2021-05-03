@@ -10,7 +10,7 @@
     "scripts": [
       "background.js"
     ],
-    "persistent": false
+    "persistent": true
   },
   "icons": {
     "16": "icon16.png",

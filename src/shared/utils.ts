@@ -570,25 +570,28 @@ export const extractTransactionValue = (transaction: nt.Transaction) => {
     return new Decimal(transaction.inMessage.value).sub(outgoing)
 }
 
-export const extractTransactionAddress = (transaction: nt.Transaction) => {
-    if (transaction.outMessages.length > 0) {
-        for (const item of transaction.outMessages) {
-            if (item.dst != null) {
-                return item.dst
-            }
+export const extractTransactionAddress = (
+    transaction: nt.Transaction
+): { direction: TransactionDirection; address: string } => {
+    for (const item of transaction.outMessages) {
+        if (item.dst != null) {
+            return { direction: 'to', address: item.dst }
         }
-        return undefined
-    } else if (transaction.inMessage.src != null) {
-        return transaction.inMessage.src
+    }
+
+    if (transaction.inMessage.src != null) {
+        return { direction: 'from', address: transaction.inMessage.src }
     } else {
-        return transaction.inMessage.dst
+        return { direction: 'service', address: transaction.inMessage.dst || '' }
     }
 }
+
+export type TransactionDirection = 'from' | 'to' | 'service'
 
 export const convertAddress = (address: string | undefined) =>
     address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
 
-export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toString()
+export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toFixed()
 
 export const estimateUsd = (amount: string) => {
     return `${new Decimal(amount || '0').div(ONE_TON).mul('0.6').toFixed(2).toString()}`

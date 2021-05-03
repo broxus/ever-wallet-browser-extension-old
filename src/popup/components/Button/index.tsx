@@ -27,6 +27,7 @@ const Button: React.FC<IButton> = ({ text, white, disabled, noBorder, onClick, t
             <button
                 type={type}
                 form={form}
+                disabled={disabled}
                 className={className}
                 onClick={() => {}}
                 onMouseDown={(e) => {
