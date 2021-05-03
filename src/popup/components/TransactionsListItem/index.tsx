@@ -1,9 +1,10 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import {
     extractTransactionValue,
     extractTransactionAddress,
     convertAddress,
     convertTons,
+    logStreamDisconnectWarning,
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
@@ -20,9 +21,14 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
     const value = extractTransactionValue(transaction)
     const address = extractTransactionAddress(transaction)
 
+    useEffect(() => {
+        console.log(transaction, 'transaction')
+        console.log(additionalInfo, 'additionalInfo')
+    }, [transaction, additionalInfo])
+
     return (
         <>
-            <div className="transactions-list-item">
+            <div className="transactions-list-item" onClick={() => console.log('clicked')}>
                 <div style={{ display: 'flex', width: '100%' }}>
                     <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
                         <TonLogoS />

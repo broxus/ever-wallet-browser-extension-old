@@ -47,6 +47,8 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const tonWalletState = controllerState.accountContractStates[
         accountAddress
     ] as nt.ContractState | null
+
+
     const transactions = controllerState.accountTransactions[accountAddress] || []
     const network = selectedConnection.name
 
