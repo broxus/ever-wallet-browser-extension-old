@@ -73,7 +73,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
             </div>
             <SlidingPanel isOpen={detailsPanelOpen} onClose={() => setDetailsPanelOpen(false)}>
                 <TransactionInfo
-                    date={new Date(transaction.createdAt * 1000).toLocaleTimeString()}
+                    date={new Date(transaction.createdAt * 1000).toLocaleString()}
                     txAddress={txAddress}
                     amount={convertTons(value.toString())}
                     fee={convertTons(transaction.totalFees)}
