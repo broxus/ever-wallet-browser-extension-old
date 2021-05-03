@@ -87,7 +87,7 @@
     "react-tooltip": "^4.2.17",
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
-    "ton-inpage-provider": "^0.0.8",
+    "ton-inpage-provider": "^0.0.11",
     "util": "^0.12.3"
   }
 }

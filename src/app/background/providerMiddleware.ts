@@ -5,6 +5,7 @@ import {
     FullContractState,
     GenTimings,
     AccountInteractionItem,
+    TokensObject,
 } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
@@ -486,9 +487,7 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     requireBoolean(req, req.params, 'internal')
 
     try {
-        res.result = {
-            output: nt.decodeInput(body, abi, method, internal),
-        }
+        res.result = nt.decodeInput(body, abi, method, internal) || {}
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -505,9 +504,7 @@ const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end
     requireString(req, req.params, 'method')
 
     try {
-        res.result = {
-            output: nt.decodeOutput(body, abi, method),
-        }
+        res.result = nt.decodeOutput(body, abi, method) || {}
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -529,7 +526,7 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
     requireString(req, req.params, 'method')
 
     try {
-        res.result = nt.decodeTransaction(transaction, abi, method)
+        res.result = nt.decodeTransaction(transaction, abi, method) || {}
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -697,24 +694,44 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
 
 const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     req,
-    _res,
+    res,
     _next,
-    _end,
+    end,
     ctx
 ) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { preferredKey, address, initData, payload } = req.params
+    const { preferredKey, address, stateInit, payload } = req.params
     requireOptionalString(req, req.params, 'preferredKey')
     requireString(req, req.params, 'address')
-    requireOptionalString(req, req.params, 'initData')
+    requireOptionalString(req, req.params, 'stateInit')
     requireFunctionCall(req, req.params, 'payload')
 
-    const { permissionsController, approvalController } = ctx
+    const {
+        permissionsController,
+        approvalController,
+        accountController,
+        subscriptionsController,
+    } = ctx
 
     const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
     const signer = findPreferredSender(req, allowedAccounts, preferredKey)
+
+    let unsignedMessage: nt.UnsignedMessage
+    try {
+        unsignedMessage = nt.createExternalMessage(
+            address,
+            payload.abi,
+            payload.method,
+            stateInit,
+            payload.params,
+            signer,
+            60
+        )
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
 
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
@@ -726,7 +743,28 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         },
     })
 
-    // TODO: sign and send
+    let signedMessage: nt.SignedMessage
+    try {
+        unsignedMessage.refreshTimeout()
+        signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    } finally {
+        unsignedMessage.free()
+    }
+
+    const transaction = await subscriptionsController.sendMessage(address, signedMessage)
+    let output: TokensObject | undefined
+    try {
+        const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)
+        output = decoded?.output
+    } catch (_) {}
+
+    res.result = {
+        transaction,
+        output,
+    }
+    end()
 }
 
 const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {

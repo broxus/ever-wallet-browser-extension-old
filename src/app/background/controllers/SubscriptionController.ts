@@ -78,11 +78,7 @@ export class SubscriptionController extends BaseController<
             if (shouldUnsubscribe) {
                 tabSubscriptions?.delete(address)
                 subscriptionTabs?.delete(tabId)
-                if ((subscriptionTabs?.size || 0) == 0) {
-                    const subscription = this._subscriptions.get(address)
-                    this._subscriptions.delete(address)
-                    await subscription?.stop()
-                }
+                await this._tryUnsubscribe(address)
                 return defaultSubscriptionState
             }
 
@@ -93,69 +89,7 @@ export class SubscriptionController extends BaseController<
             let existingSubscription = this._subscriptions.get(address)
             const newSubscription = existingSubscription == null
             if (existingSubscription == null) {
-                class ContractHandler implements IGenericContractHandler {
-                    private readonly _address: string
-                    private readonly _controller: SubscriptionController
-                    private _enabled: boolean = false
-
-                    constructor(address: string, controller: SubscriptionController) {
-                        this._address = address
-                        this._controller = controller
-                    }
-
-                    public enableNotifications() {
-                        this._enabled = true
-                    }
-
-                    onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-                        this._enabled &&
-                            this._controller._rejectMessageRequest(
-                                this._address,
-                                pendingTransaction.bodyHash,
-                                new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
-                            )
-                    }
-
-                    onMessageSent(
-                        pendingTransaction: nt.PendingTransaction,
-                        transaction: nt.Transaction
-                    ) {
-                        this._enabled &&
-                            this._controller._resolveMessageRequest(
-                                this._address,
-                                pendingTransaction.bodyHash,
-                                transaction
-                            )
-                    }
-
-                    onStateChanged(newState: nt.ContractState) {
-                        this._enabled &&
-                            this._controller._notifyStateChanged(this._address, newState)
-                    }
-
-                    onTransactionsFound(
-                        transactions: Array<nt.Transaction>,
-                        info: nt.TransactionsBatchInfo
-                    ) {
-                        this._enabled &&
-                            this._controller._notifyTransactionsFound(
-                                this._address,
-                                transactions,
-                                info
-                            )
-                    }
-                }
-
-                const handler = new ContractHandler(address, this)
-
-                existingSubscription = await GenericContractSubscription.subscribe(
-                    this.config.connectionController,
-                    address,
-                    handler
-                )
-                handler.enableNotifications()
-                this._subscriptions.set(address, existingSubscription)
-                this._subscriptionTabs.set(address, subscriptionTabs)
+                existingSubscription = await this._createSubscription(address, subscriptionTabs)
             }
 
             subscriptionTabs.add(tabId)
@@ -201,10 +135,119 @@ export class SubscriptionController extends BaseController<
         for (const tabId of tabs) {
             await this.unsubscribeFromAllContracts(tabId)
         }
-        this._clearSendMessageRequests()
+        await this._clearSendMessageRequests()
     }
 
-    private _clearSendMessageRequests() {
+    public async sendMessage(address: string, signedMessage: nt.SignedMessage) {
+        let messageRequests = await this._sendMessageRequests.get(address)
+        if (messageRequests == null) {
+            messageRequests = new Map()
+            this._sendMessageRequests.set(address, messageRequests)
+        }
+
+        return new Promise<nt.Transaction>(async (resolve, reject) => {
+            const id = signedMessage.bodyHash
+            messageRequests!.set(id, { resolve, reject })
+
+            const subscription = await this._subscriptionsMutex.use(async () => {
+                let subscription = this._subscriptions.get(address)
+                if (subscription == null) {
+                    subscription = await this._createSubscription(address, new Set())
+                }
+                return subscription
+            })
+
+            await subscription.prepareReliablePolling()
+            await subscription
+                .use(async (contract) => {
+                    try {
+                        await contract.sendMessage(signedMessage)
+                        subscription.skipRefreshTimer()
+                    } catch (e) {
+                        throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+                    }
+                })
+                .catch((e) => {
+                    this._rejectMessageRequest(address, id, e)
+                })
+        })
+    }
+
+    private async _createSubscription(address: string, subscriptionTabs: Set<number>) {
+        class ContractHandler implements IGenericContractHandler {
+            private readonly _address: string
+            private readonly _controller: SubscriptionController
+            private _enabled: boolean = false
+
+            constructor(address: string, controller: SubscriptionController) {
+                this._address = address
+                this._controller = controller
+            }
+
+            public enableNotifications() {
+                this._enabled = true
+            }
+
+            onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+                this._enabled &&
+                    this._controller
+                        ._rejectMessageRequest(
+                            this._address,
+                            pendingTransaction.bodyHash,
+                            new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
+                        )
+                        .catch(console.error)
+            }
+
+            onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+                this._enabled &&
+                    this._controller
+                        ._resolveMessageRequest(
+                            this._address,
+                            pendingTransaction.bodyHash,
+                            transaction
+                        )
+                        .catch(console.error)
+            }
+
+            onStateChanged(newState: nt.ContractState) {
+                this._enabled && this._controller._notifyStateChanged(this._address, newState)
+            }
+
+            onTransactionsFound(
+                transactions: Array<nt.Transaction>,
+                info: nt.TransactionsBatchInfo
+            ) {
+                this._enabled &&
+                    this._controller._notifyTransactionsFound(this._address, transactions, info)
+            }
+        }
+
+        const handler = new ContractHandler(address, this)
+
+        const subscription = await GenericContractSubscription.subscribe(
+            this.config.connectionController,
+            address,
+            handler
+        )
+        handler.enableNotifications()
+        this._subscriptions.set(address, subscription)
+        this._subscriptionTabs.set(address, subscriptionTabs)
+
+        return subscription
+    }
+
+    private async _tryUnsubscribe(address: string) {
+        const subscriptionTabs = this._subscriptionTabs.get(address)
+        const sendMessageRequests = this._sendMessageRequests.get(address)
+        if ((subscriptionTabs?.size || 0) == 0 && (sendMessageRequests?.size || 0) == 0) {
+            const subscription = this._subscriptions.get(address)
+            this._subscriptions.delete(address)
+            await subscription?.stop()
+        }
+    }
+
+    private async _clearSendMessageRequests() {
         const rejectionError = new NekotonRpcError(
             RpcErrorCode.RESOURCE_UNAVAILABLE,
             'The request was rejected; please try again'
@@ -214,18 +257,20 @@ export class SubscriptionController extends BaseController<
         for (const address of addresses) {
             const ids = Array.from(this._sendMessageRequests.get(address)?.keys() || [])
             for (const id of ids) {
-                this._rejectMessageRequest(address, id, rejectionError)
+                await this._rejectMessageRequest(address, id, rejectionError)
             }
         }
         this._sendMessageRequests.clear()
     }
 
-    private _rejectMessageRequest(address: string, id: string, error: Error) {
+    private async _rejectMessageRequest(address: string, id: string, error: Error) {
         this._deleteMessageRequestAndGetCallback(address, id).reject(error)
+        await this._subscriptionsMutex.use(async () => this._tryUnsubscribe(address))
     }
 
-    private _resolveMessageRequest(address: string, id: string, transaction: nt.Transaction) {
+    private async _resolveMessageRequest(address: string, id: string, transaction: nt.Transaction) {
         this._deleteMessageRequestAndGetCallback(address, id).resolve(transaction)
+        await this._subscriptionsMutex.use(async () => this._tryUnsubscribe(address))
     }
 
     private _deleteMessageRequestAndGetCallback(address: string, id: string): SendMessageCallback {
@@ -501,7 +546,7 @@ class GenericContractSubscription {
         }
     }
 
-    public async use<T>(f: (wallet: nt.GenericContract) => Promise<T>) {
+    public async use<T>(f: (contract: nt.GenericContract) => Promise<T>) {
         const release = await this._contractMutex.acquire()
         return f(this._contract)
             .then((res) => {
