@@ -1,9 +1,9 @@
-import { ContractType, InternalMessageParams, Permissions, Permission } from 'ton-inpage-provider'
+import { WalletContractType, Permissions, Permission, FunctionCall } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
 export type AccountToCreate = {
     name: string
-    contractType: ContractType
+    contractType: WalletContractType
     seed: nt.GeneratedMnemonic
     password: string
 }
@@ -41,9 +41,11 @@ export type ApprovalApi = {
     }
     callContractMethod: {
         input: {
-            address: string
+            signer: string
+            recipient: string
+            payload: FunctionCall
         }
-        output: null
+        output: nt.KeyPassword
     }
     sendMessage: {
         input: {
@@ -51,7 +53,7 @@ export type ApprovalApi = {
             recipient: string
             amount: string
             bounce: boolean
-            payload?: InternalMessageParams
+            payload?: FunctionCall
             fees: string
         }
         output: nt.KeyPassword

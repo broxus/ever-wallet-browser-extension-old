@@ -17,7 +17,7 @@ const rejectedByUser = serializeError(
 interface IApprovalPage {
     pendingApprovals: PendingApproval<keyof ApprovalApi>[]
     selectedAccount: nt.AssetsList
-    tonWalletStates: { [address: string]: nt.AccountState }
+    tonWalletStates: { [address: string]: nt.ContractState }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     resolvePendingApproval: (id: string, params: any) => Promise<void>
     rejectPendingApproval: (id: string, params: JsonRpcError) => Promise<void>
@@ -35,7 +35,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
 
     const tonWalletState = tonWalletStates[
         selectedAccount.tonWallet.address
-    ] as nt.AccountState | null
+    ] as nt.ContractState | null
 
     const selectNextApproval = () => {
         if (pendingApprovals.length === 0) {

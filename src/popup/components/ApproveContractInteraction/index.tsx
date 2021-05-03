@@ -12,7 +12,7 @@ import Arrow from '@popup/img/arrow.svg'
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
     account: nt.AssetsList | null
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     onSubmit: () => void
     onReject: () => void
 }
@@ -30,7 +30,7 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     onReject,
 }) => {
     const { origin } = approval
-    const { address } = approval.requestData
+    const { recipient } = approval.requestData
 
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.DETAILS)
 

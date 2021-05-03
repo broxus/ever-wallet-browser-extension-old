@@ -14,7 +14,7 @@ import './style.scss'
 
 interface IDeployWallet {
     account: nt.AssetsList
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     estimateFees: () => Promise<string>
     prepareDeployMessage: (keyPassword: nt.KeyPassword) => Promise<nt.SignedMessage>
     sendMessage: (params: nt.SignedMessage) => Promise<nt.Transaction>
@@ -35,7 +35,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     const [fees, setFees] = useState<string>()
 
     useEffect(() => {
-        if (tonWalletState != null) {
+        if (tonWalletState != null && !tonWalletState.isDeployed) {
             estimateFees()
                 .then((fees) => {
                     setFees(fees)

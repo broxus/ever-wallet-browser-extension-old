@@ -1,3 +1,4 @@
+pub mod generic_contract;
 pub mod models;
 pub mod token_wallet;
 pub mod ton_wallet;

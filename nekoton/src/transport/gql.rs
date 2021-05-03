@@ -1,4 +1,6 @@
+use std::convert::TryFrom;
 use std::convert::TryInto;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -10,7 +12,9 @@ use wasm_bindgen_futures::*;
 
 use nt::transport::{gql, Transport};
 
-use super::{PromiseOptionFullAccountState, PromiseTokenWallet, PromiseTonWallet};
+use super::{
+    PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
+};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -46,6 +50,32 @@ impl GqlConnection {
                 sender: Arc::new(sender),
             }),
         }
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToGenericContract")]
+    pub fn subscribe_to_generic_contract_wallet(
+        &self,
+        address: &str,
+        handler: crate::core::generic_contract::GenericContractSubscriptionHandlerImpl,
+    ) -> Result<PromiseGenericContract, JsValue> {
+        use crate::core::generic_contract::*;
+
+        let address = parse_address(address)?;
+
+        let transport = Arc::new(self.make_transport());
+        let handler = Arc::new(GenericContractSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::generic_contract::GenericContract::subscribe(
+                transport.clone() as Arc<dyn nt::transport::Transport>,
+                address,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(GenericContract::new(transport, wallet)))
+        })))
     }
 
     #[wasm_bindgen(js_name = "subscribeToTonWallet")]
@@ -140,21 +170,63 @@ impl GqlConnection {
         })))
     }
 
-    #[wasm_bindgen(js_name = "getFullAccountState")]
+    #[wasm_bindgen(js_name = "getFullContractState")]
     pub fn get_full_account_state(
         &self,
         address: &str,
-    ) -> Result<PromiseOptionFullAccountState, JsValue> {
+    ) -> Result<PromiseOptionFullContractState, JsValue> {
         let address = parse_address(address)?;
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            super::make_full_account_state(
+            super::make_full_contract_state(
                 transport
                     .get_contract_state(&address)
                     .await
                     .handle_error()?,
             )
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTransactions")]
+    pub fn get_transactions(
+        &self,
+        address: &str,
+        before_lt: Option<String>,
+        limit: u8,
+        inclusive: bool,
+    ) -> Result<PromiseTransactionsList, JsValue> {
+        use crate::core::models::*;
+
+        let address = parse_address(address)?;
+        let before_lt = before_lt
+            .as_deref()
+            .map(u64::from_str)
+            .transpose()
+            .handle_error()?
+            .unwrap_or(u64::MAX);
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(transport
+                .get_transactions(
+                    address,
+                    nt::core::models::TransactionId {
+                        lt: if inclusive { before_lt } else { before_lt - 1 },
+                        hash: Default::default(),
+                    },
+                    limit,
+                )
+                .await
+                .handle_error()?
+                .into_iter()
+                .map(|transaction| {
+                    nt::core::models::Transaction::try_from((transaction.hash, transaction.data))
+                        .map(make_transaction)
+                })
+                .collect::<Result<js_sys::Array, _>>()
+                .handle_error()?
+                .unchecked_into())
         })))
     }
 }

@@ -5,7 +5,7 @@ import { createRipple, removeRipple } from '@popup/common'
 import './style.scss'
 
 type IButton = {
-    text: string
+    text: string | JSX.Element
     type?: 'button' | 'submit' | 'reset' | undefined
     form?: string
     white?: boolean

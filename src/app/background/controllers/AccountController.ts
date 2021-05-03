@@ -1,10 +1,12 @@
-import { Mutex } from 'await-semaphore'
+import { Mutex } from '@broxus/await-semaphore'
 import {
     convertAddress,
     convertTons,
     extractTransactionAddress,
     extractTransactionValue,
     NekotonRpcError,
+    SendMessageCallback,
+    SendMessageRequest,
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { AccountToCreate, MessageToPrepare } from '@shared/approvalApi'
@@ -19,19 +21,6 @@ const BACKGROUND_POLLING_INTERVAL = 60000 // 1m
 
 const NEXT_BLOCK_TIMEOUT = 60 // 60s
 
-type SendMessagePromiseResolve = (transaction: nt.Transaction) => void
-type SendMessagePromiseReject = (error?: Error) => void
-
-interface SendMessageCallback {
-    resolve: SendMessagePromiseResolve
-    reject: SendMessagePromiseReject
-}
-
-export interface SendMessageRequest {
-    expireAt: number
-    boc: string
-}
-
 export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
@@ -42,14 +31,14 @@ export interface AccountControllerConfig extends BaseConfig {
 
 export interface AccountControllerState extends BaseState {
     selectedAccount: nt.AssetsList | undefined
-    accountStates: { [address: string]: nt.AccountState }
+    accountContractStates: { [address: string]: nt.ContractState }
     accountTransactions: { [address: string]: nt.Transaction[] }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
 }
 
 const defaultState: AccountControllerState = {
     selectedAccount: undefined,
-    accountStates: {},
+    accountContractStates: {},
     accountTransactions: {},
     accountPendingMessages: {},
 }
@@ -114,7 +103,7 @@ export class AccountController extends BaseController<
                     )
                 }
 
-                onStateChanged(newState: nt.AccountState) {
+                onStateChanged(newState: nt.ContractState) {
                     this._controller._updateTonWalletState(this._address, newState)
                 }
 
@@ -391,6 +380,19 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async preloadTransactions(address: string, lt: string, hash: string) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireSubscription(address, subscription)
+
+        await subscription.use(async (wallet) => {
+            try {
+                await wallet.preloadTransactions(lt, hash)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+            }
+        })
+    }
+
     public enableIntensivePolling() {
         console.log('Enable intensive polling')
         this._tonWalletSubscriptions.forEach((subscription) => {
@@ -477,14 +479,14 @@ export class AccountController extends BaseController<
         })
     }
 
-    private _updateTonWalletState(address: string, state: nt.AccountState) {
-        const currentStates = this.state.accountStates
+    private _updateTonWalletState(address: string, state: nt.ContractState) {
+        const currentStates = this.state.accountContractStates
         const newStates = {
             ...currentStates,
             [address]: state,
         }
         this.update({
-            accountStates: newStates,
+            accountContractStates: newStates,
         })
     }
 
@@ -521,7 +523,7 @@ interface ITonWalletHandler {
 
     onMessageExpired(pendingTransaction: nt.PendingTransaction): void
 
-    onStateChanged(newState: nt.AccountState): void
+    onStateChanged(newState: nt.ContractState): void
 
     onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
 }
@@ -701,6 +703,7 @@ class TonWalletSubscription {
 
     public async stop() {
         await this.pause()
+        this._tonWallet.free()
         this._releaseConnection?.()
         this._releaseConnection = undefined
     }

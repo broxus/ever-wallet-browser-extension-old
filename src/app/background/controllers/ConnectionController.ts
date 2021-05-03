@@ -1,4 +1,4 @@
-import { Mutex } from 'await-semaphore'
+import { Mutex } from '@broxus/await-semaphore'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { ConnectionData, GqlSocketParams, NamedConnectionData } from '@shared/approvalApi'

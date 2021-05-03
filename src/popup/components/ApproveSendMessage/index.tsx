@@ -13,7 +13,7 @@ import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
     account: nt.AssetsList
-    tonWalletState: nt.AccountState | null
+    tonWalletState: nt.ContractState | null
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void

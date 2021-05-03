@@ -597,3 +597,13 @@ export const estimateUsd = (amount: string) => {
 export const parseTons = (amount: string) => {
     return new Decimal(amount).mul(ONE_TON).ceil().toFixed(0)
 }
+
+export interface SendMessageRequest {
+    expireAt: number
+    boc: string
+}
+
+export interface SendMessageCallback {
+    resolve: (transaction: nt.Transaction) => void
+    reject: (error?: Error) => void
+}

@@ -8,7 +8,7 @@ import Arrow from '@popup/img/arrow.svg'
 import './style.scss'
 
 type IAssetsListItem = {
-    tonWalletState: nt.AccountState
+    tonWalletState: nt.ContractState
 }
 
 const AssetsListItem: React.FC<IAssetsListItem> = ({ tonWalletState }) => (

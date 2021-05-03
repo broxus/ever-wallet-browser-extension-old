@@ -112,6 +112,8 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
 
             if (method === 'NEKOTON_STREAM_FAILURE') {
                 connectionStream.destroy(new Error('Permanently disconnected'))
+            } else {
+                this.emit(method, params)
             }
         })
     }
@@ -218,7 +220,7 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
             )
         }
 
-        this.emit('disconnect', error)
+        this.emit('disconnected', error)
     }
 
     private _handleStreamDisconnect = (streamName: string, error: Error | undefined) => {

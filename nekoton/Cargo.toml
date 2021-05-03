@@ -1,8 +1,11 @@
 [package]
-name = "nekoton"
+name = "bindings"
 version = "0.1.0"
 authors = ["Ivan Kalinin <i.kalinin@dexpa.io>"]
 edition = "2018"
+description = "Nekoton bindings for WASM"
+repository = "https://github.com/broxus/ton-wallet-crystal-browser-extension"
+license-file = "../LICENSE"
 
 [lib]
 crate-type = ["cdylib"]
@@ -15,6 +18,7 @@ anyhow = "1.0"
 async-trait = "0.1"
 hex = "0.4"
 base64 = "0.13"
+console_error_panic_hook = "0.1"
 dyn-clone = "1.0"
 ed25519-dalek = "1.0.1"
 futures = "0.3"
@@ -44,9 +48,6 @@ package = "nekoton"
 git = "https://github.com/broxus/nekoton.git"
 branch = "master"
 features = ["web"]
-
-[target."cfg(debug_assertions)".dependencies]
-console_error_panic_hook = "0.1"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

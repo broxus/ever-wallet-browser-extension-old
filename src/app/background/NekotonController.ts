@@ -4,6 +4,7 @@ import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
 import { debounce } from 'lodash'
+import { ProviderEvent, ProviderEventCall } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
 import {
@@ -30,12 +31,12 @@ import { ApprovalController } from './controllers/ApprovalController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
+import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
 
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
     openPopup: () => void
-    getRequestAccountTabIds: () => { [origin: string]: number }
     getOpenNekotonTabIds: () => { [id: number]: true }
 }
 
@@ -48,6 +49,7 @@ interface NekotonControllerComponents {
     connectionController: ConnectionController
     notificationController: NotificationController
     permissionsController: PermissionsController
+    subscriptionsController: SubscriptionController
 }
 
 interface SetupProviderEngineOptions {
@@ -61,7 +63,9 @@ interface SetupProviderEngineOptions {
 export class NekotonController extends EventEmitter {
     private _defaultMaxListeners: number
     private _activeControllerConnections: number
-    private readonly _connections: { [origin: string]: { [id: string]: { engine: JsonRpcEngine } } }
+    private readonly _connections: { [id: string]: { engine: JsonRpcEngine } }
+    private readonly _originToIds: { [origin: string]: Set<string> }
+    private readonly _tabToIds: { [tabId: number]: Set<string> }
 
     private readonly _options: NekotonControllerOptions
     private readonly _components: NekotonControllerComponents
@@ -90,6 +94,9 @@ export class NekotonController extends EventEmitter {
         const permissionsController = new PermissionsController({
             approvalController,
         })
+        const subscriptionsController = new SubscriptionController({
+            connectionController,
+        })
 
         await connectionController.initialSync()
         await accountController.startSubscriptions()
@@ -105,6 +112,7 @@ export class NekotonController extends EventEmitter {
             connectionController,
             notificationController,
             permissionsController,
+            subscriptionsController,
         })
     }
 
@@ -118,6 +126,8 @@ export class NekotonController extends EventEmitter {
         this._activeControllerConnections = 0
 
         this._connections = {}
+        this._originToIds = {}
+        this._tabToIds = {}
 
         this._options = options
         this._components = components
@@ -129,6 +139,11 @@ export class NekotonController extends EventEmitter {
         this._components.accountController.subscribe((_state) => {
             this._debouncedSendUpdate()
         })
+
+        this._components.permissionsController.config.notifyDomain = this._notifyConnections.bind(
+            this
+        )
+        this._components.subscriptionsController.config.notifyTab = this._notifyTab.bind(this)
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
@@ -178,6 +193,7 @@ export class NekotonController extends EventEmitter {
             prepareMessage: nodeifyAsync(accountController, 'prepareMessage'),
             prepareDeploymentMessage: nodeifyAsync(accountController, 'prepareDeploymentMessage'),
             sendMessage: nodeifyAsync(accountController, 'sendMessage'),
+            preloadTransactions: nodeifyAsync(accountController, 'preloadTransactions'),
             resolvePendingApproval: nodeify(approvalController, 'resolve'),
             rejectPendingApproval: nodeify(approvalController, 'reject'),
         }
@@ -193,14 +209,27 @@ export class NekotonController extends EventEmitter {
 
     public async changeNetwork(params: NamedConnectionData) {
         await this._components.accountController.stopSubscriptions()
+        await this._components.subscriptionsController.stopSubscriptions()
         await this._components.connectionController
             .startSwitchingNetwork(params)
             .then((handle) => handle.switch())
         await this._components.accountController.startSubscriptions()
+
+        this._notifyAllConnections({
+            method: 'networkChanged',
+            params: {
+                selectedConnection: params.name,
+            },
+        })
     }
 
     public async logOut() {
         await this._components.accountController.logOut()
+
+        this._notifyAllConnections({
+            method: 'loggedOut',
+            params: {},
+        })
     }
 
     private _setupControllerConnection<T extends Duplex>(outStream: T) {
@@ -238,7 +267,7 @@ export class NekotonController extends EventEmitter {
         if (sender.id !== chrome.runtime.id) {
             extensionId = sender.id
         }
-        let tabId
+        let tabId: number | undefined
         if (sender.tab && sender.tab.id) {
             tabId = sender.tab.id
         }
@@ -253,7 +282,7 @@ export class NekotonController extends EventEmitter {
 
         const providerStream = createEngineStream({ engine })
 
-        const connectionId = this._addConnection(origin, { engine })
+        const connectionId = this._addConnection(origin, tabId, { engine })
 
         pump(outStream, providerStream, outStream, (e) => {
             console.debug('providerStream closed')
@@ -266,7 +295,14 @@ export class NekotonController extends EventEmitter {
                     ;((middleware as unknown) as DestroyableMiddleware).destroy()
                 }
             })
-            connectionId && this._removeConnection(origin, connectionId)
+
+            if (tabId) {
+                this._components.subscriptionsController
+                    .unsubscribeFromAllContracts(tabId)
+                    .catch(console.error)
+            }
+
+            connectionId && this._removeConnection(origin, tabId, connectionId)
             if (e) {
                 console.error(e)
             }
@@ -285,71 +321,102 @@ export class NekotonController extends EventEmitter {
         engine.push(
             createProviderMiddleware({
                 origin,
+                tabId,
                 isInternal,
                 approvalController: this._components.approvalController,
                 accountController: this._components.accountController,
                 connectionController: this._components.connectionController,
                 permissionsController: this._components.permissionsController,
+                subscriptionsController: this._components.subscriptionsController,
             })
         )
 
         return engine
     }
 
-    private _addConnection(origin: string, { engine }: AddConnectionOptions) {
+    private _addConnection(
+        origin: string,
+        tabId: number | undefined,
+        { engine }: AddConnectionOptions
+    ) {
         if (origin === 'nekoton') {
             return null
         }
 
-        if (!this._connections[origin]) {
-            this._connections[origin] = {}
+        const id = nanoid()
+        this._connections[id] = {
+            engine,
         }
 
-        const id = nanoid()
-        this._connections[origin][id] = {
-            engine,
+        let originIds = this._originToIds[origin]
+        if (originIds == null) {
+            originIds = new Set()
+            this._originToIds[origin] = originIds
+        }
+        originIds.add(id)
+
+        if (tabId != null) {
+            let tabIds = this._tabToIds[tabId]
+            if (tabIds == null) {
+                tabIds = new Set()
+                this._tabToIds[tabId] = tabIds
+            }
+            tabIds.add(id)
         }
 
         return id
     }
 
-    private _removeConnection(origin: string, id: string) {
-        const connections = this._connections[origin]
-        if (!connections) {
-            return
+    private _removeConnection(origin: string, tabId: number | undefined, id: string) {
+        delete this._connections[id]
+
+        const originIds = this._originToIds[origin]
+        if (originIds != null) {
+            originIds.delete(id)
+            if (originIds.size === 0) {
+                delete this._originToIds[origin]
+            }
         }
 
-        delete connections[id]
-
-        if (Object.keys(connections).length === 0) {
-            delete this._connections[origin]
+        if (tabId != null) {
+            const tabIds = this._tabToIds[tabId]
+            if (tabIds != null) {
+                tabIds.delete(id)
+                if (tabIds.size === 0) {
+                    delete this._tabToIds[tabId]
+                }
+            }
         }
     }
 
-    private _notifyConnections<T>(origin: string, payload: T) {
-        const connections = this._connections[origin]
-        if (connections) {
-            Object.values(connections).forEach(({ engine }) => {
-                engine.emit('notification', payload)
+    private _notifyConnection<T extends ProviderEvent>(id: string, payload: ProviderEventCall<T>) {
+        this._connections[id]?.engine.emit('notification', payload)
+    }
+
+    private _notifyTab<T extends ProviderEvent>(tabId: number, payload: ProviderEventCall<T>) {
+        const tabIds = this._tabToIds[tabId]
+        if (tabIds) {
+            tabIds.forEach((id) => {
+                this._connections[id]?.engine.emit('notification', payload)
             })
         }
     }
 
-    private _notifyAllConnections<T extends {}>(
-        payload: ((origin: { [id: string]: { engine: JsonRpcEngine } }) => T) | T
+    private _notifyConnections<T extends ProviderEvent>(
+        origin: string,
+        payload: ProviderEventCall<T>
     ) {
-        const getPayload =
-            typeof payload === 'function'
-                ? (origin: { [id: string]: { engine: JsonRpcEngine } }) =>
-                      (payload as (origin: { [id: string]: { engine: JsonRpcEngine } }) => T)(
-                          origin
-                      )
-                : () => payload
-
-        Object.values(this._connections).forEach((origin) => {
-            Object.values(origin).forEach(({ engine }) => {
-                engine.emit('notification', getPayload(origin))
+        const originIds = this._originToIds[origin]
+        if (originIds) {
+            originIds.forEach((id) => {
+                this._connections[id]?.engine.emit('notification', payload)
             })
+        }
+    }
+
+    private _notifyAllConnections<T extends ProviderEvent>(payload: ProviderEventCall<T>) {
+        Object.values(this._connections).forEach(({ engine }) => {
+            engine.emit('notification', payload)
         })
     }
 

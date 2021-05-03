@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::HashMap;
 use std::str::FromStr;
 
@@ -19,7 +20,7 @@ pub fn run_local(
     contract_abi: &str,
     method: &str,
     input: TokensObject,
-) -> Result<TokensObject, JsValue> {
+) -> Result<ExecutionOutput, JsValue> {
     use crate::core::models::*;
 
     let gen_timings = parse_gen_timings(gen_timings)?;
@@ -33,7 +34,7 @@ pub fn run_local(
         .run_local(account_stuff, gen_timings, &last_transaction_id, &input)
         .handle_error()?;
 
-    make_tokens_object(&output)
+    make_execution_output(&output)
 }
 
 #[wasm_bindgen(js_name = "getExpectedAddress")]
@@ -82,33 +83,312 @@ pub fn encode_internal_input(
     Ok(base64::encode(&body))
 }
 
+#[wasm_bindgen(js_name = "createExternalMessage")]
+pub fn create_external_message(
+    dst: &str,
+    contract_abi: &str,
+    method: &str,
+    state_init: Option<String>,
+    input: TokensObject,
+    public_key: &str,
+    timeout: u32,
+) -> Result<crate::crypto::UnsignedMessage, JsValue> {
+    let dst = parse_address(dst)?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let method = contract_abi.function(method).handle_error()?;
+    let state_init = state_init
+        .as_deref()
+        .map(ton_block::StateInit::construct_from_base64)
+        .transpose()
+        .handle_error()?;
+    let input = parse_tokens_object(&method.inputs, input).handle_error()?;
+    let public_key = parse_public_key(public_key)?;
+
+    let mut message =
+        ton_block::Message::with_ext_in_header(ton_block::ExternalInboundMessageHeader {
+            dst,
+            ..Default::default()
+        });
+    if let Some(state_init) = state_init {
+        message.set_state_init(state_init);
+    }
+
+    Ok(crate::crypto::UnsignedMessage {
+        inner: nt::core::utils::make_labs_unsigned_message(
+            message,
+            nt::core::models::Expiration::Timeout(timeout),
+            &public_key,
+            Cow::Owned(method.clone()),
+            input,
+        )
+        .handle_error()?,
+    })
+}
+
 #[wasm_bindgen(js_name = "decodeInput")]
 pub fn decode_input(
     message_body: &str,
     contract_abi: &str,
-    method: &str,
+    method: JsMethodName,
     internal: bool,
-) -> Result<TokensObject, JsValue> {
+) -> Result<Option<DecodedInput>, JsValue> {
     let message_body = parse_slice(message_body)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
-    let method = contract_abi.function(method).handle_error()?;
+    let method = match guess_method_by_input(&contract_abi, &message_body, method, internal)? {
+        Some(method) => method,
+        None => return Ok(None),
+    };
 
-    let output = method.decode_input(message_body, internal).handle_error()?;
-    make_tokens_object(&output)
+    let input = method.decode_input(message_body, internal).handle_error()?;
+    Ok(Some(
+        ObjectBuilder::new()
+            .set("method", &method.name)
+            .set("input", make_tokens_object(&input)?)
+            .build()
+            .unchecked_into(),
+    ))
 }
 
 #[wasm_bindgen(js_name = "decodeOutput")]
 pub fn decode_output(
     message_body: &str,
     contract_abi: &str,
-    method: &str,
-) -> Result<TokensObject, JsValue> {
+    method: JsMethodName,
+) -> Result<Option<DecodedOutput>, JsValue> {
     let message_body = parse_slice(message_body)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
-    let method = contract_abi.function(method).handle_error()?;
+    let method = parse_method_name(method)?;
+
+    let method = match method {
+        MethodName::Known(name) => contract_abi.function(&name).handle_error()?,
+        MethodName::Guess(names) => {
+            let output_id = nt::utils::read_u32(&message_body).handle_error()?;
+
+            let mut method = None;
+            for name in names.iter() {
+                let function = contract_abi.function(name).handle_error()?;
+                if function.output_id == output_id {
+                    method = Some(function);
+                    break;
+                }
+            }
+
+            match method {
+                Some(method) => method,
+                None => return Ok(None),
+            }
+        }
+    };
 
     let output = method.decode_output(message_body, true).handle_error()?;
-    make_tokens_object(&output)
+    Ok(Some(
+        ObjectBuilder::new()
+            .set("method", &method.name)
+            .set("output", make_tokens_object(&output)?)
+            .build()
+            .unchecked_into(),
+    ))
+}
+
+#[wasm_bindgen(js_name = "decodeTransaction")]
+pub fn decode_transaction(
+    transaction: crate::core::models::Transaction,
+    contract_abi: &str,
+    method: JsMethodName,
+) -> Result<Option<DecodedTransaction>, JsValue> {
+    let transaction: JsValue = transaction.unchecked_into();
+    if !transaction.is_object() {
+        return Err(AbiError::ExpectedObject).handle_error();
+    }
+
+    let contract_abi = parse_contract_abi(contract_abi)?;
+
+    let in_msg = js_sys::Reflect::get(&transaction, &JsValue::from_str("inMessage"))?;
+    if !in_msg.is_object() {
+        return Err(AbiError::ExpectedMessage).handle_error();
+    }
+    let internal = js_sys::Reflect::get(&in_msg, &JsValue::from_str("src"))?.is_string();
+
+    let body_key = JsValue::from_str("body");
+    let in_msg_body = js_sys::Reflect::get(&in_msg, &body_key)?
+        .as_string()
+        .ok_or(AbiError::ExpectedMessageBody)
+        .handle_error()
+        .and_then(|body| parse_slice(&body))?;
+
+    let method = match guess_method_by_input(&contract_abi, &in_msg_body, method, internal)? {
+        Some(method) => method,
+        None => return Ok(None),
+    };
+
+    let input = method.decode_input(in_msg_body, internal).handle_error()?;
+
+    let out_msgs = js_sys::Reflect::get(&transaction, &JsValue::from_str("outMessages"))?;
+    if !js_sys::Array::is_array(&out_msgs) {
+        return Err(AbiError::ExpectedArray).handle_error();
+    }
+
+    let dst_key = JsValue::from_str("dst");
+    let ext_out_msgs = out_msgs
+        .unchecked_into::<js_sys::Array>()
+        .iter()
+        .filter_map(|message| {
+            match js_sys::Reflect::get(&message, &body_key) {
+                Ok(dst) if dst.is_string() => return None,
+                Err(error) => return Some(Err(error)),
+                _ => {}
+            };
+
+            Some(
+                match js_sys::Reflect::get(&message, &dst_key).map(|item| item.as_string()) {
+                    Ok(Some(body)) => parse_slice(&body),
+                    Ok(None) => Err(AbiError::ExpectedMessageBody).handle_error(),
+                    Err(error) => Err(error),
+                },
+            )
+        })
+        .collect::<Result<Vec<_>, JsValue>>()?;
+
+    let output = nt::helpers::abi::process_raw_outputs(&ext_out_msgs, method).handle_error()?;
+
+    Ok(Some(
+        ObjectBuilder::new()
+            .set("method", &method.name)
+            .set("input", make_tokens_object(&input)?)
+            .set("output", make_tokens_object(&output)?)
+            .build()
+            .unchecked_into(),
+    ))
+}
+
+fn guess_method_by_input<'a>(
+    contract_abi: &'a ton_abi::Contract,
+    message_body: &ton_types::SliceData,
+    method: JsMethodName,
+    internal: bool,
+) -> Result<Option<&'a ton_abi::Function>, JsValue> {
+    match parse_method_name(method)? {
+        MethodName::Known(name) => Ok(Some(contract_abi.function(&name).handle_error()?)),
+        MethodName::Guess(names) => {
+            let input_id = read_input_function_id(contract_abi, message_body.clone(), internal)?;
+
+            let mut method = None;
+            for name in names.iter() {
+                let function = contract_abi.function(name).handle_error()?;
+                if function.input_id == input_id {
+                    method = Some(function);
+                    break;
+                }
+            }
+            Ok(method)
+        }
+    }
+}
+
+fn read_input_function_id(
+    contract_abi: &ton_abi::Contract,
+    mut body: ton_types::SliceData,
+    internal: bool,
+) -> Result<u32, JsValue> {
+    if internal {
+        read_u32(&body).handle_error()
+    } else {
+        if body.get_next_bit().handle_error()? {
+            body.move_by(ed25519_dalek::SIGNATURE_LENGTH * 8)
+                .handle_error()?
+        }
+        for header in contract_abi.header() {
+            match header.kind {
+                ton_abi::ParamType::PublicKey => {
+                    if body.get_next_bit().handle_error()? {
+                        body.move_by(ed25519_dalek::PUBLIC_KEY_LENGTH * 8)
+                            .handle_error()?;
+                    }
+                }
+                ton_abi::ParamType::Time => body.move_by(64).handle_error()?,
+                ton_abi::ParamType::Expire => body.move_by(32).handle_error()?,
+                _ => return Err(AbiError::UnsupportedHeader).handle_error(),
+            }
+        }
+        read_u32(&body).handle_error()
+    }
+}
+
+pub enum MethodName {
+    Known(String),
+    Guess(Vec<String>),
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const METHOD_NAME: &str = r#"
+export type MethodName = string | string[]
+"#;
+
+pub fn parse_method_name(value: JsMethodName) -> Result<MethodName, JsValue> {
+    let value: JsValue = value.unchecked_into();
+    if let Some(value) = value.as_string() {
+        Ok(MethodName::Known(value))
+    } else if js_sys::Array::is_array(&value) {
+        let value: js_sys::Array = value.unchecked_into();
+        Ok(MethodName::Guess(
+            value
+                .iter()
+                .map(|value| match value.as_string() {
+                    Some(value) => Ok(value),
+                    None => Err(AbiError::ExpectedStringOrArray),
+                })
+                .collect::<Result<Vec<_>, AbiError>>()
+                .handle_error()?,
+        ))
+    } else {
+        Err(AbiError::ExpectedStringOrArray).handle_error()
+    }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const DECODED_INPUT: &str = r#"
+export type DecodedInput = {
+    method: string,
+    input: TokensObject,
+};
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const DECODED_OUTPUT: &str = r#"
+export type DecodedOutput = {
+    method: string,
+    output: TokensObject,
+};
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const DECODED_TRANSACTION: &str = r#"
+export type DecodedTransaction = {
+    method: string,
+    input: TokensObject,
+    output: TokensObject,
+};
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const EXECUTION_OUTPUT: &str = r#"
+export type ExecutionOutput = {
+    output?: TokensObject,
+    code: number,
+};
+"#;
+
+fn make_execution_output(
+    data: &nt::helpers::abi::ExecutionOutput,
+) -> Result<ExecutionOutput, JsValue> {
+    Ok(ObjectBuilder::new()
+        .set(
+            "output",
+            data.tokens.as_deref().map(make_tokens_object).transpose()?,
+        )
+        .set("code", data.result_code)
+        .build()
+        .unchecked_into())
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -505,6 +785,8 @@ enum AbiError {
     ExpectedBoolean,
     #[error("Expected string")]
     ExpectedString,
+    #[error("Expected string or array")]
+    ExpectedStringOrArray,
     #[error("Expected string or number")]
     ExpectedStringOrNumber,
     #[error("Expected unsigned number")]
@@ -515,6 +797,10 @@ enum AbiError {
     ExpectedMapItem,
     #[error("Expected object")]
     ExpectedObject,
+    #[error("Expected message")]
+    ExpectedMessage,
+    #[error("Expected message body")]
+    ExpectedMessageBody,
     #[error("Invalid array length")]
     InvalidArrayLength,
     #[error("Invalid number")]
@@ -533,6 +819,8 @@ enum AbiError {
     InvalidMappingKey,
     #[error("Tuple property not found")]
     TuplePropertyNotFound,
+    #[error("Unsupported header")]
+    UnsupportedHeader,
 }
 
 fn parse_contract_abi(contract_abi: &str) -> Result<ton_abi::Contract, JsValue> {
@@ -546,4 +834,19 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "TokensObject")]
     pub type TokensObject;
+
+    #[wasm_bindgen(typescript_type = "ExecutionOutput")]
+    pub type ExecutionOutput;
+
+    #[wasm_bindgen(typescript_type = "DecodedTransaction")]
+    pub type DecodedTransaction;
+
+    #[wasm_bindgen(typescript_type = "MethodName")]
+    pub type JsMethodName;
+
+    #[wasm_bindgen(typescript_type = "DecodedInput")]
+    pub type DecodedInput;
+
+    #[wasm_bindgen(typescript_type = "DecodedOutput")]
+    pub type DecodedOutput;
 }

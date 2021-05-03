@@ -1,23 +1,36 @@
-import { ProviderApi, Permission } from 'ton-inpage-provider'
+import {
+    ProviderApi,
+    Permission,
+    FunctionCall,
+    FullContractState,
+    GenTimings,
+    AccountInteractionItem,
+    TokensObject,
+} from 'ton-inpage-provider'
+import { RpcErrorCode } from '@shared/errors'
+import { NekotonRpcError, UniqueArray } from '@shared/utils'
+import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
+import * as nt from '@nekoton'
+
 import { ApprovalController } from './controllers/ApprovalController'
 import { PermissionsController, validatePermission } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { AccountController } from './controllers/AccountController'
-import { NekotonRpcError, UniqueArray } from '../../shared/utils'
-import { RpcErrorCode } from '../../shared/errors'
-import { JsonRpcMiddleware, JsonRpcRequest } from '../../shared/jrpc'
-import * as nt from '@nekoton'
+import { SubscriptionController } from './controllers/SubscriptionController'
+import { LastTransactionId } from '@nekoton'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`, data)
 
 interface CreateProviderMiddlewareOptions {
     origin: string
+    tabId?: number
     isInternal: boolean
     approvalController: ApprovalController
     accountController: AccountController
     permissionsController: PermissionsController
     connectionController: ConnectionController
+    subscriptionsController: SubscriptionController
 }
 
 type ProviderMethod<T extends keyof ProviderApi> = ProviderApi[T] extends {
@@ -75,6 +88,17 @@ function requireBoolean<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object:
     }
 }
 
+function requireOptionalBoolean<T, O, P extends keyof O>(
+    req: JsonRpcRequest<T>,
+    object: O,
+    key: P
+) {
+    const property = object[key]
+    if (property != null && typeof property !== 'boolean') {
+        throw invalidRequest(req, `'${key}' must be a boolean if specified`)
+    }
+}
+
 function requireString<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     const property = object[key]
     if (typeof property !== 'string' || property.length === 0) {
@@ -110,6 +134,105 @@ function requireArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O
     }
 }
 
+function requireOptional<T, O, P extends keyof O>(
+    req: JsonRpcRequest<T>,
+    object: O,
+    key: P,
+    predicate: (req: JsonRpcRequest<T>, object: O, key: P) => void
+) {
+    const property = object[key]
+    if (property != null) {
+        predicate(req, object, key)
+    }
+}
+
+function requireTabid<T>(
+    req: JsonRpcRequest<T>,
+    tabId: number | undefined
+): asserts tabId is number {
+    if (tabId == null) {
+        throw invalidRequest(req, 'Invalid tab id')
+    }
+}
+
+function requireLastTransactionId<T, O, P extends keyof O>(
+    req: JsonRpcRequest<T>,
+    object: O,
+    key: P
+) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as LastTransactionId
+    requireBoolean(req, property, 'isExact')
+    requireString(req, property, 'lt')
+    requireOptionalString(req, property, 'hash')
+}
+
+function requireGenTimings<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as GenTimings
+    requireString(req, property, 'genLt')
+    requireNumber(req, property, 'genUtime')
+}
+
+function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as FullContractState
+    requireString(req, property, 'balance')
+    requireGenTimings(req, property, 'genTimings')
+    requireOptional(req, property, 'lastTransactionId', requireLastTransactionId)
+    requireBoolean(req, property, 'isDeployed')
+}
+
+function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as FunctionCall
+    requireString(req, property, 'abi')
+    requireString(req, property, 'method')
+    requireObject(req, property, 'params')
+}
+
+function requireMethodOrArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    const property = object[key]
+    if (typeof property !== 'string' && !Array.isArray(property)) {
+        throw invalidRequest(req, `'${key}' must be a method name or an array of possible names`)
+    }
+}
+
+function findPreferredAccount<T, K>(
+    req: JsonRpcRequest<T>,
+    allowedAccounts: AccountInteractionItem[],
+    key: K | undefined,
+    predicate: (item: AccountInteractionItem) => K
+) {
+    if (allowedAccounts.length === 0) {
+        throw invalidRequest(req, 'No allowed accounts available')
+    }
+    if (key == null) {
+        return predicate(allowedAccounts[0])
+    }
+    const index = allowedAccounts.findIndex((item) => predicate(item) == key)
+    if (index < 0) {
+        throw invalidRequest(req, 'Preferred account not available')
+    }
+    return predicate(allowedAccounts[index])
+}
+
+function findPreferredSender<T>(
+    req: JsonRpcRequest<T>,
+    allowedAccounts: AccountInteractionItem[],
+    preferredSender?: string
+) {
+    return findPreferredAccount(req, allowedAccounts, preferredSender, (item) => item.address)
+}
+
+function findPreferredKey<T>(
+    req: JsonRpcRequest<T>,
+    allowedAccounts: AccountInteractionItem[],
+    preferredKey?: string
+) {
+    return findPreferredAccount(req, allowedAccounts, preferredKey, (item) => item.publicKey)
+}
+
 // Provider api
 //
 
@@ -131,7 +254,64 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
 
     permissions.map(validatePermission)
 
-    await permissionsController.requestPermissions(origin, permissions as Permission[])
+    res.result = await permissionsController.requestPermissions(origin, permissions as Permission[])
+    end()
+}
+
+const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
+    requirePermissions(ctx, [])
+
+    const { origin, permissionsController } = ctx
+
+    permissionsController.removeOrigin(origin)
+    res.result = {}
+    end()
+}
+
+const subscribe: ProviderMethod<'subscribe'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { address, subscriptions } = req.params
+    requireString(req, req.params, 'address')
+    requireOptionalObject(req, req.params, 'subscriptions')
+
+    if (!nt.checkAddress(address)) {
+        throw invalidRequest(req, 'Invalid address')
+    }
+
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
+
+    res.result = await subscriptionsController.subscribeToContract(tabId, address, subscriptions)
+    end()
+}
+
+const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, [])
+    requireParams(req)
+
+    const { address } = req.params
+    requireString(req, req.params, 'address')
+
+    if (!nt.checkAddress(address)) {
+        throw invalidRequest(req, 'Invalid address')
+    }
+
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
+
+    await subscriptionsController.unsubscribeFromContract(tabId, address)
+    res.result = {}
+    end()
+}
+
+const unsubscribeAll: ProviderMethod<'unsubscribeAll'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, [])
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
+
+    await subscriptionsController.unsubscribeFromAllContracts(tabId)
 
     res.result = {}
     end()
@@ -142,7 +322,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res,
     _next,
     end,
-    { origin, connectionController, permissionsController }
+    { origin, tabId, connectionController, permissionsController, subscriptionsController }
 ) => {
     const { selectedConnection } = connectionController.state
     const permissions = permissionsController.getPermissions(origin)
@@ -150,11 +330,12 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res.result = {
         selectedConnection: selectedConnection.name,
         permissions,
+        subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
     end()
 }
 
-const getFullAccountState: ProviderMethod<'getFullAccountState'> = async (
+const getFullContractState: ProviderMethod<'getFullContractState'> = async (
     req,
     res,
     _next,
@@ -169,48 +350,84 @@ const getFullAccountState: ProviderMethod<'getFullAccountState'> = async (
 
     const { connectionController } = ctx
 
-    const state = await connectionController.use(
-        async ({ data: { connection } }) => await connection.getFullAccountState(address)
-    )
-
-    res.result = {
-        state,
+    try {
+        res.result = {
+            state: await connectionController.use(
+                async ({ data: { connection } }) => await connection.getFullContractState(address)
+            ),
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
     }
-    end()
+}
+
+const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { address, beforeLt, limit, inclusive } = req.params
+    requireString(req, req.params, 'address')
+    requireOptionalString(req, req.params, 'beforeLt')
+    requireOptionalNumber(req, req.params, 'limit')
+    requireOptionalBoolean(req, req.params, 'inclusive')
+
+    const { connectionController } = ctx
+
+    try {
+        const transactions = await connectionController.use(
+            async ({ data: { connection } }) =>
+                await connection.getTransactions(address, beforeLt, limit || 50, inclusive || false)
+        )
+
+        const oldestLt =
+            transactions.length > 0 ? transactions[transactions.length - 1].id.lt : undefined
+
+        res.result = {
+            transactions,
+            oldestLt,
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
 }
 
 const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
 
-    const { address, abi, method, params } = req.params
+    const { address, cachedState, functionCall } = req.params
     requireString(req, req.params, 'address')
-    requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
+    requireOptionalString(req, req.params, 'cachedState')
+    requireFunctionCall(req, req.params, 'functionCall')
 
     const { connectionController } = ctx
 
-    const state = await connectionController.use(
-        async ({ data: { connection } }) => await connection.getFullAccountState(address)
-    )
+    let contractState = cachedState
 
-    if (state == null) {
+    if (contractState == null) {
+        contractState = await connectionController.use(
+            async ({ data: { connection } }) => await connection.getFullContractState(address)
+        )
+    }
+
+    if (contractState == null) {
         throw invalidRequest(req, 'Account not found')
+    }
+    if (!contractState.isDeployed || contractState.lastTransactionId == null) {
+        throw invalidRequest(req, 'Account is not deployed')
     }
 
     try {
-        const output = nt.runLocal(
-            state.genTimings,
-            state.lastTransactionId,
-            state.boc,
-            abi,
-            method,
-            params
+        res.result = nt.runLocal(
+            contractState.genTimings,
+            contractState.lastTransactionId,
+            contractState.boc,
+            functionCall.abi,
+            functionCall.method,
+            functionCall.params
         )
-
-        res.result = {
-            output,
-        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -234,10 +451,8 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
     requireOptionalString(req, req.params, 'publicKey')
 
     try {
-        const address = nt.getExpectedAddress(tvc, abi, workchain || 0, publicKey, initParams)
-
         res.result = {
-            address,
+            address: nt.getExpectedAddress(tvc, abi, workchain || 0, publicKey, initParams),
         }
         end()
     } catch (e) {
@@ -255,14 +470,12 @@ const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
 
+    requireFunctionCall(req, req, 'params')
     const { abi, method, params } = req.params
-    requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
 
     try {
-        const boc = nt.encodeInternalInput(abi, method, params)
         res.result = {
-            boc,
+            boc: nt.encodeInternalInput(abi, method, params),
         }
         end()
     } catch (e) {
@@ -277,14 +490,11 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     const { body, abi, method, internal } = req.params
     requireString(req, req.params, 'body')
     requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
+    requireMethodOrArray(req, req.params, 'method')
     requireBoolean(req, req.params, 'internal')
 
     try {
-        const output = nt.decodeInput(body, abi, method, internal)
-        res.result = {
-            output,
-        }
+        res.result = nt.decodeInput(body, abi, method, internal) || null
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -298,13 +508,32 @@ const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end
     const { body, abi, method } = req.params
     requireString(req, req.params, 'body')
     requireString(req, req.params, 'abi')
-    requireString(req, req.params, 'method')
+    requireMethodOrArray(req, req.params, 'method')
 
     try {
-        const output = nt.decodeOutput(body, abi, method)
-        res.result = {
-            output,
-        }
+        res.result = nt.decodeOutput(body, abi, method) || null
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { transaction, abi, method } = req.params
+    requireString(req, req.params, 'abi')
+    requireMethodOrArray(req, req.params, 'method')
+
+    try {
+        res.result = nt.decodeTransaction(transaction, abi, method) || null
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -315,22 +544,16 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { address, amount, payload } = req.params
+    const { preferredSender, address, amount, payload } = req.params
+    requireOptionalString(req, req.params, 'preferredSender')
     requireString(req, req.params, 'address')
     requireString(req, req.params, 'amount')
-    requireOptionalObject(req, req.params, 'payload')
-    if (payload != null) {
-        requireString(req, payload, 'abi')
-        requireString(req, payload, 'method')
-    }
+    requireOptional(req, req.params, 'payload', requireFunctionCall)
 
     const { origin, permissionsController, accountController } = ctx
 
     const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
-    if (allowedAccounts.length === 0) {
-        throw invalidRequest(req, 'No allowed accounts available')
-    }
-    const { address: selectedAddress } = allowedAccounts[0]
+    const selectedAddress = findPreferredSender(req, allowedAccounts, preferredSender)
 
     let body: string = ''
     if (payload != null) {
@@ -347,14 +570,20 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
             throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
         }
 
-        const unsignedMessage = wallet.prepareTransfer(
-            contractState,
-            address,
-            amount,
-            false,
-            body,
-            60
-        )
+        let unsignedMessage: nt.UnsignedMessage | undefined = undefined
+        try {
+            unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                address,
+                amount,
+                false,
+                body,
+                60
+            )
+        } finally {
+            contractState.free()
+        }
+
         if (unsignedMessage == null) {
             throw invalidRequest(req, 'Contract must be deployed first')
         }
@@ -379,23 +608,17 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { address, amount, bounce, payload } = req.params
+    const { preferredSender, address, amount, bounce, payload } = req.params
+    requireOptionalString(req, req.params, 'preferredSender')
     requireString(req, req.params, 'address')
     requireString(req, req.params, 'amount')
     requireBoolean(req, req.params, 'bounce')
-    requireOptionalObject(req, req.params, 'payload')
-    if (payload != null) {
-        requireString(req, payload, 'abi')
-        requireString(req, payload, 'method')
-    }
+    requireOptional(req, req.params, 'payload', requireFunctionCall)
 
     const { origin, permissionsController, accountController, approvalController } = ctx
 
     const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
-    if (allowedAccounts.length === 0) {
-        throw invalidRequest(req, 'No allowed accounts available')
-    }
-    const { address: sender } = allowedAccounts[0]
+    const sender = findPreferredSender(req, allowedAccounts, preferredSender)
 
     let body: string = ''
     if (payload != null) {
@@ -414,14 +637,20 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
                 throw invalidRequest(req, `Failed to get contract state for ${sender}`)
             }
 
-            const unsignedMessage = wallet.prepareTransfer(
-                contractState,
-                address,
-                amount,
-                bounce,
-                body,
-                60
-            )
+            let unsignedMessage: nt.UnsignedMessage | undefined = undefined
+            try {
+                unsignedMessage = wallet.prepareTransfer(
+                    contractState,
+                    address,
+                    amount,
+                    false,
+                    body,
+                    60
+                )
+            } finally {
+                contractState.free()
+            }
+
             if (unsignedMessage == null) {
                 throw invalidRequest(req, 'Contract must be deployed first')
             }
@@ -470,17 +699,99 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     end()
 }
 
+const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { preferredKey, address, stateInit, payload } = req.params
+    requireOptionalString(req, req.params, 'preferredKey')
+    requireString(req, req.params, 'address')
+    requireOptionalString(req, req.params, 'stateInit')
+    requireFunctionCall(req, req.params, 'payload')
+
+    const {
+        permissionsController,
+        approvalController,
+        accountController,
+        subscriptionsController,
+    } = ctx
+
+    const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
+    const signer = findPreferredSender(req, allowedAccounts, preferredKey)
+
+    let unsignedMessage: nt.UnsignedMessage
+    try {
+        unsignedMessage = nt.createExternalMessage(
+            address,
+            payload.abi,
+            payload.method,
+            stateInit,
+            payload.params,
+            signer,
+            60
+        )
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    const password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        type: 'callContractMethod',
+        requestData: {
+            signer,
+            recipient: address,
+            payload,
+        },
+    })
+
+    let signedMessage: nt.SignedMessage
+    try {
+        unsignedMessage.refreshTimeout()
+        signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    } finally {
+        unsignedMessage.free()
+    }
+
+    const transaction = await subscriptionsController.sendMessage(address, signedMessage)
+    let output: TokensObject | undefined
+    try {
+        const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)
+        output = decoded?.output
+    } catch (_) {}
+
+    res.result = {
+        transaction,
+        output,
+    }
+    end()
+}
+
 const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     requestPermissions,
+    disconnect,
+    subscribe,
+    unsubscribe,
+    unsubscribeAll,
     getProviderState,
-    getFullAccountState,
+    getFullContractState,
+    getTransactions,
     runLocal,
     getExpectedAddress,
     encodeInternalInput,
     decodeInput,
     decodeOutput,
+    decodeTransaction,
     estimateFees,
     sendMessage,
+    sendExternalMessage,
 }
 
 export const createProviderMiddleware = (
