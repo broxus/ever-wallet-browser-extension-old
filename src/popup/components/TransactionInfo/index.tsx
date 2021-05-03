@@ -1,13 +1,15 @@
 import React from 'react'
 import './style.scss'
-import { convertAddress } from '@shared/utils'
+import { convertAddress, TransactionDirection } from '@shared/utils'
 import Button from '@popup/components/Button'
 import CopyAddress from '@popup/components/CopyAddress'
 
 interface ITransactionInfo {
     date: string
-    sender: string
-    recipient: string
+    txAddress: {
+        direction: TransactionDirection
+        address: string
+    }
     amount: string
     fee: string
     total: string
@@ -16,13 +18,12 @@ interface ITransactionInfo {
 }
 const TransactionInfo: React.FC<ITransactionInfo> = ({
     date,
-    sender,
-    recipient,
     amount,
     fee,
     total,
     address,
     txHash,
+    txAddress,
 }) => {
     return (
         <>
@@ -37,16 +38,10 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
                     <CopyAddress address={txHash} />
                 </div>
                 <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Sender</span>
-                    <span className="send-screen__form-tx-details-param-value">
-                        {convertAddress(sender)}
+                    <span className="send-screen__form-tx-details-param-desc">
+                        {txAddress?.direction === 'to' ? 'Recipient' : 'Sender'}
                     </span>
-                </div>
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Recipient</span>
-                    <span className="send-screen__form-tx-details-param-value">
-                        {convertAddress(recipient)}
-                    </span>
+                    <CopyAddress address={txAddress?.address} />
                 </div>
                 <div
                     style={{

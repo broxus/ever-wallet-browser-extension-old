@@ -8,6 +8,7 @@ import {
 import * as nt from '@nekoton'
 
 import TonLogoS from '@popup/img/ton-logo-s.svg'
+import Decimal from 'decimal.js'
 
 import './style.scss'
 import TransactionInfo from '@popup/components/TransactionInfo'
@@ -21,10 +22,13 @@ type ITransactionsListItem = {
 const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, additionalInfo }) => {
     const [detailsPanelOpen, setDetailsPanelOpen] = useState(false)
     const value = extractTransactionValue(transaction)
-    const address = extractTransactionAddress(transaction)
-    const total = value.add(transaction.totalFees)
-
-    console.log(transaction, 'transaction')
+    const { address } = extractTransactionAddress(transaction)
+    const txAddress = extractTransactionAddress(transaction)
+    // @ts-ignore
+    let total: number = Decimal.abs(value).add(transaction.totalFees)
+    if (value.lessThan(0)) {
+        total *= -1
+    }
 
     return (
         <>
@@ -70,8 +74,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
             <SlidingPanel isOpen={detailsPanelOpen} onClose={() => setDetailsPanelOpen(false)}>
                 <TransactionInfo
                     date={new Date(transaction.createdAt * 1000).toLocaleTimeString()}
-                    sender={'tt'}
-                    recipient={'tt'}
+                    txAddress={txAddress}
                     amount={convertTons(value.toString())}
                     fee={convertTons(transaction.totalFees)}
                     total={convertTons(total.toString())}
