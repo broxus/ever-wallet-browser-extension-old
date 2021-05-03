@@ -270,7 +270,11 @@ fn guess_method_by_input<'a>(
     match parse_method_name(method)? {
         MethodName::Known(name) => Ok(Some(contract_abi.function(&name).handle_error()?)),
         MethodName::Guess(names) => {
-            let input_id = read_input_function_id(contract_abi, message_body.clone(), internal)?;
+            let input_id =
+                match read_input_function_id(contract_abi, message_body.clone(), internal) {
+                    Ok(id) => id,
+                    Err(_) => return Ok(None),
+                };
 
             let mut method = None;
             for name in names.iter() {
