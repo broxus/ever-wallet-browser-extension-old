@@ -61,11 +61,12 @@ interface SetupProviderEngineOptions {
 }
 
 export class NekotonController extends EventEmitter {
-    private _defaultMaxListeners: number
-    private _activeControllerConnections: number
-    private readonly _connections: { [id: string]: { engine: JsonRpcEngine } }
-    private readonly _originToIds: { [origin: string]: Set<string> }
-    private readonly _tabToIds: { [tabId: number]: Set<string> }
+    private _defaultMaxListeners: number = 20
+    private _activeControllerConnections: number = 0
+    private readonly _connections: { [id: string]: { engine: JsonRpcEngine } } = {}
+    private readonly _originToConnectionIds: { [origin: string]: Set<string> } = {}
+    private readonly _originToTabIds: { [origin: string]: Set<number> } = {}
+    private readonly _tabToConnectionIds: { [tabId: number]: Set<string> } = {}
 
     private readonly _options: NekotonControllerOptions
     private readonly _components: NekotonControllerComponents
@@ -123,13 +124,6 @@ export class NekotonController extends EventEmitter {
     ) {
         super()
 
-        this._defaultMaxListeners = 20
-        this._activeControllerConnections = 0
-
-        this._connections = {}
-        this._originToIds = {}
-        this._tabToIds = {}
-
         this._options = options
         this._components = components
 
@@ -145,6 +139,9 @@ export class NekotonController extends EventEmitter {
             this
         )
         this._components.subscriptionsController.config.notifyTab = this._notifyTab.bind(this)
+        this._components.subscriptionsController.config.getOriginTabs = this._getOriginTabs.bind(
+            this
+        )
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
@@ -350,20 +347,27 @@ export class NekotonController extends EventEmitter {
             engine,
         }
 
-        let originIds = this._originToIds[origin]
+        let originIds = this._originToConnectionIds[origin]
         if (originIds == null) {
             originIds = new Set()
-            this._originToIds[origin] = originIds
+            this._originToConnectionIds[origin] = originIds
         }
         originIds.add(id)
 
         if (tabId != null) {
-            let tabIds = this._tabToIds[tabId]
+            let tabIds = this._tabToConnectionIds[tabId]
             if (tabIds == null) {
                 tabIds = new Set()
-                this._tabToIds[tabId] = tabIds
+                this._tabToConnectionIds[tabId] = tabIds
             }
             tabIds.add(id)
+
+            let originTabs = this._originToTabIds[origin]
+            if (originTabs == null) {
+                originTabs = new Set()
+                this._originToTabIds[origin] = originTabs
+            }
+            originTabs.add(tabId)
         }
 
         return id
@@ -372,20 +376,28 @@ export class NekotonController extends EventEmitter {
     private _removeConnection(origin: string, tabId: number | undefined, id: string) {
         delete this._connections[id]
 
-        const originIds = this._originToIds[origin]
+        const originIds = this._originToConnectionIds[origin]
         if (originIds != null) {
             originIds.delete(id)
             if (originIds.size === 0) {
-                delete this._originToIds[origin]
+                delete this._originToConnectionIds[origin]
             }
         }
 
         if (tabId != null) {
-            const tabIds = this._tabToIds[tabId]
+            const tabIds = this._tabToConnectionIds[tabId]
             if (tabIds != null) {
                 tabIds.delete(id)
                 if (tabIds.size === 0) {
-                    delete this._tabToIds[tabId]
+                    delete this._tabToConnectionIds[tabId]
+                }
+            }
+
+            let originTabs = this._originToTabIds[origin]
+            if (originTabs != null) {
+                originTabs.delete(tabId)
+                if (originTabs.size === 0) {
+                    delete this._originToTabIds[origin]
                 }
             }
         }
@@ -395,8 +407,13 @@ export class NekotonController extends EventEmitter {
         this._connections[id]?.engine.emit('notification', payload)
     }
 
+    private _getOriginTabs(origin: string) {
+        const tabIds = this._originToTabIds[origin]
+        return tabIds ? Array.from(tabIds.values()) : []
+    }
+
     private _notifyTab<T extends ProviderEvent>(tabId: number, payload: ProviderEventCall<T>) {
-        const tabIds = this._tabToIds[tabId]
+        const tabIds = this._tabToConnectionIds[tabId]
         if (tabIds) {
             tabIds.forEach((id) => {
                 this._connections[id]?.engine.emit('notification', payload)
@@ -408,7 +425,7 @@ export class NekotonController extends EventEmitter {
         origin: string,
         payload: ProviderEventCall<T>
     ) {
-        const originIds = this._originToIds[origin]
+        const originIds = this._originToConnectionIds[origin]
         if (originIds) {
             originIds.forEach((id) => {
                 this._connections[id]?.engine.emit('notification', payload)

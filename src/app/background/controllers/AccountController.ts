@@ -1,4 +1,5 @@
 import { Mutex } from '@broxus/await-semaphore'
+import { mergeTransactions } from 'ton-inpage-provider'
 import {
     convertAddress,
     convertTons,
@@ -819,38 +820,4 @@ class TonWalletSubscription {
                 throw err
             })
     }
-}
-
-function mergeTransactions(
-    knownTransactions: Array<nt.Transaction>,
-    newTransactions: Array<nt.Transaction>,
-    info: nt.TransactionsBatchInfo
-): nt.Transaction[] {
-    if (info.batchType == 'old') {
-        knownTransactions.push(...newTransactions)
-        return knownTransactions
-    }
-
-    if (knownTransactions.length === 0) {
-        knownTransactions.push(...newTransactions)
-        return knownTransactions
-    }
-
-    // Example:
-    // known lts: [N, N-1, N-2, N-3, (!) N-10,...]
-    // new lts: [N-4, N-5]
-    // batch info: { minLt: N-5, maxLt: N-4, batchType: 'new' }
-
-    // 1. Skip indices until known transaction lt is greater than the biggest in the batch
-    let i = 0
-    while (
-        i < knownTransactions.length &&
-        knownTransactions[i].id.lt.localeCompare(info.maxLt) >= 0
-    ) {
-        ++i
-    }
-
-    // 2. Insert new transactions
-    knownTransactions.splice(i, 0, ...newTransactions)
-    return knownTransactions
 }

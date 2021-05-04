@@ -1,13 +1,15 @@
 import ObjectMultiplex from 'obj-multiplex'
 import { Duplex } from 'readable-stream'
 import { duplex as isDuplex } from 'is-stream'
+import pump from 'pump'
+
 import {
     JsonRpcEngine,
     JsonRpcRequest,
     JsonRpcResponse,
     JsonRpcId,
     JsonRpcVersion,
-} from '../../shared/jrpc'
+} from '@shared/jrpc'
 import {
     ConsoleLike,
     createIdRemapMiddleware,
@@ -18,10 +20,9 @@ import {
     Maybe,
     NekotonRpcError,
     SafeEventEmitter,
-} from '../../shared/utils'
-import { NEKOTON_PROVIDER } from '../../shared/constants'
-import { RpcErrorCode } from '../../shared/errors'
-import pump from 'pump'
+} from '@shared/utils'
+import { NEKOTON_PROVIDER } from '@shared/constants'
+import { RpcErrorCode } from '@shared/errors'
 
 interface UnvalidatedJsonRpcRequest {
     id?: JsonRpcId
@@ -43,7 +44,6 @@ export interface RequestArguments {
 
 interface InternalState {
     isConnected: boolean
-    initialized: boolean
     isPermanentlyDisconnected: boolean
 }
 
@@ -73,7 +73,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
 
         this._state = {
             isConnected: false,
-            initialized: false,
             isPermanentlyDisconnected: false,
         }
 
@@ -102,8 +101,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         rpcEngine.push(createErrorMiddleware(this._log))
         rpcEngine.push(jsonRpcConnection.middleware)
         this._rpcEngine = rpcEngine
-
-        this._initializeState().then(() => {})
 
         jsonRpcConnection.events.on('notification', (payload) => {
             const { method, params } = payload
@@ -171,21 +168,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
 
     public prependOnceListener(eventName: string, listener: (...args: unknown[]) => void) {
         return super.prependOnceListener(eventName, listener)
-    }
-
-    private _initializeState = async () => {
-        try {
-            const { selectedConnection } = (await this.request({
-                method: 'getProviderState',
-            })) as any
-
-            console.log(selectedConnection)
-        } catch (e) {
-            this._log.error('Nekoton: Failed to get initial state', e)
-        } finally {
-            this._state.initialized = true
-            this.emit('_initialized')
-        }
     }
 
     private _rpcRequest = (

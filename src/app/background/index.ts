@@ -1,3 +1,5 @@
+;(window as Record<string, any>).hasTonProvider = true
+
 import '../../polyfills'
 
 import endOfStream from 'end-of-stream'

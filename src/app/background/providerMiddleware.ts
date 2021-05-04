@@ -244,7 +244,7 @@ const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, c
     const { origin, tabId, permissionsController, subscriptionsController } = ctx
 
     permissionsController.removeOrigin(origin)
-    tabId && (await subscriptionsController.unsubscribeFromAllContracts(tabId))
+    await subscriptionsController.unsubscribeOriginFromAllContracts(origin, tabId)
     res.result = {}
     end()
 }
