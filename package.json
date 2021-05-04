@@ -86,8 +86,10 @@
     "react-select": "^4.2.1",
     "react-textarea-autosize": "^8.3.2",
     "react-tooltip": "^4.2.17",
+    "react-virtualized": "^9.22.3",
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
+    "reselect": "^4.0.0",
     "ton-inpage-provider": "^0.0.12",
     "util": "^0.12.3"
   }

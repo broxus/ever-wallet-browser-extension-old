@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import cn from 'classnames'
 import * as nt from '@nekoton'
 
@@ -61,6 +61,10 @@ enum AssetsTab {
 const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setActiveContent }) => {
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
+    useEffect(() => {
+        console.log(`tab changed at ${Date.now()}`)
+    }, [activeTab])
+
     return (
         <>
             <div className="user-assets">
@@ -77,7 +81,10 @@ const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setAc
                         className={cn('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.TRANSACTIONS,
                         })}
-                        onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}
+                        onClick={() => {
+                            console.log(`clicked at ${Date.now()}`)
+                            setActiveTab(AssetsTab.TRANSACTIONS)
+                        }}
                     >
                         Transactions
                     </div>

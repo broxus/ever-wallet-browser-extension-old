@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useEffect } from 'react'
+import { createSelector } from 'reselect'
 import * as nt from '@nekoton'
 
 import TransactionListItem from '@popup/components/TransactionsListItem'
@@ -10,6 +11,22 @@ type TransactionListProps = {
 }
 
 const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
+
+
+    // const taxPercentSelector = state => state.shop.taxPercent
+    //
+    // const taxSelector = createSelector(
+    //     taxPercentSelector,
+    //     (taxPercent) => taxPercent
+    // )
+    //
+    // const totalSelector = createSelector(
+    //     taxSelector,
+    //     (subtotal, tax) => ({ total: subtotal + tax })
+    // )
+    //
+
+
     return (
         <div
             style={{
@@ -22,12 +39,10 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
             {!(transactions.length > 0) && (
                 <p className="transactions-list-empty">History is empty</p>
             )}
+
             {transactions?.map((transaction, i) => {
                 return (
-                    <TransactionListItem
-                        key={`${transaction.id.lt}${i}`}
-                        transaction={transaction}
-                    />
+                    <TransactionListItem key={`${transaction.id.lt}`} transaction={transaction} />
                 )
             })}
         </div>

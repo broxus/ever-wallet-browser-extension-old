@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import './style.scss'
 import { convertAddress, TransactionDirection } from '@shared/utils'
 import Button from '@popup/components/Button'
@@ -23,6 +23,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
     txHash,
     txAddress,
 }) => {
+
     return (
         <>
             <h2 className="send-screen__form-title">Transaction information</h2>
