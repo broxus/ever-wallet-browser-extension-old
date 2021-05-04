@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { createSelector } from 'reselect'
 import * as nt from '@nekoton'
+import { List } from 'react-virtualized'
 
 import TransactionListItem from '@popup/components/TransactionsListItem'
 
@@ -11,8 +12,6 @@ type TransactionListProps = {
 }
 
 const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
-
-
     // const taxPercentSelector = state => state.shop.taxPercent
     //
     // const taxSelector = createSelector(
@@ -26,6 +25,25 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
     // )
     //
 
+    // List data as an array of strings
+    const list = [
+        'Brian Vaughn',
+        // And so on...
+    ]
+
+    const rowRenderer = ({
+        key, // Unique key within array of rows
+        index, // Index of row within collection
+        isScrolling, // The List is currently being scrolled
+        isVisible, // This row is visible within the List (eg it is not an overscanned row)
+        style, // Style object to be applied to row (to position it)
+    }) => {
+        return (
+            <React.Fragment key={key}>
+                <TransactionListItem transaction={transactions[index]} />
+            </React.Fragment>
+        )
+    }
 
     return (
         <div
@@ -39,12 +57,18 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
             {!(transactions.length > 0) && (
                 <p className="transactions-list-empty">History is empty</p>
             )}
-
-            {transactions?.map((transaction, i) => {
-                return (
-                    <TransactionListItem key={`${transaction.id.lt}`} transaction={transaction} />
-                )
-            })}
+            <List
+                width={320}
+                height={600}
+                rowCount={transactions.length}
+                rowHeight={121}
+                rowRenderer={rowRenderer}
+            />
+            {/*{transactions?.map((transaction, i) => {*/}
+            {/*    return (*/}
+            {/*        <TransactionListItem key={`${transaction.id.lt}`} transaction={transaction} />*/}
+            {/*    )*/}
+            {/*})}*/}
         </div>
     )
 }

@@ -32,7 +32,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
 
     return (
         <>
-            <div className="transactions-list-item" onClick={() => setDetailsPanelOpen(true)}>
+            <div className="transactions-list-item" onClick={() => setDetailsPanelOpen(false)}>
                 <div style={{ display: 'flex', width: '100%' }}>
                     <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
                         <TonLogoS />
@@ -71,16 +71,16 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
                     </div>
                 </div>
             </div>
-            <SlidingPanel isOpen={detailsPanelOpen} onClose={() => setDetailsPanelOpen(false)}>
-                <TransactionInfo
-                    date={new Date(transaction.createdAt * 1000).toLocaleString()}
-                    txAddress={txAddress}
-                    amount={convertTons(value.toString())}
-                    fee={convertTons(transaction.totalFees)}
-                    total={convertTons(total.toString())}
-                    txHash={transaction.id.hash}
-                />
-            </SlidingPanel>
+            {/*<SlidingPanel isOpen={detailsPanelOpen} onClose={() => setDetailsPanelOpen(false)}>*/}
+            {/*    <TransactionInfo*/}
+            {/*        date={new Date(transaction.createdAt * 1000).toLocaleString()}*/}
+            {/*        txAddress={txAddress}*/}
+            {/*        amount={convertTons(value.toString())}*/}
+            {/*        fee={convertTons(transaction.totalFees)}*/}
+            {/*        total={convertTons(total.toString())}*/}
+            {/*        txHash={transaction.id.hash}*/}
+            {/*    />*/}
+            {/*</SlidingPanel>*/}
         </>
     )
 }
