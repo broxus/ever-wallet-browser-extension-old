@@ -47,15 +47,6 @@ const formatGroupLabel = (data: any) => (
     </div>
 )
 
-export const groupedOptions = [
-    {
-        label: 'Key1',
-        options: [{ value: '1', label: 'Key 1' }],
-    },
-    { value: '60', label: 'Generate new key' },
-    { value: '60', label: 'Import key' },
-]
-
 const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
     return (
         <div className="create-account-page__content">

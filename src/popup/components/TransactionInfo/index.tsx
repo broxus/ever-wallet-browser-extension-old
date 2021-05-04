@@ -13,7 +13,6 @@ interface ITransactionInfo {
     amount: string
     fee: string
     total: string
-    address: string
     txHash: string
 }
 const TransactionInfo: React.FC<ITransactionInfo> = ({
@@ -21,7 +20,6 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
     amount,
     fee,
     total,
-    address,
     txHash,
     txAddress,
 }) => {

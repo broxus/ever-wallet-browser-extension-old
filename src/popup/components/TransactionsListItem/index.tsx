@@ -78,7 +78,6 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
                     amount={convertTons(value.toString())}
                     fee={convertTons(transaction.totalFees)}
                     total={convertTons(total.toString())}
-                    address={address || ''}
                     txHash={transaction.id.hash}
                 />
             </SlidingPanel>
