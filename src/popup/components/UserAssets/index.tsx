@@ -61,10 +61,6 @@ enum AssetsTab {
 const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setActiveContent }) => {
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
-    useEffect(() => {
-        console.log(`tab changed at ${Date.now()}`)
-    }, [activeTab])
-
     return (
         <>
             <div className="user-assets">

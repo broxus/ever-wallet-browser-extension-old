@@ -39,9 +39,9 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
         style, // Style object to be applied to row (to position it)
     }) => {
         return (
-            <React.Fragment key={key}>
+            <div key={key} style={style}>
                 <TransactionListItem transaction={transactions[index]} />
-            </React.Fragment>
+            </div>
         )
     }
 
@@ -57,18 +57,18 @@ const TransactionsList: React.FC<TransactionListProps> = ({ transactions }) => {
             {!(transactions.length > 0) && (
                 <p className="transactions-list-empty">History is empty</p>
             )}
-            <List
-                width={320}
-                height={600}
-                rowCount={transactions.length}
-                rowHeight={121}
-                rowRenderer={rowRenderer}
-            />
-            {/*{transactions?.map((transaction, i) => {*/}
-            {/*    return (*/}
-            {/*        <TransactionListItem key={`${transaction.id.lt}`} transaction={transaction} />*/}
-            {/*    )*/}
-            {/*})}*/}
+            {/*<List*/}
+            {/*    width={320}*/}
+            {/*    height={600}*/}
+            {/*    rowCount={transactions.length}*/}
+            {/*    rowHeight={121}*/}
+            {/*    rowRenderer={rowRenderer}*/}
+            {/*/>*/}
+            {transactions?.map((transaction) => {
+                return (
+                    <TransactionListItem key={`${transaction.id.lt}`} transaction={transaction} />
+                )
+            })}
         </div>
     )
 }
