@@ -241,9 +241,10 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
 const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
     requirePermissions(ctx, [])
 
-    const { origin, permissionsController } = ctx
+    const { origin, tabId, permissionsController, subscriptionsController } = ctx
 
     permissionsController.removeOrigin(origin)
+    tabId && (await subscriptionsController.unsubscribeFromAllContracts(tabId))
     res.result = {}
     end()
 }
