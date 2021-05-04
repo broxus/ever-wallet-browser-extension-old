@@ -525,7 +525,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     requireParams(req)
 
     const { sender, recipient, amount, payload } = req.params
-    requireOptionalString(req, req.params, 'sender')
+    requireString(req, req.params, 'sender')
     requireString(req, req.params, 'recipient')
     requireString(req, req.params, 'amount')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
@@ -593,7 +593,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     requireParams(req)
 
     const { sender, recipient, amount, bounce, payload } = req.params
-    requireOptionalString(req, req.params, 'sender')
+    requireString(req, req.params, 'sender')
     requireString(req, req.params, 'recipient')
     requireString(req, req.params, 'amount')
     requireBoolean(req, req.params, 'bounce')
@@ -698,7 +698,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requireParams(req)
 
     const { publicKey, recipient, stateInit, payload } = req.params
-    requireOptionalString(req, req.params, 'publicKey')
+    requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'recipient')
     requireOptionalString(req, req.params, 'stateInit')
     requireFunctionCall(req, req.params, 'payload')
