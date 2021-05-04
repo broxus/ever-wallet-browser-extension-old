@@ -188,6 +188,7 @@ export class NekotonController extends EventEmitter {
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
+            selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             logOut: nodeifyAsync(this, 'logOut'),
             estimateFees: nodeifyAsync(accountController, 'estimateFees'),
             estimateDeploymentFees: nodeifyAsync(accountController, 'estimateDeploymentFees'),

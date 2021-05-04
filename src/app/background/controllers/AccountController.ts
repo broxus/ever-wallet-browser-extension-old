@@ -130,11 +130,7 @@ export class AccountController extends BaseController<
             await this._stopSubscriptions()
             await this.config.accountsStorage.clear()
             await this.config.keyStore.clear()
-
-            this.update({
-                selectedAccount: undefined,
-                accountEntries: {},
-            })
+            this.update(defaultState)
         })
     }
 
@@ -143,7 +139,7 @@ export class AccountController extends BaseController<
         contractType,
         seed,
         password,
-    }: AccountToCreate): Promise<string> {
+    }: AccountToCreate): Promise<nt.AssetsList> {
         const { keyStore, accountsStorage } = this.config
 
         try {
@@ -156,7 +152,12 @@ export class AccountController extends BaseController<
                 },
             })
 
-            const address = await accountsStorage.addAccount(name, publicKey, contractType, true)
+            const selectedAccount = await accountsStorage.addAccount(
+                name,
+                publicKey,
+                contractType,
+                true
+            )
 
             const accountEntries = this.state.accountEntries
             let entries = accountEntries[publicKey]
@@ -165,26 +166,69 @@ export class AccountController extends BaseController<
                 accountEntries[publicKey] = entries
             }
             entries.push({
-                address,
+                address: selectedAccount.tonWallet.address,
                 publicKey,
                 contractType,
                 name,
             })
 
             this.update({
-                selectedAccount: {
-                    name,
-                    tonWallet: { address, contractType, publicKey },
-                    tokenWallets: [],
-                    depools: [],
-                },
+                selectedAccount,
+                accountEntries,
             })
 
             await this.startSubscriptions()
-            return address
+            return selectedAccount
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public async selectAccount(address: string) {
+        await this._accountsMutex.use(async () => {
+            const selectedAccount = await this.config.accountsStorage.setCurrentAccount(address)
+            this.update({
+                selectedAccount,
+            })
+        })
+    }
+
+    public async removeAccount(address: string) {
+        await this._accountsMutex.use(async () => {
+            const assetsList = await this.config.accountsStorage.removeAccount(address)
+            const subscription = this._tonWalletSubscriptions.get(address)
+            this._tonWalletSubscriptions.delete(address)
+            if (subscription != null) {
+                await subscription.stop()
+            }
+
+            const accountEntries = { ...this.state.accountEntries }
+            if (assetsList != null) {
+                const publicKey = assetsList.tonWallet.publicKey
+
+                let entries = [...(accountEntries[publicKey] || [])]
+                const index = entries.findIndex((item) => item.address == address)
+                entries.splice(index, 1)
+
+                if (entries.length === 0) {
+                    delete accountEntries[publicKey]
+                }
+            }
+
+            const accountContractStates = { ...this.state.accountContractStates }
+            delete accountContractStates[address]
+
+            const accountTransactions = { ...this.state.accountTransactions }
+            delete accountTransactions[address]
+
+            // TODO: select current account
+
+            this.update({
+                accountEntries,
+                accountContractStates,
+                accountTransactions,
+            })
+        })
     }
 
     public async checkPassword(password: nt.KeyPassword) {

@@ -40,28 +40,28 @@ impl AccountsStorage {
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
         update_current: bool,
-    ) -> Result<PromiseString, JsValue> {
+    ) -> Result<PromiseAssetsList, JsValue> {
         let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let address = inner
+            let assets_list = inner
                 .add_account(&name, public_key, contract_type, update_current)
                 .await
                 .handle_error()?;
-            Ok(JsValue::from(address))
+            Ok(make_assets_list(assets_list).unchecked_into())
         })))
     }
 
     #[wasm_bindgen(js_name = "removeAccount")]
-    pub fn remove_account(&self, address: String) -> PromiseVoid {
+    pub fn remove_account(&self, address: String) -> PromiseOptionAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            inner.remove_account(&address).await.handle_error()?;
-            Ok(JsValue::undefined())
+            let assets_list = inner.remove_account(&address).await.handle_error()?;
+            Ok(JsValue::from(assets_list.map(make_assets_list)))
         }))
     }
 
@@ -115,12 +115,12 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "setCurrentAccount")]
-    pub fn set_current_account(&self, address: String) -> PromiseVoid {
+    pub fn set_current_account(&self, address: String) -> PromiseAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            inner.set_current_account(&address).await.handle_error()?;
-            Ok(JsValue::undefined())
+            let assets_list = inner.set_current_account(&address).await.handle_error()?;
+            Ok(make_assets_list(assets_list).unchecked_into())
         }))
     }
 

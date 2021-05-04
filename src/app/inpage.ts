@@ -1,3 +1,5 @@
+;(window as Record<string, any>).hasTonProvider = true
+
 let __define: Define | undefined
 
 const cleanContextForImports = () => {

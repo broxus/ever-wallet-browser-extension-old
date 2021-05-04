@@ -16,7 +16,7 @@ enum LocalStep {
 }
 
 interface IWelcomePage {
-    createAccount: (params: AccountToCreate) => Promise<string>
+    createAccount: (params: AccountToCreate) => Promise<any>
 }
 
 const WelcomePage: React.FC<IWelcomePage> = ({ createAccount }) => {

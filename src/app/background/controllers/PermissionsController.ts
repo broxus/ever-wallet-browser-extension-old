@@ -6,12 +6,12 @@ import { RpcErrorCode } from '@shared/errors'
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
 
-const PERMISSIONS: Permissions = {
+const POSSIBLE_PERMISSIONS: { [K in Permission]: true } = {
     tonClient: true,
-    accountInteraction: [],
+    accountInteraction: true,
 }
 
-export const validatePermission = (permission: string) => {
+export function validatePermission(permission: string): asserts permission is Permission {
     if (typeof (permission as any) !== 'string') {
         throw new NekotonRpcError(
             RpcErrorCode.INVALID_REQUEST,
@@ -19,7 +19,7 @@ export const validatePermission = (permission: string) => {
         )
     }
 
-    if ((PERMISSIONS as any)[permission] == null) {
+    if ((POSSIBLE_PERMISSIONS as any)[permission] !== true) {
         throw new NekotonRpcError(
             RpcErrorCode.INVALID_REQUEST,
             `Unknown permission "${permission}"`

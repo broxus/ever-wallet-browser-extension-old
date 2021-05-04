@@ -49,7 +49,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
                         width: '100%',
                         marginBottom: '20px',
                     }}
-                ></div>
+                />
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Amount</span>
                     <span className="send-screen__form-tx-details-param-value">{amount}</span>
