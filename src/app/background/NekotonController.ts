@@ -99,6 +99,7 @@ export class NekotonController extends EventEmitter {
         })
 
         await connectionController.initialSync()
+        await accountController.initialSync()
         await accountController.startSubscriptions()
 
         notificationController.setHidden(false)

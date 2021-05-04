@@ -31,6 +31,7 @@ export interface AccountControllerConfig extends BaseConfig {
 
 export interface AccountControllerState extends BaseState {
     selectedAccount: nt.AssetsList | undefined
+    accountEntries: { [publicKey: string]: nt.AccountsStorageEntry[] }
     accountContractStates: { [address: string]: nt.ContractState }
     accountTransactions: { [address: string]: nt.Transaction[] }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
@@ -38,6 +39,7 @@ export interface AccountControllerState extends BaseState {
 
 const defaultState: AccountControllerState = {
     selectedAccount: undefined,
+    accountEntries: {},
     accountContractStates: {},
     accountTransactions: {},
     accountPendingMessages: {},
@@ -57,101 +59,52 @@ export class AccountController extends BaseController<
         this.initialize()
     }
 
+    public async initialSync() {
+        const address = await this.config.accountsStorage.getCurrentAccount()
+        let selectedAccount: AccountControllerState['selectedAccount'] = undefined
+        if (address != null) {
+            selectedAccount = await this.config.accountsStorage.getAccount(address)
+        }
+
+        const accountEntries: AccountControllerState['accountEntries'] = {}
+        const entries = await this.config.accountsStorage.getStoredAccounts()
+        for (const entry of entries) {
+            let item = accountEntries[entry.publicKey]
+            if (item == null) {
+                item = []
+                accountEntries[entry.publicKey] = item
+            }
+            item.push(entry)
+        }
+
+        this.update({
+            selectedAccount,
+            accountEntries,
+        })
+    }
+
     public async startSubscriptions() {
         await this._accountsMutex.use(async () => {
-            if (this._tonWalletSubscriptions.size != 0) {
-                throw new Error('Subscriptions are already running')
-            }
-
-            const address = await this.config.accountsStorage.getCurrentAccount()
-            console.log('Current address', address)
-            if (address == null) {
-                return
-            }
-
-            const selectedAccount = await this.config.accountsStorage.getAccount(address)
-            console.log('Selected account', selectedAccount)
-            if (selectedAccount == null) {
-                return
-            }
-
-            class TonWalletHandler implements ITonWalletHandler {
-                private readonly _address: string
-                private readonly _controller: AccountController
-
-                constructor(address: string, controller: AccountController) {
-                    this._address = address
-                    this._controller = controller
-                }
-
-                onMessageExpired(pendingTransaction: nt.PendingTransaction) {
-                    this._controller._rejectMessageRequest(
-                        this._address,
-                        pendingTransaction.bodyHash,
-                        new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
+            const accountEntries = this.state.accountEntries
+            const iterateEntries = async (f: (entry: nt.AccountsStorageEntry) => void) =>
+                Promise.all(
+                    window.ObjectExt.values(accountEntries).map((entries) =>
+                        Promise.all(entries.map(f))
                     )
-                }
+                )
 
-                onMessageSent(
-                    pendingTransaction: nt.PendingTransaction,
-                    transaction: nt.Transaction
-                ) {
-                    this._controller._resolveMessageRequest(
-                        this._address,
-                        pendingTransaction.bodyHash,
-                        transaction
+            await iterateEntries(async ({ address, publicKey, contractType }) => {
+                if (this._tonWalletSubscriptions.get(address) == null) {
+                    const subscription = await this._createSubscription(
+                        address,
+                        publicKey,
+                        contractType
                     )
+                    this._tonWalletSubscriptions.set(address, subscription)
+                    subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+                    await subscription?.start()
                 }
-
-                onStateChanged(newState: nt.ContractState) {
-                    this._controller._updateTonWalletState(this._address, newState)
-                }
-
-                onTransactionsFound(
-                    transactions: Array<nt.Transaction>,
-                    info: nt.TransactionsBatchInfo
-                ) {
-                    if (info.batchType == 'new') {
-                        let body = ''
-                        for (const transaction of transactions) {
-                            const value = extractTransactionValue(transaction)
-                            const { address, direction } = extractTransactionAddress(transaction)
-
-                            if (value.greaterThan('0')) {
-                                body += `${convertTons(
-                                    value.toString()
-                                )} TON ${direction} ${convertAddress(address)}\n`
-                            }
-                        }
-
-                        if (body.length !== 0) {
-                            this._controller.config.notificationController.showNotification(
-                                'New transactions found',
-                                body
-                            )
-                        }
-                    }
-
-                    this._controller._updateTransactions(this._address, transactions, info)
-                }
-            }
-
-            const subscription = await TonWalletSubscription.subscribe(
-                this.config.connectionController,
-                selectedAccount.tonWallet.address,
-                selectedAccount.tonWallet.publicKey,
-                selectedAccount.tonWallet.contractType,
-                new TonWalletHandler(address, this)
-            )
-
-            this._tonWalletSubscriptions.set(address, subscription)
-            this.update({
-                selectedAccount: selectedAccount,
             })
-
-            console.log('Started subscription', selectedAccount)
-            subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
-            await subscription.start()
         })
     }
 
@@ -180,6 +133,7 @@ export class AccountController extends BaseController<
 
             this.update({
                 selectedAccount: undefined,
+                accountEntries: {},
             })
         })
     }
@@ -193,7 +147,7 @@ export class AccountController extends BaseController<
         const { keyStore, accountsStorage } = this.config
 
         try {
-            const key = await keyStore.addKey(`${name} key`, <nt.NewKey>{
+            const { publicKey } = await keyStore.addKey(`${name} key`, <nt.NewKey>{
                 type: 'encrypted_key',
                 data: {
                     password,
@@ -202,7 +156,30 @@ export class AccountController extends BaseController<
                 },
             })
 
-            const address = accountsStorage.addAccount(name, key.publicKey, contractType, true)
+            const address = await accountsStorage.addAccount(name, publicKey, contractType, true)
+
+            const accountEntries = this.state.accountEntries
+            let entries = accountEntries[publicKey]
+            if (entries == null) {
+                entries = []
+                accountEntries[publicKey] = entries
+            }
+            entries.push({
+                address,
+                publicKey,
+                contractType,
+                name,
+            })
+
+            this.update({
+                selectedAccount: {
+                    name,
+                    tonWallet: { address, contractType, publicKey },
+                    tokenWallets: [],
+                    depools: [],
+                },
+            })
+
             await this.startSubscriptions()
             return address
         } catch (e) {
@@ -406,6 +383,76 @@ export class AccountController extends BaseController<
         this._tonWalletSubscriptions.forEach((subscription) => {
             subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
         })
+    }
+
+    private async _createSubscription(
+        address: string,
+        publicKey: string,
+        contractType: nt.ContractType
+    ) {
+        class TonWalletHandler implements ITonWalletHandler {
+            private readonly _address: string
+            private readonly _controller: AccountController
+
+            constructor(address: string, controller: AccountController) {
+                this._address = address
+                this._controller = controller
+            }
+
+            onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+                this._controller._rejectMessageRequest(
+                    this._address,
+                    pendingTransaction.bodyHash,
+                    new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
+                )
+            }
+
+            onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+                this._controller._resolveMessageRequest(
+                    this._address,
+                    pendingTransaction.bodyHash,
+                    transaction
+                )
+            }
+
+            onStateChanged(newState: nt.ContractState) {
+                this._controller._updateTonWalletState(this._address, newState)
+            }
+
+            onTransactionsFound(
+                transactions: Array<nt.Transaction>,
+                info: nt.TransactionsBatchInfo
+            ) {
+                if (info.batchType == 'new') {
+                    let body = ''
+                    for (const transaction of transactions) {
+                        const value = extractTransactionValue(transaction)
+                        const { address, direction } = extractTransactionAddress(transaction)
+
+                        body += `${convertTons(value.toString())} TON ${direction} ${convertAddress(
+                            address
+                        )}\n`
+                    }
+
+                    if (body.length !== 0) {
+                        this._controller.config.notificationController.showNotification(
+                            `New transaction${transactions.length == 1 ? '' : 's'} found`,
+                            body
+                        )
+                    }
+                }
+
+                this._controller._updateTransactions(this._address, transactions, info)
+            }
+        }
+
+        return await TonWalletSubscription.subscribe(
+            this.config.connectionController,
+            address,
+            publicKey,
+            contractType,
+            new TonWalletHandler(address, this)
+        )
     }
 
     private async _stopSubscriptions() {
