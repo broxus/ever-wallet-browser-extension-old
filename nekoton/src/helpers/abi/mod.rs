@@ -210,11 +210,10 @@ pub fn decode_transaction(
     let internal = js_sys::Reflect::get(&in_msg, &JsValue::from_str("src"))?.is_string();
 
     let body_key = JsValue::from_str("body");
-    let in_msg_body = js_sys::Reflect::get(&in_msg, &body_key)?
-        .as_string()
-        .ok_or(AbiError::ExpectedMessageBody)
-        .handle_error()
-        .and_then(|body| parse_slice(&body))?;
+    let in_msg_body = match js_sys::Reflect::get(&in_msg, &body_key)?.as_string() {
+        Some(body) => parse_slice(&body)?,
+        None => return Ok(None),
+    };
 
     let method = match guess_method_by_input(&contract_abi, &in_msg_body, method, internal)? {
         Some(method) => method,
