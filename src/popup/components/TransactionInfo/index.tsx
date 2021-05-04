@@ -67,7 +67,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
             <Button
                 white
                 onClick={() =>
-                    window.open(`https://ton-explorer.com/transactions/${address}`, '_blank')
+                    window.open(`https://ton-explorer.com/transactions/${txHash}`, '_blank')
                 }
                 text={'Open in explorer'}
             />
