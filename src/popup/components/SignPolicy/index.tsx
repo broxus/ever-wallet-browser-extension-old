@@ -16,7 +16,7 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
     const [checked, setChecked] = useState(false)
 
     return (
-        <>
+        <div className="policy-sign-page">
             <div className="policy-sign-page__illustration">
                 <Signature />
             </div>
@@ -46,7 +46,7 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
                     <Button text="Back" white onClick={() => onBack()} />
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 

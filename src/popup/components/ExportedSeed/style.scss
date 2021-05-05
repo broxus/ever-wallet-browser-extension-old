@@ -1,6 +1,12 @@
 @import 'src/popup/styles/colors';
 
 .exported-seed {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+
     &__bg {
         background-color: $illustrationBg;
         height: 350px;
@@ -17,6 +23,7 @@
         top: 0;
         height: 100%;
         width: 100%;
+        max-width: 60vw;
 
         &-form {
             margin-bottom: auto;
@@ -68,7 +75,8 @@
             display: flex;
             flex-direction: column;
 
-            & > button:not(:last-child), .panel {
+            & > button:not(:last-child),
+            .panel {
                 margin-bottom: 12px;
             }
         }

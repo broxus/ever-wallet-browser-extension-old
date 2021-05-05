@@ -1,6 +1,11 @@
 @import 'src/popup/styles/colors';
 
 .select-wallet {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
     &__content {
         display: flex;
         flex-direction: column;
@@ -10,6 +15,7 @@
         top: 0;
         height: 100%;
         width: 100%;
+        max-width: 60vw;
 
         &-options {
             display: flex;

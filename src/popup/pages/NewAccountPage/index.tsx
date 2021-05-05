@@ -11,8 +11,6 @@ import { CheckSeedOnCreation } from '@popup/components/CheckSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
 
-import './style.scss'
-
 enum LocalStep {
     SIGN_POLICY,
     SELECT_CONTRACT_TYPE,
