@@ -5,6 +5,8 @@
 $font-family: 'PT Root UI', serif;
 
 html {
+    width: 100%;
+    height: 100%;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -21,6 +23,27 @@ body {
     height: 600px;
     line-height: 1.3;
     font-size: 1.2em;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+    background-color: $windowBg;
+}
+
+#root {
+    width: 100%;
+    height: 100%;
+    min-width: 360px;
+}
+
+body.fullscreen {
+    width: 100%;
+    height: 100%;
+
+    #root {
+        max-width: min(90vw, 600px);
+    }
 }
 
 h1 {
@@ -51,13 +74,6 @@ h3 {
 
 .noselect {
     user-select: none;
-}
-
-#root {
-    width: 100%;
-    height: 100%;
-    background-color: $windowBg;
-    overflow-y: scroll;
 }
 
 //::-webkit-scrollbar {

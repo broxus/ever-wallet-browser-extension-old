@@ -416,7 +416,7 @@ export class AccountController extends BaseController<
     }
 
     public enableIntensivePolling() {
-        console.log('Enable intensive polling')
+        console.debug('Enable intensive polling')
         this._tonWalletSubscriptions.forEach((subscription) => {
             subscription.skipRefreshTimer()
             subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
@@ -424,7 +424,7 @@ export class AccountController extends BaseController<
     }
 
     public disableIntensivePolling() {
-        console.log('Disable intensive polling')
+        console.debug('Disable intensive polling')
         this._tonWalletSubscriptions.forEach((subscription) => {
             subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
         })
@@ -796,7 +796,7 @@ class TonWalletSubscription {
                 }
             }
 
-            console.log('TonWalletSubscription -> loop finished')
+            console.debug('TonWalletSubscription -> loop finished')
 
             resolve()
         })

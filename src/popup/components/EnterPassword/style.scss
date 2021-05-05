@@ -2,14 +2,11 @@
 
 .enter-password {
     &__content {
+        width: 100%;
+        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        top: 0;
-        height: 100%;
-        width: 100%;
-        max-width: 60vw;
-        min-width: 320px;
 
         &-pwd-form {
             display: flex;
@@ -24,6 +21,7 @@
                 cursor: text;
             }
         }
+
         &-buttons {
             display: flex;
             flex-direction: column;

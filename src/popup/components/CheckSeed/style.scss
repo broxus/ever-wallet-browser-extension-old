@@ -2,24 +2,22 @@
 
 .check-seed {
     &__wrapper {
-        padding: 40px 28px 28px;
-        position: absolute;
-        top: 0;
+        width: 100%;
         height: 100%;
-        width: 100vw;
         display: flex;
         align-items: center;
         flex-direction: column;
+        padding: 40px 28px 28px;
     }
+
     &__content {
+        width: 100%;
+        height: 100%;
+
         display: flex;
         flex-direction: column;
         justify-content: space-between;
         min-height: 448px;
-        height: 100%;
-        width: 100%;
-        max-width: 60vw;
-        min-width: 320px;
 
         &-title {
             margin-bottom: 28px;
@@ -34,6 +32,7 @@
             color: darkred;
             margin-bottom: 28px;
         }
+
         &-buttons {
             display: flex;
             flex-direction: column;

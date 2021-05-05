@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
 
 import TagsInput from '@popup/components/TagsInput'
 import Button from '@popup/components/Button'
@@ -25,7 +24,7 @@ const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
         <div className="enter-password__content">
             <div className="enter-password__content-pwd-form">
                 <h2 className="enter-password__content-pwd-form-header">Enter your seed phrase</h2>
-                <TagsInput setWords={setWords} words={words} wordCount={wordCount}/>
+                <TagsInput setWords={setWords} words={words} wordCount={wordCount} />
                 <div className="words-count">{`${words.length}/${wordCount} words`}</div>
             </div>
             <div className="enter-password__content-buttons">
