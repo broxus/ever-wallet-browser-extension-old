@@ -25,7 +25,7 @@ const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
         <div className="enter-password__content">
             <div className="enter-password__content-pwd-form">
                 <h2 className="enter-password__content-pwd-form-header">Enter your seed phrase</h2>
-                <TagsInput setWords={setWords} words={words} />
+                <TagsInput setWords={setWords} words={words} wordCount={wordCount}/>
                 <div className="words-count">{`${words.length}/${wordCount} words`}</div>
             </div>
             <div className="enter-password__content-buttons">
