@@ -1,7 +1,7 @@
 @import 'src/popup/styles/colors';
 
 .policy-sign-page {
-    height: 100vh;
+    //height: 100vh;
     width: 100vw;
     display: flex;
     align-items: center;
@@ -11,8 +11,8 @@
         left: 28px;
         top: 192px;
         position: absolute;
-
-        width: 100vw;
+        min-height: 251px;
+        width: 90vw;
         height: 50vh;
 
         background-color: $illustrationBg;
