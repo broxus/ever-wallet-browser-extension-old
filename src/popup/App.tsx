@@ -77,7 +77,10 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
                 })(),
             ])
 
-            if (state.selectedAccount == null && activeTab.type === 'popup') {
+            if (
+                state.selectedAccount == null &&
+                (activeTab.type === 'popup' || activeTab.type === 'notification')
+            ) {
                 await controllerRpc.openExtensionInBrowser()
                 window.close()
             } else if (state.selectedAccount != null && activeTab.type === 'fullscreen') {
