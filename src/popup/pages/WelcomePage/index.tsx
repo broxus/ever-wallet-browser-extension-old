@@ -27,7 +27,7 @@ const WelcomePage: React.FC<IWelcomePage> = ({ createAccount }) => {
     return (
         <>
             {localStep == LocalStep.WELCOME && (
-                <>
+                <div className="welcome-page">
                     <div className="welcome-page__bg" />
                     <div className="welcome-page__content">
                         <div>
@@ -57,7 +57,7 @@ const WelcomePage: React.FC<IWelcomePage> = ({ createAccount }) => {
                             />
                         </div>
                     </div>
-                </>
+                </div>
             )}
             {localStep == LocalStep.CREATE_ACCOUNT && (
                 <NewAccountPage
