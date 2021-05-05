@@ -705,6 +705,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requireFunctionCall(req, req.params, 'payload')
 
     const {
+        origin,
         permissionsController,
         approvalController,
         accountController,
@@ -713,10 +714,10 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.publicKey != publicKey) {
-        throw invalidRequest(req, 'Specified sender is not allowed')
+        throw invalidRequest(req, 'Specified signer is not allowed')
     }
 
-    const selectedPublicKey = allowedAccount.address
+    const selectedPublicKey = allowedAccount.publicKey
 
     let unsignedMessage: nt.UnsignedMessage
     try {

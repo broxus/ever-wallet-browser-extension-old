@@ -100,7 +100,7 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
                             Params
                         </span>
                         <span className="connect-wallet__details__description-param-value">
-                            {payload.params}
+                            {JSON.stringify(payload.params, undefined, 4)}
                         </span>
                     </div>
                 </div>
