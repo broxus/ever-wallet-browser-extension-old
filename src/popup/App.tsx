@@ -4,6 +4,7 @@ import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_BACKGROUND,
+    ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
 import init, * as nt from '@nekoton'
 
@@ -42,6 +43,7 @@ export type ActiveTab =
           }
       >
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
+    | nt.EnumItem<typeof ENVIRONMENT_TYPE_FULLSCREEN, undefined>
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
 interface IApp {
@@ -53,25 +55,46 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
     const [controllerState, setControllerState] = useState<ControllerState>()
 
     useEffect(() => {
-        init('index_bg.wasm').then(async () => {
-            controllerRpc.onNotification((data) => {
-                const state = data.params
+        ;(async () => {
+            const [, state] = await Promise.all([
+                init('index_bg.wasm'),
+                (async () => {
+                    controllerRpc.onNotification((data) => {
+                        const state = data.params
 
-                if (
-                    activeTab.type === 'notification' &&
-                    Object.keys((state as any).pendingApprovals).length === 0
-                ) {
-                    closeCurrentWindow()
-                } else {
-                    console.log('Got state', state)
-                    setControllerState(state as any)
-                }
-            })
+                        if (
+                            activeTab.type === 'notification' &&
+                            Object.keys((state as any).pendingApprovals).length === 0
+                        ) {
+                            closeCurrentWindow()
+                        } else {
+                            console.log('Got state', state)
+                            setControllerState(state as any)
+                        }
+                    })
 
-            const state = await controllerRpc.getState()
-            setControllerState(state)
-        })
+                    return await controllerRpc.getState()
+                })(),
+            ])
+
+            if (
+                state.selectedAccount == null &&
+                (activeTab.type === 'popup' || activeTab.type === 'notification')
+            ) {
+                await controllerRpc.openExtensionInBrowser()
+                window.close()
+            } else if (state.selectedAccount != null && activeTab.type === 'fullscreen') {
+                window.close()
+            } else {
+                setControllerState(state)
+            }
+        })()
     }, [])
+
+    if (controllerState?.selectedAccount != null && activeTab.type === 'fullscreen') {
+        window.close()
+        return null
+    }
 
     if (controllerState == null) {
         return <Loader />

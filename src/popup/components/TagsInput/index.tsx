@@ -12,7 +12,6 @@ import './style.scss'
 const useStyles = makeStyles((theme: Theme) =>
     createStyles({
         root: {
-            'width': 304,
             '& > * + *': {
                 marginTop: theme.spacing(3),
             },
@@ -24,16 +23,17 @@ const useStyles = makeStyles((theme: Theme) =>
 interface ITagsInput {
     words: string[]
     setWords: (words: string[]) => void
+    wordCount: number
 }
 
-const TagsInput: React.FC<ITagsInput> = ({ setWords, words }) => {
+const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount }) => {
     const classes = useStyles()
     const [hints, setHints] = useState<string[]>([])
 
     const onInputChange = (_event: React.ChangeEvent<{}>, value: string) => {
         if (value) {
             const clone = _.cloneDeep(formatSeed(value))
-            if (clone.length === 12) {
+            if (clone.length === wordCount) {
                 setWords(clone)
             } else {
                 const last = clone.pop()

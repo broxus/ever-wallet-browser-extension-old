@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
     extractTransactionValue,
     extractTransactionAddress,
@@ -21,11 +21,11 @@ type ITransactionsListItem = {
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, additionalInfo }) => {
     const [detailsPanelOpen, setDetailsPanelOpen] = useState(false)
-    const value = extractTransactionValue(transaction)
-    const { address } = extractTransactionAddress(transaction)
-    const txAddress = extractTransactionAddress(transaction)
+    const value = useMemo(() => extractTransactionValue(transaction), [transaction])
+    const txAddress = useMemo(() => extractTransactionAddress(transaction), [transaction])
     // @ts-ignore
-    let total: number = Decimal.abs(value).add(transaction.totalFees)
+    let total: number = useMemo(() => Decimal.abs(value).add(transaction.totalFees), [transaction])
+
     if (value.lessThan(0)) {
         total *= -1
     }
@@ -45,7 +45,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span className="transactions-list-item__description__address">
-                                {address && convertAddress(address)}
+                                {txAddress.address && convertAddress(txAddress.address)}
                             </span>
                             <span
                                 className={`transactions-list-item__description__${
@@ -78,7 +78,6 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
                     amount={convertTons(value.toString())}
                     fee={convertTons(transaction.totalFees)}
                     total={convertTons(total.toString())}
-                    address={address || ''}
                     txHash={transaction.id.hash}
                 />
             </SlidingPanel>

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import './style.scss'
 import { convertAddress, TransactionDirection } from '@shared/utils'
 import Button from '@popup/components/Button'
@@ -13,7 +13,6 @@ interface ITransactionInfo {
     amount: string
     fee: string
     total: string
-    address: string
     txHash: string
 }
 const TransactionInfo: React.FC<ITransactionInfo> = ({
@@ -21,10 +20,10 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
     amount,
     fee,
     total,
-    address,
     txHash,
     txAddress,
 }) => {
+
     return (
         <>
             <h2 className="send-screen__form-title">Transaction information</h2>
@@ -50,7 +49,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
                         width: '100%',
                         marginBottom: '20px',
                     }}
-                ></div>
+                />
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Amount</span>
                     <span className="send-screen__form-tx-details-param-value">{amount}</span>
@@ -67,7 +66,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
             <Button
                 white
                 onClick={() =>
-                    window.open(`https://ton-explorer.com/transactions/${address}`, '_blank')
+                    window.open(`https://ton-explorer.com/transactions/${txHash}`, '_blank')
                 }
                 text={'Open in explorer'}
             />

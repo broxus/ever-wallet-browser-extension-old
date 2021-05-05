@@ -1,8 +1,6 @@
 export {}
 
 declare global {
-    import { NotificationManager } from '../app/background/notificationManager'
-
     interface Define extends {} {}
 
     interface Window {
@@ -17,6 +15,5 @@ declare global {
         ): { [key: string]: T }
 
         define?: Define
-        NEKOTON_NOTIFIER: NotificationManager
     }
 }

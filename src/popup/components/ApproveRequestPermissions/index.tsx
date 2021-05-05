@@ -60,20 +60,6 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                         </h2>
                         <div
                             className="connect-wallet-select-account__item"
-                            style={{ paddingBottom: '32px' }}
-                        >
-                            <Checkbox
-                                checked={selectedAccount != null}
-                                setChecked={(checked) => {
-                                    setSelectedAccount(checked ? account : undefined)
-                                }}
-                            />
-                            <span className="connect-wallet-select-account__item-select">
-                                Select all
-                            </span>
-                        </div>
-                        <div
-                            className="connect-wallet-select-account__item"
                             style={{ display: 'flex' }}
                         >
                             <Checkbox
@@ -147,13 +133,11 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
 
                                 const originPermissions: ApprovalOutput<'requestPermissions'> = {}
                                 if (shouldSelectAccount) {
-                                    originPermissions.accountInteraction = [
-                                        {
-                                            address: account.tonWallet.address,
-                                            publicKey: account.tonWallet.publicKey,
-                                            contractType: account.tonWallet.contractType,
-                                        },
-                                    ]
+                                    originPermissions.accountInteraction = {
+                                        address: account.tonWallet.address,
+                                        publicKey: account.tonWallet.publicKey,
+                                        contractType: account.tonWallet.contractType,
+                                    }
                                 }
 
                                 if (permissions.includes('tonClient')) {

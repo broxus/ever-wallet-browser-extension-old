@@ -872,7 +872,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e61e29c28d9e8e1a58d49083ca07a283832eb159"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#621c8a52f6168f2de6d715e98fbb925c7f4621f0"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1239,9 +1239,9 @@ dependencies = [
 
 [[package]]
 name = "rustc-demangle"
-version = "0.1.18"
+version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6e3bad0ee36814ca07d7968269dd4b7ec89ec2da10c4bb613928d3077083c232"
+checksum = "410f7acf3cb3a44527c5d9546bad4bf4e6c460915d5f9f2fc524498bfe8f70ce"
 
 [[package]]
 name = "rustc-hash"

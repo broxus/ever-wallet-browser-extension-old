@@ -41,7 +41,7 @@ export type ApprovalApi = {
     }
     callContractMethod: {
         input: {
-            signer: string
+            publicKey: string
             recipient: string
             payload: FunctionCall
         }

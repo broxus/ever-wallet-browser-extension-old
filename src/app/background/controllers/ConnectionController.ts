@@ -201,24 +201,24 @@ export class ConnectionController extends BaseController<
     }
 
     private async _acquireConnection() {
-        console.log('_acquireConnection')
+        console.debug('_acquireConnection')
 
         if (this._acquiredConnection) {
-            console.log('_acquireConnection -> increase')
+            console.debug('_acquireConnection -> increase')
             this._acquiredConnection.increase()
         } else {
-            console.log('_acquireConnection -> await')
+            console.debug('_acquireConnection -> await')
             const release = await this._networkMutex.acquire()
-            console.log('_acquireConnection -> create')
+            console.debug('_acquireConnection -> create')
             this._acquiredConnection = new AcquiredConnection(release)
         }
     }
 
     private _releaseConnection() {
-        console.log('_releaseConnection')
+        console.debug('_releaseConnection')
 
         if (this._acquiredConnection?.decrease()) {
-            console.log('_releaseConnection -> release')
+            console.debug('_releaseConnection -> release')
             this._acquiredConnection = undefined
         }
     }
@@ -256,7 +256,6 @@ export class GqlSocket {
                         }).then((response) => response.text())
                         handler.onReceive(response)
                     } catch (e) {
-                        console.log(e)
                         handler.onError(e)
                     }
                 })()

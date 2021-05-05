@@ -17,6 +17,7 @@ export interface SubscriptionControllerConfig extends BaseConfig {
         tabId: number,
         payload: { method: ProviderEvent; params: ProviderEventData<T> }
     ) => void
+    getOriginTabs?: (origin: string) => number[]
 }
 
 export interface SubscriptionControllerState extends BaseState {
@@ -120,6 +121,11 @@ export class SubscriptionController extends BaseController<
         for (const address of tabSubscriptions.keys()) {
             await this.unsubscribeFromContract(tabId, address)
         }
+    }
+
+    public async unsubscribeOriginFromAllContracts(origin: string, tabId?: number) {
+        const tabIds = this.config.getOriginTabs?.(origin) || (tabId != null ? [tabId] : [])
+        await Promise.all(tabIds.map(async (tabId) => this.unsubscribeFromAllContracts(tabId)))
     }
 
     public getTabSubscriptions(tabId: number) {

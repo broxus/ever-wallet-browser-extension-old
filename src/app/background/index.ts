@@ -1,15 +1,21 @@
+;(window as Record<string, any>).hasTonProvider = true
+
 import '../../polyfills'
 
 import endOfStream from 'end-of-stream'
 import init from '@nekoton'
 import { PortDuplexStream, checkForError } from '@shared/utils'
-import { ENVIRONMENT_TYPE_POPUP, ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
+import {
+    ENVIRONMENT_TYPE_POPUP,
+    ENVIRONMENT_TYPE_NOTIFICATION,
+    ENVIRONMENT_TYPE_BACKGROUND,
+    ENVIRONMENT_TYPE_FULLSCREEN,
+} from '@shared/constants'
 
-import { NotificationManager } from './NotificationManager'
+import { NotificationManager, openExtensionInBrowser } from '@popup/utils/platform'
 import { NekotonController } from './NekotonController'
 
 const notificationManager = new NotificationManager()
-window.NEKOTON_NOTIFIER = notificationManager
 
 let popupIsOpen: boolean = false
 let notificationIsOpen: boolean = false
@@ -38,6 +44,7 @@ const setupController = async () => {
     const nekotonInternalProcessHash: { [type: string]: true } = {
         [ENVIRONMENT_TYPE_POPUP]: true,
         [ENVIRONMENT_TYPE_NOTIFICATION]: true,
+        [ENVIRONMENT_TYPE_FULLSCREEN]: true,
     }
 
     function connectRemote(remotePort: chrome.runtime.Port) {
@@ -58,6 +65,14 @@ const setupController = async () => {
             } else if (processName === ENVIRONMENT_TYPE_NOTIFICATION) {
                 notificationIsOpen = true
                 endOfStream(portStream, () => (notificationIsOpen = false))
+            } else if (processName === ENVIRONMENT_TYPE_FULLSCREEN) {
+                const tabId = remotePort.sender?.tab?.id
+                if (tabId != null) {
+                    openNekotonTabsIDs[tabId] = true
+                }
+                endOfStream(portStream, () => {
+                    tabId != null && delete openNekotonTabsIDs[tabId]
+                })
             }
         } else {
             connectExternal(remotePort)
@@ -110,3 +125,9 @@ const openPopup = async () => {
 }
 
 initialize().catch(console.error)
+
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+    if (reason === 'install' && !(process.env.NEKOTON_DEBUG || process.env.IN_TEST)) {
+        openExtensionInBrowser().catch(console.error)
+    }
+})

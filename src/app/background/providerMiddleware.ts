@@ -4,7 +4,6 @@ import {
     FunctionCall,
     FullContractState,
     GenTimings,
-    AccountInteractionItem,
     TokensObject,
 } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
@@ -198,41 +197,6 @@ function requireMethodOrArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, o
     }
 }
 
-function findPreferredAccount<T, K>(
-    req: JsonRpcRequest<T>,
-    allowedAccounts: AccountInteractionItem[],
-    key: K | undefined,
-    predicate: (item: AccountInteractionItem) => K
-) {
-    if (allowedAccounts.length === 0) {
-        throw invalidRequest(req, 'No allowed accounts available')
-    }
-    if (key == null) {
-        return predicate(allowedAccounts[0])
-    }
-    const index = allowedAccounts.findIndex((item) => predicate(item) == key)
-    if (index < 0) {
-        throw invalidRequest(req, 'Preferred account not available')
-    }
-    return predicate(allowedAccounts[index])
-}
-
-function findPreferredSender<T>(
-    req: JsonRpcRequest<T>,
-    allowedAccounts: AccountInteractionItem[],
-    preferredSender?: string
-) {
-    return findPreferredAccount(req, allowedAccounts, preferredSender, (item) => item.address)
-}
-
-function findPreferredKey<T>(
-    req: JsonRpcRequest<T>,
-    allowedAccounts: AccountInteractionItem[],
-    preferredKey?: string
-) {
-    return findPreferredAccount(req, allowedAccounts, preferredKey, (item) => item.publicKey)
-}
-
 // Provider api
 //
 
@@ -252,18 +216,35 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
     const { permissions } = req.params
     requireArray(req, req.params, 'permissions')
 
-    permissions.map(validatePermission)
+    const existingPermissions = permissionsController.getPermissions(origin)
 
-    res.result = await permissionsController.requestPermissions(origin, permissions as Permission[])
+    let hasNewPermissions = false
+    for (const permission of permissions) {
+        validatePermission(permission)
+
+        if (existingPermissions[permission] == null) {
+            hasNewPermissions = true
+        }
+    }
+
+    if (hasNewPermissions) {
+        res.result = await permissionsController.requestPermissions(
+            origin,
+            permissions as Permission[]
+        )
+    } else {
+        res.result = existingPermissions
+    }
     end()
 }
 
 const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
     requirePermissions(ctx, [])
 
-    const { origin, permissionsController } = ctx
+    const { origin, tabId, permissionsController, subscriptionsController } = ctx
 
     permissionsController.removeOrigin(origin)
+    await subscriptionsController.unsubscribeOriginFromAllContracts(origin, tabId)
     res.result = {}
     end()
 }
@@ -544,16 +525,20 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { preferredSender, address, amount, payload } = req.params
-    requireOptionalString(req, req.params, 'preferredSender')
-    requireString(req, req.params, 'address')
+    const { sender, recipient, amount, payload } = req.params
+    requireString(req, req.params, 'sender')
+    requireString(req, req.params, 'recipient')
     requireString(req, req.params, 'amount')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
 
     const { origin, permissionsController, accountController } = ctx
 
-    const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
-    const selectedAddress = findPreferredSender(req, allowedAccounts, preferredSender)
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.address != sender) {
+        throw invalidRequest(req, 'Specified sender is not allowed')
+    }
+
+    const selectedAddress = allowedAccount.address
 
     let body: string = ''
     if (payload != null) {
@@ -574,7 +559,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         try {
             unsignedMessage = wallet.prepareTransfer(
                 contractState,
-                address,
+                recipient,
                 amount,
                 false,
                 body,
@@ -608,17 +593,21 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { preferredSender, address, amount, bounce, payload } = req.params
-    requireOptionalString(req, req.params, 'preferredSender')
-    requireString(req, req.params, 'address')
+    const { sender, recipient, amount, bounce, payload } = req.params
+    requireString(req, req.params, 'sender')
+    requireString(req, req.params, 'recipient')
     requireString(req, req.params, 'amount')
     requireBoolean(req, req.params, 'bounce')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
 
     const { origin, permissionsController, accountController, approvalController } = ctx
 
-    const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
-    const sender = findPreferredSender(req, allowedAccounts, preferredSender)
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.address != sender) {
+        throw invalidRequest(req, 'Specified sender is not allowed')
+    }
+
+    const selectedAddress = allowedAccount.address
 
     let body: string = ''
     if (payload != null) {
@@ -630,18 +619,18 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     }
 
     const { unsignedMessage, fees } = await accountController.useSubscription(
-        sender,
+        selectedAddress,
         async (wallet) => {
             const contractState = await wallet.getContractState()
             if (contractState == null) {
-                throw invalidRequest(req, `Failed to get contract state for ${sender}`)
+                throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
             }
 
             let unsignedMessage: nt.UnsignedMessage | undefined = undefined
             try {
                 unsignedMessage = wallet.prepareTransfer(
                     contractState,
-                    address,
+                    selectedAddress,
                     amount,
                     false,
                     body,
@@ -673,8 +662,8 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         origin,
         type: 'sendMessage',
         requestData: {
-            sender,
-            recipient: address,
+            sender: selectedAddress,
+            recipient,
             amount,
             bounce,
             payload,
@@ -692,7 +681,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         unsignedMessage.free()
     }
 
-    const transaction = await accountController.sendMessage(sender, signedMessage)
+    const transaction = await accountController.sendMessage(selectedAddress, signedMessage)
     res.result = {
         transaction,
     }
@@ -709,31 +698,36 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { preferredKey, address, stateInit, payload } = req.params
-    requireOptionalString(req, req.params, 'preferredKey')
-    requireString(req, req.params, 'address')
+    const { publicKey, recipient, stateInit, payload } = req.params
+    requireString(req, req.params, 'publicKey')
+    requireString(req, req.params, 'recipient')
     requireOptionalString(req, req.params, 'stateInit')
     requireFunctionCall(req, req.params, 'payload')
 
     const {
+        origin,
         permissionsController,
         approvalController,
         accountController,
         subscriptionsController,
     } = ctx
 
-    const allowedAccounts = permissionsController.getPermissions(origin).accountInteraction || []
-    const signer = findPreferredSender(req, allowedAccounts, preferredKey)
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified signer is not allowed')
+    }
+
+    const selectedPublicKey = allowedAccount.publicKey
 
     let unsignedMessage: nt.UnsignedMessage
     try {
         unsignedMessage = nt.createExternalMessage(
-            address,
+            recipient,
             payload.abi,
             payload.method,
             stateInit,
             payload.params,
-            signer,
+            selectedPublicKey,
             60
         )
     } catch (e) {
@@ -744,8 +738,8 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         origin,
         type: 'callContractMethod',
         requestData: {
-            signer,
-            recipient: address,
+            publicKey: selectedPublicKey,
+            recipient,
             payload,
         },
     })
@@ -760,7 +754,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         unsignedMessage.free()
     }
 
-    const transaction = await subscriptionsController.sendMessage(address, signedMessage)
+    const transaction = await subscriptionsController.sendMessage(recipient, signedMessage)
     let output: TokensObject | undefined
     try {
         const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)

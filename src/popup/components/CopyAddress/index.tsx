@@ -4,10 +4,10 @@ import ReactTooltip from 'react-tooltip'
 import { convertAddress } from '@shared/utils'
 import './style.scss'
 
-interface IWalletAddress {
+interface ICopyAddress {
     address: string
 }
-const WalletAddress: React.FC<IWalletAddress> = ({ address }) => (
+const CopyAddress: React.FC<ICopyAddress> = ({ address }) => (
     <>
         <CopyToClipboard
             text={address}
@@ -23,4 +23,4 @@ const WalletAddress: React.FC<IWalletAddress> = ({ address }) => (
     </>
 )
 
-export default WalletAddress
+export default CopyAddress

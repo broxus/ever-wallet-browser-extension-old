@@ -58,6 +58,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
 
     const logOut = async () => {
         await controllerRpc.logOut()
+        window.close()
     }
 
     const sendMessage = async (message: nt.SignedMessage) => {

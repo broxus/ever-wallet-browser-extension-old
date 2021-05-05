@@ -13,8 +13,8 @@ interface IExportedSeed {
 
 const ExportedSeed: React.FC<IExportedSeed> = ({ onNext, onBack, seed }) => {
     return (
-        <>
-            <div className="exported-seed__bg" />
+        <div className="exported-seed">
+            {/*<div className="exported-seed__bg" />*/}
             <div className="exported-seed__content">
                 <div>
                     <h2 className="exported-seed__content-title">Save the seed phrase</h2>
@@ -34,7 +34,7 @@ const ExportedSeed: React.FC<IExportedSeed> = ({ onNext, onBack, seed }) => {
                     <Button text={'Back'} white onClick={onBack} />
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 

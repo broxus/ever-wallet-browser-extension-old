@@ -16,12 +16,11 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
     const [checked, setChecked] = useState(false)
 
     return (
-        <>
-            <div className="policy-sign-page__illustration">
-                <Signature />
-            </div>
+        <div className="policy-sign-page">
+            <div className="policy-sign-page__illustration" />
             <div className="policy-sign-page__content noselect">
                 <h2>Sign the decentralization policy to proceed</h2>
+                <Signature />
                 <div className="policy-sign-page__content-checkbox">
                     <Checkbox checked={checked} setChecked={setChecked} />
                     <span className="policy-sign-page__content-checkbox-label">
@@ -46,7 +45,7 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
                     <Button text="Back" white onClick={() => onBack()} />
                 </div>
             </div>
-        </>
+        </div>
     )
 }
 
