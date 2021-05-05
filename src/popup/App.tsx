@@ -4,7 +4,9 @@ import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_BACKGROUND,
+    ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
+import { openExtensionInBrowser } from '@popup/utils/platform'
 import init, * as nt from '@nekoton'
 
 import WelcomePage from '@popup/pages/WelcomePage'
@@ -42,6 +44,7 @@ export type ActiveTab =
           }
       >
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
+    | nt.EnumItem<typeof ENVIRONMENT_TYPE_FULLSCREEN, undefined>
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
 interface IApp {
@@ -69,7 +72,13 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
             })
 
             const state = await controllerRpc.getState()
-            setControllerState(state)
+
+            if (state.selectedAccount == null && activeTab.type === 'popup') {
+                await controllerRpc.openExtensionInBrowser()
+                window.close()
+            } else {
+                setControllerState(state)
+            }
         })
     }, [])
 

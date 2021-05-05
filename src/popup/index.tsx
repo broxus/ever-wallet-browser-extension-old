@@ -7,7 +7,7 @@ import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 
-import { getEnvironmentType } from '@popup/utils'
+import { getEnvironmentType } from '@popup/utils/platform'
 import { PortDuplexStream } from '@shared/utils'
 import { Environment, ENVIRONMENT_TYPE_BACKGROUND, ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
 import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
@@ -18,6 +18,7 @@ import App, { ActiveTab } from './App'
 
 const start = async () => {
     const windowType = getEnvironmentType()
+    console.log('Window type', windowType)
 
     const extensionPort = chrome.runtime.connect({ name: windowType })
     const connectionStream = new PortDuplexStream(extensionPort)
@@ -54,7 +55,7 @@ const queryCurrentActiveTab = async (windowType: Environment) => {
                 return resolve({ type: ENVIRONMENT_TYPE_BACKGROUND } as any)
             }
 
-            resolve({ type: ENVIRONMENT_TYPE_POPUP, data: { id, title, origin, protocol, url } })
+            resolve({ type: windowType, data: { id, title, origin, protocol, url } })
         })
     })
 }

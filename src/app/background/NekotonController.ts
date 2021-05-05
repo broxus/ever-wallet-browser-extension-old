@@ -16,6 +16,7 @@ import {
     JsonRpcSuccess,
 } from '@shared/jrpc'
 import {
+    checkForError,
     createEngineStream,
     NekotonRpcError,
     nodeify,
@@ -33,6 +34,7 @@ import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
+import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
 
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
@@ -182,6 +184,17 @@ export class NekotonController extends EventEmitter {
                 cb(null, this.getState()),
             getAvailableNetworks: (cb: ApiCallback<NamedConnectionData[]>) =>
                 cb(null, connectionController.getAvailableNetworks()),
+            openExtensionInBrowser: (cb: ApiCallback<undefined>) => {
+                const existingTabs = window.ObjectExt.keys(this._options.getOpenNekotonTabIds())
+                if (existingTabs.length == 0) {
+                    openExtensionInBrowser().then(() => cb(null))
+                } else {
+                    focusTab(existingTabs[0]).then(async (tab) => {
+                        tab && (await focusWindow(tab.windowId))
+                        cb(null)
+                    })
+                }
+            },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
