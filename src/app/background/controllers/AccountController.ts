@@ -691,20 +691,24 @@ class TonWalletSubscription {
         }
 
         if (this._loopPromise) {
-            console.log('TonWalletSubscription -> awaiting loop promise')
+            console.debug('TonWalletSubscription -> awaiting loop promise')
             await this._loopPromise
         }
 
-        console.log('TonWalletSubscription -> loop started')
+        console.debug('TonWalletSubscription -> loop started')
 
         this._loopPromise = new Promise<void>(async (resolve) => {
             this._isRunning = true
+            let previousPollingMethod = this._currentPollingMethod
             outer: while (this._isRunning) {
+                const pollingMethodChanged = previousPollingMethod != this._currentPollingMethod
+                previousPollingMethod = this._currentPollingMethod
+
                 switch (this._currentPollingMethod) {
                     case 'manual': {
                         this._currentBlockId = undefined
 
-                        console.log('TonWalletSubscription -> manual -> waiting begins')
+                        console.debug('TonWalletSubscription -> manual -> waiting begins')
 
                         await new Promise<void>((resolve) => {
                             const timerHandle = window.setTimeout(() => {
@@ -714,48 +718,79 @@ class TonWalletSubscription {
                             this._refreshTimer = [timerHandle, resolve]
                         })
 
-                        console.log('TonWalletSubscription -> manual -> waining ends')
+                        console.debug('TonWalletSubscription -> manual -> waining ends')
 
                         if (!this._isRunning) {
                             break outer
                         }
 
-                        console.log('TonWalletSubscription -> manual -> refreshing begins')
-                        await this._tonWalletMutex.use(async () => {
-                            await this._tonWallet.refresh()
-                            this._currentPollingMethod = this._tonWallet.pollingMethod
-                        })
-                        console.log('TonWalletSubscription -> manual -> refreshing ends')
+                        console.debug('TonWalletSubscription -> manual -> refreshing begins')
+
+                        try {
+                            this._currentPollingMethod = await this._tonWalletMutex.use(
+                                async () => {
+                                    await this._tonWallet.refresh()
+                                    return this._tonWallet.pollingMethod
+                                }
+                            )
+                        } catch (e) {
+                            console.error(`Error during account refresh (${this._address})`, e)
+                        }
+
+                        console.debug('TonWalletSubscription -> manual -> refreshing ends')
 
                         break
                     }
                     case 'reliable': {
-                        console.log('TonWalletSubscription -> reliable start')
+                        console.debug('TonWalletSubscription -> reliable start')
 
-                        if (this._suggestedBlockId != null) {
+                        if (pollingMethodChanged && this._suggestedBlockId != null) {
                             this._currentBlockId = this._suggestedBlockId
-                            this._suggestedBlockId = undefined
                         }
+                        this._suggestedBlockId = undefined
 
                         let nextBlockId: string
                         if (this._currentBlockId == null) {
                             console.warn('Starting reliable connection with unknown block')
-                            const latestBlock = await this._connection.getLatestBlock(this._address)
-                            this._currentBlockId = latestBlock.id
-                            nextBlockId = this._currentBlockId
+
+                            try {
+                                const latestBlock = await this._connection.getLatestBlock(
+                                    this._address
+                                )
+                                this._currentBlockId = latestBlock.id
+                                nextBlockId = this._currentBlockId
+                            } catch (e) {
+                                console.error(`Failed to get latest block for ${this._address}`, e)
+                                continue // retry
+                            }
                         } else {
-                            nextBlockId = await this._connection.waitForNextBlock(
-                                this._currentBlockId,
-                                this._address,
-                                NEXT_BLOCK_TIMEOUT
-                            )
+                            try {
+                                nextBlockId = await this._connection.waitForNextBlock(
+                                    this._currentBlockId,
+                                    this._address,
+                                    NEXT_BLOCK_TIMEOUT
+                                )
+                            } catch (e) {
+                                console.debug(
+                                    `Failed to wait for next block for ${this._address}`,
+                                    e
+                                )
+                                continue // retry
+                            }
                         }
 
-                        await this._tonWalletMutex.use(async () => {
-                            await this._tonWallet.handleBlock(nextBlockId)
-                            this._currentPollingMethod = this._tonWallet.pollingMethod
+                        try {
+                            this._currentPollingMethod = await this._tonWalletMutex.use(
+                                async () => {
+                                    await this._tonWallet.handleBlock(nextBlockId)
+                                    return this._tonWallet.pollingMethod
+                                }
+                            )
                             this._currentBlockId = nextBlockId
-                        })
+                        } catch (e) {
+                            console.error(`Failed to handle block for ${this._address}`, e)
+                        }
+
                         break
                     }
                 }

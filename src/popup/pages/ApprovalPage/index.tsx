@@ -88,9 +88,9 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
                 <ApproveContractInteraction
                     approval={approval}
                     account={selectedAccount}
-                    tonWalletState={tonWalletState}
-                    onSubmit={() => {
-                        resolvePendingApproval(approval.id, {}).then(() => {})
+                    checkPassword={checkPassword}
+                    onSubmit={(password) => {
+                        resolvePendingApproval(approval.id, password).then(() => {})
                     }}
                     onReject={() => {
                         rejectPendingApproval(approval.id, rejectedByUser).then(() => {})

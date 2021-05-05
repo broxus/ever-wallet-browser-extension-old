@@ -6,7 +6,6 @@ import {
     ENVIRONMENT_TYPE_BACKGROUND,
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
-import { openExtensionInBrowser } from '@popup/utils/platform'
 import init, * as nt from '@nekoton'
 
 import WelcomePage from '@popup/pages/WelcomePage'
