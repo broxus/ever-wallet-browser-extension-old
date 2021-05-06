@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
@@ -84,7 +85,7 @@ export class ConnectionController extends BaseController<
     private _acquiredConnection?: AcquiredConnection
 
     constructor(config: ConnectionConfig, state?: ConnectionControllerState) {
-        super(config, state || defaultState)
+        super(config, state || _.cloneDeep(defaultState))
 
         this._initializedConnection = undefined
         this._networkMutex = new Mutex()

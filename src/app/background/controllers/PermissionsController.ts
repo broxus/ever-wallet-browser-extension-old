@@ -45,7 +45,7 @@ const defaultState: PermissionsState = {
 
 export class PermissionsController extends BaseController<PermissionsConfig, PermissionsState> {
     constructor(config: PermissionsConfig, state?: PermissionsState) {
-        super(config, state || defaultState)
+        super(config, state || _.cloneDeep(defaultState))
         this.initialize()
     }
 

@@ -237,6 +237,7 @@ export class NekotonController extends EventEmitter {
 
     public async logOut() {
         await this._components.accountController.logOut()
+        await this._components.subscriptionsController.stopSubscriptions()
 
         this._notifyAllConnections({
             method: 'loggedOut',
@@ -253,11 +254,15 @@ export class NekotonController extends EventEmitter {
         outStream.on('data', createMetaRPCHandler(api, outStream))
 
         const handleUpdate = (params: unknown) => {
-            outStream.write({
-                jsonrpc: '2.0',
-                method: 'sendUpdate',
-                params,
-            })
+            try {
+                outStream.write({
+                    jsonrpc: '2.0',
+                    method: 'sendUpdate',
+                    params,
+                })
+            } catch (e) {
+                console.error(e)
+            }
         }
 
         this.on('update', handleUpdate)
