@@ -1,5 +1,6 @@
 import React from 'react'
 import { createRipple, removeRipple } from '@popup/common'
+import * as nt from '@nekoton'
 
 import TransactionsList from '@popup/components/TransactionsList'
 
@@ -9,7 +10,12 @@ import TonLogo from '@popup/img/ton-logo.svg'
 
 import './style.scss'
 
-const AssetFull: React.FC<any> = ({ handleSendReceive }) => {
+type IAssetFull = {
+    handleSendReceive: (temp: string) => void // TODO: change
+    onViewTransaction: (transaction: nt.Transaction) => void
+}
+
+const AssetFull: React.FC<IAssetFull> = ({ handleSendReceive, onViewTransaction }) => {
     return (
         <>
             <div className="asset-full">
@@ -57,7 +63,7 @@ const AssetFull: React.FC<any> = ({ handleSendReceive }) => {
                 </div>
                 <div className="asset-full__history">
                     <h2 className="asset-full__history-title">History</h2>
-                    <TransactionsList transactions={[]} />
+                    <TransactionsList transactions={[]} onViewTransaction={onViewTransaction} />
                 </div>
             </div>
         </>

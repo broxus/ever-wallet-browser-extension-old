@@ -1,28 +1,36 @@
-import React, { useEffect } from 'react'
-import './style.scss'
-import { convertAddress, TransactionDirection } from '@shared/utils'
+import React from 'react'
+import {
+    convertAddress,
+    convertTons,
+    extractTransactionAddress,
+    extractTransactionValue,
+} from '@shared/utils'
+import Decimal from 'decimal.js'
+import * as nt from '@nekoton'
+
 import Button from '@popup/components/Button'
 import CopyAddress from '@popup/components/CopyAddress'
 
+import './style.scss'
+
 interface ITransactionInfo {
-    date: string
-    txAddress: {
-        direction: TransactionDirection
-        address: string
-    }
-    amount: string
-    fee: string
-    total: string
-    txHash: string
+    transaction: nt.Transaction
 }
-const TransactionInfo: React.FC<ITransactionInfo> = ({
-    date,
-    amount,
-    fee,
-    total,
-    txHash,
-    txAddress,
-}) => {
+
+const TRANSACTION_NAMES = {
+    to: 'Recipient',
+    service: 'Recipient',
+    from: 'Sender',
+}
+
+const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
+    const value = extractTransactionValue(transaction)
+    const { direction, address } = extractTransactionAddress(transaction)
+
+    const fee = new Decimal(transaction.totalFees)
+    const total = value.sub(fee)
+
+    const txHash = transaction.id.hash
 
     return (
         <>
@@ -30,7 +38,9 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
             <div className="send-screen__form-tx-details" style={{ background: 'white' }}>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Date, time</span>
-                    <span className="send-screen__form-tx-details-param-value">{date}</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {new Date(transaction.createdAt * 1000).toLocaleString()}
+                    </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Tx hash</span>
@@ -38,9 +48,9 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">
-                        {txAddress?.direction === 'to' ? 'Recipient' : 'Sender'}
+                        {TRANSACTION_NAMES[direction]}
                     </span>
-                    <CopyAddress address={txAddress?.address} />
+                    <CopyAddress address={convertAddress(address)} />
                 </div>
                 <div
                     style={{
@@ -52,15 +62,21 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({
                 />
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Amount</span>
-                    <span className="send-screen__form-tx-details-param-value">{amount}</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {convertTons(value.toString())}
+                    </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
-                    <span className="send-screen__form-tx-details-param-value">{fee}</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {fee.toString()}
+                    </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Total amount</span>
-                    <span className="send-screen__form-tx-details-param-value">{total}</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {total.toString()}
+                    </span>
                 </div>
             </div>
             <Button

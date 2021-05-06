@@ -17,22 +17,20 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 type ITransactionsListItem = {
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
+    onViewTransaction: (transaction: nt.Transaction) => void
 }
 
-const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, additionalInfo }) => {
-    const [detailsPanelOpen, setDetailsPanelOpen] = useState(false)
+const TransactionListItem: React.FC<ITransactionsListItem> = ({
+    transaction,
+    additionalInfo,
+    onViewTransaction,
+}) => {
     const value = useMemo(() => extractTransactionValue(transaction), [transaction])
     const txAddress = useMemo(() => extractTransactionAddress(transaction), [transaction])
-    // @ts-ignore
-    let total: number = useMemo(() => Decimal.abs(value).add(transaction.totalFees), [transaction])
-
-    if (value.lessThan(0)) {
-        total *= -1
-    }
 
     return (
         <>
-            <div className="transactions-list-item" onClick={() => setDetailsPanelOpen(true)}>
+            <div className="transactions-list-item" onClick={() => onViewTransaction(transaction)}>
                 <div style={{ display: 'flex', width: '100%' }}>
                     <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
                         <TonLogoS />
@@ -71,16 +69,6 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({ transaction, add
                     </div>
                 </div>
             </div>
-            <SlidingPanel isOpen={detailsPanelOpen} onClose={() => setDetailsPanelOpen(false)}>
-                <TransactionInfo
-                    date={new Date(transaction.createdAt * 1000).toLocaleString()}
-                    txAddress={txAddress}
-                    amount={convertTons(value.toString())}
-                    fee={convertTons(transaction.totalFees)}
-                    total={convertTons(total.toString())}
-                    txHash={transaction.id.hash}
-                />
-            </SlidingPanel>
         </>
     )
 }

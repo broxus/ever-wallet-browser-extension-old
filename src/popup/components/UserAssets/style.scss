@@ -4,7 +4,9 @@
     padding: 0 20px;
 
     &__panel {
+        top: 0;
         display: flex;
+        position: sticky;
         border-bottom: 1px solid #ebedee;
 
         &__tab {
@@ -18,6 +20,8 @@
             letter-spacing: 0.25px;
             padding: 16px 0;
             width: 50%;
+            background: white;
+            z-index: 1;
 
             &._active {
                 color: $windowBgActive;

@@ -51,6 +51,7 @@ type IUserAssets = {
     tonWalletState: nt.ContractState | null
     transactions: nt.Transaction[]
     setActiveContent: (arg0: number) => void
+    onViewTransaction: (transaction: nt.Transaction) => void
 }
 
 enum AssetsTab {
@@ -58,7 +59,12 @@ enum AssetsTab {
     TRANSACTIONS,
 }
 
-const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setActiveContent }) => {
+const UserAssets: React.FC<IUserAssets> = ({
+    tonWalletState,
+    transactions,
+    setActiveContent,
+    onViewTransaction,
+}) => {
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
     return (
@@ -92,7 +98,10 @@ const UserAssets: React.FC<IUserAssets> = ({ tonWalletState, transactions, setAc
                     />
                 )}
                 {activeTab == AssetsTab.TRANSACTIONS && (
-                    <TransactionsList transactions={transactions} />
+                    <TransactionsList
+                        transactions={transactions}
+                        onViewTransaction={onViewTransaction}
+                    />
                 )}
             </div>
         </>
