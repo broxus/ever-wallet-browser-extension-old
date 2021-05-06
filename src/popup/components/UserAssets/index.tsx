@@ -83,10 +83,7 @@ const UserAssets: React.FC<IUserAssets> = ({
                         className={cn('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.TRANSACTIONS,
                         })}
-                        onClick={() => {
-                            console.log(`clicked at ${Date.now()}`)
-                            setActiveTab(AssetsTab.TRANSACTIONS)
-                        }}
+                        onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}
                     >
                         Transactions
                     </div>

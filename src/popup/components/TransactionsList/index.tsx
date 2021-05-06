@@ -12,14 +12,7 @@ type TransactionListProps = {
 
 const TransactionsList: React.FC<TransactionListProps> = ({ transactions, onViewTransaction }) => {
     return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                position: 'relative',
-            }}
-        >
+        <div className="user-assets__transactions-list">
             {!(transactions.length > 0) && (
                 <p className="transactions-list-empty">History is empty</p>
             )}
