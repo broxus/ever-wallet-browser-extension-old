@@ -45,7 +45,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
                             {new Date(transaction.createdAt * 1000).toLocaleTimeString()}
                         </span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                         <span className="transactions-list-item__description__address">
                             {txAddress.address && convertAddress(txAddress.address)}
                         </span>
