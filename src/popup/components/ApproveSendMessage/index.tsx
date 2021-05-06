@@ -84,7 +84,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
             </div>
             <div className="connect-wallet__spend-details">
                 <div className="connect-wallet__details__description">
-                    <div className="connect-wallet__details__description-param _section">
+                    <div className="connect-wallet__details__description-param">
                         <span className="connect-wallet__details__description-param-desc">
                             Recipient
                         </span>
@@ -100,7 +100,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                             {convertTons(amount)} TON
                         </span>
                     </div>
-                    <div className="connect-wallet__details__description-param _section">
+                    <div className="connect-wallet__details__description-param">
                         <span className="connect-wallet__details__description-param-desc">
                             Blockchain fee
                         </span>
@@ -108,32 +108,34 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                             ~{convertTons(fees)} TON
                         </span>
                     </div>
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Data
-                        </span>
-                        <div className="connect-wallet__details__description-param-data">
-                            <div className="connect-wallet__details__description-param-data__method">
-                                <span>Method:</span>
-                                <span>{payload?.method}</span>
-                            </div>
-                            {Object.entries(payload?.params).map((item, i) => (
-                                <div
-                                    className="connect-wallet__details__description-param-data__block"
-                                    key={i}
-                                >
-                                    <div className="connect-wallet__details__description-param-data__block--param-name">
-                                        {item?.[0]}
-                                    </div>
-                                    {item?.[1] instanceof Array ? (
-                                        <div>{JSON.stringify(item?.[1], undefined, 4)}</div>
-                                    ) : (
-                                        <div>{item?.[1]}</div>
-                                    )}
+                    {payload && (
+                        <div className="connect-wallet__details__description-param">
+                            <span className="connect-wallet__details__description-param-desc">
+                                Data
+                            </span>
+                            <div className="connect-wallet__details__description-param-data">
+                                <div className="connect-wallet__details__description-param-data__method">
+                                    <span>Method:</span>
+                                    <span>{payload.method}</span>
                                 </div>
-                            ))}
+                                {Object.entries(payload.params).map((item, i) => (
+                                    <div
+                                        className="connect-wallet__details__description-param-data__block"
+                                        key={i}
+                                    >
+                                        <div className="connect-wallet__details__description-param-data__block--param-name">
+                                            {item?.[0]}
+                                        </div>
+                                        {item?.[1] instanceof Array ? (
+                                            <div>{JSON.stringify(item?.[1], undefined, 4)}</div>
+                                        ) : (
+                                            <div>{item?.[1]}</div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
             <div className="connect-wallet__buttons">
