@@ -33,13 +33,13 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState }) => {
                     <AssetsListItem tonWalletState={tonWalletState} />
                 </div>
             )}
-            {/*<div className="user-assets__assets-list__add-new-btn">*/}
-            {/*    <Button*/}
-            {/*        text={'Add new asset'}*/}
-            {/*        white*/}
-            {/*        onClick={() => setOpenedPanel(Panel.ADD_NEW_TOKEN)}*/}
-            {/*    />*/}
-            {/*</div>*/}
+            <div className="user-assets__assets-list__add-new-btn">
+                <Button
+                    text={'Add new asset'}
+                    white
+                    onClick={() => setOpenedPanel(Panel.ADD_NEW_TOKEN)}
+                />
+            </div>
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <AddNewToken onBack={closePanel} />
             </SlidingPanel>

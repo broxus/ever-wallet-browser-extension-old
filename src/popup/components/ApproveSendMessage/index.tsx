@@ -118,18 +118,18 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                                     <span>Method:</span>
                                     <span>{payload.method}</span>
                                 </div>
-                                {Object.entries(payload.params).map((item, i) => (
+                                {Object.entries(payload.params).map(([key, value], i) => (
                                     <div
                                         className="connect-wallet__details__description-param-data__block"
                                         key={i}
                                     >
                                         <div className="connect-wallet__details__description-param-data__block--param-name">
-                                            {item?.[0]}
+                                            {key}
                                         </div>
-                                        {item?.[1] instanceof Array ? (
-                                            <div>{JSON.stringify(item?.[1], undefined, 4)}</div>
+                                        {value instanceof Array ? (
+                                            <div>{JSON.stringify(value, undefined, 4)}</div>
                                         ) : (
-                                            <div>{item?.[1]}</div>
+                                            <div>{value}</div>
                                         )}
                                     </div>
                                 ))}
