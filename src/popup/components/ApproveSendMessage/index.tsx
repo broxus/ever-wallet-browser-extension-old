@@ -60,6 +60,9 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
         }
     }
 
+    console.log(payload, 'payload')
+
+    // @ts-ignore
     return (
         <div className="connect-wallet">
             <div className="connect-wallet__spend-top-panel">
@@ -79,20 +82,17 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <div className="connect-wallet__address-entry">{origin}</div>
                 </div>
                 <h3 className="connect-wallet__spend-top-panel__header">
-                    This site wants to spend your TON
+                    Request to send your WTON
                 </h3>
-                <p className="connect-wallet__spend-top-panel__comment">
-                    {`Do you trust this site? By granting this permission, you’re allowing
-                    ${origin} to withdraw your WTON and automate transactions for you.`}
-                </p>
             </div>
             <div className="connect-wallet__spend-details">
-                <p className="connect-wallet__spend-details-title">Transaction details</p>
                 <div className="connect-wallet__details__description">
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">Fee</span>
+                    <div className="connect-wallet__details__description-param _section">
+                        <span className="connect-wallet__details__description-param-desc">
+                            Recipient
+                        </span>
                         <span className="connect-wallet__details__description-param-value">
-                            {convertTons(fees)} TON
+                            {recipient}
                         </span>
                     </div>
                     <div className="connect-wallet__details__description-param">
@@ -103,15 +103,41 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                             {convertTons(amount)} TON
                         </span>
                     </div>
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">To</span>
+                    <div className="connect-wallet__details__description-param _section">
+                        <span className="connect-wallet__details__description-param-desc">
+                            Blockchain fee
+                        </span>
                         <span className="connect-wallet__details__description-param-value">
-                            {convertAddress(recipient)}
+                            ~{convertTons(fees)} TON
                         </span>
                     </div>
+                    <div className="connect-wallet__details__description-param">
+                        <span className="connect-wallet__details__description-param-desc">
+                            Data
+                        </span>
+                        <div className="connect-wallet__details__description-param-data">
+                            <div className="connect-wallet__details__description-param-data__method">
+                                <span>Method:</span>
+                                <span>{payload?.method}</span>
+                            </div>
+                            {Object.entries(payload?.params).map((item, i) => (
+                                <div
+                                    className="connect-wallet__details__description-param-data__block"
+                                    key={i}
+                                >
+                                    <div className="connect-wallet__details__description-param-data__block--param-name">
+                                        {item?.[0]}
+                                    </div>
+                                    {item?.[1] instanceof Array ? (
+                                        <div>{JSON.stringify(item?.[1], undefined, 4)}</div>
+                                    ) : (
+                                        <div>{item?.[1]}</div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
-                <p className="connect-wallet__spend-details-title">Data</p>
-                <div className="connect-wallet__details__data">{JSON.stringify(payload)}</div>
             </div>
             <div className="connect-wallet__buttons">
                 <div className="connect-wallet__buttons-button">

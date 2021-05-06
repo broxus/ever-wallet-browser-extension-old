@@ -22,6 +22,10 @@
             padding: 16px 0;
             width: 50%;
 
+            &:hover {
+                color: $windowBgActive;
+            }
+
             &._active {
                 color: $windowBgActive;
                 border-bottom: 2px solid $windowBgActive;
