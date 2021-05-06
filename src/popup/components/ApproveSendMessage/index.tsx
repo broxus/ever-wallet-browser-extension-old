@@ -60,9 +60,6 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
         }
     }
 
-    console.log(payload, 'payload')
-
-    // @ts-ignore
     return (
         <div className="connect-wallet">
             <div className="connect-wallet__spend-top-panel">
