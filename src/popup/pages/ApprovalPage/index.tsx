@@ -67,23 +67,19 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
 
     return (
         <>
-            {pendingApprovals.length === 1 && (
+            {pendingApprovals.length !== 1 && (
                 <div className="connect-wallet__slider">
                     <div>
                         Pending approval{' '}
-                        <span className="connect-wallet__slider__counter">{`${approvalIndex + 1} of ${pendingApprovals.length}`}</span>
+                        <span className="connect-wallet__slider__counter">{`${
+                            approvalIndex + 1
+                        } of ${pendingApprovals.length}`}</span>
                     </div>
                     <div className="connect-wallet__slider__nav">
-                        <div
-                            className="connect-wallet__slider__button"
-                            onClick={() => decrementIndex()}
-                        >
+                        <div className="connect-wallet__slider__button" onClick={decrementIndex}>
                             <Left />
                         </div>
-                        <div
-                            className="connect-wallet__slider__button"
-                            onClick={() => incrementIndex()}
-                        >
+                        <div className="connect-wallet__slider__button" onClick={incrementIndex}>
                             <Right />
                         </div>
                     </div>
