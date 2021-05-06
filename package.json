@@ -1,6 +1,6 @@
 {
   "name": "ton-crystal-wallet",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Simple TON wallet browser plugin",
   "scripts": {
     "start": "webpack --watch --config webpack.dev.js",

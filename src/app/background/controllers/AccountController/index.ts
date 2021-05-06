@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
 import { mergeTransactions } from 'ton-inpage-provider'
 import {
@@ -53,7 +54,7 @@ export class AccountController extends BaseController<
     private readonly _accountsMutex = new Mutex()
 
     constructor(config: AccountControllerConfig, state?: AccountControllerState) {
-        super(config, state || defaultState)
+        super(config, state || _.cloneDeep(defaultState))
 
         this.initialize()
     }
@@ -83,7 +84,11 @@ export class AccountController extends BaseController<
     }
 
     public async startSubscriptions() {
+        console.debug('startSubscriptions')
+
         await this._accountsMutex.use(async () => {
+            console.debug('startSubscriptions -> mutex gained')
+
             const accountEntries = this.state.accountEntries
             const iterateEntries = async (f: (entry: nt.AccountsStorageEntry) => void) =>
                 Promise.all(
@@ -93,23 +98,42 @@ export class AccountController extends BaseController<
                 )
 
             await iterateEntries(async ({ address, publicKey, contractType }) => {
+                console.debug(
+                    `iterateEntries -> ${address}, ${contractType}, ${this._tonWalletSubscriptions.get(
+                        address
+                    )}`
+                )
+
                 if (this._tonWalletSubscriptions.get(address) == null) {
+                    console.debug('iterateEntries -> subscribing')
                     const subscription = await this._createSubscription(
                         address,
                         publicKey,
                         contractType
                     )
+                    console.debug('iterateEntries -> subscribed')
+
                     this._tonWalletSubscriptions.set(address, subscription)
                     subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+
+                    console.debug('iterateEntries -> start')
                     await subscription?.start()
+
+                    console.debug('iterateEntries -> started')
                 }
             })
+
+            console.debug('startSubscriptions -> mutex released')
         })
     }
 
     public async stopSubscriptions() {
+        console.debug('stopSubscriptions')
+
         await this._accountsMutex.use(async () => {
+            console.debug('stopSubscriptions -> mutex gained')
             await this._stopSubscriptions()
+            console.debug('stopSubscriptions -> mutex released')
         })
     }
 
@@ -125,11 +149,16 @@ export class AccountController extends BaseController<
     }
 
     public async logOut() {
+        console.debug('logOut')
         await this._accountsMutex.use(async () => {
+            console.debug('logOut -> mutex gained')
+
             await this._stopSubscriptions()
             await this.config.accountsStorage.clear()
             await this.config.keyStore.clear()
-            this.update(defaultState)
+            this.update(_.cloneDeep(defaultState), true)
+
+            console.debug('logOut -> mutex released')
         })
     }
 
@@ -184,11 +213,17 @@ export class AccountController extends BaseController<
     }
 
     public async selectAccount(address: string) {
+        console.debug('selectAccount')
+
         await this._accountsMutex.use(async () => {
+            console.debug('selectAccount -> mutex gained')
+
             const selectedAccount = await this.config.accountsStorage.setCurrentAccount(address)
             this.update({
                 selectedAccount,
             })
+
+            console.debug('selectAccount -> mutex released')
         })
     }
 
