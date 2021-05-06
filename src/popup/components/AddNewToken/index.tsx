@@ -82,7 +82,7 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
                     required: true,
                 })}
             />
-            {errors.name && <div className="check-seed__content-error">This field is required</div>}
+            {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
                 {window.ObjectExt.entries(tokens).map(([id, token]) => {
                     const makeOnToggle = (id: string) => (enabled: boolean) => {
@@ -118,21 +118,56 @@ type ICustomToken = {
 }
 
 const CustomToken: React.FC<ICustomToken> = ({ onBack }) => {
+    const { register, handleSubmit, errors } = useForm()
+
+    const onSubmit = async (data) => {
+        console.log('custom token submitted')
+        console.log('contractAddress', data.contractAddress)
+        console.log('symbol', data.symbol)
+        console.log('decimals', data.decimals)
+    }
+
     return (
-        <>
-            <Input label={'Contract wallet address...'} />
-            <Input label={'Token symbol...'} />
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <Input
+                label={'Contract wallet address...'}
+                className="add-new-token__search-form"
+                type="text"
+                name="contractAddress"
+                register={register({
+                    required: true,
+                })}
+            />
+            {errors.contractAddrress && (
+                <div className="check-seed__content-error">This field is required</div>
+            )}
+
+            <Input
+                label={'Token symbol...'}
+                name="symbol"
+                type="text"
+                register={register({
+                    required: false,
+                })}
+            />
             <Input
                 label={'Number of decimal places...'}
+                name="decimals"
                 className="add-new-token__custom-last-input"
+                register={register({
+                    validate: (decimals) => decimals <= 18,
+                })}
             />
+            {errors.decimals && (
+                <div className="check-seed__content-error">Maximum number of decimals is 18</div>
+            )}
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
                     <Button text={'Back'} onClick={onBack} white />
                 </div>
-                <Button text={'Select assets'} />
+                <Button text={'Select assets'} type="submit" />
             </div>
-        </>
+        </form>
     )
 }
 
