@@ -69,13 +69,13 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
                     <span className="send-screen__form-tx-details-param-value">
-                        {fee.toString()}
+                        {convertTons(fee.toString())}
                     </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Total amount</span>
                     <span className="send-screen__form-tx-details-param-value">
-                        {total.toString()}
+                        {convertTons(total.toString())}
                     </span>
                 </div>
             </div>
