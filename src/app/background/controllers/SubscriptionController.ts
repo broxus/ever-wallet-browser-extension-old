@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { NekotonRpcError, SendMessageCallback, SendMessageRequest } from '@shared/utils'
 import { ContractUpdatesSubscription, ProviderEvent, ProviderEventData } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
@@ -44,7 +45,7 @@ export class SubscriptionController extends BaseController<
     private readonly _subscriptionTabs: Map<string, Set<number>> = new Map()
 
     constructor(config: SubscriptionControllerConfig, state?: SubscriptionControllerState) {
-        super(config, state || defaultState)
+        super(config, state || _.cloneDeep(defaultState))
         this.initialize()
     }
 

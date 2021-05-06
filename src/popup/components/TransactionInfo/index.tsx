@@ -50,7 +50,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
                     <span className="send-screen__form-tx-details-param-desc">
                         {TRANSACTION_NAMES[direction]}
                     </span>
-                    <CopyAddress address={convertAddress(address)} />
+                    <CopyAddress address={address} />
                 </div>
                 <div
                     style={{

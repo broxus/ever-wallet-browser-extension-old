@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import { nanoid } from 'nanoid'
 import { ApprovalApi, Approval } from '@shared/approvalApi'
 import { NekotonRpcError } from '@shared/utils'
@@ -38,7 +39,7 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
             throw new Error('Must specify function showApprovalRequest')
         }
 
-        super(config, state || defaultState)
+        super(config, state || _.cloneDeep(defaultState))
 
         this._approvals = new Map<string, ApprovalCallbacks<unknown>>()
         this._origins = new Map<string, Set<string>>()
