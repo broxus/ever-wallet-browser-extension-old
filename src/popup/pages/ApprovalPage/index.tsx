@@ -56,7 +56,8 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
     }
 
     return (
-        <div className="connect-wallet">
+        <>
+            {/*<div className="connect-wallet">*/}
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
                     approval={approval}
@@ -97,7 +98,8 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
                     }}
                 />
             )}
-        </div>
+            {/*</div>*/}
+        </>
     )
 }
 
