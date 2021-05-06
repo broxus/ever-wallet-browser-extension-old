@@ -32,7 +32,6 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
         <div
             className="transactions-list-item"
             onClick={() => {
-                console.log('ASDASD', transaction)
                 onViewTransaction(transaction)
             }}
         >
