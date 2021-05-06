@@ -11,11 +11,11 @@ import Send from '@popup/components/Send'
 import KeyStorage from '@popup/components/KeyStorage'
 import AssetFull from '@popup/components/AssetFull'
 import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
+import TransactionInfo from '@popup/components/TransactionInfo'
 
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
-import TransactionInfo from '@popup/components/TransactionInfo'
 
 interface IMainPage {
     controllerState: ControllerState
@@ -29,16 +29,21 @@ enum Panel {
     KEY_STORAGE,
     CREATE_ACCOUNT,
     ASSET,
+    TRANSACTION,
 }
 
 const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
+    const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
 
     if (controllerState.selectedAccount == null) {
         return null
     }
 
-    const closePanel = () => setOpenedPanel(undefined)
+    const closePanel = () => {
+        setSelectedTransaction(undefined)
+        setOpenedPanel(undefined)
+    }
 
     const { selectedAccount, selectedConnection } = controllerState
 
@@ -65,6 +70,11 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         return controllerRpc.sendMessage(accountAddress, message)
     }
 
+    const showTransaction = (transaction: nt.Transaction) => {
+        setSelectedTransaction(transaction)
+        setOpenedPanel(Panel.TRANSACTION)
+    }
+
     return (
         <>
             <AccountDetails
@@ -85,6 +95,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                 tonWalletState={tonWalletState}
                 setActiveContent={setOpenedPanel}
                 transactions={transactions}
+                onViewTransaction={showTransaction}
             />
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <>
@@ -121,7 +132,15 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
-                    {openedPanel == Panel.ASSET && <AssetFull handleSendReceive={() => {}} />}
+                    {openedPanel == Panel.ASSET && (
+                        <AssetFull
+                            handleSendReceive={() => {}}
+                            onViewTransaction={showTransaction}
+                        />
+                    )}
+                    {openedPanel == Panel.TRANSACTION && selectedTransaction && (
+                        <TransactionInfo transaction={selectedTransaction} />
+                    )}
                 </>
             </SlidingPanel>
         </>

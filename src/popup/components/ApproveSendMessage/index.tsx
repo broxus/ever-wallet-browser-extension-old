@@ -82,8 +82,8 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     This site wants to spend your TON
                 </h3>
                 <p className="connect-wallet__spend-top-panel__comment">
-                    Do you trust this site? By granting this permission, you’re allowing
-                    {origin} to withdraw your WTON and automate transactions for you.
+                    {`Do you trust this site? By granting this permission, you’re allowing
+                    ${origin} to withdraw your WTON and automate transactions for you.`}
                 </p>
             </div>
             <div className="connect-wallet__spend-details">

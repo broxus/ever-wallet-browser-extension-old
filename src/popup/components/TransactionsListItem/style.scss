@@ -1,4 +1,4 @@
-@import "../../styles/colors";
+@import '../../styles/colors';
 
 .transactions-list-item {
     align-items: center;
@@ -11,9 +11,12 @@
     &__description {
         display: flex;
         flex-direction: column;
+        white-space: nowrap;
         width: 100%;
 
-        &__date, &__fees, &__comment {
+        &__date,
+        &__fees,
+        &__comment {
             font-style: normal;
             font-weight: normal;
             font-size: 14px;

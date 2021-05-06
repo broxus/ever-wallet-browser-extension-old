@@ -4,8 +4,11 @@
     padding: 0 20px;
 
     &__panel {
+        top: 0;
         display: flex;
+        position: sticky;
         border-bottom: 1px solid #ebedee;
+        background: white;
 
         &__tab {
             font-style: normal;
@@ -40,5 +43,13 @@
         &__add-new-btn {
             margin-bottom: 32px;
         }
+    }
+
+    &__transactions-list {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+
+        z-index: -1; // to allow sticky tabs work
     }
 }

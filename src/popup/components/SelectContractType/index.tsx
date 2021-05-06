@@ -7,10 +7,10 @@ import Button from '@popup/components/Button'
 import './style.scss'
 
 const CONTRACT_TYPES: { [K in nt.ContractType]: string } = {
-    SurfWallet: 'Surf (default)',
-    SafeMultisigWallet: 'SafeMultisig',
+    SafeMultisigWallet: 'SafeMultisig (default)',
     SafeMultisigWallet24h: 'SafeMultisig24',
     SetcodeMultisigWallet: 'SetcodeMultisigWallet',
+    SurfWallet: 'Surf',
     WalletV3: 'WalletV3 (legacy)',
 }
 
@@ -27,7 +27,7 @@ const SelectContractType: React.FC<ISelectWallet> = ({
     onSkip,
     excludedContracts,
 }) => {
-    const [walletType, updateWalletType] = useState<nt.ContractType>('SurfWallet')
+    const [walletType, updateWalletType] = useState<nt.ContractType>('SafeMultisigWallet')
 
     return (
         <div className="select-wallet">
