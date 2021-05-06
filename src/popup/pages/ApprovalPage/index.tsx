@@ -7,6 +7,8 @@ import * as nt from '@nekoton'
 import ApproveContractInteraction from '@popup/components/ApproveContractInteraction'
 import ApproveRequestPermissions from '@popup/components/ApproveRequestPermissions'
 import ApproveSendMessage from '@popup/components/ApproveSendMessage'
+import Right from '@popup/img/right-arrow-blue.svg'
+import Left from '@popup/img/left-arrow-blue.svg'
 
 import './style.scss'
 
@@ -55,9 +57,38 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
         return null
     }
 
+    const decrementIndex = () => {
+        setApprovalIndex((approvalIndex + pendingApprovals.length - 1) % pendingApprovals.length)
+    }
+
+    const incrementIndex = () => {
+        setApprovalIndex((approvalIndex + 1) % pendingApprovals.length)
+    }
+
     return (
         <>
-            {/*<div className="connect-wallet">*/}
+            {pendingApprovals.length === 1 && (
+                <div className="connect-wallet__slider">
+                    <div>
+                        Pending approval{' '}
+                        <span className="connect-wallet__slider__counter">{`${approvalIndex + 1} of ${pendingApprovals.length}`}</span>
+                    </div>
+                    <div className="connect-wallet__slider__nav">
+                        <div
+                            className="connect-wallet__slider__button"
+                            onClick={() => decrementIndex()}
+                        >
+                            <Left />
+                        </div>
+                        <div
+                            className="connect-wallet__slider__button"
+                            onClick={() => incrementIndex()}
+                        >
+                            <Right />
+                        </div>
+                    </div>
+                </div>
+            )}
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
                     approval={approval}
@@ -98,7 +129,6 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
                     }}
                 />
             )}
-            {/*</div>*/}
         </>
     )
 }

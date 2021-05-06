@@ -184,7 +184,7 @@
 
         &__description {
             padding: 20px;
-            background: #f8f9f9;
+            background: $lightGreyBg;
             margin-bottom: 28px;
 
             &-param {
@@ -317,6 +317,44 @@
                 line-height: 16px;
                 letter-spacing: 0.4px;
                 color: #96a1a7;
+            }
+        }
+    }
+
+    &__slider {
+        background: $lightGreyBg;
+        color: $windowFg;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+        padding: 8px 20px;
+        width: 100%;
+
+        &__counter {
+            color: #96a1a7;
+            padding: 0 12px;
+        }
+
+        &__nav {
+            display: flex;
+        }
+
+        &__button {
+            cursor: pointer;
+            height: 32px;
+
+            &:hover {
+                background: rgba(0, 136, 204, 0.1);
+                border-radius: 50%;
+                transition: 400ms ease-in;
+            }
+            &:not(:last-child) {
+                margin-right: 8px;
             }
         }
     }
