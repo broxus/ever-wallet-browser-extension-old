@@ -51,7 +51,8 @@ impl TokenWallet {
         eth_event_address: &str,
     ) -> Result<crate::core::InternalMessage, JsValue> {
         let eth_event_address = parse_address(eth_event_address)?;
-        Ok(token_wallet::make_collect_tokens_call(eth_event_address).into())
+        let internal_message = token_wallet::make_collect_tokens_call(eth_event_address);
+        crate::core::make_internal_message(internal_message)
     }
 
     #[wasm_bindgen(getter)]
@@ -83,7 +84,10 @@ impl TokenWallet {
     #[wasm_bindgen(js_name = "prepareDeploy")]
     pub fn prepare_deploy(&self) -> Result<crate::core::InternalMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
-        wallet.prepare_deploy().handle_error().map(From::from)
+        wallet
+            .prepare_deploy()
+            .handle_error()
+            .and_then(crate::core::make_internal_message)
     }
 
     #[wasm_bindgen(js_name = "prepareTransfer")]
@@ -104,7 +108,8 @@ impl TokenWallet {
             let message = wallet
                 .prepare_transfer(core_models::TransferRecipient::OwnerWallet(dest), tokens)
                 .handle_error()?;
-            Ok(JsValue::from(crate::core::InternalMessage::from(message)))
+
+            crate::core::make_internal_message(message).map(JsValue::from)
         })))
     }
 
@@ -126,7 +131,8 @@ impl TokenWallet {
             let message = wallet
                 .prepare_swap_back(dest, tokens, proxy_address)
                 .handle_error()?;
-            Ok(JsValue::from(crate::core::InternalMessage::from(message)))
+
+            crate::core::make_internal_message(message).map(JsValue::from)
         })))
     }
 

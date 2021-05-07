@@ -55,12 +55,48 @@ impl AccountsStorage {
         })))
     }
 
+    #[wasm_bindgen(js_name = "addTokenWallet")]
+    pub fn add_token_wallet(
+        &self,
+        account: String,
+        root_token_contract: String,
+    ) -> Result<PromiseAssetsList, JsValue> {
+        let inner = self.inner.clone();
+        let root_token_contract = parse_address(&root_token_contract)?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let assets_list = inner
+                .add_token_wallet(&account, root_token_contract)
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(make_assets_list(assets_list)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "removeTokenWallet")]
+    pub fn remove_token_wallet(
+        &self,
+        account: String,
+        root_token_contract: String,
+    ) -> Result<PromiseAssetsList, JsValue> {
+        let inner = self.inner.clone();
+        let root_token_contract = parse_address(&root_token_contract)?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let assets_list = inner
+                .remove_token_wallet(&account, &root_token_contract)
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(make_assets_list(assets_list)))
+        })))
+    }
+
     #[wasm_bindgen(js_name = "removeAccount")]
-    pub fn remove_account(&self, address: String) -> PromiseOptionAssetsList {
+    pub fn remove_account(&self, account: String) -> PromiseOptionAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let assets_list = inner.remove_account(&address).await.handle_error()?;
+            let assets_list = inner.remove_account(&account).await.handle_error()?;
             Ok(JsValue::from(assets_list.map(make_assets_list)))
         }))
     }
@@ -76,7 +112,7 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "getAccount")]
-    pub fn get_account(&self, address: String) -> PromiseOptionAssetsList {
+    pub fn get_account(&self, account: String) -> PromiseOptionAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -84,7 +120,7 @@ impl AccountsStorage {
             Ok(JsValue::from(
                 state
                     .accounts()
-                    .get(&address)
+                    .get(&account)
                     .cloned()
                     .map(make_assets_list),
             ))
@@ -108,11 +144,11 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "setCurrentAccount")]
-    pub fn set_current_account(&self, address: String) -> PromiseAssetsList {
+    pub fn set_current_account(&self, account: String) -> PromiseAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let assets_list = inner.set_current_account(&address).await.handle_error()?;
+            let assets_list = inner.set_current_account(&account).await.handle_error()?;
             Ok(make_assets_list(assets_list).unchecked_into())
         }))
     }

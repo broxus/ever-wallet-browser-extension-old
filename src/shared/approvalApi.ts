@@ -14,6 +14,17 @@ export type MessageToPrepare = {
     payload?: string
 }
 
+export type TokenMessageToPrepare = {
+    amount: string
+    recipient: string
+}
+
+export type SwapBackMessageToPrepare = {
+    amount: string
+    ethAddress: string
+    proxyAddress: string
+}
+
 export interface Approval<T extends string, D> {
     id: string
     origin: string

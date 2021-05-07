@@ -4,7 +4,6 @@ import { mergeTransactions } from 'ton-inpage-provider'
 import {
     convertAddress,
     convertTons,
-    extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
     NekotonRpcError,
@@ -12,7 +11,12 @@ import {
     SendMessageRequest,
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
-import { AccountToCreate, MessageToPrepare } from '@shared/approvalApi'
+import {
+    AccountToCreate,
+    MessageToPrepare,
+    SwapBackMessageToPrepare,
+    TokenMessageToPrepare,
+} from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
@@ -58,7 +62,10 @@ export class AccountController extends BaseController<
     AccountControllerState
 > {
     private readonly _tonWalletSubscriptions: Map<string, TonWalletSubscription> = new Map()
-    private readonly _tokenWalletSubscriptions: Map<string, TokenWalletSubscription> = new Map()
+    private readonly _tokenWalletSubscriptions: Map<
+        string,
+        Map<string, TokenWalletSubscription>
+    > = new Map()
     private readonly _sendMessageRequests: Map<string, Map<string, SendMessageCallback>> = new Map()
     private readonly _accountsMutex = new Mutex()
 
@@ -107,35 +114,18 @@ export class AccountController extends BaseController<
                 )
 
             await iterateEntries(async ({ tonWallet, tokenWallets }) => {
-                if (this._tonWalletSubscriptions.get(tonWallet.address) == null) {
-                    console.debug('iterateEntries -> subscribing to ton wallet')
-                    const subscription = await this._createTonWalletSubscription(
-                        tonWallet.address,
-                        tonWallet.publicKey,
-                        tonWallet.contractType
-                    )
-                    console.debug('iterateEntries -> subscribed to ton wallet')
-
-                    this._tonWalletSubscriptions.set(tonWallet.address, subscription)
-                    subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
-
-                    await subscription?.start()
-                }
+                await this._createTonWalletSubscription(
+                    tonWallet.address,
+                    tonWallet.publicKey,
+                    tonWallet.contractType
+                )
 
                 await Promise.all(
                     tokenWallets.map(async ({ rootTokenContract }) => {
-                        console.debug('iterateEntries -> subscribing to token wallet')
-                        const subscription = await this._createTokenWalletSubscription(
+                        await this._createTokenWalletSubscription(
                             tonWallet.address,
                             rootTokenContract
                         )
-                        console.debug('iterateEntries -> subscribed to token wallet')
-
-                        const key = `${tonWallet.address}${rootTokenContract}`
-                        this._tokenWalletSubscriptions.set(key, subscription)
-                        subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
-
-                        await subscription?.start()
                     })
                 )
             })
@@ -170,7 +160,7 @@ export class AccountController extends BaseController<
         rootTokenContract: string,
         f: (wallet: nt.TokenWallet) => Promise<T>
     ) {
-        const subscription = this._tokenWalletSubscriptions.get(`${owner}${rootTokenContract}`)
+        const subscription = this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
         if (!subscription) {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,
@@ -239,11 +229,6 @@ export class AccountController extends BaseController<
         }
     }
 
-    public async addTokenWallet(_address: string, _rootTokenContract: string): Promise<{}> {
-        // TODO: add token wallet to accounts storage. requires some changes in nekoton
-        return {}
-    }
-
     public async selectAccount(address: string) {
         console.debug('selectAccount')
 
@@ -262,10 +247,19 @@ export class AccountController extends BaseController<
     public async removeAccount(address: string) {
         await this._accountsMutex.use(async () => {
             const assetsList = await this.config.accountsStorage.removeAccount(address)
+
             const subscription = this._tonWalletSubscriptions.get(address)
             this._tonWalletSubscriptions.delete(address)
             if (subscription != null) {
                 await subscription.stop()
+            }
+
+            const tokenSubscriptions = this._tokenWalletSubscriptions.get(address)
+            this._tokenWalletSubscriptions.delete(address)
+            if (tokenSubscriptions != null) {
+                await Promise.all(
+                    Array.from(tokenSubscriptions.values()).map(async (item) => await item.stop())
+                )
             }
 
             const accountEntries = { ...this.state.accountEntries }
@@ -297,13 +291,42 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async addTokenWallet(address: string, rootTokenContract: string): Promise<void> {
+        const { accountsStorage } = this.config
+
+        try {
+            await this._accountsMutex.use(async () => {
+                const assetsList = await accountsStorage.addTokenWallet(address, rootTokenContract)
+                this._updateAssetsList(assetsList)
+            })
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async removeTokenWallet(address: string, rootTokenContract: string): Promise<void> {
+        const { accountsStorage } = this.config
+
+        try {
+            await this._accountsMutex.use(async () => {
+                const assetsList = await accountsStorage.removeTokenWallet(
+                    address,
+                    rootTokenContract
+                )
+                this._updateAssetsList(assetsList)
+            })
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
     public async checkPassword(password: nt.KeyPassword) {
         return this.config.keyStore.check_password(password)
     }
 
     public async estimateFees(address: string, params: MessageToPrepare) {
         const subscription = await this._tonWalletSubscriptions.get(address)
-        requireSubscription(address, subscription)
+        requireTonWalletSubscription(address, subscription)
 
         return subscription.use(async (wallet) => {
             const contractState = await wallet.getContractState()
@@ -342,7 +365,7 @@ export class AccountController extends BaseController<
 
     public async estimateDeploymentFees(address: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
-        requireSubscription(address, subscription)
+        requireTonWalletSubscription(address, subscription)
 
         return subscription.use(async (wallet) => {
             const contractState = await wallet.getContractState()
@@ -372,7 +395,7 @@ export class AccountController extends BaseController<
         password: nt.KeyPassword
     ) {
         const subscription = await this._tonWalletSubscriptions.get(address)
-        requireSubscription(address, subscription)
+        requireTonWalletSubscription(address, subscription)
 
         return subscription.use(async (wallet) => {
             const contractState = await wallet.getContractState()
@@ -410,7 +433,7 @@ export class AccountController extends BaseController<
 
     public async prepareDeploymentMessage(address: string, password: nt.KeyPassword) {
         const subscription = await this._tonWalletSubscriptions.get(address)
-        requireSubscription(address, subscription)
+        requireTonWalletSubscription(address, subscription)
 
         return subscription.use(async (wallet) => {
             const contractState = await wallet.getContractState()
@@ -432,6 +455,44 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async prepareTokenMessage(
+        owner: string,
+        rootTokenContract: string,
+        params: TokenMessageToPrepare
+    ) {
+        const subscription = await this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
+        requireTokenWalletSubscription(owner, rootTokenContract, subscription)
+
+        return subscription.use(async (wallet) => {
+            try {
+                return await wallet.prepareTransfer(params.recipient, params.amount)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            }
+        })
+    }
+
+    public async prepareSwapBackMessage(
+        owner: string,
+        rootTokenContract: string,
+        params: SwapBackMessageToPrepare
+    ) {
+        const subscription = await this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
+        requireTokenWalletSubscription(owner, rootTokenContract, subscription)
+
+        return subscription.use(async (wallet) => {
+            try {
+                return await wallet.prepareSwapBack(
+                    params.ethAddress,
+                    params.amount,
+                    params.proxyAddress
+                )
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            }
+        })
+    }
+
     public async signPreparedMessage(
         unsignedMessage: nt.UnsignedMessage,
         password: nt.KeyPassword
@@ -441,7 +502,7 @@ export class AccountController extends BaseController<
 
     public async sendMessage(address: string, signedMessage: nt.SignedMessage) {
         const subscription = await this._tonWalletSubscriptions.get(address)
-        requireSubscription(address, subscription)
+        requireTonWalletSubscription(address, subscription)
 
         let accountMessageRequests = await this._sendMessageRequests.get(address)
         if (accountMessageRequests == null) {
@@ -469,7 +530,7 @@ export class AccountController extends BaseController<
 
     public async preloadTransactions(address: string, lt: string, hash: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
-        requireSubscription(address, subscription)
+        requireTonWalletSubscription(address, subscription)
 
         await subscription.use(async (wallet) => {
             try {
@@ -500,6 +561,10 @@ export class AccountController extends BaseController<
         publicKey: string,
         contractType: nt.ContractType
     ) {
+        if (this._tonWalletSubscriptions.get(address) != null) {
+            return
+        }
+
         class TonWalletHandler implements ITonWalletHandler {
             private readonly _address: string
             private readonly _controller: AccountController
@@ -537,15 +602,32 @@ export class AccountController extends BaseController<
             }
         }
 
-        return await TonWalletSubscription.subscribe(
+        console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
+        const subscription = await TonWalletSubscription.subscribe(
             this.config.connectionController,
             publicKey,
             contractType,
             new TonWalletHandler(address, this)
         )
+        console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
+
+        this._tonWalletSubscriptions.set(address, subscription)
+        subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+
+        await subscription?.start()
     }
 
     private async _createTokenWalletSubscription(owner: string, rootTokenContract: string) {
+        let ownerSubscriptions = this._tokenWalletSubscriptions.get(owner)
+        if (ownerSubscriptions == null) {
+            ownerSubscriptions = new Map()
+            this._tokenWalletSubscriptions.set(owner, ownerSubscriptions)
+        }
+
+        if (ownerSubscriptions.get(rootTokenContract) != null) {
+            return
+        }
+
         class TokenWalletHandler implements ITokenWalletHandler {
             private readonly _owner: string
             private readonly _rootTokenContract: string
@@ -578,28 +660,73 @@ export class AccountController extends BaseController<
             }
         }
 
-        return await TokenWalletSubscription.subscribe(
+        console.debug('_createTokenWalletSubscription -> subscribing to token wallet')
+        const subscription = await TokenWalletSubscription.subscribe(
             this.config.connectionController,
             owner,
             rootTokenContract,
             new TokenWalletHandler(owner, rootTokenContract, this)
         )
+        console.debug('_createTokenWalletSubscription -> subscribed to token wallet')
+
+        ownerSubscriptions.set(rootTokenContract, subscription)
+        subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+
+        await subscription?.start()
     }
 
     private async _stopSubscriptions() {
-        await Promise.all(
-            Array.from(this._tonWalletSubscriptions.values())
-                .map(async (item) => await item.stop())
-                .concat(
-                    ...Array.from(this._tokenWalletSubscriptions.values()).map(
-                        async (item) => await item.stop()
+        const stopTonSubscriptions = async () => {
+            await Promise.all(
+                Array.from(this._tonWalletSubscriptions.values()).map(
+                    async (item) => await item.stop()
+                )
+            )
+        }
+
+        const stopTokenSubscriptions = async () => {
+            await Promise.all(
+                Array.from(this._tokenWalletSubscriptions.values()).map((subscriptions) =>
+                    Promise.all(
+                        Array.from(subscriptions.values()).map(async (item) => await item.stop())
                     )
                 )
-        )
+            )
+        }
+
+        await Promise.all([stopTonSubscriptions(), stopTokenSubscriptions()])
 
         this._tonWalletSubscriptions.clear()
         this._tokenWalletSubscriptions.clear()
         this._clearSendMessageRequests()
+    }
+
+    private _updateAssetsList(assetsList: nt.AssetsList) {
+        const accountEntries = this.state.accountEntries
+        let pubkeyEntries = accountEntries[assetsList.tonWallet.publicKey]
+        if (pubkeyEntries == null) {
+            pubkeyEntries = []
+            accountEntries[assetsList.tonWallet.publicKey] = pubkeyEntries
+        }
+
+        const entryIndex = pubkeyEntries.findIndex(
+            (item) => item.tonWallet.address == assetsList.tonWallet.address
+        )
+        if (entryIndex < 0) {
+            pubkeyEntries.push(assetsList)
+        } else {
+            pubkeyEntries[entryIndex] = assetsList
+        }
+
+        const selectedAccount =
+            this.state.selectedAccount?.tonWallet.address == assetsList.tonWallet.address
+                ? assetsList
+                : undefined
+
+        this.update({
+            selectedAccount,
+            accountEntries,
+        })
     }
 
     private _clearSendMessageRequests() {
@@ -752,7 +879,7 @@ export class AccountController extends BaseController<
     }
 }
 
-function requireSubscription(
+function requireTonWalletSubscription(
     address: string,
     subscription?: TonWalletSubscription
 ): asserts subscription is TonWalletSubscription {
@@ -760,6 +887,19 @@ function requireSubscription(
         throw new NekotonRpcError(
             RpcErrorCode.RESOURCE_UNAVAILABLE,
             `There is no subscription for address ${address}`
+        )
+    }
+}
+
+function requireTokenWalletSubscription(
+    address: string,
+    rootTokenContract: string,
+    subscription?: TokenWalletSubscription
+): asserts subscription is TokenWalletSubscription {
+    if (!subscription) {
+        throw new NekotonRpcError(
+            RpcErrorCode.RESOURCE_UNAVAILABLE,
+            `There is no token subscription for owner ${address}, root token contract ${rootTokenContract}`
         )
     }
 }
