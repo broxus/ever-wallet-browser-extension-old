@@ -92,7 +92,7 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "getStoredAccounts")]
-    pub fn get_stored_accounts(&self) -> PromiseStoredAccountsEntriesList {
+    pub fn get_stored_accounts(&self) -> PromiseAssetsListList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -100,14 +100,7 @@ impl AccountsStorage {
             Ok(state
                 .accounts()
                 .iter()
-                .map(|(address, assets)| {
-                    make_account_storage_entry(
-                        address.clone(),
-                        assets.name.clone(),
-                        hex::encode(assets.ton_wallet.public_key.as_bytes()),
-                        assets.ton_wallet.contract.into(),
-                    )
-                })
+                .map(|(_, assets)| make_assets_list(assets.clone()))
                 .map(JsValue::from)
                 .collect::<js_sys::Array>()
                 .unchecked_into())
@@ -140,37 +133,6 @@ impl AccountsStorage {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
-const ACCOUNT_STORAGE_ENTRY: &str = r#"
-export type AccountsStorageEntry = {
-    address: string,
-    name: string,
-    publicKey: string,
-    contractType: ContractType,
-};
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "AccountsStorageEntry")]
-    pub type AccountsStorageEntry;
-}
-
-pub fn make_account_storage_entry(
-    address: String,
-    name: String,
-    public_key: String,
-    contract_type: crate::core::ton_wallet::ContractType,
-) -> AccountsStorageEntry {
-    ObjectBuilder::new()
-        .set("address", address)
-        .set("name", name)
-        .set("publicKey", public_key)
-        .set("contractType", contract_type)
-        .build()
-        .unchecked_into()
-}
-
-#[wasm_bindgen(typescript_custom_section)]
 const ASSETS_LIST: &str = r#"
 export type AssetsList = {
     name: string,
@@ -191,7 +153,7 @@ fn make_assets_list(data: nt::core::accounts_storage::AssetsList) -> AssetsList 
         .set("name", data.name)
         .set("tonWallet", make_ton_wallet_asset(data.ton_wallet))
         .set(
-            "tokenWallet",
+            "tokenWallets",
             data.token_wallets
                 .into_iter()
                 .map(make_token_wallet_asset)
@@ -240,7 +202,7 @@ fn make_ton_wallet_asset(data: nt::core::accounts_storage::TonWalletAsset) -> To
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type TokenWalletAsset = {
-    symbol: Symbol,
+    rootTokenContract: string,
 };
 "#;
 
@@ -251,9 +213,8 @@ extern "C" {
 }
 
 fn make_token_wallet_asset(data: nt::core::accounts_storage::TokenWalletAsset) -> TokenWalletAsset {
-    use crate::core::models::*;
     ObjectBuilder::new()
-        .set("symbol", make_symbol(data.symbol))
+        .set("rootTokenContract", data.root_token_contract.to_string())
         .build()
         .unchecked_into()
 }
@@ -280,8 +241,8 @@ fn make_depool_asset(data: nt::core::accounts_storage::DePoolAsset) -> DePoolAss
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<Array<AccountsStorageEntry>>")]
-    pub type PromiseStoredAccountsEntriesList;
+    #[wasm_bindgen(typescript_type = "Promise<Array<AssetsList>>")]
+    pub type PromiseAssetsListList;
 
     #[wasm_bindgen(typescript_type = "Promise<AssetsList | undefined>")]
     pub type PromiseOptionAssetsList;

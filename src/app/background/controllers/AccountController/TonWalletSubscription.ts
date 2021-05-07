@@ -13,7 +13,10 @@ export interface ITonWalletHandler {
 
     onStateChanged(newState: nt.ContractState): void
 
-    onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
+    onTransactionsFound(
+        transactions: Array<nt.TonWalletTransaction>,
+        info: nt.TransactionsBatchInfo
+    ): void
 }
 
 export class TonWalletSubscription {
@@ -32,7 +35,6 @@ export class TonWalletSubscription {
 
     public static async subscribe(
         connectionController: ConnectionController,
-        address: string,
         publicKey: string,
         contractType: nt.ContractType,
         handler: ITonWalletHandler
@@ -50,11 +52,8 @@ export class TonWalletSubscription {
                 contractType,
                 handler
             )
-            if (tonWallet == null) {
-                throw new NekotonRpcError(RpcErrorCode.INTERNAL, 'Failed to subscribe')
-            }
 
-            return new TonWalletSubscription(connection, release, address, tonWallet)
+            return new TonWalletSubscription(connection, release, tonWallet)
         } catch (e) {
             release()
             throw e
@@ -64,12 +63,11 @@ export class TonWalletSubscription {
     private constructor(
         connection: nt.GqlConnection,
         release: () => void,
-        address: string,
         tonWallet: nt.TonWallet
     ) {
         this._releaseConnection = release
         this._connection = connection
-        this._address = address
+        this._address = tonWallet.address
         this._tonWallet = tonWallet
         this._currentPollingMethod = this._tonWallet.pollingMethod
     }

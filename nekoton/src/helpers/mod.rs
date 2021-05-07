@@ -1,4 +1,4 @@
-mod abi;
+pub mod abi;
 
 use std::convert::TryFrom;
 use std::str::FromStr;

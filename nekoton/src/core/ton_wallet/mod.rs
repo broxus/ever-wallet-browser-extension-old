@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
+use nt::core::models as core_models;
 use nt::core::ton_wallet;
 use nt::utils::*;
 
@@ -76,7 +77,7 @@ impl TonWallet {
         let wallet = self.inner.wallet.lock().trust_me();
 
         let inner = wallet
-            .prepare_deploy(nt::core::models::Expiration::Timeout(timeout))
+            .prepare_deploy(core_models::Expiration::Timeout(timeout))
             .handle_error()?;
         Ok(crate::crypto::UnsignedMessage { inner })
     }
@@ -109,7 +110,7 @@ impl TonWallet {
                     amount,
                     bounce,
                     body,
-                    nt::core::models::Expiration::Timeout(timeout),
+                    core_models::Expiration::Timeout(timeout),
                 )
                 .handle_error()?
             {
@@ -210,7 +211,7 @@ impl TonWallet {
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = nt::core::models::TransactionId {
+        let from = core_models::TransactionId {
             lt: u64::from_str(&lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };
@@ -287,8 +288,8 @@ impl From<TonWalletSubscriptionHandlerImpl> for TonWalletSubscriptionHandler {
 impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
     fn on_message_sent(
         &self,
-        pending_transaction: nt::core::models::PendingTransaction,
-        transaction: Option<nt::core::models::Transaction>,
+        pending_transaction: core_models::PendingTransaction,
+        transaction: Option<core_models::Transaction>,
     ) {
         use crate::core::models::*;
         self.inner.on_message_sent(
@@ -297,27 +298,27 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
         );
     }
 
-    fn on_message_expired(&self, pending_transaction: nt::core::models::PendingTransaction) {
+    fn on_message_expired(&self, pending_transaction: core_models::PendingTransaction) {
         use crate::core::models::*;
         self.inner
             .on_message_expired(make_pending_transaction(pending_transaction));
     }
 
-    fn on_state_changed(&self, new_state: nt::core::models::ContractState) {
+    fn on_state_changed(&self, new_state: core_models::ContractState) {
         use crate::core::models::*;
         self.inner.on_state_changed(make_contract_state(new_state));
     }
 
     fn on_transactions_found(
         &self,
-        transactions: Vec<nt::core::models::Transaction>,
-        batch_info: nt::core::models::TransactionsBatchInfo,
+        transactions: Vec<core_models::TransactionWithData<core_models::TransactionAdditionalInfo>>,
+        batch_info: core_models::TransactionsBatchInfo,
     ) {
         use crate::core::models::*;
         self.inner.on_transactions_found(
             transactions
                 .into_iter()
-                .map(make_transaction)
+                .map(make_ton_wallet_transaction)
                 .map(JsValue::from)
                 .collect::<js_sys::Array>()
                 .unchecked_into(),
@@ -390,6 +391,34 @@ pub fn get_contract_type_details(contract_type: ContractType) -> Result<TonWalle
     Ok(make_ton_wallet_details(contract_type.details()))
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const TON_WALLET_TRANSACTION: &str = r#"
+export type TonWalletTransaction = Transaction & { info?: TransactionAdditionalInfo };
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TonWalletTransaction")]
+    pub type TonWalletTransaction;
+}
+
+fn make_ton_wallet_transaction(
+    data: core_models::TransactionWithData<core_models::TransactionAdditionalInfo>,
+) -> TonWalletTransaction {
+    let transaction = crate::core::models::make_transaction(data.transaction);
+    if let Some(data) = data.data {
+        js_sys::Reflect::set(
+            &transaction,
+            &JsValue::from_str("info"),
+            &crate::core::models::make_transaction_additional_info(data)
+                .map(|item| item.unchecked_into())
+                .unwrap_or_else(JsValue::undefined),
+        )
+        .trust_me();
+    }
+    transaction.unchecked_into()
+}
+
 #[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "ContractType")]
@@ -397,4 +426,7 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<RawContractState | null>")]
     pub type PromiseOptionRawContractState;
+
+    #[wasm_bindgen(typescript_type = "Array<TonWalletTransaction>")]
+    pub type TonWalletTransactionsList;
 }
