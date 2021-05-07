@@ -170,7 +170,7 @@ export class AccountController extends BaseController<
         rootTokenContract: string,
         f: (wallet: nt.TokenWallet) => Promise<T>
     ) {
-        const subscription = this._tonWalletSubscriptions.get(`${owner}${rootTokenContract}`)
+        const subscription = this._tokenWalletSubscriptions.get(`${owner}${rootTokenContract}`)
         if (!subscription) {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,

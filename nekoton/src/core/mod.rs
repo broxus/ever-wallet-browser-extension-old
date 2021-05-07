@@ -1,11 +1,13 @@
-pub mod generic_contract;
-pub mod models;
-pub mod token_wallet;
-pub mod ton_wallet;
-
 use wasm_bindgen::prelude::*;
 
 use crate::utils::*;
+
+mod accounts_storage;
+pub mod generic_contract;
+mod keystore;
+pub mod models;
+pub mod token_wallet;
+pub mod ton_wallet;
 
 #[wasm_bindgen]
 pub struct InternalMessage {

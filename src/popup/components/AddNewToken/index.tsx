@@ -35,6 +35,8 @@ const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
     },
 }
 
+type NewToken = { rootTokenContract: string }
+
 interface IToken {
     logo: () => JSX.Element
     name: string
@@ -117,56 +119,28 @@ type ICustomToken = {
     onBack: () => void
 }
 
-const CustomToken: React.FC<ICustomToken> = ({ onBack }) => {
-    const { register, handleSubmit, errors } = useForm()
+const CustomToken: React.FC<ICustomToken> = ({}) => {
+    const { register, handleSubmit, errors } = useForm<NewToken>()
 
-    const onSubmit = async (data) => {
+    const onSubmit = async (data: NewToken) => {
         console.log('custom token submitted')
-        console.log('contractAddress', data.contractAddress)
-        console.log('symbol', data.symbol)
-        console.log('decimals', data.decimals)
+        console.log('contractAddress', data.rootTokenContract)
     }
 
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <Input
-                label={'Contract wallet address...'}
+                label={'Root token contract...'}
                 className="add-new-token__search-form"
                 type="text"
-                name="contractAddress"
+                name="rootTokenContract"
                 register={register({
                     required: true,
                 })}
             />
-            {errors.contractAddrress && (
+            {errors.rootTokenContract && (
                 <div className="check-seed__content-error">This field is required</div>
             )}
-
-            <Input
-                label={'Token symbol...'}
-                name="symbol"
-                type="text"
-                register={register({
-                    required: false,
-                })}
-            />
-            <Input
-                label={'Number of decimal places...'}
-                name="decimals"
-                className="add-new-token__custom-last-input"
-                register={register({
-                    validate: (decimals) => decimals <= 18,
-                })}
-            />
-            {errors.decimals && (
-                <div className="check-seed__content-error">Maximum number of decimals is 18</div>
-            )}
-            <div style={{ display: 'flex' }}>
-                <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onBack} white />
-                </div>
-                <Button text={'Select assets'} type="submit" />
-            </div>
         </form>
     )
 }

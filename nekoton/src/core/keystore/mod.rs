@@ -16,7 +16,7 @@ pub struct KeyStore {
 #[wasm_bindgen]
 impl KeyStore {
     #[wasm_bindgen]
-    pub fn load(storage: &crate::storage::Storage) -> PromiseKeyStore {
+    pub fn load(storage: &crate::external::Storage) -> PromiseKeyStore {
         let storage = storage.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {

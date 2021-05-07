@@ -17,7 +17,7 @@ pub struct AccountsStorage {
 #[wasm_bindgen]
 impl AccountsStorage {
     #[wasm_bindgen]
-    pub fn load(storage: &crate::storage::Storage) -> PromiseAccountsStorage {
+    pub fn load(storage: &crate::external::Storage) -> PromiseAccountsStorage {
         let storage = storage.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {

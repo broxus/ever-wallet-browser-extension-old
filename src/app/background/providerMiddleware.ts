@@ -549,7 +549,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         }
     }
 
-    const fees = await accountController.useSubscription(selectedAddress, async (wallet) => {
+    const fees = await accountController.useTonWallet(selectedAddress, async (wallet) => {
         const contractState = await wallet.getContractState()
         if (contractState == null) {
             throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
@@ -618,7 +618,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         }
     }
 
-    const { unsignedMessage, fees } = await accountController.useSubscription(
+    const { unsignedMessage, fees } = await accountController.useTonWallet(
         selectedAddress,
         async (wallet) => {
             const contractState = await wallet.getContractState()

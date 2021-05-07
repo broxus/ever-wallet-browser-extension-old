@@ -4,8 +4,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::Result;
-use async_trait::async_trait;
-use futures::channel::oneshot;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
@@ -15,24 +13,8 @@ use nt::transport::{gql, Transport};
 use super::{
     PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
 };
+use crate::external::{GqlConnectionImpl, GqlSender};
 use crate::utils::*;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
-
-#[wasm_bindgen]
-extern "C" {
-    pub type GqlSender;
-
-    #[wasm_bindgen(method)]
-    pub fn send(this: &GqlSender, data: &str, handler: GqlQuery);
-}
-
-unsafe impl Send for GqlSender {}
-unsafe impl Sync for GqlSender {}
 
 #[wasm_bindgen]
 #[derive(Clone)]
@@ -46,9 +28,7 @@ impl GqlConnection {
     #[wasm_bindgen(constructor)]
     pub fn new(sender: GqlSender) -> GqlConnection {
         Self {
-            inner: Arc::new(GqlConnectionImpl {
-                sender: Arc::new(sender),
-            }),
+            inner: Arc::new(GqlConnectionImpl::new(sender)),
         }
     }
 
@@ -235,58 +215,6 @@ impl GqlConnection {
     pub fn make_transport(&self) -> gql::GqlTransport {
         gql::GqlTransport::new(self.inner.clone())
     }
-}
-
-pub struct GqlConnectionImpl {
-    sender: Arc<GqlSender>,
-}
-
-#[async_trait]
-impl nt::external::GqlConnection for GqlConnectionImpl {
-    async fn post(&self, data: &str) -> Result<String> {
-        let (tx, rx) = oneshot::channel();
-
-        self.sender.send(data, GqlQuery { tx });
-
-        let response = rx.await.unwrap_or(Err(QueryError::RequestDropped))?;
-        Ok(response)
-    }
-}
-
-type GqlQueryResult = Result<String, QueryError>;
-
-#[wasm_bindgen]
-pub struct GqlQuery {
-    #[wasm_bindgen(skip)]
-    pub tx: oneshot::Sender<GqlQueryResult>,
-}
-
-#[wasm_bindgen]
-impl GqlQuery {
-    #[wasm_bindgen(js_name = "onReceive")]
-    pub fn on_receive(self, data: String) {
-        let _ = self.tx.send(Ok(data));
-    }
-
-    #[wasm_bindgen(js_name = "onError")]
-    pub fn on_error(self, _: JsValue) {
-        let _ = self.tx.send(Err(QueryError::RequestFailed));
-    }
-
-    #[wasm_bindgen(js_name = "onTimeout")]
-    pub fn on_timeout(self) {
-        let _ = self.tx.send(Err(QueryError::TimeoutReached));
-    }
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum QueryError {
-    #[error("Request dropped unexpectedly")]
-    RequestDropped,
-    #[error("Timeout reached")]
-    TimeoutReached,
-    #[error("Request failed")]
-    RequestFailed,
 }
 
 #[wasm_bindgen(typescript_custom_section)]
