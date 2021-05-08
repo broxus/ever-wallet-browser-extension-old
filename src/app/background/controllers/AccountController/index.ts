@@ -45,6 +45,7 @@ export interface AccountControllerState extends BaseState {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
+    knownTokens: { [rootTokenContract: string]: nt.Symbol }
 }
 
 const defaultState: AccountControllerState = {
@@ -55,6 +56,7 @@ const defaultState: AccountControllerState = {
     accountTransactions: {},
     accountTokenTransactions: {},
     accountPendingMessages: {},
+    knownTokens: {},
 }
 
 export class AccountController extends BaseController<
@@ -296,6 +298,7 @@ export class AccountController extends BaseController<
 
         try {
             await this._accountsMutex.use(async () => {
+                await this._createTokenWalletSubscription(address, rootTokenContract)
                 const assetsList = await accountsStorage.addTokenWallet(address, rootTokenContract)
                 this._updateAssetsList(assetsList)
             })
@@ -670,9 +673,17 @@ export class AccountController extends BaseController<
         console.debug('_createTokenWalletSubscription -> subscribed to token wallet')
 
         ownerSubscriptions.set(rootTokenContract, subscription)
-        subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+        subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
 
-        await subscription?.start()
+        await subscription.start()
+
+        const knownTokens = this.state.knownTokens
+        this.update({
+            knownTokens: {
+                ...knownTokens,
+                [rootTokenContract]: subscription.symbol,
+            },
+        })
     }
 
     private async _stopSubscriptions() {

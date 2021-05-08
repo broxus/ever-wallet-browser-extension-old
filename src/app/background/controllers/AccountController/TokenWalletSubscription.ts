@@ -164,4 +164,8 @@ export class TokenWalletSubscription {
                 throw err
             })
     }
+
+    public get symbol() {
+        return this._symbol
+    }
 }
