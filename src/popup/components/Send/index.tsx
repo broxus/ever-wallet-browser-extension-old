@@ -207,6 +207,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                     />
                     <Input
                         name="amount"
+                        type="text"
                         label={'Amount...'}
                         onChange={(value) => setValue('amount', value.trim())}
                         register={register({
