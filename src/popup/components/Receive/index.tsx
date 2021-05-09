@@ -3,8 +3,7 @@ import React from 'react'
 import QRCode from 'react-qr-code'
 import CopyButton from '@popup/components/CopyButton'
 import Button from '@popup/components/Button'
-
-import UserPic from '@popup/img/user-avatar-placeholder.svg'
+import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
@@ -16,7 +15,7 @@ interface IReceive {
 const Receive: React.FC<IReceive> = ({ accountName, address }) => (
     <>
         <div className="receive-screen__account_details">
-            <UserPic />
+            <UserAvatar address={address} />
             <span className="receive-screen__account_details-title">{accountName || ''}</span>
         </div>
 

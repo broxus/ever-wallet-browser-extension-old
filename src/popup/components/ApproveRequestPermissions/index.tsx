@@ -8,7 +8,7 @@ import Checkbox from '@popup/components/Checkbox'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
 
 import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
+import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>
@@ -69,7 +69,7 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                                 }}
                             />
 
-                            <UserPicS />
+                            <UserAvatar address={account.tonWallet.address} small />
                             <div style={{ padding: '0 12px' }}>
                                 <div className="account-settings-section-account">
                                     {account?.name}

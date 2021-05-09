@@ -4,7 +4,6 @@ import Modal from '@popup/components/Modal'
 import Button from '@popup/components/Button'
 
 import ThreeDots from '@popup/img/three-dots.svg'
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 
 import './style.scss'
 
@@ -54,7 +53,7 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey }) => {
                                         borderBottom: '1px solid #ebedee',
                                     }}
                                 >
-                                    <UserPicS />
+                                    {/*<UserAvatar address={account} />*/}
                                     <div style={{ padding: '0 12px' }}>
                                         <div className="key-storage__key-text-block-account">
                                             Account 1 (Wallet V3)
