@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Decimal from 'decimal.js'
 import { selectStyles } from '@popup/constants/selectStyle'
-import { convertAddress, convertTons, parseTons } from '@shared/utils'
+import { convertTons, parseTons } from '@shared/utils'
 import { MessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
@@ -15,14 +15,7 @@ import UserPic from '@popup/img/user-avatar-placeholder.svg'
 
 import './style.scss'
 
-const options = [
-    { value: '60', label: 'TON' },
-    /*
-    { value: '1', label: 'USDT' },
-    { value: '60', label: 'BTC' },
-    { value: '60', label: 'ETH' },
-    */
-]
+const options = [{ value: 'TON', label: 'TON' }]
 
 enum PrepareStep {
     ENTER_ADDRESS,
@@ -31,7 +24,7 @@ enum PrepareStep {
 
 type IEnterPassword = {
     account: nt.AssetsList
-    params: MessageToPrepare
+    params?: IMessage
     fees?: string
     error?: string
     disabled: boolean
@@ -68,7 +61,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">You send</span>
                     <span className="send-screen__form-tx-details-param-value">
-                        {params.amount}
+                        {params?.amount}
                     </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
@@ -82,9 +75,18 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                         Recipient address
                     </span>
                     <span className="send-screen__form-tx-details-param-value">
-                        {convertAddress(params.recipient)}
+                        {params?.recipient}
                     </span>
                 </div>
+                {/*TODO password form doesn't fit, wait for design update*/}
+                {/*{params?.comment && (*/}
+                {/*    <div className="send-screen__form-tx-details-param">*/}
+                {/*        <span className="send-screen__form-tx-details-param-desc">Comment</span>*/}
+                {/*        <span className="send-screen__form-tx-details-param-value">*/}
+                {/*            {params?.comment}*/}
+                {/*        </span>*/}
+                {/*    </div>*/}
+                {/*)}*/}
             </div>
             <Input
                 className="send-screen__form-comment"
@@ -127,6 +129,12 @@ type IPrepareMessage = {
     onBack: () => void
 }
 
+type IMessage = {
+    amount: string
+    comment?: string
+    recipient: string
+}
+
 const PrepareMessage: React.FC<IPrepareMessage> = ({
     account,
     tonWalletState,
@@ -140,8 +148,17 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     const [error, setError] = useState()
     const [messageToPrepare, setMessageToPrepare] = useState<MessageToPrepare>()
     const [fees, setFees] = useState<string>()
+    const [messageParams, setMessageParams] = useState<IMessage>()
 
     const { register, setValue, handleSubmit, errors, getValues } = useForm<MessageParams>()
+
+    useEffect(() => {
+        if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
+            setValue('amount', messageParams.amount)
+            setValue('recipient', messageParams.recipient)
+            setValue('comment', messageParams.comment)
+        }
+    }, [localStep])
 
     const submitMessageParams = (data: MessageParams) => {
         const messageToPrepare: MessageToPrepare = {
@@ -158,6 +175,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             .catch(console.error)
 
         setMessageToPrepare(messageToPrepare)
+        setMessageParams(getValues())
         setLocalStep(PrepareStep.ENTER_PASSWORD)
     }
 
@@ -180,98 +198,96 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
 
     const balance = new Decimal(tonWalletState?.balance || '0')
 
-    const paramsFormHidden = localStep != PrepareStep.ENTER_ADDRESS
-
     return (
         <>
-            <div
-                style={{
-                    visibility: paramsFormHidden ? 'hidden' : undefined,
-                    height: paramsFormHidden ? '0' : undefined,
-                }}
-            >
-                <div className="send-screen__account_details">
-                    <UserPic />{' '}
-                    <span className="send-screen__account_details-title">{account.name}</span>
-                </div>
-
-                <h2 className="send-screen__form-title">Enter receiver address</h2>
-                <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
-                    <Select
-                        name="currency"
-                        className="send-screen__form-token-dropdown"
-                        options={options}
-                        defaultValue={options?.[0]}
-                        placeholder={'Select currency'}
-                        styles={selectStyles}
-                    />
-                    <Input
-                        name="amount"
-                        type="text"
-                        label={'Amount...'}
-                        onChange={(value) => setValue('amount', value.trim())}
-                        register={register({
-                            required: true,
-                            pattern: /^(?:0|[1-9][0-9]*)(?:.[0-9]{0,9})?$/,
-                            validate: (value?: string) => {
-                                try {
-                                    const current = new Decimal(parseTons(value || ''))
-                                    return current.lessThanOrEqualTo(balance)
-                                } catch (e) {
-                                    console.error(e)
-                                    return false
-                                }
-                            },
-                        })}
-                    />
-                    {errors.amount && (
-                        <div className="send-screen__form-error">
-                            {errors.amount.type == 'required' && 'This field is required'}
-                            {errors.amount.type == 'validate' && 'Insufficient amount'}
-                            {errors.amount.type == 'pattern' && 'Invalid format'}
-                        </div>
-                    )}
-                    <div className="send-screen__form-balance">
-                        Your balance: {convertTons(tonWalletState?.balance)} TON
-                    </div>
-                    <Input
-                        name="recipient"
-                        label={'Receiver address...'}
-                        onChange={(value) => setValue('recipient', value)}
-                        register={register({
-                            required: true,
-                            pattern: /(?:-1|0):[0-9a-fA-F]{64}/,
-                            validate: (value: string) => nt.checkAddress(value),
-                        })}
-                        type="text"
-                    />
-                    {errors.recipient && (
-                        <div className="send-screen__form-error">
-                            {errors.recipient.type == 'required' && 'This field is required'}
-                            {errors.recipient.type == 'validate' && 'Invalid recipient'}
-                            {errors.recipient.type == 'pattern' && 'Invalid format'}
-                        </div>
-                    )}
-                    <Input
-                        name="comment"
-                        label={'Comment...'}
-                        className="send-screen__form-comment"
-                        onChange={(value) => setValue('comment', value)}
-                        register={register()}
-                        type="text"
-                    />
-                </form>
-                <div style={{ display: 'flex' }}>
-                    <div style={{ width: '50%', marginRight: '12px' }}>
-                        <Button text={'Back'} onClick={onBack} white />
-                    </div>
-                    <Button text={'Send'} onClick={handleSubmit(submitMessageParams)} form="send" />
-                </div>
+            <div className="send-screen__account_details">
+                <UserPic />{' '}
+                <span className="send-screen__account_details-title">{account.name}</span>
             </div>
+            {localStep === PrepareStep.ENTER_ADDRESS && (
+                <div>
+                    <h2 className="send-screen__form-title">Send your funds</h2>
+                    <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
+                        <Select
+                            name="currency"
+                            className="send-screen__form-token-dropdown"
+                            options={options}
+                            defaultValue={options?.[0]}
+                            placeholder={'Select currency'}
+                            styles={selectStyles}
+                        />
+                        <Input
+                            name="amount"
+                            type="text"
+                            label={'Amount...'}
+                            onChange={(value) => setValue('amount', value.trim())}
+                            register={register({
+                                required: true,
+                                pattern: /^(?:0|[1-9][0-9]*)(?:.[0-9]{0,9})?$/,
+                                validate: (value?: string) => {
+                                    try {
+                                        const current = new Decimal(parseTons(value || ''))
+                                        return current.lessThanOrEqualTo(balance)
+                                    } catch (e) {
+                                        console.error(e)
+                                        return false
+                                    }
+                                },
+                            })}
+                        />
+                        {errors.amount && (
+                            <div className="send-screen__form-error">
+                                {errors.amount.type == 'required' && 'This field is required'}
+                                {errors.amount.type == 'validate' && 'Insufficient amount'}
+                                {errors.amount.type == 'pattern' && 'Invalid format'}
+                            </div>
+                        )}
+                        <div className="send-screen__form-balance">
+                            Your balance: {convertTons(tonWalletState?.balance)} TON
+                        </div>
+                        <Input
+                            name="recipient"
+                            label={'Receiver address...'}
+                            onChange={(value) => setValue('recipient', value)}
+                            register={register({
+                                required: true,
+                                pattern: /(?:-1|0):[0-9a-fA-F]{64}/,
+                                validate: (value: string) => nt.checkAddress(value),
+                            })}
+                            type="text"
+                        />
+                        {errors.recipient && (
+                            <div className="send-screen__form-error">
+                                {errors.recipient.type == 'required' && 'This field is required'}
+                                {errors.recipient.type == 'validate' && 'Invalid recipient'}
+                                {errors.recipient.type == 'pattern' && 'Invalid format'}
+                            </div>
+                        )}
+                        <Input
+                            name="comment"
+                            label={'Comment...'}
+                            className="send-screen__form-comment"
+                            onChange={(value) => setValue('comment', value)}
+                            register={register()}
+                            type="text"
+                        />
+                    </form>
+                    <div style={{ display: 'flex' }}>
+                        <div style={{ width: '50%', marginRight: '12px' }}>
+                            <Button text={'Back'} onClick={onBack} white />
+                        </div>
+                        <Button
+                            text={'Send'}
+                            onClick={handleSubmit(submitMessageParams)}
+                            form="send"
+                        />
+                    </div>
+                </div>
+            )}
             {localStep == PrepareStep.ENTER_PASSWORD && (
                 <EnterPassword
                     account={account}
-                    params={getValues()}
+                    params={messageParams}
                     fees={fees}
                     error={error}
                     disabled={inProcess}
