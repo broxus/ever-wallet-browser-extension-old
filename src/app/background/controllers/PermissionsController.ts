@@ -107,6 +107,24 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
     }
 
+    public clear() {
+        const permissions = this.state.permissions
+
+        this.update(
+            {
+                permissions: {},
+            },
+            true
+        )
+
+        for (const origin of Object.keys(permissions)) {
+            this.config.notifyDomain?.(origin, {
+                method: 'permissionsChanged',
+                params: { permissions: {} },
+            })
+        }
+    }
+
     public checkPermissions(origin: string, permissions: Permission[]) {
         const originPermissions = this.state.permissions[origin]
         if (originPermissions == null) {
