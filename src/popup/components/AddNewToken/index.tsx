@@ -6,7 +6,8 @@ import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import Tumbler from '@popup/components/Tumbler'
 
-import TonLogo from '@popup/img/ton-logo.svg'
+import USDCLogo from '@popup/img/usdc-logo-s.svg'
+import USDTLogo from '@popup/img/usdt-logo-s.svg'
 
 import './style.scss'
 
@@ -22,7 +23,7 @@ const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
         symbol: 'USDC',
         logo: () => {
             // @ts-ignore
-            return <TonLogo className="assets-list-item__logo" />
+            return <USDCLogo className="assets-list-item__logo" />
         },
     },
     another: {
@@ -30,7 +31,7 @@ const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
         symbol: 'USDT',
         logo: () => {
             // @ts-ignore
-            return <TonLogo className="assets-list-item__logo" />
+            return <USDTLogo className="assets-list-item__logo" />
         },
     },
 }
@@ -81,9 +82,7 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
                     className="add-new-token__search-form"
                     type="text"
                     name="name"
-                    register={register({
-                        required: true,
-                    })}
+                    register={register()}
                 />
                 {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
                 <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
@@ -110,7 +109,11 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
                     <div style={{ width: '50%', marginRight: '12px' }}>
                         <Button text={'Back'} onClick={onBack} white />
                     </div>
-                    <Button text={'Select assets'} onClick={handleSubmit(onSubmit)} />
+                    <Button
+                        text={'Select assets'}
+                        onClick={handleSubmit(onSubmit)}
+                        disabled={!enabledTokens.length}
+                    />
                 </div>
             </form>
         </>
