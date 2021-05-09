@@ -6,14 +6,14 @@ import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 import Arrow from '@popup/img/arrow.svg'
 import EnterPassword from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
+import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
-    account: nt.AssetsList | null
+    account: nt.AssetsList
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
@@ -62,12 +62,12 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
                 <div className="connect-wallet__network">Mainnet</div>
                 <div className="connect-wallet__address">
                     <div className="connect-wallet__address-entry">
-                        <UserPicS />
-                        <div className="connect-wallet__address-entry">{account?.name}</div>
+                        <UserAvatar address={account.tonWallet.address} small />
+                        <div className="connect-wallet__address-entry">{account.name}</div>
                     </div>
                     <Arrow />
                     <div className="connect-wallet__address-entry">
-                        <UserPicS />
+                        <UserAvatar address={account.tonWallet.address} small />
                         <div className="connect-wallet__address-entry">
                             {convertAddress(account?.tonWallet.address)}
                         </div>

@@ -3,7 +3,7 @@ import { convertTons } from '@shared/utils'
 import { hideModalOnClick } from '@popup/common'
 import * as nt from '@nekoton'
 
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
+import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
@@ -43,7 +43,7 @@ const AccountModal: React.FC<IAccountModal> = ({
         <Wrapper>
             <div className="account-settings-section">
                 <div className="account-settings-section-item" style={{ display: 'flex' }}>
-                    <UserPicS />
+                    <UserAvatar address={account.tonWallet.address} small />
                     <div style={{ padding: '0 12px' }}>
                         <div className="account-settings-section-account">{account.name}</div>
                         <div className="account-settings-section-item-value">

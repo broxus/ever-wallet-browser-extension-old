@@ -10,8 +10,7 @@ import Select from 'react-select'
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import TransactionProgress from '@popup/components/TransactionProgress'
-
-import UserPic from '@popup/img/user-avatar-placeholder.svg'
+import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
@@ -191,7 +190,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                 }}
             >
                 <div className="send-screen__account_details">
-                    <UserPic />{' '}
+                    <UserAvatar address={account.tonWallet.address} />{' '}
                     <span className="send-screen__account_details-title">{account.name}</span>
                 </div>
 

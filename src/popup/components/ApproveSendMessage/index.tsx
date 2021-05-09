@@ -7,8 +7,7 @@ import Button from '@popup/components/Button'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import EnterPassword from '@popup/components/EnterPassword'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
-
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
+import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
@@ -65,7 +64,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
             <div className="connect-wallet__spend-top-panel">
                 <div className="connect-wallet__spend-top-panel__network">
                     <div className="connect-wallet__address-entry">
-                        <UserPicS />
+                        <UserAvatar address={account.tonWallet.address} small />
                         <div className="connect-wallet__spend-top-panel__account">
                             {account?.name}
                         </div>
