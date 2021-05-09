@@ -124,10 +124,10 @@ const openPopup = async () => {
     })
 }
 
-initialize().catch(console.error)
+const ensureInitialized = initialize().catch(console.error)
 
 chrome.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === 'install' && !(process.env.NEKOTON_DEBUG || process.env.IN_TEST)) {
-        openExtensionInBrowser().catch(console.error)
+        ensureInitialized.then(() => openExtensionInBrowser()).catch(console.error)
     }
 })
