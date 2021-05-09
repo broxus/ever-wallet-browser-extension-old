@@ -49,6 +49,31 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         this.initialize()
     }
 
+    public async initialSync() {
+        try {
+            await new Promise<void>((resolve) => {
+                chrome.storage.local.get(['permissions'], ({ permissions }) => {
+                    if (typeof permissions === 'object') {
+                        this.update({
+                            permissions,
+                        })
+
+                        for (const origin of Object.keys(permissions)) {
+                            this.config.notifyDomain?.(origin, {
+                                method: 'permissionsChanged',
+                                params: { permissions: {} },
+                            })
+                        }
+                    }
+
+                    resolve()
+                })
+            })
+        } catch (e) {
+            console.warn('Failed to load permissions', e)
+        }
+    }
+
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
 
@@ -74,9 +99,11 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             true
         )
 
+        await this._savePermissions()
+
         this.config.notifyDomain?.(origin, {
             method: 'permissionsChanged',
-            params: { permissions },
+            params: { permissions: originPermissions },
         })
         return originPermissions
     }
@@ -85,7 +112,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         return this.state.permissions[origin] || {}
     }
 
-    public removeOrigin(origin: string) {
+    public async removeOrigin(origin: string) {
         const permissions = this.state.permissions
         const originPermissions = permissions[origin]
 
@@ -99,6 +126,8 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             true
         )
 
+        await this._savePermissions()
+
         if (originPermissions != null) {
             this.config.notifyDomain?.(origin, {
                 method: 'permissionsChanged',
@@ -107,7 +136,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
     }
 
-    public clear() {
+    public async clear() {
         const permissions = this.state.permissions
 
         this.update(
@@ -116,6 +145,8 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             },
             true
         )
+
+        await this._savePermissions()
 
         for (const origin of Object.keys(permissions)) {
             this.config.notifyDomain?.(origin, {
@@ -142,5 +173,13 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
                 )
             }
         }
+    }
+
+    private async _savePermissions(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ permissions: this.state.permissions }, () => {
+                resolve()
+            })
+        })
     }
 }
