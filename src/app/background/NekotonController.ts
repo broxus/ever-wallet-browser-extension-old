@@ -243,6 +243,8 @@ export class NekotonController extends EventEmitter {
     public async logOut() {
         await this._components.accountController.logOut()
         await this._components.subscriptionsController.stopSubscriptions()
+        await this._components.approvalController.clear()
+        await this._components.permissionsController.clear()
 
         this._notifyAllConnections({
             method: 'loggedOut',
