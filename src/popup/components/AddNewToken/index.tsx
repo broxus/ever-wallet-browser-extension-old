@@ -55,7 +55,7 @@ export const Token: React.FC<IToken> = ({ logo, name, symbol, enabled, onToggle 
                     <span className="assets-list-item__balance__dollars">{symbol}</span>
                 </div>
             </div>
-            <Tumbler checked={enabled} onChange={onToggle} />
+            <Tumbler checked={enabled} onChange={onToggle} id={name} />
         </div>
     )
 }
@@ -74,44 +74,46 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <Input
-                label={'Enter token name...'}
-                className="add-new-token__search-form"
-                type="text"
-                name="name"
-                register={register({
-                    required: true,
-                })}
-            />
-            {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
-            <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                {window.ObjectExt.entries(tokens).map(([id, token]) => {
-                    const makeOnToggle = (id: string) => (enabled: boolean) => {
-                        if (enabled) {
-                            setEnabledTokens([...enabledTokens, id])
-                        } else {
-                            setEnabledTokens(enabledTokens.filter((item) => item != id))
+        <>
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <Input
+                    label={'Enter token name...'}
+                    className="add-new-token__search-form"
+                    type="text"
+                    name="name"
+                    register={register({
+                        required: true,
+                    })}
+                />
+                {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
+                <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
+                    {window.ObjectExt.entries(tokens).map(([id, token]) => {
+                        const makeOnToggle = (id: string) => (enabled: boolean) => {
+                            if (enabled) {
+                                setEnabledTokens([...enabledTokens, id])
+                            } else {
+                                setEnabledTokens(enabledTokens.filter((item) => item !== id))
+                            }
                         }
-                    }
 
-                    return (
-                        <Token
-                            key={id}
-                            {...token}
-                            enabled={enabledTokens.includes(id)}
-                            onToggle={makeOnToggle(id)}
-                        />
-                    )
-                })}
-            </div>
-            <div style={{ display: 'flex' }}>
-                <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onBack} white />
+                        return (
+                            <Token
+                                key={id}
+                                {...token}
+                                enabled={enabledTokens.includes(id)}
+                                onToggle={makeOnToggle(id)}
+                            />
+                        )
+                    })}
                 </div>
-                <Button text={'Select assets'} onClick={handleSubmit(onSubmit)} />
-            </div>
-        </form>
+                <div style={{ display: 'flex' }}>
+                    <div style={{ width: '50%', marginRight: '12px' }}>
+                        <Button text={'Back'} onClick={onBack} white />
+                    </div>
+                    <Button text={'Select assets'} onClick={handleSubmit(onSubmit)} />
+                </div>
+            </form>
+        </>
     )
 }
 
