@@ -17,6 +17,8 @@ type PredefinedToken = {
     logo: () => JSX.Element
 }
 
+const TOKEN_SCHEMA_URL = 'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
+
 const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
     usdc: {
         name: 'USD Coin',
