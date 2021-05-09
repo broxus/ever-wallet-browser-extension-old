@@ -77,35 +77,50 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
 
-        const originPermissions: Partial<Permissions> = await this.config.approvalController.addAndShowApprovalRequest(
-            {
-                origin,
-                type: 'requestPermissions',
-                requestData: {
-                    permissions: uniquePermissions,
-                },
-            }
-        )
+        let existingPermissions = this.getPermissions(origin)
 
-        const newPermissions = {
-            ...this.state.permissions,
-            [origin]: originPermissions,
+        let hasNewPermissions = false
+        for (const permission of uniquePermissions) {
+            validatePermission(permission)
+
+            if (existingPermissions[permission] == null) {
+                hasNewPermissions = true
+            }
         }
 
-        this.update(
-            {
-                permissions: newPermissions,
-            },
-            true
-        )
+        if (hasNewPermissions) {
+            const originPermissions: Partial<Permissions> = await this.config.approvalController.addAndShowApprovalRequest(
+                {
+                    origin,
+                    type: 'requestPermissions',
+                    requestData: {
+                        permissions: uniquePermissions,
+                    },
+                }
+            )
 
-        await this._savePermissions()
+            const newPermissions = {
+                ...this.state.permissions,
+                [origin]: originPermissions,
+            }
+
+            this.update(
+                {
+                    permissions: newPermissions,
+                },
+                true
+            )
+
+            await this._savePermissions()
+
+            existingPermissions = originPermissions
+        }
 
         this.config.notifyDomain?.(origin, {
             method: 'permissionsChanged',
-            params: { permissions: originPermissions },
+            params: { permissions: existingPermissions },
         })
-        return originPermissions
+        return existingPermissions
     }
 
     public getPermissions(origin: string): Partial<Permissions> {

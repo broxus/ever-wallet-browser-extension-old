@@ -12,7 +12,7 @@ import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
 import * as nt from '@nekoton'
 
 import { ApprovalController } from './controllers/ApprovalController'
-import { PermissionsController, validatePermission } from './controllers/PermissionsController'
+import { PermissionsController } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { AccountController } from './controllers/AccountController'
 import { SubscriptionController } from './controllers/SubscriptionController'
@@ -216,25 +216,7 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
     const { permissions } = req.params
     requireArray(req, req.params, 'permissions')
 
-    const existingPermissions = permissionsController.getPermissions(origin)
-
-    let hasNewPermissions = false
-    for (const permission of permissions) {
-        validatePermission(permission)
-
-        if (existingPermissions[permission] == null) {
-            hasNewPermissions = true
-        }
-    }
-
-    if (hasNewPermissions) {
-        res.result = await permissionsController.requestPermissions(
-            origin,
-            permissions as Permission[]
-        )
-    } else {
-        res.result = existingPermissions
-    }
+    res.result = await permissionsController.requestPermissions(origin, permissions as Permission[])
     end()
 }
 
