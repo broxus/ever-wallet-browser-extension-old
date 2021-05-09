@@ -127,9 +127,13 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                                             {key}
                                         </div>
                                         {value instanceof Array ? (
-                                            <div>{JSON.stringify(value, undefined, 4)}</div>
+                                            <div className="connect-wallet__details__description-param-data__block--value">
+                                                {JSON.stringify(value, undefined, 4)}
+                                            </div>
                                         ) : (
-                                            <div>{value}</div>
+                                            <div className="connect-wallet__details__description-param-data__block--value">
+                                                {value}
+                                            </div>
                                         )}
                                     </div>
                                 ))}

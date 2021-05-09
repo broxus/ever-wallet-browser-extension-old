@@ -243,6 +243,10 @@
                         &--param-name {
                             font-weight: bold;
                         }
+
+                        &--value {
+                            word-break: break-all;
+                        }
                     }
                 }
             }
