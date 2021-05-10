@@ -148,7 +148,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                                             </div>
                                         ) : (
                                             <div className="connect-wallet__details__description-param-data__block--value">
-                                                {value}
+                                                {value.toString()}
                                             </div>
                                         )}
                                     </div>
