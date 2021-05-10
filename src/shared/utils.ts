@@ -648,6 +648,20 @@ export const parseTons = (amount: string) => {
     return new Decimal(amount).mul(multiplier(9)).ceil().toFixed(0)
 }
 
+export function findAccountByAddress(
+    accountEntries: { [publicKey: string]: nt.AssetsList[] },
+    address: string
+): nt.AssetsList | undefined {
+    for (const accounts of window.ObjectExt.values(accountEntries)) {
+        for (const account of accounts) {
+            if (account.tonWallet.address == address) {
+                return account
+            }
+        }
+    }
+    return undefined
+}
+
 export interface SendMessageRequest {
     expireAt: number
     boc: string

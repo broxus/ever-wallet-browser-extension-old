@@ -45,7 +45,12 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         setOpenedPanel(undefined)
     }
 
-    const { selectedAccount, selectedConnection } = controllerState
+    const { selectedAccount, selectedConnection, storedKeys } = controllerState
+
+    const selectedKey = storedKeys[selectedAccount.tonWallet.publicKey]
+    if (selectedKey == null) {
+        return null
+    }
 
     const accountName = selectedAccount.name
     const accountAddress = selectedAccount.tonWallet.address
@@ -106,6 +111,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
                             account={selectedAccount}
+                            keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
                             estimateFees={async (params) =>
@@ -120,6 +126,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     {openedPanel == Panel.DEPLOY && (
                         <DeployWallet
                             account={selectedAccount}
+                            keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
                             estimateFees={async () =>

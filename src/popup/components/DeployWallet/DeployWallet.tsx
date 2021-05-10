@@ -14,6 +14,7 @@ import './style.scss'
 
 interface IDeployWallet {
     account: nt.AssetsList
+    keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState | null
     estimateFees: () => Promise<string>
     prepareDeployMessage: (keyPassword: nt.KeyPassword) => Promise<nt.SignedMessage>
@@ -23,6 +24,7 @@ interface IDeployWallet {
 
 const DeployWallet: React.FC<IDeployWallet> = ({
     account,
+    keyEntry,
     tonWalletState,
     estimateFees,
     prepareDeployMessage,
@@ -48,9 +50,9 @@ const DeployWallet: React.FC<IDeployWallet> = ({
 
     const submitPassword = async (password: string) => {
         const keyPassword: nt.KeyPassword = {
-            type: 'master_key',
+            type: keyEntry.signerName,
             data: {
-                publicKey: account.tonWallet.publicKey,
+                publicKey: keyEntry.publicKey,
                 password,
             },
         }

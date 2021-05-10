@@ -36,11 +36,7 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "addKey")]
-    pub fn add_key(
-        &self,
-        name: String,
-        new_key: JsNewKey,
-    ) -> Result<PromiseKeyStoreEntry, JsValue> {
+    pub fn add_key(&self, new_key: JsNewKey) -> Result<PromiseKeyStoreEntry, JsValue> {
         use nt::crypto::*;
 
         let inner = self.inner.clone();
@@ -49,33 +45,35 @@ impl KeyStore {
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let entry = match new_key {
                 ParsedNewKey::MasterKey { params, password } => {
-                    let input = match params {
-                        ParsedNewMasterKeyParams::MasterKeyParams { phrase } => {
-                            DerivedKeyCreateInput::Import {
-                                phrase: phrase.into(),
-                                password: password.into(),
+                    inner
+                        .add_key::<DerivedKeySigner>(match params {
+                            ParsedNewMasterKeyParams::MasterKeyParams { phrase } => {
+                                DerivedKeyCreateInput::Import {
+                                    phrase: phrase.into(),
+                                    password: password.into(),
+                                }
                             }
-                        }
-                        ParsedNewMasterKeyParams::DerivedKeyParams { account_id } => {
-                            DerivedKeyCreateInput::Derive {
-                                account_id: account_id as u32,
-                                password: password.into(),
+                            ParsedNewMasterKeyParams::DerivedKeyParams { account_id } => {
+                                DerivedKeyCreateInput::Derive {
+                                    account_id,
+                                    password: password.into(),
+                                }
                             }
-                        }
-                    };
-                    inner.add_key::<DerivedKeySigner>(&name, input).await
+                        })
+                        .await
                 }
                 ParsedNewKey::EncryptedKey {
                     phrase,
                     mnemonic_type,
                     password,
                 } => {
-                    let input = EncryptedKeyCreateInput {
-                        phrase: phrase.into(),
-                        mnemonic_type: mnemonic_type.into(),
-                        password: password.into(),
-                    };
-                    inner.add_key::<EncryptedKeySigner>(&name, input).await
+                    inner
+                        .add_key::<EncryptedKeySigner>(EncryptedKeyCreateInput {
+                            phrase: phrase.into(),
+                            mnemonic_type: mnemonic_type.into(),
+                            password: password.into(),
+                        })
+                        .await
                 }
             }
             .handle_error()?;
@@ -88,7 +86,7 @@ impl KeyStore {
     pub fn change_key_password(
         &self,
         change_password: JsChangeKeyPassword,
-    ) -> Result<PromiseString, JsValue> {
+    ) -> Result<PromiseKeyStoreEntry, JsValue> {
         use nt::crypto::*;
 
         let inner = self.inner.clone();
@@ -96,7 +94,7 @@ impl KeyStore {
             JsValue::into_serde::<ParsedChangeKeyPassword>(&change_password).handle_error()?;
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            match change_password {
+            let entry = match change_password {
                 ParsedChangeKeyPassword::MasterKey {
                     old_password,
                     new_password,
@@ -123,7 +121,7 @@ impl KeyStore {
             }
             .handle_error()?;
 
-            Ok(JsValue::undefined())
+            Ok(make_key_store_entry(entry).unchecked_into())
         })))
     }
 
@@ -204,14 +202,16 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "removeKey")]
-    pub fn remove_key(&self, public_key: &str) -> Result<PromiseVoid, JsValue> {
+    pub fn remove_key(&self, public_key: &str) -> Result<PromiseOptionKeyStoreEntry, JsValue> {
         let public_key = parse_public_key(public_key)?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            inner.remove_key(&public_key).await.handle_error()?;
-            Ok(JsValue::undefined())
+            Ok(match inner.remove_key(&public_key).await.handle_error()? {
+                Some(entry) => make_key_store_entry(entry).unchecked_into(),
+                None => JsValue::undefined(),
+            })
         })))
     }
 
@@ -288,11 +288,8 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<KeyStoreEntry>")]
     pub type PromiseKeyStoreEntry;
 
-    #[wasm_bindgen(typescript_type = "Promise<StoredKey>")]
-    pub type PromiseStoredKey;
-
-    #[wasm_bindgen(typescript_type = "Promise<StoredKey | undefined>")]
-    pub type PromiseOptionStoredKey;
+    #[wasm_bindgen(typescript_type = "Promise<KeyStoreEntry | undefined>")]
+    pub type PromiseOptionKeyStoreEntry;
 
     #[wasm_bindgen(typescript_type = "Promise<KeyStore>")]
     pub type PromiseKeyStore;
@@ -333,7 +330,7 @@ enum ParsedNewKey {
 #[wasm_bindgen(typescript_custom_section)]
 const NEW_MASTER_KEY_PARAMS: &str = r#"
 export type MasterKeyParams = { phrase: string };
-export type DerivedKeyParams = { account_id: number };
+export type DerivedKeyParams = { accountId: number };
 "#;
 
 #[derive(Deserialize)]
@@ -466,9 +463,9 @@ enum ParsedKeyPassword {
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type KeyStoreEntry = {
-    name: string,
-    publicKey: string,
     signerName: 'master_key' | 'encrypted_key',
+    publicKey: string,
+    accountId: number,
 };
 "#;
 
@@ -480,9 +477,9 @@ extern "C" {
 
 fn make_key_store_entry(data: nt::core::keystore::KeyStoreEntry) -> KeyStoreEntry {
     ObjectBuilder::new()
-        .set("name", data.name)
-        .set("publicKey", hex::encode(data.public_key.as_bytes()))
         .set("signerName", data.signer_name)
+        .set("publicKey", hex::encode(data.public_key.as_bytes()))
+        .set("accountId", data.account_id)
         .build()
         .unchecked_into()
 }

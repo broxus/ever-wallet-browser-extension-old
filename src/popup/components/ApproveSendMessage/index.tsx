@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { convertAddress, convertTons } from '@shared/utils'
+import React, { useEffect, useState } from 'react'
+import { convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
@@ -11,8 +11,9 @@ import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
-    account: nt.AssetsList
-    tonWalletState: nt.ContractState | null
+    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountContractStates: { [address: string]: nt.ContractState }
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
@@ -20,28 +21,44 @@ interface IApproveSendMessage {
 
 const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     approval,
-    account,
-    tonWalletState,
+    accountEntries,
+    accountContractStates,
+    storedKeys,
     checkPassword,
     onReject,
     onSubmit,
 }) => {
     const { origin } = approval
-    const { recipient, amount, fees, payload } = approval.requestData
+    const { sender, recipient, amount, fees, payload } = approval.requestData
 
-    const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
+    const contractState = accountContractStates[sender]
+
+    const balance = convertTons(contractState?.balance || '0').toLocaleString()
 
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
 
+    const account = findAccountByAddress(accountEntries, sender)
+    if (account == null) {
+        !inProcess && onReject()
+        setInProcess(true)
+        return null
+    }
+
     const trySubmit = async (password: string) => {
+        const keyEntry = storedKeys[account.tonWallet.publicKey]
+        if (keyEntry == null) {
+            setError('Key entry not found')
+            return
+        }
+
         setInProcess(true)
         try {
             const keyPassword: nt.KeyPassword = {
-                type: 'encrypted_key',
+                type: keyEntry.signerName,
                 data: {
-                    publicKey: account.tonWallet.publicKey,
+                    publicKey: keyEntry.publicKey,
                     password,
                 },
             }

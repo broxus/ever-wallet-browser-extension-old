@@ -12,8 +12,8 @@ import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>
-    account: nt.AssetsList | null
-    tonWalletState: nt.ContractState | null
+    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountContractStates: { [address: string]: nt.ContractState }
     onSubmit: (data: ApprovalOutput<'requestPermissions'>) => void
     onReject: () => void
 }
@@ -26,8 +26,8 @@ enum LocalStep {
 
 const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
     approval,
-    account,
-    tonWalletState,
+    accountEntries,
+    accountContractStates,
     onSubmit,
 }) => {
     const { origin } = approval
@@ -42,10 +42,6 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
     const [selectedAccount, setSelectedAccount] = useState<nt.AssetsList>()
     const [confirmChecked, setConfirmChecked] = useState(false)
 
-    if (account == null) {
-        return null
-    }
-
     return (
         <div className="connect-wallet-select-account">
             {localStep === LocalStep.SELECT_ACCOUNT && (
@@ -58,27 +54,37 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                         <h2 className="connect-wallet-select-account__title">
                             Select account(s) to connect with Crystal wallet
                         </h2>
-                        <div
-                            className="connect-wallet-select-account__item"
-                            style={{ display: 'flex' }}
-                        >
-                            <Checkbox
-                                checked={selectedAccount != null}
-                                setChecked={(checked) => {
-                                    setSelectedAccount(checked ? account : undefined)
-                                }}
-                            />
 
-                            <UserAvatar address={account.tonWallet.address} small />
-                            <div style={{ padding: '0 12px' }}>
-                                <div className="account-settings-section-account">
-                                    {account?.name}
+                        {window.ObjectExt.values(accountEntries).map((items) =>
+                            items.map((item) => (
+                                <div
+                                    className="connect-wallet-select-account__item"
+                                    style={{ display: 'flex' }}
+                                >
+                                    <Checkbox
+                                        checked={
+                                            selectedAccount?.tonWallet.address ==
+                                            item.tonWallet.address
+                                        }
+                                        setChecked={(checked) => {
+                                            setSelectedAccount(checked ? item : undefined)
+                                        }}
+                                    />
+                                    <UserAvatar address={item.tonWallet.address} small />
+                                    <div style={{ padding: '0 12px' }}>
+                                        <div className="account-settings-section-account">
+                                            {item.name}
+                                        </div>
+                                        <div className="connect-wallet-select-account__item-value">
+                                            {`${convertTons(
+                                                accountContractStates[item.tonWallet.address]
+                                                    ?.balance || '0'
+                                            )} TON`}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="connect-wallet-select-account__item-value">
-                                    {`${convertTons(tonWalletState?.balance || '0')} TON`}
-                                </div>
-                            </div>
-                        </div>
+                            ))
+                        )}
                     </div>
                     <Button
                         type="submit"
@@ -95,12 +101,17 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             <WebsiteIcon origin={origin} />
                             <div className="connect-wallet-select-account-source">{origin}</div>
                         </div>
-                        <h2>{`Connected to ${account?.name}`}</h2>
+                        <h2>{`Connected to ${selectedAccount?.name}`}</h2>
                         <div
                             className="connect-wallet-select-account__item-value"
                             style={{ marginBottom: '32px' }}
                         >
-                            {`${convertTons(tonWalletState?.balance || '0')} TON`}
+                            {`${convertTons(
+                                (selectedAccount &&
+                                    accountContractStates[selectedAccount.tonWallet.address]
+                                        ?.balance) ||
+                                    '0'
+                            )} TON`}
                         </div>
                         <h3 style={{ fontWeight: 'bold', marginBottom: '16px' }}>
                             Allow this site to:
@@ -127,16 +138,16 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                         )}
                         <Button
                             text={'Connect'}
-                            disabled={!confirmChecked}
+                            disabled={!confirmChecked || (shouldSelectAccount && !selectedAccount)}
                             onClick={() => {
                                 setLocalStep(LocalStep.CONNECTING)
 
                                 const originPermissions: ApprovalOutput<'requestPermissions'> = {}
-                                if (shouldSelectAccount) {
+                                if (shouldSelectAccount && selectedAccount) {
                                     originPermissions.accountInteraction = {
-                                        address: account.tonWallet.address,
-                                        publicKey: account.tonWallet.publicKey,
-                                        contractType: account.tonWallet.contractType,
+                                        address: selectedAccount.tonWallet.address,
+                                        publicKey: selectedAccount.tonWallet.publicKey,
+                                        contractType: selectedAccount.tonWallet.contractType,
                                     }
                                 }
 

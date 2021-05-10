@@ -13,6 +13,9 @@ import {
 import { RpcErrorCode } from '@shared/errors'
 import {
     AccountToCreate,
+    KeyToDerive,
+    KeyToRemove,
+    MasterKeyToCreate,
     MessageToPrepare,
     SwapBackMessageToPrepare,
     TokenMessageToPrepare,
@@ -46,6 +49,7 @@ export interface AccountControllerState extends BaseState {
     }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
 }
 
 const defaultState: AccountControllerState = {
@@ -57,6 +61,7 @@ const defaultState: AccountControllerState = {
     accountTokenTransactions: {},
     accountPendingMessages: {},
     knownTokens: {},
+    storedKeys: {},
 }
 
 export class AccountController extends BaseController<
@@ -78,6 +83,12 @@ export class AccountController extends BaseController<
     }
 
     public async initialSync() {
+        const keyStoreEntries = await this.config.keyStore.getKeys()
+        const storedKeys: typeof defaultState.storedKeys = {}
+        for (const entry of keyStoreEntries) {
+            storedKeys[entry.publicKey] = entry
+        }
+
         const address = await this.config.accountsStorage.getCurrentAccount()
         let selectedAccount: AccountControllerState['selectedAccount'] = undefined
         if (address != null) {
@@ -98,6 +109,7 @@ export class AccountController extends BaseController<
         this.update({
             selectedAccount,
             accountEntries,
+            storedKeys,
         })
     }
 
@@ -186,23 +198,103 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createAccount({
-        name,
-        contractType,
-        seed,
-        password,
-    }: AccountToCreate): Promise<nt.AssetsList> {
-        const { keyStore, accountsStorage } = this.config
+    public async createMasterKey({ seed, password }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
 
         try {
-            const { publicKey } = await keyStore.addKey(`${name} key`, <nt.NewKey>{
-                type: 'encrypted_key',
-                data: {
-                    password,
-                    phrase: seed.phrase,
-                    mnemonicType: seed.mnemonicType,
+            const newKey: nt.NewKey =
+                seed.mnemonicType.type == 'labs'
+                    ? {
+                          type: 'master_key',
+                          data: {
+                              password,
+                              params: {
+                                  phrase: seed.phrase,
+                              },
+                          },
+                      }
+                    : {
+                          type: 'encrypted_key',
+                          data: {
+                              password,
+                              phrase: seed.phrase,
+                              mnemonicType: seed.mnemonicType,
+                          },
+                      }
+
+            const entry = await keyStore.addKey(newKey)
+
+            console.log('Added', entry)
+
+            this.update({
+                storedKeys: {
+                    ...this.state.storedKeys,
+                    [entry.publicKey]: entry,
                 },
             })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async createDerivedKey({ accountId, password }: KeyToDerive): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
+
+        try {
+            const entry = await keyStore.addKey({
+                type: 'master_key',
+                data: {
+                    password,
+                    params: { accountId },
+                },
+            })
+
+            this.update({
+                storedKeys: {
+                    ...this.state.storedKeys,
+                    [entry.publicKey]: entry,
+                },
+            })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
+        const { keyStore } = this.config
+
+        try {
+            const entry = await keyStore.removeKey(publicKey)
+
+            const storedKeys = { ...this.state.storedKeys }
+            delete storedKeys[publicKey]
+
+            this.update({
+                storedKeys,
+            })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async createAccount({
+        name,
+        publicKey,
+        contractType,
+    }: AccountToCreate): Promise<nt.AssetsList> {
+        const { accountsStorage } = this.config
+
+        try {
+            const storedKeys = this.state.storedKeys
+            if (storedKeys[publicKey] == null) {
+                throw new Error('Requested key not found')
+            }
 
             const selectedAccount = await accountsStorage.addAccount(
                 name,

@@ -22,7 +22,7 @@ enum PrepareStep {
 }
 
 type IEnterPassword = {
-    account: nt.AssetsList
+    keyEntry: nt.KeyStoreEntry
     params?: IMessage
     fees?: string
     error?: string
@@ -32,7 +32,7 @@ type IEnterPassword = {
 }
 
 const EnterPassword: React.FC<IEnterPassword> = ({
-    account,
+    keyEntry,
     params,
     fees,
     error,
@@ -44,9 +44,9 @@ const EnterPassword: React.FC<IEnterPassword> = ({
 
     const trySubmit = async () => {
         const keyPassword: nt.KeyPassword = {
-            type: 'encrypted_key',
+            type: keyEntry.signerName,
             data: {
-                publicKey: account.tonWallet.publicKey,
+                publicKey: keyEntry.publicKey,
                 password,
             },
         }
@@ -118,6 +118,7 @@ type MessageParams = {
 
 type IPrepareMessage = {
     account: nt.AssetsList
+    keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState
     estimateFees: (params: MessageToPrepare) => Promise<string>
     prepareMessage: (
@@ -136,6 +137,7 @@ type IMessage = {
 
 const PrepareMessage: React.FC<IPrepareMessage> = ({
     account,
+    keyEntry,
     tonWalletState,
     estimateFees,
     prepareMessage,
@@ -285,7 +287,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             )}
             {localStep == PrepareStep.ENTER_PASSWORD && (
                 <EnterPassword
-                    account={account}
+                    keyEntry={keyEntry}
                     params={messageParams}
                     fees={fees}
                     error={error}
@@ -302,6 +304,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
 
 interface ISend {
     account: nt.AssetsList
+    keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState
     estimateFees: (params: MessageToPrepare) => Promise<string>
     prepareMessage: (
@@ -314,6 +317,7 @@ interface ISend {
 
 const Send: React.FC<ISend> = ({
     account,
+    keyEntry,
     tonWalletState,
     estimateFees,
     prepareMessage,
@@ -330,6 +334,7 @@ const Send: React.FC<ISend> = ({
         return (
             <PrepareMessage
                 account={account}
+                keyEntry={keyEntry}
                 tonWalletState={tonWalletState}
                 prepareMessage={prepareMessage}
                 estimateFees={estimateFees}

@@ -1,11 +1,24 @@
 import { WalletContractType, Permissions, Permission, FunctionCall } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
-export type AccountToCreate = {
-    name: string
-    contractType: WalletContractType
+export type MasterKeyToCreate = {
     seed: nt.GeneratedMnemonic
     password: string
+}
+
+export type KeyToDerive = {
+    accountId: number
+    password: string
+}
+
+export type KeyToRemove = {
+    publicKey: string
+}
+
+export type AccountToCreate = {
+    name: string
+    publicKey: string
+    contractType: WalletContractType
 }
 
 export type MessageToPrepare = {
