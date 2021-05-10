@@ -34,50 +34,44 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
 
     return (
         <>
-            <h2 className="send-screen__form-title">Transaction information</h2>
+            <h2 className="transaction-info-title">Transaction information</h2>
             <div
-                className="send-screen__form-tx-details"
-                style={{ background: 'white', padding: 0 }}
+                className="transaction-info-tx-details"
             >
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Date and time</span>
-                    <span className="send-screen__form-tx-details-param-value">
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">Date and time</span>
+                    <span className="transaction-info-tx-details-param-value">
                         {new Date(transaction.createdAt * 1000).toLocaleString()}
                     </span>
                 </div>
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Hash (ID)</span>
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">Hash (ID)</span>
                     <CopyAddress address={txHash} />
                 </div>
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">
                         {TRANSACTION_NAMES[direction]}
                     </span>
                     <CopyAddress address={address} />
                 </div>
                 <div
-                    style={{
-                        background: '#EBEDEE',
-                        height: '1px',
-                        width: '100%',
-                        marginBottom: '16px'
-                    }}
+                    className="transaction-info-tx-details-separator"
                 />
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Amount</span>
-                    <span className="send-screen__form-tx-details-param-value">
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">Amount</span>
+                    <span className="transaction-info-tx-details-param-value">
                         {convertTons(value.toString())}
                     </span>
                 </div>
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
-                    <span className="send-screen__form-tx-details-param-value">
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">Blockchain fee</span>
+                    <span className="transaction-info-tx-details-param-value">
                         {convertTons(fee.toString())}
                     </span>
                 </div>
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Total amount</span>
-                    <span className="send-screen__form-tx-details-param-value">
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">Total amount</span>
+                    <span className="transaction-info-tx-details-param-value">
                         {convertTons(total.toString())}
                     </span>
                 </div>
