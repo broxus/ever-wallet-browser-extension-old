@@ -20,6 +20,7 @@ import {
     MessageToPrepare,
     SwapBackMessageToPrepare,
     TokenMessageToPrepare,
+    TokenWalletsToUpdate,
 } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
@@ -386,30 +387,40 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async addTokenWallet(address: string, rootTokenContract: string): Promise<void> {
+    public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
         const { accountsStorage } = this.config
 
         try {
             await this._accountsMutex.use(async () => {
-                await this._createTokenWalletSubscription(address, rootTokenContract)
-                const assetsList = await accountsStorage.addTokenWallet(address, rootTokenContract)
-                this._updateAssetsList(assetsList)
-            })
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
-    }
-
-    public async removeTokenWallet(address: string, rootTokenContract: string): Promise<void> {
-        const { accountsStorage } = this.config
-
-        try {
-            await this._accountsMutex.use(async () => {
-                const assetsList = await accountsStorage.removeTokenWallet(
-                    address,
-                    rootTokenContract
+                await Promise.all(
+                    Object.entries(params).map(
+                        async ([rootTokenContract, enabled]: readonly [string, boolean]) => {
+                            if (enabled) {
+                                await this._createTokenWalletSubscription(
+                                    address,
+                                    rootTokenContract
+                                )
+                                await accountsStorage.addTokenWallet(address, rootTokenContract)
+                            } else {
+                                const tokenSubscriptions = this._tokenWalletSubscriptions.get(
+                                    address
+                                )
+                                this._tokenWalletSubscriptions.delete(address)
+                                if (tokenSubscriptions != null) {
+                                    await Promise.all(
+                                        Array.from(tokenSubscriptions.values()).map(
+                                            async (item) => await item.stop()
+                                        )
+                                    )
+                                }
+                                await accountsStorage.removeTokenWallet(address, rootTokenContract)
+                            }
+                        }
+                    )
                 )
-                this._updateAssetsList(assetsList)
+
+                const assetsList = await accountsStorage.getAccount(address)
+                assetsList && this._updateAssetsList(assetsList)
             })
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())

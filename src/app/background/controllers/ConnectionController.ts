@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
@@ -43,8 +42,10 @@ export interface ConnectionControllerState extends BaseState {
     selectedConnection: NamedConnectionData
 }
 
-const defaultState: ConnectionControllerState = {
-    selectedConnection: getPreset('Mainnet'),
+function makeDefaultState(): ConnectionControllerState {
+    return {
+        selectedConnection: getPreset('Mainnet'),
+    }
 }
 
 interface INetworkSwitchHandle {
@@ -85,7 +86,7 @@ export class ConnectionController extends BaseController<
     private _acquiredConnection?: AcquiredConnection
 
     constructor(config: ConnectionConfig, state?: ConnectionControllerState) {
-        super(config, state || _.cloneDeep(defaultState))
+        super(config, state || makeDefaultState())
 
         this._initializedConnection = undefined
         this._networkMutex = new Mutex()

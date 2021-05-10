@@ -48,7 +48,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         setOpenedPanel(undefined)
     }
 
-    const { selectedAccount, selectedConnection, storedKeys } = controllerState
+    const { selectedAccount, selectedConnection, storedKeys, knownTokens } = controllerState
 
     const selectedKey = storedKeys[selectedAccount.tonWallet.publicKey]
     if (selectedKey == null) {
@@ -108,8 +108,12 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
             <UserAssets
                 account={selectedAccount}
                 tonWalletState={tonWalletState}
+                tokenWalletStates={tokenWalletStates}
+                knownTokens={knownTokens}
                 transactions={transactions}
-                setActiveContent={setOpenedPanel}
+                updateTokenWallets={async (params) =>
+                    await controllerRpc.updateTokenWallets(accountAddress, params)
+                }
                 onViewTransaction={showTransaction}
                 onSeeFull={() => setOpenedPanel(Panel.ASSET)}
             />
