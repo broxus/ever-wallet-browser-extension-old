@@ -221,8 +221,6 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
 }
 
 const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
-    requirePermissions(ctx, [])
-
     const { origin, tabId, permissionsController, subscriptionsController } = ctx
 
     await permissionsController.removeOrigin(origin)
@@ -251,7 +249,6 @@ const subscribe: ProviderMethod<'subscribe'> = async (req, res, _next, end, ctx)
 }
 
 const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, [])
     requireParams(req)
 
     const { address } = req.params
@@ -270,7 +267,6 @@ const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, res, _next, end, 
 }
 
 const unsubscribeAll: ProviderMethod<'unsubscribeAll'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, [])
     const { tabId, subscriptionsController } = ctx
     requireTabid(req, tabId)
 
