@@ -9,6 +9,7 @@ import {
     NekotonRpcError,
     SendMessageCallback,
     SendMessageRequest,
+    TokenWalletState,
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
@@ -42,7 +43,7 @@ export interface AccountControllerState extends BaseState {
     selectedAccount: nt.AssetsList | undefined
     accountEntries: { [publicKey: string]: nt.AssetsList[] }
     accountContractStates: { [address: string]: nt.ContractState }
-    accountTokenBalances: { [address: string]: { [rootTokenContract: string]: string } }
+    accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
@@ -56,7 +57,7 @@ const defaultState: AccountControllerState = {
     selectedAccount: undefined,
     accountEntries: {},
     accountContractStates: {},
-    accountTokenBalances: {},
+    accountTokenStates: {},
     accountTransactions: {},
     accountTokenTransactions: {},
     accountPendingMessages: {},
@@ -905,17 +906,19 @@ export class AccountController extends BaseController<
     }
 
     private _updateTokenWalletState(owner: string, rootTokenContract: string, balance: string) {
-        const currentBalances = this.state.accountTokenBalances
-        const ownerBalances = {
-            ...currentBalances[owner],
-            [rootTokenContract]: balance,
+        const accountTokenStates = this.state.accountTokenStates
+        const ownerTokenStates = {
+            ...accountTokenStates[owner],
+            [rootTokenContract]: {
+                balance,
+            } as TokenWalletState,
         }
         const newBalances = {
-            ...currentBalances,
-            [owner]: ownerBalances,
+            ...accountTokenStates,
+            [owner]: ownerTokenStates,
         }
         this.update({
-            accountTokenBalances: newBalances,
+            accountTokenStates: newBalances,
         })
     }
 

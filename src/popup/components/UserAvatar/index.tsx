@@ -3,9 +3,10 @@ import React from 'react'
 type IUserAvatar = {
     address: string
     small?: boolean
+    className?: string
 }
 
-const UserAvatar: React.FC<IUserAvatar> = ({ address, small }) => {
+const UserAvatar: React.FC<IUserAvatar> = ({ address, small, className }) => {
     const hash = address.split(':')[1]
 
     const size = small === true ? 24 : 36
@@ -30,6 +31,7 @@ const UserAvatar: React.FC<IUserAvatar> = ({ address, small }) => {
             viewBox="0 0 36 36"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
+            className={className}
         >
             <g clipPath="url(#clip0)">
                 <circle cx="3" cy="3" r="7" fill={colors[0]} />

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import cn from 'classnames'
 import * as nt from '@nekoton'
 
@@ -9,29 +9,38 @@ import AssetsListItem from '@popup/components/AssetsListItem'
 import TransactionsList from '@popup/components/TransactionsList'
 
 import './style.scss'
+import { SelectedAsset } from '@shared/utils'
 
 type AssetsListProps = {
-    tonWalletState: nt.ContractState | null
+    account: nt.AssetsList
+    tonWalletState: nt.ContractState | undefined
     setActiveContent: (arg0: number) => void
-    onSeeFull: () => void
+    onSeeFull: (asset: SelectedAsset) => void
 }
 
 enum Panel {
     ADD_NEW_TOKEN,
 }
 
-const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, onSeeFull }) => {
+const AssetsList: React.FC<AssetsListProps> = ({ account, tonWalletState, onSeeFull }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
 
     const closePanel = () => setOpenedPanel(undefined)
 
     return (
         <div className="user-assets__assets-list">
-            {tonWalletState && (
-                <div onClick={onSeeFull}>
-                    <AssetsListItem tonWalletState={tonWalletState} />
-                </div>
-            )}
+            <AssetsListItem
+                tonWalletState={tonWalletState}
+                onClick={() =>
+                    onSeeFull({
+                        type: 'ton_wallet',
+                        data: {
+                            address: account.tonWallet.address,
+                        },
+                    })
+                }
+            />
+            {/*tonWalletState && <div onClick={() => onSeeFull()}></div>*/}
             <div className="user-assets__assets-list__add-new-btn">
                 <Button
                     text={'Add new asset'}
@@ -47,11 +56,12 @@ const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, onSeeFull }) =>
 }
 
 type IUserAssets = {
-    tonWalletState: nt.ContractState | null
+    account: nt.AssetsList
+    tonWalletState: nt.ContractState | undefined
     transactions: nt.Transaction[]
     setActiveContent: (arg0: number) => void
     onViewTransaction: (transaction: nt.Transaction) => void
-    onSeeFull: () => void
+    onSeeFull: (asset: SelectedAsset) => void
 }
 
 enum AssetsTab {
@@ -60,6 +70,7 @@ enum AssetsTab {
 }
 
 const UserAssets: React.FC<IUserAssets> = ({
+    account,
     tonWalletState,
     transactions,
     setActiveContent,
@@ -91,6 +102,7 @@ const UserAssets: React.FC<IUserAssets> = ({
                 </div>
                 {activeTab == AssetsTab.ASSETS && (
                     <AssetsList
+                        account={account}
                         tonWalletState={tonWalletState}
                         setActiveContent={setActiveContent}
                         onSeeFull={onSeeFull}

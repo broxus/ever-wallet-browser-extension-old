@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { SelectedAsset } from '@shared/utils'
 import * as nt from '@nekoton'
 
 import AccountDetails from '@popup/components/AccountDetails'
@@ -9,9 +10,9 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import Receive from '@popup/components/Receive'
 import Send from '@popup/components/Send'
 import KeyStorage from '@popup/components/KeyStorage'
-import AssetFull from '@popup/components/AssetFull'
 import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import TransactionInfo from '@popup/components/TransactionInfo'
+import AssetFull from '@popup/components/AssetFull'
 
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
@@ -35,6 +36,7 @@ enum Panel {
 const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
+    const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -42,6 +44,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
+        setSelectedAsset(undefined)
         setOpenedPanel(undefined)
     }
 
@@ -55,9 +58,10 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const accountName = selectedAccount.name
     const accountAddress = selectedAccount.tonWallet.address
 
-    const tonWalletState = controllerState.accountContractStates[
-        accountAddress
-    ] as nt.ContractState | null
+    const tonWalletState = controllerState.accountContractStates[accountAddress] as
+        | nt.ContractState
+        | undefined
+    const tokenWalletStates = controllerState.accountTokenStates[accountAddress] || {}
 
     const transactions = controllerState.accountTransactions[accountAddress] || []
     const network = selectedConnection.name
@@ -80,10 +84,15 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         setOpenedPanel(Panel.TRANSACTION)
     }
 
+    const showAsset = (selectedAsset: SelectedAsset) => {
+        setSelectedAsset(selectedAsset)
+        setOpenedPanel(Panel.ASSET)
+    }
+
     return (
         <>
             <AccountDetails
-                account={controllerState.selectedAccount}
+                account={selectedAccount}
                 tonWalletState={tonWalletState}
                 network={network}
                 onToggleNetwork={toggleNetwork}
@@ -97,9 +106,10 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                 onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
             />
             <UserAssets
+                account={selectedAccount}
                 tonWalletState={tonWalletState}
-                setActiveContent={setOpenedPanel}
                 transactions={transactions}
+                setActiveContent={setOpenedPanel}
                 onViewTransaction={showTransaction}
                 onSeeFull={() => setOpenedPanel(Panel.ASSET)}
             />
@@ -140,13 +150,11 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
-                    {openedPanel == Panel.ASSET && (
+                    {openedPanel == Panel.ASSET && selectedAsset && (
                         <AssetFull
-                            onSend={() => setOpenedPanel(Panel.SEND)}
-                            onReceive={() => setOpenedPanel(Panel.RECEIVE)}
-                            onViewTransaction={showTransaction}
-                            tonWalletState={tonWalletState}
-                            transactions={transactions}
+                            selectedAsset={selectedAsset}
+                            controllerState={controllerState}
+                            controllerRpc={controllerRpc}
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (

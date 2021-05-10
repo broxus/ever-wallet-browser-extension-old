@@ -15,7 +15,7 @@ import './style.scss'
 interface IDeployWallet {
     account: nt.AssetsList
     keyEntry: nt.KeyStoreEntry
-    tonWalletState: nt.ContractState | null
+    tonWalletState: nt.ContractState | undefined
     estimateFees: () => Promise<string>
     prepareDeployMessage: (keyPassword: nt.KeyPassword) => Promise<nt.SignedMessage>
     sendMessage: (params: nt.SignedMessage) => Promise<nt.Transaction>

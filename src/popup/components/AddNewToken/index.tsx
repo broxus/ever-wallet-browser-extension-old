@@ -1,69 +1,33 @@
 import React, { useEffect, useState } from 'react'
-import cn from 'classnames'
+import { connect } from 'react-redux'
 import { useForm } from 'react-hook-form'
+import cn from 'classnames'
+import { AppState, StoreAction, TokensManifest, TokensManifestItem } from '@popup/store/app/types'
+import { fetchManifest } from '@popup/store/app/actions'
 
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import Tumbler from '@popup/components/Tumbler'
 
-import USDCLogo from '@popup/img/usdc-logo-s.svg'
-import USDTLogo from '@popup/img/usdt-logo-s.svg'
+import Loader from '@popup/components/Loader'
+import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
-import axios from 'axios'
-import Loader from '@popup/components/Loader'
-
-type PredefinedToken = {
-    name: string
-    symbol: string
-    logo: () => JSX.Element
-}
-
-type IAvailableToken = {
-    address: string
-    name: string
-    chainId: number
-    decimals: number
-    logoURI: string
-    symbol: string
-    version: number
-}
-
-const TOKEN_SCHEMA_URL = 'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
-
-const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
-    usdc: {
-        name: 'USD Coin',
-        symbol: 'USDC',
-        logo: () => {
-            // @ts-ignore
-            return <USDCLogo className="assets-list-item__logo" />
-        },
-    },
-    another: {
-        name: 'USDT Coin',
-        symbol: 'USDT',
-        logo: () => {
-            // @ts-ignore
-            return <USDTLogo className="assets-list-item__logo" />
-        },
-    },
-}
 
 type NewToken = { rootTokenContract: string }
 
 interface IToken {
-    logoURI: string
-    name: string
-    symbol: string
+    token: TokensManifestItem
     enabled?: boolean
     onToggle?: (enabled: boolean) => void
 }
 
-export const Token: React.FC<IToken> = ({ logoURI, name, symbol, enabled, onToggle }) => {
+export const Token: React.FC<IToken> = ({ token, enabled, onToggle }) => {
+    const { name, symbol, address, logoURI } = token
+
     return (
         <div className="assets-list-item">
-            <div style={{ display: 'flex' }}>
+            <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                 {logoURI && (
                     <img
                         src={logoURI}
@@ -73,6 +37,7 @@ export const Token: React.FC<IToken> = ({ logoURI, name, symbol, enabled, onTogg
                         className="assets-list-item__icon"
                     />
                 )}
+                {!logoURI && <UserAvatar address={address} className="assets-list-item__icon" />}
                 <div className="assets-list-item__balance">
                     <span className="assets-list-item__balance__amount">{name}</span>
                     <span className="assets-list-item__balance__dollars">{symbol}</span>
@@ -86,7 +51,7 @@ export const Token: React.FC<IToken> = ({ logoURI, name, symbol, enabled, onTogg
 }
 
 type ISearchToken = {
-    tokens: IAvailableToken[]
+    tokens: TokensManifestItem[]
     onBack: () => void
     onNext: (tokens: string[]) => void
 }
@@ -99,20 +64,10 @@ enum SelectTokenStep {
 const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack, onNext }) => {
     const [enabledTokens, setEnabledTokens] = useState<string[]>([])
 
-    const { register } = useForm()
-
     return (
         <form>
-            {/*<Input*/}
-            {/*    label={'Enter token name...'}*/}
-            {/*    className="add-new-token__search-form"*/}
-            {/*    type="text"*/}
-            {/*    name="name"*/}
-            {/*    register={register()}*/}
-            {/*/>*/}
-            {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                {tokens.map(({ symbol, logoURI, name, address }) => {
+                {tokens.map((token) => {
                     const makeOnToggle = (address: string) => (enabled: boolean) => {
                         if (enabled) {
                             setEnabledTokens([...enabledTokens, address])
@@ -123,12 +78,10 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack, onNext }) => {
 
                     return (
                         <Token
-                            key={symbol}
-                            symbol={symbol}
-                            logoURI={logoURI}
-                            name={name}
-                            enabled={enabledTokens.includes(address)}
-                            onToggle={makeOnToggle(address)}
+                            key={token.address}
+                            token={token}
+                            enabled={enabledTokens.includes(token.address)}
+                            onToggle={makeOnToggle(token.address)}
                         />
                     )
                 })}
@@ -186,6 +139,8 @@ const CustomToken: React.FC<ICustomToken> = ({ onBack, onNext }) => {
 }
 
 interface IAddNewToken {
+    tokensManifest: TokensManifest | undefined
+    fetchManifest: StoreAction<typeof fetchManifest>
     onBack: () => void
 }
 
@@ -194,20 +149,17 @@ enum Tab {
     CUSTOM,
 }
 
-const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
+const AddNewToken: React.FC<IAddNewToken> = ({ tokensManifest, fetchManifest, onBack }) => {
     const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
-    const [availableTokens, setAvailableTokens] = useState<IAvailableToken[]>([])
     const [step, setStep] = useState<SelectTokenStep>(SelectTokenStep.SELECT)
-    const [selectedTokens, setSekectedTokens] = useState<string[]>()
+    const [selectedTokens, setSelectedTokens] = useState<string[]>([])
 
     useEffect(() => {
-        axios.get(TOKEN_SCHEMA_URL).then((res) => {
-            setAvailableTokens(res.data.tokens)
-        })
+        fetchManifest().catch(console.error)
     }, [])
 
     const handleSelected = (tokens: string[]) => {
-        setSekectedTokens(tokens)
+        setSelectedTokens(tokens)
         setStep(SelectTokenStep.CONFIRM)
     }
 
@@ -239,20 +191,24 @@ const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
                                 Custom token
                             </div>
                         </div>
-                        {availableTokens.length === 0 && (
-                            <div
-                                style={{ width: '100%', display: 'flex', justifyContent: 'center' }}
-                            >
-                                <Loader />
-                            </div>
-                        )}
-                        {activeTab == Tab.PREDEFINED && (
-                            <SearchToken
-                                onBack={onBack}
-                                tokens={availableTokens}
-                                onNext={handleSelected}
-                            />
-                        )}
+                        {activeTab == Tab.PREDEFINED &&
+                            ((tokensManifest?.tokens.length || 0) > 0 ? (
+                                <SearchToken
+                                    onBack={onBack}
+                                    tokens={tokensManifest?.tokens || []}
+                                    onNext={handleSelected}
+                                />
+                            ) : (
+                                <div
+                                    style={{
+                                        width: '100%',
+                                        display: 'flex',
+                                        justifyContent: 'center',
+                                    }}
+                                >
+                                    <Loader />
+                                </div>
+                            ))}
                         {activeTab == Tab.CUSTOM && (
                             <CustomToken onBack={onBack} onNext={() => {}} />
                         )}
@@ -262,10 +218,10 @@ const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
             {step === SelectTokenStep.CONFIRM && (
                 <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
                     <h2>Do you want to add these assets?</h2>
-                    {availableTokens
+                    {(tokensManifest?.tokens || [])
                         .filter((item) => selectedTokens?.includes(item.address))
-                        .map(({ name, logoURI, symbol }) => (
-                            <Token key={symbol} name={name} logoURI={logoURI} symbol={symbol} />
+                        .map((token) => (
+                            <Token key={token.address} token={token} />
                         ))}
                     <div style={{ display: 'flex', paddingTop: '16px' }}>
                         <div style={{ width: '50%', marginRight: '12px' }}>
@@ -283,4 +239,10 @@ const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
     )
 }
 
-export default AddNewToken
+const mapStateToProps = (store: { app: AppState }) => ({
+    tokensManifest: store.app.tokensManifest,
+})
+
+export default connect(mapStateToProps, {
+    fetchManifest,
+})(AddNewToken)

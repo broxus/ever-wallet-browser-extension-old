@@ -17,8 +17,8 @@ import AddAccount from '@popup/img/add-account.svg'
 import './style.scss'
 
 type AccountDetailsParams = {
-    account: nt.AssetsList | null
-    tonWalletState: nt.ContractState | null
+    account: nt.AssetsList | undefined
+    tonWalletState: nt.ContractState | undefined
     network: string
     onToggleNetwork: () => void
     onSend: () => void

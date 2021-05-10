@@ -1,32 +1,60 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { createRipple, removeRipple } from '@popup/common'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { convertTons, SelectedAsset } from '@shared/utils'
 import * as nt from '@nekoton'
 
+import Ripples from 'react-ripples'
 import TransactionsList from '@popup/components/TransactionsList'
+import Receive from '@popup/components/Receive'
+import Send from '@popup/components/Send'
+import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
+import KeyStorage from '@popup/components/KeyStorage'
+import CreateAccountPage from '@popup/pages/CreateAccountPage'
+import TransactionInfo from '@popup/components/TransactionInfo'
+import SlidingPanel from '@popup/components/SlidingPanel'
 
 import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
 import SendIcon from '@popup/img/send-dark-blue.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
-import Ripples from 'react-ripples'
 
 import './style.scss'
-import { convertTons } from '@shared/utils'
 
 type IAssetFull = {
-    onViewTransaction: (transaction: nt.Transaction) => void
-    tonWalletState: nt.ContractState | null
-    transactions: nt.Transaction[]
-    onSend: () => void
-    onReceive: () => void
+    selectedAsset: SelectedAsset
+    controllerState: ControllerState
+    controllerRpc: IControllerRpcClient
 }
 
-const AssetFull: React.FC<IAssetFull> = ({
-    onViewTransaction,
-    tonWalletState,
-    transactions,
-    onSend,
-    onReceive,
-}) => {
+enum Panel {
+    RECEIVE,
+    SEND,
+    DEPLOY,
+    TRANSACTION,
+}
+
+const AssetFull: React.FC<IAssetFull> = ({}) => {
+    const [openedPanel, setOpenedPanel] = useState<Panel>()
+    const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
+
+    const closePanel = () => {
+        setSelectedTransaction(undefined)
+        setOpenedPanel(undefined)
+    }
+
+    const showTransaction = (transaction: nt.Transaction) => {
+        setSelectedTransaction(transaction)
+        setOpenedPanel(Panel.TRANSACTION)
+    }
+
+    const onReceive = () => {
+        // TODO
+    }
+
+    const onSend = () => {
+        // TODO
+    }
+
     return (
         <>
             <div className="asset-full">
@@ -36,7 +64,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                     <TonLogo style={{ marginRight: '16px', minWidth: '40px', zIndex: 1 }} />
                     <div className="asset-full__info-token">
                         <span className="asset-full__info-token-amount">{`${convertTons(
-                            tonWalletState?.balance
+                            '0'
                         ).toLocaleString()} TON`}</span>
                         <span className="asset-full__info-token-comment">FreeTon Crystal</span>
                     </div>
@@ -65,12 +93,16 @@ const AssetFull: React.FC<IAssetFull> = ({
                 </div>
                 <div className="asset-full__history">
                     <h2 className="asset-full__history-title">History</h2>
-                    <TransactionsList
-                        transactions={transactions}
-                        onViewTransaction={onViewTransaction}
-                    />
+                    <TransactionsList transactions={[]} onViewTransaction={showTransaction} />
                 </div>
             </div>
+            <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
+                <>
+                    {openedPanel == Panel.TRANSACTION && selectedTransaction && (
+                        <TransactionInfo transaction={selectedTransaction} />
+                    )}
+                </>
+            </SlidingPanel>
         </>
     )
 }

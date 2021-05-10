@@ -14,3 +14,6 @@ export const getHost = (url: string, defaultProtocol = 'https://') => {
 export const getIconUrl = (url: string) => {
     return `https://api.faviconkit.com/${getHost(url)}/64`
 }
+
+export const TOKENS_MANIFEST_URL =
+    'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'

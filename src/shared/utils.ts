@@ -672,7 +672,10 @@ export interface SendMessageCallback {
     reject: (error?: Error) => void
 }
 
+export type SelectedAsset =
+    | nt.EnumItem<'ton_wallet', { address: string }>
+    | nt.EnumItem<'token_wallet', { owner: string; rootTokenContract: string }>
+
 export interface TokenWalletState {
-    symbol: nt.Symbol
     balance: string
 }
