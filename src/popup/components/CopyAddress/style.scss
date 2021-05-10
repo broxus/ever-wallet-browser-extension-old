@@ -9,6 +9,7 @@
     letter-spacing: 0.25px;
     color: #000000;
     cursor: pointer;
+    word-break: break-all;
 
     &:hover {
         color: $activeButtonBg;

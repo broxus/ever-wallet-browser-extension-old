@@ -35,15 +35,18 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
     return (
         <>
             <h2 className="send-screen__form-title">Transaction information</h2>
-            <div className="send-screen__form-tx-details" style={{ background: 'white' }}>
+            <div
+                className="send-screen__form-tx-details"
+                style={{ background: 'white', padding: 0 }}
+            >
                 <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Date, time</span>
+                    <span className="send-screen__form-tx-details-param-desc">Date and time</span>
                     <span className="send-screen__form-tx-details-param-value">
                         {new Date(transaction.createdAt * 1000).toLocaleString()}
                     </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Tx hash</span>
+                    <span className="send-screen__form-tx-details-param-desc">Hash (ID)</span>
                     <CopyAddress address={txHash} />
                 </div>
                 <div className="send-screen__form-tx-details-param">
@@ -57,7 +60,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
                         background: '#EBEDEE',
                         height: '1px',
                         width: '100%',
-                        marginBottom: '20px',
+                        marginBottom: '16px'
                     }}
                 />
                 <div className="send-screen__form-tx-details-param">
