@@ -13,17 +13,19 @@ import './style.scss'
 import { convertTons } from '@shared/utils'
 
 type IAssetFull = {
-    handleSendReceive: (temp: string) => void // TODO: change
     onViewTransaction: (transaction: nt.Transaction) => void
     tonWalletState: nt.ContractState | null
     transactions: nt.Transaction[]
+    onSend: () => void
+    onReceive: () => void
 }
 
 const AssetFull: React.FC<IAssetFull> = ({
-    handleSendReceive,
     onViewTransaction,
     tonWalletState,
     transactions,
+    onSend,
+    onReceive,
 }) => {
     return (
         <>
@@ -41,10 +43,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                 </div>
                 <div className="asset-full__buttons">
                     <Ripples className="asset-full__buttons-wrapper">
-                        <button
-                            onClick={() => handleSendReceive && handleSendReceive('receive')}
-                            className="asset-full__buttons-button"
-                        >
+                        <button onClick={() => onReceive()} className="asset-full__buttons-button">
                             <span className="asset-full__buttons-button__content">
                                 {/*@ts-ignore*/}
                                 <ReceiveIcon style={{ marginRight: '8px' }} />
@@ -54,10 +53,8 @@ const AssetFull: React.FC<IAssetFull> = ({
                     </Ripples>
 
                     <Ripples className="asset-full__buttons-wrapper">
-                        <button
-                            onClick={() => handleSendReceive && handleSendReceive('send')}
-                            className="asset-full__buttons-button"
-                        >
+                        {/*TODO specify predefined token for Send panel*/}
+                        <button onClick={() => onSend()} className="asset-full__buttons-button">
                             <span className="asset-full__buttons-button__content">
                                 {/*@ts-ignore*/}
                                 <SendIcon style={{ marginRight: '8px' }} />

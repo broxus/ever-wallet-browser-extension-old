@@ -142,11 +142,11 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
                     {openedPanel == Panel.ASSET && (
                         <AssetFull
-                            handleSendReceive={() => {}}
+                            onSend={() => setOpenedPanel(Panel.SEND)}
+                            onReceive={() => setOpenedPanel(Panel.RECEIVE)}
                             onViewTransaction={showTransaction}
                             tonWalletState={tonWalletState}
                             transactions={transactions}
-
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (
