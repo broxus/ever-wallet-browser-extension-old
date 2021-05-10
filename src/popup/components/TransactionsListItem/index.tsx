@@ -20,7 +20,6 @@ type ITransactionsListItem = {
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({
     transaction,
-    additionalInfo,
     onViewTransaction,
 }) => {
     const value = useMemo(() => extractTransactionValue(transaction), [transaction])
