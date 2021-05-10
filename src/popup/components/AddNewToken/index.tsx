@@ -10,11 +10,22 @@ import USDCLogo from '@popup/img/usdc-logo-s.svg'
 import USDTLogo from '@popup/img/usdt-logo-s.svg'
 
 import './style.scss'
+import axios from 'axios'
 
 type PredefinedToken = {
     name: string
     symbol: string
     logo: () => JSX.Element
+}
+
+type IAvailableToken = {
+    address: string
+    name: string
+    chainId: number
+    decimals: number
+    logoURI: string
+    symbol: string
+    version: number
 }
 
 const TOKEN_SCHEMA_URL = 'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
@@ -41,18 +52,26 @@ const PREDEFINED_TOKENS: { [K in string]: PredefinedToken } = {
 type NewToken = { rootTokenContract: string }
 
 interface IToken {
-    logo: () => JSX.Element
+    logoURI: string
     name: string
     symbol: string
     enabled: boolean
     onToggle: (enabled: boolean) => void
 }
 
-export const Token: React.FC<IToken> = ({ logo, name, symbol, enabled, onToggle }) => {
+export const Token: React.FC<IToken> = ({ logoURI, name, symbol, enabled, onToggle }) => {
     return (
         <div className="assets-list-item">
             <div style={{ display: 'flex' }}>
-                {logo()}
+                {logoURI && (
+                    <img
+                        src={logoURI}
+                        alt=""
+                        height="36px"
+                        width="36px"
+                        className="assets-list-item__icon"
+                    />
+                )}
                 <div className="assets-list-item__balance">
                     <span className="assets-list-item__balance__amount">{name}</span>
                     <span className="assets-list-item__balance__dollars">{symbol}</span>
@@ -64,7 +83,7 @@ export const Token: React.FC<IToken> = ({ logo, name, symbol, enabled, onToggle 
 }
 
 type ISearchToken = {
-    tokens: { [K in string]: PredefinedToken }
+    tokens: IAvailableToken[]
     onBack: () => void
 }
 
@@ -75,6 +94,8 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
     const onSubmit = async () => {
         console.log('submitted')
     }
+
+    console.log(tokens, 'tokens')
 
     return (
         <>
@@ -88,26 +109,28 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
                 />
                 {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
                 <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                    {window.ObjectExt.entries(tokens).map(([id, token]) => {
-                        const makeOnToggle = (id: string) => (enabled: boolean) => {
+                    {tokens.map(({ symbol, logoURI, name }) => {
+                        const makeOnToggle = (symbol: string) => (enabled: boolean) => {
                             if (enabled) {
-                                setEnabledTokens([...enabledTokens, id])
+                                setEnabledTokens([...enabledTokens, symbol])
                             } else {
-                                setEnabledTokens(enabledTokens.filter((item) => item !== id))
+                                setEnabledTokens(enabledTokens.filter((item) => item !== symbol))
                             }
                         }
 
                         return (
                             <Token
-                                key={id}
-                                {...token}
-                                enabled={enabledTokens.includes(id)}
-                                onToggle={makeOnToggle(id)}
+                                key={symbol}
+                                symbol={symbol}
+                                logoURI={logoURI}
+                                name={name}
+                                enabled={enabledTokens.includes(symbol)}
+                                onToggle={makeOnToggle(symbol)}
                             />
                         )
                     })}
                 </div>
-                <div style={{ display: 'flex' }}>
+                <div style={{ display: 'flex', paddingTop: '16px' }}>
                     <div style={{ width: '50%', marginRight: '12px' }}>
                         <Button text={'Back'} onClick={onBack} white />
                     </div>
@@ -163,6 +186,14 @@ enum Tab {
 
 const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
+    const [availableTokens, setAvailableTokens] = useState<IAvailableToken[]>([])
+
+    useEffect(() => {
+        axios.get(TOKEN_SCHEMA_URL).then((res) => {
+            setAvailableTokens(res.data.tokens)
+        })
+        console.log('called axios')
+    }, [])
 
     return (
         <>
@@ -188,7 +219,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
                     </div>
                 </div>
                 {activeTab == Tab.PREDEFINED && (
-                    <SearchToken onBack={onBack} tokens={PREDEFINED_TOKENS} />
+                    <SearchToken onBack={onBack} tokens={availableTokens} />
                 )}
                 {activeTab == Tab.CUSTOM && <CustomToken onBack={onBack} />}
             </div>
