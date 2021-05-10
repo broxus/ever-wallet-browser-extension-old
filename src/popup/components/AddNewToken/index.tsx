@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import cn from 'classnames'
 import { useForm } from 'react-hook-form'
 
@@ -87,60 +87,87 @@ type ISearchToken = {
     onBack: () => void
 }
 
+enum SearchTokenStep {
+    SELECT,
+    CONFIRM,
+}
 const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack }) => {
     const [enabledTokens, setEnabledTokens] = useState<string[]>([])
-    const { register, handleSubmit, errors } = useForm()
+    const [step, setStep] = useState<SearchTokenStep>(SearchTokenStep.SELECT)
+    const { register } = useForm()
 
     const onSubmit = async () => {
         console.log('submitted')
     }
 
-    console.log(tokens, 'tokens')
+    useEffect(() => {
+        console.log('enabledTokens', enabledTokens)
+    }, [enabledTokens])
 
     return (
         <>
-            <form onSubmit={handleSubmit(onSubmit)}>
-                <Input
-                    label={'Enter token name...'}
-                    className="add-new-token__search-form"
-                    type="text"
-                    name="name"
-                    register={register()}
-                />
-                {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
-                <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                    {tokens.map(({ symbol, logoURI, name }) => {
-                        const makeOnToggle = (symbol: string) => (enabled: boolean) => {
-                            if (enabled) {
-                                setEnabledTokens([...enabledTokens, symbol])
-                            } else {
-                                setEnabledTokens(enabledTokens.filter((item) => item !== symbol))
-                            }
-                        }
-
-                        return (
-                            <Token
-                                key={symbol}
-                                symbol={symbol}
-                                logoURI={logoURI}
-                                name={name}
-                                enabled={enabledTokens.includes(symbol)}
-                                onToggle={makeOnToggle(symbol)}
-                            />
-                        )
-                    })}
-                </div>
-                <div style={{ display: 'flex', paddingTop: '16px' }}>
-                    <div style={{ width: '50%', marginRight: '12px' }}>
-                        <Button text={'Back'} onClick={onBack} white />
-                    </div>
-                    <Button
-                        text={'Select assets'}
-                        onClick={handleSubmit(onSubmit)}
-                        disabled={!enabledTokens.length}
+            {step === SearchTokenStep.SELECT && (
+                <form>
+                    <Input
+                        label={'Enter token name...'}
+                        className="add-new-token__search-form"
+                        type="text"
+                        name="name"
+                        register={register()}
                     />
-                </div>
-            </form>
+                    {/*{errors.name && <div className="check-seed__content-error">This field is required</div>}*/}
+                    <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
+                        {tokens.map(({ symbol, logoURI, name, address }) => {
+                            const makeOnToggle = (address: string) => (enabled: boolean) => {
+                                if (enabled) {
+                                    setEnabledTokens([...enabledTokens, address])
+                                } else {
+                                    setEnabledTokens(
+                                        enabledTokens.filter((item) => item !== address)
+                                    )
+                                }
+                            }
+
+                            return (
+                                <Token
+                                    key={symbol}
+                                    symbol={symbol}
+                                    logoURI={logoURI}
+                                    name={name}
+                                    enabled={enabledTokens.includes(address)}
+                                    onToggle={makeOnToggle(address)}
+                                />
+                            )
+                        })}
+                    </div>
+                    <div style={{ display: 'flex', paddingTop: '16px' }}>
+                        <div style={{ width: '50%', marginRight: '12px' }}>
+                            <Button text={'Back'} onClick={onBack} white />
+                        </div>
+                        <Button
+                            text={'Select assets'}
+                            disabled={!enabledTokens.length}
+                            onClick={() => setStep(SearchTokenStep.CONFIRM)}
+                        />
+                    </div>
+                </form>
+            )}
+            {step === SearchTokenStep.CONFIRM && (
+                <>
+                    <h2>Do you want to add these assets?</h2>
+
+                    <div style={{ display: 'flex', paddingTop: '16px' }}>
+                        <div style={{ width: '50%', marginRight: '12px' }}>
+                            <Button
+                                text={'Back'}
+                                onClick={() => setStep(SearchTokenStep.SELECT)}
+                                white
+                            />
+                        </div>
+                        <Button text={'Yes, add selected assets'} onClick={() => onSubmit()} />
+                    </div>
+                </>
+            )}
         </>
     )
 }
@@ -187,12 +214,12 @@ enum Tab {
 const AddNewToken: React.FC<IAddNewToken> = ({ onBack }) => {
     const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
     const [availableTokens, setAvailableTokens] = useState<IAvailableToken[]>([])
+    const [selectedTokens, setSekectedTokens] = useState<string[]>()
 
     useEffect(() => {
         axios.get(TOKEN_SCHEMA_URL).then((res) => {
             setAvailableTokens(res.data.tokens)
         })
-        console.log('called axios')
     }, [])
 
     return (
