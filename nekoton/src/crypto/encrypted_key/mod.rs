@@ -16,7 +16,6 @@ pub struct EncryptedKey {
 impl EncryptedKey {
     #[wasm_bindgen(constructor)]
     pub fn new(
-        name: &str,
         phrase: &str,
         mnemonic_type: JsMnemonicType,
         password: &str,
@@ -24,7 +23,7 @@ impl EncryptedKey {
         let mnemonic_type = super::parse_mnemonic_type(mnemonic_type)?;
 
         Ok(EncryptedKey {
-            inner: crypto::EncryptedKey::new(name, password.into(), mnemonic_type, phrase.into())
+            inner: crypto::EncryptedKey::new(password.into(), mnemonic_type, phrase.into())
                 .handle_error()?,
         })
     }
@@ -73,11 +72,6 @@ impl EncryptedKey {
     #[wasm_bindgen(getter, js_name = "publicKey")]
     pub fn public_key(&self) -> String {
         hex::encode(self.inner.public_key())
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String {
-        self.inner.name().to_owned()
     }
 
     #[wasm_bindgen(getter, js_name = "mnemonicType")]

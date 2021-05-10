@@ -13,7 +13,7 @@ import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
-    account: nt.AssetsList
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
@@ -21,7 +21,7 @@ interface IApproveContractInteraction {
 
 const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     approval,
-    account,
+    storedKeys,
     checkPassword,
     onSubmit,
     onReject,
@@ -34,10 +34,16 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
 
     const trySubmit = async (password: string) => {
+        const keyEntry = storedKeys[publicKey]
+        if (keyEntry == null) {
+            setError('Key entry not found')
+            return
+        }
+
         setInProcess(true)
         try {
             const keyPassword: nt.KeyPassword = {
-                type: 'encrypted_key',
+                type: keyEntry.signerName,
                 data: {
                     publicKey,
                     password,
@@ -56,10 +62,11 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
             setInProcess(false)
         }
     }
+
     return (
         <div className="connect-wallet">
             <div className="connect-wallet__top-panel">
-                <div className="connect-wallet__network">Mainnet</div>
+                {/*<div className="connect-wallet__network">Mainnet</div>
                 <div className="connect-wallet__address">
                     <div className="connect-wallet__address-entry">
                         <UserAvatar address={account.tonWallet.address} small />
@@ -72,7 +79,7 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
                             {convertAddress(account?.tonWallet.address)}
                         </div>
                     </div>
-                </div>
+                </div>*/}
                 <p className="connect-wallet__top-panel__title">Contract interaction</p>
                 <p className="connect-wallet__top-panel__source">{origin}</p>
             </div>

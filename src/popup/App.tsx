@@ -101,15 +101,16 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
     }
 
     if (controllerState.selectedAccount == null) {
-        return <WelcomePage createAccount={async (params) => controllerRpc.createAccount(params)} />
+        return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
     }
 
     const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
     if (pendingApprovals.length > 0) {
         return (
             <ApprovalPage
-                selectedAccount={controllerState.selectedAccount}
-                tonWalletStates={controllerState.accountContractStates}
+                storedKeys={controllerState.storedKeys}
+                accountContractStates={controllerState.accountContractStates}
+                accountEntries={controllerState.accountEntries}
                 pendingApprovals={pendingApprovals}
                 checkPassword={async (password) => await controllerRpc.checkPassword(password)}
                 resolvePendingApproval={async (id, params) =>
