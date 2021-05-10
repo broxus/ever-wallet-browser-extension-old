@@ -138,6 +138,8 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             handleSendReceive={() => {}}
                             onViewTransaction={showTransaction}
                             tonWalletState={tonWalletState}
+                            transactions={transactions}
+
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (

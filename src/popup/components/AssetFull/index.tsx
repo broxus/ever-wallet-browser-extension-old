@@ -7,6 +7,7 @@ import TransactionsList from '@popup/components/TransactionsList'
 import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
 import SendIcon from '@popup/img/send-dark-blue.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
+import Ripples from 'react-ripples'
 
 import './style.scss'
 import { convertTons } from '@shared/utils'
@@ -15,12 +16,14 @@ type IAssetFull = {
     handleSendReceive: (temp: string) => void // TODO: change
     onViewTransaction: (transaction: nt.Transaction) => void
     tonWalletState: nt.ContractState | null
+    transactions: nt.Transaction[]
 }
 
 const AssetFull: React.FC<IAssetFull> = ({
     handleSendReceive,
     onViewTransaction,
     tonWalletState,
+    transactions,
 }) => {
     return (
         <>
@@ -37,41 +40,38 @@ const AssetFull: React.FC<IAssetFull> = ({
                     </div>
                 </div>
                 <div className="asset-full__buttons">
-                    <button
-                        className="asset-full__buttons-button"
-                        onMouseDown={createRipple}
-                        onMouseLeave={removeRipple}
-                        onMouseUp={(event) => {
-                            removeRipple(event)
-                            handleSendReceive && handleSendReceive('receive')
-                        }}
-                    >
-                        <span className="asset-full__buttons-button__content">
-                            {/*@ts-ignore*/}
-                            <ReceiveIcon style={{ marginRight: '8px' }} />
-                            Receive
-                        </span>
-                    </button>
+                    <Ripples className="asset-full__buttons-wrapper">
+                        <button
+                            onClick={() => handleSendReceive && handleSendReceive('receive')}
+                            className="asset-full__buttons-button"
+                        >
+                            <span className="asset-full__buttons-button__content">
+                                {/*@ts-ignore*/}
+                                <ReceiveIcon style={{ marginRight: '8px' }} />
+                                Receive
+                            </span>
+                        </button>
+                    </Ripples>
 
-                    <button
-                        className="asset-full__buttons-button"
-                        onMouseDown={createRipple}
-                        onMouseLeave={removeRipple}
-                        onMouseUp={(event) => {
-                            removeRipple(event)
-                            handleSendReceive && handleSendReceive('send')
-                        }}
-                    >
-                        <span className="asset-full__buttons-button__content">
-                            {/*@ts-ignore*/}
-                            <SendIcon style={{ marginRight: '8px' }} />
-                            Send
-                        </span>
-                    </button>
+                    <Ripples className="asset-full__buttons-wrapper">
+                        <button
+                            onClick={() => handleSendReceive && handleSendReceive('send')}
+                            className="asset-full__buttons-button"
+                        >
+                            <span className="asset-full__buttons-button__content">
+                                {/*@ts-ignore*/}
+                                <SendIcon style={{ marginRight: '8px' }} />
+                                Send
+                            </span>
+                        </button>
+                    </Ripples>
                 </div>
                 <div className="asset-full__history">
                     <h2 className="asset-full__history-title">History</h2>
-                    <TransactionsList transactions={[]} onViewTransaction={onViewTransaction} />
+                    <TransactionsList
+                        transactions={transactions}
+                        onViewTransaction={onViewTransaction}
+                    />
                 </div>
             </div>
         </>

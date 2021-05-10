@@ -51,6 +51,13 @@
         display: flex;
         margin-bottom: 48px;
 
+        &-wrapper {
+            width: 100%;
+            &:first-child {
+                margin-right: 12px;
+            }
+        }
+
         &-button {
             display: flex;
             background: #c5e4f3;
@@ -63,16 +70,8 @@
             padding: 0.8em 1em;
             width: 100%;
 
-            &:first-child {
-                margin-right: 12px;
-            }
-
             &:hover {
                 background-color: #b6e4fa;
-            }
-
-            span.ripple {
-                background-color: #7484d8;
             }
 
             &__content {
