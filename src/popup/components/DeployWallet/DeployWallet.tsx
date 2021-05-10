@@ -48,7 +48,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({
 
     const submitPassword = async (password: string) => {
         const keyPassword: nt.KeyPassword = {
-            type: 'encrypted_key',
+            type: 'master_key',
             data: {
                 publicKey: account.tonWallet.publicKey,
                 password,
