@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import cn from 'classnames'
 import { AppState, StoreAction, TokensManifest, TokensManifestItem } from '@popup/store/app/types'
 import { fetchManifest } from '@popup/store/app/actions'
+import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
@@ -13,6 +14,7 @@ import Loader from '@popup/components/Loader'
 import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
+import { TokenWalletsToUpdate } from '@shared/approvalApi'
 
 type NewToken = { rootTokenContract: string }
 
@@ -52,8 +54,10 @@ export const Token: React.FC<IToken> = ({ token, enabled, onToggle }) => {
 
 type ISearchToken = {
     tokens: TokensManifestItem[]
+    existingTokens: TokenWalletsToUpdate
+    disabled?: boolean
+    onSubmit: (params: TokenWalletsToUpdate) => void
     onBack: () => void
-    onNext: (tokens: string[]) => void
 }
 
 enum SelectTokenStep {
@@ -61,27 +65,41 @@ enum SelectTokenStep {
     CONFIRM,
 }
 
-const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack, onNext }) => {
-    const [enabledTokens, setEnabledTokens] = useState<string[]>([])
+const SearchToken: React.FC<ISearchToken> = ({
+    tokens,
+    existingTokens,
+    disabled,
+    onSubmit,
+    onBack,
+}) => {
+    const [result, setResult] = useState<TokenWalletsToUpdate>({})
+
+    const hasChanges = Object.keys(result).length > 0
 
     return (
         <form>
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
                 {tokens.map((token) => {
-                    const makeOnToggle = (address: string) => (enabled: boolean) => {
-                        if (enabled) {
-                            setEnabledTokens([...enabledTokens, address])
-                        } else {
-                            setEnabledTokens(enabledTokens.filter((item) => item !== address))
-                        }
-                    }
+                    const address = token.address
+                    const existing = existingTokens[address] || false
+                    const enabled = result[address] == null ? existing : result[address]
 
                     return (
                         <Token
-                            key={token.address}
+                            key={address}
                             token={token}
-                            enabled={enabledTokens.includes(token.address)}
-                            onToggle={makeOnToggle(token.address)}
+                            enabled={enabled}
+                            onToggle={(enabled: boolean) => {
+                                let newResult = { ...result }
+                                if (!existing && enabled) {
+                                    newResult[address] = true
+                                } else if (existing && !enabled) {
+                                    newResult[address] = false
+                                } else {
+                                    delete newResult[address]
+                                }
+                                setResult(newResult)
+                            }}
                         />
                     )
                 })}
@@ -91,9 +109,9 @@ const SearchToken: React.FC<ISearchToken> = ({ tokens, onBack, onNext }) => {
                     <Button text={'Back'} onClick={onBack} white />
                 </div>
                 <Button
-                    text={'Select assets'}
-                    disabled={!enabledTokens.length}
-                    onClick={() => onNext(enabledTokens)}
+                    text={'Save'}
+                    disabled={disabled || !hasChanges}
+                    onClick={() => onSubmit(result)}
                 />
             </div>
         </form>
@@ -140,7 +158,9 @@ const CustomToken: React.FC<ICustomToken> = ({ onBack, onNext }) => {
 
 interface IAddNewToken {
     tokensManifest: TokensManifest | undefined
+    tokenWallets: nt.TokenWalletAsset[]
     fetchManifest: StoreAction<typeof fetchManifest>
+    onSubmit: (params: TokenWalletsToUpdate) => Promise<void>
     onBack: () => void
 }
 
@@ -149,92 +169,105 @@ enum Tab {
     CUSTOM,
 }
 
-const AddNewToken: React.FC<IAddNewToken> = ({ tokensManifest, fetchManifest, onBack }) => {
+const AddNewToken: React.FC<IAddNewToken> = ({
+    tokensManifest,
+    tokenWallets,
+    fetchManifest,
+    onSubmit,
+    onBack,
+}) => {
     const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
-    const [step, setStep] = useState<SelectTokenStep>(SelectTokenStep.SELECT)
-    const [selectedTokens, setSelectedTokens] = useState<string[]>([])
+    const [inProcess, setInProcess] = useState(false)
+    //const [step, setStep] = useState<SelectTokenStep>(SelectTokenStep.SELECT)
 
     useEffect(() => {
         fetchManifest().catch(console.error)
     }, [])
 
-    const handleSelected = (tokens: string[]) => {
-        setSelectedTokens(tokens)
-        setStep(SelectTokenStep.CONFIRM)
+    const handleSubmit = async (params: TokenWalletsToUpdate) => {
+        setInProcess(true)
+        try {
+            await onSubmit(params)
+            onBack()
+        } catch (e) {
+            console.error(e)
+            setInProcess(false)
+        }
     }
 
-    const handleSubmit = () => {
-        console.log('selected tokens: ', selectedTokens)
+    const existingTokens: TokenWalletsToUpdate = {}
+    for (const token of tokenWallets) {
+        existingTokens[token.rootTokenContract] = true
     }
 
     return (
         <>
-            {step === SelectTokenStep.SELECT && (
-                <>
-                    <h2>Select new assets</h2>
-                    <div className="add-new-token">
-                        <div className="add-new-token__panel">
-                            <div
-                                className={cn('add-new-token__panel-tab', {
-                                    _active: activeTab == Tab.PREDEFINED,
-                                })}
-                                onClick={() => setActiveTab(Tab.PREDEFINED)}
-                            >
-                                Search
-                            </div>
-                            <div
-                                className={cn('add-new-token__panel-tab', {
-                                    _active: activeTab == Tab.CUSTOM,
-                                })}
-                                onClick={() => setActiveTab(Tab.CUSTOM)}
-                            >
-                                Custom token
-                            </div>
+            {/*step === SelectTokenStep.SELECT && ( */}
+            <>
+                <h2>Select assets</h2>
+                <div className="add-new-token">
+                    <div className="add-new-token__panel">
+                        <div
+                            className={cn('add-new-token__panel-tab', {
+                                _active: activeTab == Tab.PREDEFINED,
+                            })}
+                            onClick={() => setActiveTab(Tab.PREDEFINED)}
+                        >
+                            Search
                         </div>
-                        {activeTab == Tab.PREDEFINED &&
-                            ((tokensManifest?.tokens.length || 0) > 0 ? (
-                                <SearchToken
-                                    onBack={onBack}
-                                    tokens={tokensManifest?.tokens || []}
-                                    onNext={handleSelected}
-                                />
-                            ) : (
-                                <div
-                                    style={{
-                                        width: '100%',
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                    }}
-                                >
-                                    <Loader />
-                                </div>
-                            ))}
-                        {activeTab == Tab.CUSTOM && (
-                            <CustomToken onBack={onBack} onNext={() => {}} />
-                        )}
+                        <div
+                            className={cn('add-new-token__panel-tab', {
+                                _active: activeTab == Tab.CUSTOM,
+                            })}
+                            onClick={() => setActiveTab(Tab.CUSTOM)}
+                        >
+                            Custom token
+                        </div>
                     </div>
-                </>
-            )}
-            {step === SelectTokenStep.CONFIRM && (
-                <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
-                    <h2>Do you want to add these assets?</h2>
-                    {(tokensManifest?.tokens || [])
-                        .filter((item) => selectedTokens?.includes(item.address))
-                        .map((token) => (
-                            <Token key={token.address} token={token} />
-                        ))}
-                    <div style={{ display: 'flex', paddingTop: '16px' }}>
-                        <div style={{ width: '50%', marginRight: '12px' }}>
-                            <Button
-                                text={'Back'}
-                                onClick={() => setStep(SelectTokenStep.SELECT)}
-                                white
+                    {activeTab == Tab.PREDEFINED &&
+                        ((tokensManifest?.tokens.length || 0) > 0 ? (
+                            <SearchToken
+                                onBack={onBack}
+                                existingTokens={existingTokens}
+                                tokens={tokensManifest?.tokens || []}
+                                disabled={inProcess}
+                                onSubmit={handleSubmit}
                             />
-                        </div>
-                        <Button text={'Yes, add selected assets'} onClick={() => handleSubmit()} />
-                    </div>
+                        ) : (
+                            <div
+                                style={{
+                                    width: '100%',
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                }}
+                            >
+                                <Loader />
+                            </div>
+                        ))}
+                    {activeTab == Tab.CUSTOM && <CustomToken onBack={onBack} onNext={() => {}} />}
                 </div>
-            )}
+            </>
+            {/*)*/}
+            {/*{step === SelectTokenStep.CONFIRM && (*/}
+            {/*    <div style={{ maxHeight: '500px', overflowY: 'auto' }}>*/}
+            {/*        <h2>Do you want to add these assets?</h2>*/}
+            {/*        {(tokensManifest?.tokens || [])*/}
+            {/*            .filter((item) => selectedTokens?.includes(item.address))*/}
+            {/*            .map((token) => (*/}
+            {/*                <Token key={token.address} token={token} />*/}
+            {/*            ))}*/}
+            {/*        <div style={{ display: 'flex', paddingTop: '16px' }}>*/}
+            {/*            <div style={{ width: '50%', marginRight: '12px' }}>*/}
+            {/*                <Button*/}
+            {/*                    text={'Back'}*/}
+            {/*                    onClick={() => setStep(SelectTokenStep.SELECT)}*/}
+            {/*                    white*/}
+            {/*                />*/}
+            {/*            </div>*/}
+            {/*            <Button text={'Yes, add selected assets'} onClick={handleSubmit} />*/}
+            {/*        </div>*/}
+            {/*    </div>*/}
+            {/*)}*/}
         </>
     )
 }

@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { SelectedAsset, TokenWalletState } from '@shared/utils'
+import { TokenWalletsToUpdate } from '@shared/approvalApi'
 import cn from 'classnames'
 import * as nt from '@nekoton'
 
@@ -9,12 +11,13 @@ import AssetsListItem from '@popup/components/AssetsListItem'
 import TransactionsList from '@popup/components/TransactionsList'
 
 import './style.scss'
-import { SelectedAsset } from '@shared/utils'
 
 type AssetsListProps = {
     account: nt.AssetsList
     tonWalletState: nt.ContractState | undefined
-    setActiveContent: (arg0: number) => void
+    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
+    knownTokens: { [rootTokenContract: string]: nt.Symbol }
+    updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
     onSeeFull: (asset: SelectedAsset) => void
 }
 
@@ -22,7 +25,14 @@ enum Panel {
     ADD_NEW_TOKEN,
 }
 
-const AssetsList: React.FC<AssetsListProps> = ({ account, tonWalletState, onSeeFull }) => {
+const AssetsList: React.FC<AssetsListProps> = ({
+    account,
+    tonWalletState,
+    tokenWalletStates,
+    knownTokens,
+    updateTokenWallets,
+    onSeeFull,
+}) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
 
     const closePanel = () => setOpenedPanel(undefined)
@@ -30,7 +40,11 @@ const AssetsList: React.FC<AssetsListProps> = ({ account, tonWalletState, onSeeF
     return (
         <div className="user-assets__assets-list">
             <AssetsListItem
-                tonWalletState={tonWalletState}
+                type={'ton_wallet'}
+                address={account.tonWallet.address}
+                balance={tonWalletState?.balance}
+                name={'TON'}
+                decimals={9}
                 onClick={() =>
                     onSeeFull({
                         type: 'ton_wallet',
@@ -40,16 +54,42 @@ const AssetsList: React.FC<AssetsListProps> = ({ account, tonWalletState, onSeeF
                     })
                 }
             />
-            {/*tonWalletState && <div onClick={() => onSeeFull()}></div>*/}
+            {account.tokenWallets.map(({ rootTokenContract }) => {
+                const symbol = knownTokens[rootTokenContract]
+                const balance = tokenWalletStates[rootTokenContract]?.balance
+                return (
+                    <AssetsListItem
+                        key={rootTokenContract}
+                        type={'token_wallet'}
+                        address={rootTokenContract}
+                        balance={balance}
+                        name={symbol?.name}
+                        decimals={symbol?.decimals}
+                        onClick={() => {
+                            onSeeFull({
+                                type: 'token_wallet',
+                                data: {
+                                    owner: account.tonWallet.address,
+                                    rootTokenContract,
+                                },
+                            })
+                        }}
+                    />
+                )
+            })}
             <div className="user-assets__assets-list__add-new-btn">
                 <Button
-                    text={'Add new asset'}
+                    text={'Select assets'}
                     white
                     onClick={() => setOpenedPanel(Panel.ADD_NEW_TOKEN)}
                 />
             </div>
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
-                <AddNewToken onBack={closePanel} />
+                <AddNewToken
+                    tokenWallets={account.tokenWallets}
+                    onSubmit={updateTokenWallets}
+                    onBack={closePanel}
+                />
             </SlidingPanel>
         </div>
     )
@@ -58,9 +98,11 @@ const AssetsList: React.FC<AssetsListProps> = ({ account, tonWalletState, onSeeF
 type IUserAssets = {
     account: nt.AssetsList
     tonWalletState: nt.ContractState | undefined
+    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
+    knownTokens: { [rootTokenContract: string]: nt.Symbol }
     transactions: nt.Transaction[]
-    setActiveContent: (arg0: number) => void
     onViewTransaction: (transaction: nt.Transaction) => void
+    updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
     onSeeFull: (asset: SelectedAsset) => void
 }
 
@@ -72,8 +114,10 @@ enum AssetsTab {
 const UserAssets: React.FC<IUserAssets> = ({
     account,
     tonWalletState,
+    tokenWalletStates,
+    knownTokens,
     transactions,
-    setActiveContent,
+    updateTokenWallets,
     onViewTransaction,
     onSeeFull,
 }) => {
@@ -104,8 +148,10 @@ const UserAssets: React.FC<IUserAssets> = ({
                     <AssetsList
                         account={account}
                         tonWalletState={tonWalletState}
-                        setActiveContent={setActiveContent}
                         onSeeFull={onSeeFull}
+                        knownTokens={knownTokens}
+                        tokenWalletStates={tokenWalletStates}
+                        updateTokenWallets={updateTokenWallets}
                     />
                 )}
                 {activeTab == AssetsTab.TRANSACTIONS && (

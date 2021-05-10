@@ -5,6 +5,7 @@ export type Locale = 'en_US' | 'ru_RU'
 export type AppState = {
     locale: Locale
     tokensManifest: TokensManifest | undefined
+    tokensMeta: { [rootTokenContract: string]: TokensManifestItem }
 }
 
 export type Action = {

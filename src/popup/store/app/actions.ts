@@ -10,6 +10,10 @@ export const Action = {
     },
     setManifest: (manifest: TokensManifest) => (draft: AppState) => {
         draft.tokensManifest = manifest
+        draft.tokensMeta = { ...draft.tokensMeta }
+        for (const token of manifest.tokens) {
+            draft.tokensMeta[token.address] = token
+        }
     },
 }
 

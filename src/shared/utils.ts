@@ -676,6 +676,8 @@ export type SelectedAsset =
     | nt.EnumItem<'ton_wallet', { address: string }>
     | nt.EnumItem<'token_wallet', { owner: string; rootTokenContract: string }>
 
+export type AssetType = SelectedAsset['type']
+
 export interface TokenWalletState {
     balance: string
 }

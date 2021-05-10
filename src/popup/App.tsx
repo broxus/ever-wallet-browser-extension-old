@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react'
+import { connect } from 'react-redux'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { AppState, StoreAction } from '@popup/store/app/types'
+import { fetchManifest } from '@popup/store/app/actions'
 import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
@@ -49,9 +52,10 @@ export type ActiveTab =
 interface IApp {
     activeTab: ActiveTab
     controllerRpc: IControllerRpcClient
+    fetchManifest: StoreAction<typeof fetchManifest>
 }
 
-const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
+const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
     const [controllerState, setControllerState] = useState<ControllerState>()
 
     useEffect(() => {
@@ -88,6 +92,8 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
             } else {
                 setControllerState(state)
             }
+
+            fetchManifest().catch(console.error)
         })()
     }, [])
 
@@ -126,4 +132,10 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc }) => {
     return <MainPage controllerState={controllerState} controllerRpc={controllerRpc} />
 }
 
-export default App
+const mapStateToProps = (store: { app: AppState }) => ({
+    tokensManifest: store.app.tokensManifest,
+})
+
+export default connect(mapStateToProps, {
+    fetchManifest,
+})(App)
