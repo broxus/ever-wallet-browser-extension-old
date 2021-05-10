@@ -75,7 +75,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
                 <SelectContractType
                     onSubmit={(contractType) => {
                         setContractType(contractType)
-                        setLocalStep(LocalStep.ENTER_PASSWORD)
+                        setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
                     onBack={onBack}
                     excludedContracts={['WalletV3']}
