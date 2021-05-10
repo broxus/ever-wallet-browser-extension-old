@@ -58,25 +58,26 @@ const EnterPassword: React.FC<IEnterPassword> = ({
             <h2 className="send-screen__form-title">Enter your password to confirm transaction</h2>
             <div className="send-screen__form-tx-details">
                 <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">You send</span>
-                    <span className="send-screen__form-tx-details-param-value">
-                        {params?.amount}
-                    </span>
-                </div>
-                <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
-                    <span className="send-screen__form-tx-details-param-value">
-                        {fees ? `${convertTons(fees)} TON` : 'calculating...'}
-                    </span>
-                </div>
-                <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">
-                        Recipient address
+                        Recipient
                     </span>
                     <span className="send-screen__form-tx-details-param-value">
                         {params?.recipient}
                     </span>
                 </div>
+                <div className="send-screen__form-tx-details-param">
+                    <span className="send-screen__form-tx-details-param-desc">Amount</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {params?.amount} TON
+                    </span>
+                </div>
+                <div className="send-screen__form-tx-details-param">
+                    <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
+                    <span className="send-screen__form-tx-details-param-value">
+                        {fees ? `~${convertTons(fees)} TON` : 'calculating...'}
+                    </span>
+                </div>
+
                 {/*TODO password form doesn't fit, wait for design update*/}
                 {/*{params?.comment && (*/}
                 {/*    <div className="send-screen__form-tx-details-param">*/}
