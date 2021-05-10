@@ -15,7 +15,7 @@ export interface SubscriptionControllerConfig extends BaseConfig {
     connectionController: ConnectionController
     notifyTab?: <T extends ProviderEvent>(
         tabId: number,
-        payload: { method: ProviderEvent; params: ProviderEventData<T> }
+        payload: { method: T; params: ProviderEventData<T> }
     ) => void
     getOriginTabs?: (origin: string) => number[]
 }
@@ -331,6 +331,7 @@ export class SubscriptionController extends BaseController<
                 this.config.notifyTab?.(connectionId, {
                     method: 'contractStateChanged',
                     params: {
+                        address,
                         state,
                     },
                 })
@@ -343,7 +344,7 @@ export class SubscriptionController extends BaseController<
         transactions: nt.Transaction[],
         info: nt.TransactionsBatchInfo
     ) {
-        console.log('Transactions found', transactions, info, this._subscriptionTabs)
+        console.debug('Transactions found', transactions, info, this._subscriptionTabs)
 
         const connections = this._subscriptionTabs.get(address)
         if (connections == null) {
@@ -355,6 +356,7 @@ export class SubscriptionController extends BaseController<
                 this.config.notifyTab?.(connectionId, {
                     method: 'transactionsFound',
                     params: {
+                        address,
                         transactions,
                         info,
                     },
@@ -439,11 +441,11 @@ class GenericContractSubscription {
         }
 
         if (this._loopPromise) {
-            console.log('GenericContractSubscription -> awaiting loop promise')
+            console.debug('GenericContractSubscription -> awaiting loop promise')
             await this._loopPromise
         }
 
-        console.log('GenericContractSubscription -> loop started')
+        console.debug('GenericContractSubscription -> loop started')
 
         this._loopPromise = new Promise<void>(async (resolve) => {
             this._isRunning = true
@@ -452,7 +454,7 @@ class GenericContractSubscription {
                     case 'manual': {
                         this._currentBlockId = undefined
 
-                        console.log('GenericContractSubscription -> manual -> waiting begins')
+                        console.debug('GenericContractSubscription -> manual -> waiting begins')
 
                         await new Promise<void>((resolve) => {
                             const timerHandle = window.setTimeout(() => {
@@ -462,23 +464,23 @@ class GenericContractSubscription {
                             this._refreshTimer = [timerHandle, resolve]
                         })
 
-                        console.log('GenericContractSubscription -> manual -> waiting ends')
+                        console.debug('GenericContractSubscription -> manual -> waiting ends')
 
                         if (!this._isRunning) {
                             break outer
                         }
 
-                        console.log('GenericContractSubscription -> manual -> refreshing begins')
+                        console.debug('GenericContractSubscription -> manual -> refreshing begins')
                         await this._contractMutex.use(async () => {
                             await this._contract.refresh()
                             this._currentPollingMethod = this._contract.pollingMethod
                         })
-                        console.log('GenericContractSubscription -> manual -> refreshing ends')
+                        console.debug('GenericContractSubscription -> manual -> refreshing ends')
 
                         break
                     }
                     case 'reliable': {
-                        console.log('GenericContractSubscription -> reliable start')
+                        console.debug('GenericContractSubscription -> reliable start')
 
                         if (this._suggestedBlockId != null) {
                             this._currentBlockId = this._suggestedBlockId
@@ -509,7 +511,7 @@ class GenericContractSubscription {
                 }
             }
 
-            console.log('GenericContractSubscription -> loop finished')
+            console.debug('GenericContractSubscription -> loop finished')
 
             resolve()
         })

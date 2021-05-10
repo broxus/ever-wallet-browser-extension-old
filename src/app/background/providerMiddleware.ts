@@ -245,7 +245,6 @@ const subscribe: ProviderMethod<'subscribe'> = async (req, res, _next, end, ctx)
     requireTabid(req, tabId)
 
     res.result = await subscriptionsController.subscribeToContract(tabId, address, subscriptions)
-    console.log('AFTER RESULT:', JSON.stringify(res.result, undefined, 4))
     end()
 }
 
