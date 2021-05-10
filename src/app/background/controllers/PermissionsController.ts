@@ -39,13 +39,15 @@ export interface PermissionsState extends BaseState {
     permissions: { [origin: string]: Partial<Permissions> }
 }
 
-const defaultState: PermissionsState = {
-    permissions: {},
+function makeDefaultState(): PermissionsState {
+    return {
+        permissions: {},
+    }
 }
 
 export class PermissionsController extends BaseController<PermissionsConfig, PermissionsState> {
     constructor(config: PermissionsConfig, state?: PermissionsState) {
-        super(config, state || _.cloneDeep(defaultState))
+        super(config, state || makeDefaultState())
         this.initialize()
     }
 

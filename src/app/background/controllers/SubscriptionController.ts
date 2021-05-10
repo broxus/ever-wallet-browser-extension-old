@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { NekotonRpcError, SendMessageCallback, SendMessageRequest } from '@shared/utils'
 import { ContractUpdatesSubscription, ProviderEvent, ProviderEventData } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
@@ -25,13 +24,17 @@ export interface SubscriptionControllerState extends BaseState {
     subscriptionPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
 }
 
-const defaultState: SubscriptionControllerState = {
-    subscriptionPendingMessages: {},
+function makeDefaultState(): SubscriptionControllerState {
+    return {
+        subscriptionPendingMessages: {},
+    }
 }
 
-const defaultSubscriptionState: ContractUpdatesSubscription = {
-    state: false,
-    transactions: false,
+function makeDefaultSubscriptionState(): ContractUpdatesSubscription {
+    return {
+        state: false,
+        transactions: false,
+    }
 }
 
 export class SubscriptionController extends BaseController<
@@ -45,7 +48,7 @@ export class SubscriptionController extends BaseController<
     private readonly _subscriptionTabs: Map<string, Set<number>> = new Map()
 
     constructor(config: SubscriptionControllerConfig, state?: SubscriptionControllerState) {
-        super(config, state || _.cloneDeep(defaultState))
+        super(config, state || makeDefaultState())
         this.initialize()
     }
 
@@ -57,7 +60,7 @@ export class SubscriptionController extends BaseController<
         return this._subscriptionsMutex.use(async () => {
             let tabSubscriptions = this._tabs.get(tabId)
             if (params == {}) {
-                return tabSubscriptions?.get(address) || defaultSubscriptionState
+                return tabSubscriptions?.get(address) || makeDefaultSubscriptionState()
             }
 
             const shouldCreateTab = tabSubscriptions == null
@@ -66,8 +69,8 @@ export class SubscriptionController extends BaseController<
             }
 
             let shouldUnsubscribe = true
-            const currentParams = tabSubscriptions.get(address) || defaultSubscriptionState
-            window.ObjectExt.keys(defaultSubscriptionState).map((param) => {
+            const currentParams = tabSubscriptions.get(address) || makeDefaultSubscriptionState()
+            window.ObjectExt.keys(currentParams).map((param) => {
                 const value = params[param]
                 if (typeof value === 'boolean') {
                     currentParams[param] = value
@@ -81,7 +84,7 @@ export class SubscriptionController extends BaseController<
                 tabSubscriptions?.delete(address)
                 subscriptionTabs?.delete(tabId)
                 await this._tryUnsubscribe(address)
-                return defaultSubscriptionState
+                return currentParams
             }
 
             if (subscriptionTabs == null) {

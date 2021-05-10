@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import { useForm } from 'react-hook-form'
 import cn from 'classnames'
 import { AppState, StoreAction, TokensManifest, TokensManifestItem } from '@popup/store/app/types'
+import { TokenWalletsToUpdate } from '@shared/approvalApi'
 import { fetchManifest } from '@popup/store/app/actions'
 import * as nt from '@nekoton'
 
@@ -14,7 +15,6 @@ import Loader from '@popup/components/Loader'
 import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
-import { TokenWalletsToUpdate } from '@shared/approvalApi'
 
 type NewToken = { rootTokenContract: string }
 
