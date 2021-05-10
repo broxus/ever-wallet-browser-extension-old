@@ -53,7 +53,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                     </Ripples>
 
                     <Ripples className="asset-full__buttons-wrapper">
-                        {/*TODO specify predefined token for Send panel*/}
+                        {/*TODO specify predefined token and "back" for Send panel*/}
                         <button onClick={() => onSend()} className="asset-full__buttons-button">
                             <span className="asset-full__buttons-button__content">
                                 {/*@ts-ignore*/}
