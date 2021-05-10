@@ -459,7 +459,7 @@ class GenericContractSubscription {
                             this._refreshTimer = [timerHandle, resolve]
                         })
 
-                        console.log('GenericContractSubscription -> manual -> waining ends')
+                        console.log('GenericContractSubscription -> manual -> waiting ends')
 
                         if (!this._isRunning) {
                             break outer
