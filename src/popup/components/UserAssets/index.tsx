@@ -13,23 +13,22 @@ import './style.scss'
 type AssetsListProps = {
     tonWalletState: nt.ContractState | null
     setActiveContent: (arg0: number) => void
+    onSeeFull: () => void
 }
 
 enum Panel {
     ADD_NEW_TOKEN,
 }
 
-const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState }) => {
+const AssetsList: React.FC<AssetsListProps> = ({ tonWalletState, onSeeFull }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
 
     const closePanel = () => setOpenedPanel(undefined)
 
     return (
         <div className="user-assets__assets-list">
-            {/*TODO remove later*/}
             {tonWalletState && (
-                // <div onClick={() => setActiveContent(6)}>
-                <div>
+                <div onClick={onSeeFull}>
                     <AssetsListItem tonWalletState={tonWalletState} />
                 </div>
             )}
@@ -52,6 +51,7 @@ type IUserAssets = {
     transactions: nt.Transaction[]
     setActiveContent: (arg0: number) => void
     onViewTransaction: (transaction: nt.Transaction) => void
+    onSeeFull: () => void
 }
 
 enum AssetsTab {
@@ -64,6 +64,7 @@ const UserAssets: React.FC<IUserAssets> = ({
     transactions,
     setActiveContent,
     onViewTransaction,
+    onSeeFull,
 }) => {
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
@@ -92,6 +93,7 @@ const UserAssets: React.FC<IUserAssets> = ({
                     <AssetsList
                         tonWalletState={tonWalletState}
                         setActiveContent={setActiveContent}
+                        onSeeFull={onSeeFull}
                     />
                 )}
                 {activeTab == AssetsTab.TRANSACTIONS && (

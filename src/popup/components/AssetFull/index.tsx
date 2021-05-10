@@ -9,13 +9,19 @@ import SendIcon from '@popup/img/send-dark-blue.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
 
 import './style.scss'
+import { convertTons } from '@shared/utils'
 
 type IAssetFull = {
     handleSendReceive: (temp: string) => void // TODO: change
     onViewTransaction: (transaction: nt.Transaction) => void
+    tonWalletState: nt.ContractState | null
 }
 
-const AssetFull: React.FC<IAssetFull> = ({ handleSendReceive, onViewTransaction }) => {
+const AssetFull: React.FC<IAssetFull> = ({
+    handleSendReceive,
+    onViewTransaction,
+    tonWalletState,
+}) => {
     return (
         <>
             <div className="asset-full">
@@ -24,7 +30,9 @@ const AssetFull: React.FC<IAssetFull> = ({ handleSendReceive, onViewTransaction 
                     {/*// @ts-ignore*/}
                     <TonLogo style={{ marginRight: '16px', minWidth: '40px', zIndex: 1 }} />
                     <div className="asset-full__info-token">
-                        <span className="asset-full__info-token-amount">204.00 TON</span>
+                        <span className="asset-full__info-token-amount">{`${convertTons(
+                            tonWalletState?.balance
+                        ).toLocaleString()} TON`}</span>
                         <span className="asset-full__info-token-comment">FreeTon Crystal</span>
                     </div>
                 </div>

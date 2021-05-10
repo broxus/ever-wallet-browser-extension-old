@@ -96,6 +96,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                 setActiveContent={setOpenedPanel}
                 transactions={transactions}
                 onViewTransaction={showTransaction}
+                onSeeFull={() => setOpenedPanel(Panel.ASSET)}
             />
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <>
@@ -136,6 +137,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                         <AssetFull
                             handleSendReceive={() => {}}
                             onViewTransaction={showTransaction}
+                            tonWalletState={tonWalletState}
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (
