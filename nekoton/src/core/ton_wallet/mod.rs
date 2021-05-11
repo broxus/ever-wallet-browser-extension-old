@@ -357,6 +357,14 @@ pub struct RawContractState {
     pub inner: ton_block::AccountStuff,
 }
 
+#[wasm_bindgen]
+impl RawContractState {
+    #[wasm_bindgen(getter)]
+    pub fn balance(&self) -> String {
+        self.inner.storage.balance.grams.to_string()
+    }
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const CONTRACT_TYPE: &'static str = r#"
 export type ContractType = 

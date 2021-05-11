@@ -95,7 +95,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <div className="connect-wallet__address-entry">{origin}</div>
                 </div>
                 <h3 className="connect-wallet__spend-top-panel__header noselect">
-                    Request to send your WTON
+                    Send internal message
                 </h3>
             </div>
             <div className="connect-wallet__spend-details">
