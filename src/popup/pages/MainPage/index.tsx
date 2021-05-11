@@ -115,7 +115,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     await controllerRpc.updateTokenWallets(accountAddress, params)
                 }
                 onViewTransaction={showTransaction}
-                onSeeFull={() => setOpenedPanel(Panel.ASSET)}
+                onViewAsset={showAsset}
             />
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <>
@@ -144,7 +144,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
                             estimateFees={async () =>
-                                await controllerRpc.estimateDeploymentFees(accountAddress)
+                                controllerRpc.estimateDeploymentFees(accountAddress)
                             }
                             prepareDeployMessage={async (password) =>
                                 controllerRpc.prepareDeploymentMessage(accountAddress, password)
@@ -156,6 +156,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
                     {openedPanel == Panel.ASSET && selectedAsset && (
                         <AssetFull
+                            account={selectedAccount}
                             selectedAsset={selectedAsset}
                             controllerState={controllerState}
                             controllerRpc={controllerRpc}
