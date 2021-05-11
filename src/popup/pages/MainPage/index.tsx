@@ -202,12 +202,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (
-                        <TransactionInfo
-                            transaction={selectedTransaction}
-                            selectedAsset={selectedAsset}
-                            controllerState={controllerState}
-
-                        />
+                        <TransactionInfo transaction={selectedTransaction} />
                     )}
                 </>
             </SlidingPanel>
