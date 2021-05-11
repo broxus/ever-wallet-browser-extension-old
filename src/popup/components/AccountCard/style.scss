@@ -54,11 +54,18 @@
             font-size: 24px;
             line-height: 32px;
             color: $accountBalance;
+            white-space: nowrap;
             &-decimals {
                 font-weight: normal;
                 font-size: 18px;
                 line-height: 24px;
                 letter-spacing: 0.5px;
+            }
+            &--resized {
+                font-size: 22px;
+                & > span {
+                    font-size: 16px;
+                }
             }
         }
     }
