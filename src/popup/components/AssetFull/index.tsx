@@ -215,13 +215,6 @@ const AssetFull: React.FC<IAssetFull> = ({
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
                                 controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
                             }
-                            prepareSwapBackMessage={async (owner, rootTokenContract, params) =>
-                                controllerRpc.prepareSwapBackMessage(
-                                    owner,
-                                    rootTokenContract,
-                                    params
-                                )
-                            }
                             sendMessage={async (message) =>
                                 controllerRpc.sendMessage(accountAddress, message)
                             }

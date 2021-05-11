@@ -164,6 +164,7 @@ export type TonEventStatus =
 const SYMBOL: &str = r#"
 export type Symbol = {
     name: string,
+    fullName: string,
     decimals: number,
     rootTokenContract: string,
 };
@@ -177,7 +178,8 @@ extern "C" {
 
 pub fn make_symbol(data: models::Symbol) -> Symbol {
     ObjectBuilder::new()
-        .set("name", data.name)
+        .set("name", data.symbol)
+        .set("fullName", data.name)
         .set("decimals", data.decimals)
         .set("rootTokenContract", data.root_token_contract.to_string())
         .build()
