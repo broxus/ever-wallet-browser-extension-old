@@ -87,6 +87,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <AddNewToken
                     tokenWallets={account.tokenWallets}
+                    knownTokens={knownTokens}
                     onSubmit={updateTokenWallets}
                     onBack={closePanel}
                 />

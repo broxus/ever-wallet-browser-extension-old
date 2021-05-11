@@ -10,52 +10,51 @@ import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import Tumbler from '@popup/components/Tumbler'
+import AssetIcon from '@popup/components/AssetIcon'
 
 import Loader from '@popup/components/Loader'
-import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
 type NewToken = { rootTokenContract: string }
 
 interface IToken {
-    token: TokensManifestItem
+    name: string
+    fullName: string
+    rootTokenContract: string
     enabled?: boolean
     onToggle?: (enabled: boolean) => void
 }
 
-export const Token: React.FC<IToken> = ({ token, enabled, onToggle }) => {
-    const { name, symbol, address, logoURI } = token
-
+export const Token: React.FC<IToken> = ({
+    name,
+    fullName,
+    rootTokenContract,
+    enabled,
+    onToggle,
+}) => {
     return (
         <div className="assets-list-item">
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-                {logoURI && (
-                    <img
-                        src={logoURI}
-                        alt=""
-                        height="36px"
-                        width="36px"
-                        className="assets-list-item__icon noselect"
-                    />
-                )}
-                {!logoURI && (
-                    <UserAvatar address={address} className="assets-list-item__icon noselect" />
-                )}
+                <AssetIcon
+                    type={'token_wallet'}
+                    address={rootTokenContract}
+                    className="assets-list-item__icon noselect"
+                />
                 <div className="assets-list-item__balance">
                     <span className="assets-list-item__balance__amount">{name}</span>
-                    <span className="assets-list-item__balance__dollars">{symbol}</span>
+                    <span className="assets-list-item__balance__dollars">{fullName}</span>
                 </div>
             </div>
             {onToggle && enabled !== undefined && (
-                <Tumbler checked={enabled} onChange={onToggle} id={name} />
+                <Tumbler checked={enabled} onChange={onToggle} id={rootTokenContract} />
             )}
         </div>
     )
 }
 
 type ISearchToken = {
-    tokens: TokensManifestItem[]
+    tokens: { name: string; fullName: string; rootTokenContract: string }[]
     existingTokens: TokenWalletsToUpdate
     disabled?: boolean
     onSubmit: (params: TokenWalletsToUpdate) => void
@@ -81,15 +80,18 @@ const SearchToken: React.FC<ISearchToken> = ({
     return (
         <form>
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                {tokens.map((token) => {
-                    const address = token.address
+                {tokens.map(({ name, fullName, rootTokenContract }) => {
+                    const address = rootTokenContract
+
                     const existing = existingTokens[address] || false
                     const enabled = result[address] == null ? existing : result[address]
 
                     return (
                         <Token
                             key={address}
-                            token={token}
+                            name={name}
+                            fullName={fullName}
+                            rootTokenContract={address}
                             enabled={enabled}
                             onToggle={(enabled: boolean) => {
                                 let newResult = { ...result }
@@ -121,17 +123,19 @@ const SearchToken: React.FC<ISearchToken> = ({
 }
 
 type ICustomToken = {
+    disabled?: boolean
+    error?: string
+    onSubmit: (params: TokenWalletsToUpdate) => void
     onBack: () => void
-    onNext: () => void
 }
 
-const CustomToken: React.FC<ICustomToken> = ({ onBack, onNext }) => {
+const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack }) => {
     const { register, handleSubmit, errors } = useForm<NewToken>()
 
-    const onSubmit = async (data: NewToken) => {
-        console.log('custom token submitted')
-        console.log('contractAddress', data.rootTokenContract)
-        onNext()
+    const trySubmit = async ({ rootTokenContract }: NewToken) => {
+        onSubmit({
+            [rootTokenContract]: true,
+        })
     }
 
     return (
@@ -141,18 +145,32 @@ const CustomToken: React.FC<ICustomToken> = ({ onBack, onNext }) => {
                 className="add-new-token__search-form"
                 type="text"
                 name="rootTokenContract"
+                disabled={disabled}
                 register={register({
                     required: true,
+                    pattern: /^(?:-1|0):[0-9a-fA-F]{64}$/,
+                    validate: (value: string) => value != null && nt.checkAddress(value),
                 })}
             />
+            {error && <div className="check-seed__content-error">{error}</div>}
             {errors.rootTokenContract && (
-                <div className="check-seed__content-error">This field is required</div>
+                <div className="check-seed__content-error">
+                    {errors.rootTokenContract.type == 'required' && 'This field is required'}
+                    {(errors.rootTokenContract.type == 'pattern' ||
+                        errors.rootTokenContract.type == 'validate') &&
+                        'Invalid address'}
+                </div>
             )}
             <div style={{ display: 'flex', paddingTop: '16px' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onBack} white />
+                    <Button disabled={disabled} text={'Back'} onClick={onBack} white />
                 </div>
-                <Button text={'Proceed'} type="button" onClick={handleSubmit(onSubmit)} />
+                <Button
+                    disabled={disabled}
+                    text={'Proceed'}
+                    type="button"
+                    onClick={handleSubmit(trySubmit)}
+                />
             </div>
         </form>
     )
@@ -160,7 +178,9 @@ const CustomToken: React.FC<ICustomToken> = ({ onBack, onNext }) => {
 
 interface IAddNewToken {
     tokensManifest: TokensManifest | undefined
+    tokensMeta: { [rootTokenContract: string]: TokensManifestItem } | undefined
     tokenWallets: nt.TokenWalletAsset[]
+    knownTokens: { [rootTokenContract: string]: nt.Symbol }
     fetchManifest: StoreAction<typeof fetchManifest>
     onSubmit: (params: TokenWalletsToUpdate) => Promise<void>
     onBack: () => void
@@ -174,12 +194,15 @@ enum Tab {
 const AddNewToken: React.FC<IAddNewToken> = ({
     tokensManifest,
     tokenWallets,
+    tokensMeta,
+    knownTokens,
     fetchManifest,
     onSubmit,
     onBack,
 }) => {
     const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
     const [inProcess, setInProcess] = useState(false)
+    const [error, setError] = useState<string>()
     //const [step, setStep] = useState<SelectTokenStep>(SelectTokenStep.SELECT)
 
     useEffect(() => {
@@ -192,14 +215,34 @@ const AddNewToken: React.FC<IAddNewToken> = ({
             await onSubmit(params)
             onBack()
         } catch (e) {
-            console.error(e)
+            setError(e.toString())
             setInProcess(false)
         }
     }
 
+    const tokens =
+        tokensManifest?.tokens?.map((token) => ({
+            name: token.symbol,
+            fullName: token.name,
+            rootTokenContract: token.address,
+        })) || []
+
     const existingTokens: TokenWalletsToUpdate = {}
     for (const token of tokenWallets) {
         existingTokens[token.rootTokenContract] = true
+
+        if ((tokensMeta as any)[token.rootTokenContract] == null) {
+            const symbol = knownTokens[token.rootTokenContract]
+            if (symbol == null) {
+                continue
+            }
+
+            tokens.push({
+                name: symbol.name,
+                fullName: symbol.fullName,
+                rootTokenContract: symbol.rootTokenContract,
+            })
+        }
     }
 
     return (
@@ -217,23 +260,23 @@ const AddNewToken: React.FC<IAddNewToken> = ({
                         >
                             Search
                         </div>
-                        {/*<div*/}
-                        {/*    className={cn('add-new-token__panel-tab', {*/}
-                        {/*        _active: activeTab == Tab.CUSTOM,*/}
-                        {/*    })}*/}
-                        {/*    onClick={() => setActiveTab(Tab.CUSTOM)}*/}
-                        {/*>*/}
-                        {/*    Custom token*/}
-                        {/*</div>*/}
+                        <div
+                            className={cn('add-new-token__panel-tab', {
+                                _active: activeTab == Tab.CUSTOM,
+                            })}
+                            onClick={() => setActiveTab(Tab.CUSTOM)}
+                        >
+                            Custom token
+                        </div>
                     </div>
                     {activeTab == Tab.PREDEFINED &&
                         ((tokensManifest?.tokens.length || 0) > 0 ? (
                             <SearchToken
-                                onBack={onBack}
                                 existingTokens={existingTokens}
-                                tokens={tokensManifest?.tokens || []}
+                                tokens={tokens}
                                 disabled={inProcess}
                                 onSubmit={handleSubmit}
+                                onBack={onBack}
                             />
                         ) : (
                             <div
@@ -246,7 +289,14 @@ const AddNewToken: React.FC<IAddNewToken> = ({
                                 <Loader />
                             </div>
                         ))}
-                    {activeTab == Tab.CUSTOM && <CustomToken onBack={onBack} onNext={() => {}} />}
+                    {activeTab == Tab.CUSTOM && (
+                        <CustomToken
+                            disabled={inProcess}
+                            error={error}
+                            onBack={onBack}
+                            onSubmit={handleSubmit}
+                        />
+                    )}
                 </div>
             </>
             {/*)*/}
@@ -276,6 +326,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
 
 const mapStateToProps = (store: { app: AppState }) => ({
     tokensManifest: store.app.tokensManifest,
+    tokensMeta: store.app.tokensMeta,
 })
 
 export default connect(mapStateToProps, {
