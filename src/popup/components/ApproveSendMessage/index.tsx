@@ -77,9 +77,6 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
         }
     }
 
-    console.log('amount', amount)
-    console.log('tonbalance', contractState.balance)
-
     return (
         <div className="connect-wallet">
             <div className="connect-wallet__spend-top-panel">
