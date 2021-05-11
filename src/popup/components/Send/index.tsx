@@ -173,7 +173,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         defaultAsset.type == 'ton_wallet' ? '' : defaultAsset.data.rootTokenContract
     )
 
-    const { register, setValue, handleSubmit, errors, getValues } = useForm<MessageParams>()
+    const { register, setValue, handleSubmit, errors } = useForm<MessageParams>()
 
     let defaultValue: { value: string; label: string } = { value: '', label: 'TON' }
     const options: { value: string; label: string }[] = [defaultValue]
@@ -185,7 +185,10 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             label: symbol?.name || 'Unknown',
         })
 
-        if (defaultAsset.type == 'token_wallet') {
+        if (
+            defaultAsset.type == 'token_wallet' &&
+            defaultAsset.data.rootTokenContract == rootTokenContract
+        ) {
             defaultValue = options[options.length - 1]
         }
     }

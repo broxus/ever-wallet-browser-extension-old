@@ -10,7 +10,12 @@ TON Wallet browser extension
 
 ### How to build
 
-```
-npm install
-npm run build
+```bash
+# Prepare builder container
+docker build --tag ton-crystal-extension .
+
+# Build extension
+docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-extension
+
+# Extension output will be at $(pwd)/dist 
 ```
