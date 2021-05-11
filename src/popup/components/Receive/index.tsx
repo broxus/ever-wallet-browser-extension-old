@@ -20,7 +20,7 @@ const Receive: React.FC<IReceive> = ({ accountName, address, currencyName }) => 
             <span className="receive-screen__account_details-title">{accountName || ''}</span>
         </div>
 
-        <h3 className="receive-screen__form-title">
+        <h3 className="receive-screen__form-title noselect">
             Your address to receive {currencyName || 'TON'}
         </h3>
         <div className="receive-screen__qr-code">

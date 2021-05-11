@@ -25,7 +25,7 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
             <div className="account-card__info">
                 <div className="account-card__info-details">
                     <div className="account-card__info-details-name">{accountName}</div>
-                    <div className="account-card__info-details-public-key">
+                    <div className="account-card__info-details-public-key noselect">
                         Public key
                         <CopyToClipboard
                             text={publicKey}
@@ -42,7 +42,7 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
                         </CopyToClipboard>
                         <ReactTooltip type="dark" effect="solid" place="bottom" />
                     </div>
-                    <div className="account-card__info-details-public-key">
+                    <div className="account-card__info-details-public-key noselect">
                         Address
                         <CopyToClipboard
                             text={address}
@@ -76,9 +76,9 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
             </div>
             <div className="account-card__pattern">
                 <Pattern />
-                <div className="account-card__pattern-ellipsis">
-                    <Ellipsis />
-                </div>
+                {/*<div className="account-card__pattern-ellipsis">*/}
+                {/*    <Ellipsis />*/}
+                {/*</div>*/}
             </div>
         </div>
     )

@@ -76,7 +76,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
             <div className="account-details">
                 <div className="account-details__top-panel">
                     <Notifications />
-                    <div className="account-details__network" onClick={onToggleNetwork}>
+                    <div className="account-details__network noselect" onClick={onToggleNetwork}>
                         {network}
                     </div>
                     <div

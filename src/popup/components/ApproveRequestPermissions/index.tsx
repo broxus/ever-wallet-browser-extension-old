@@ -51,8 +51,8 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             <WebsiteIcon origin={origin} />
                             <div className="connect-wallet-select-account-source">{origin}</div>
                         </div>
-                        <h2 className="connect-wallet-select-account__title">
-                            Select account(s) to connect with Crystal wallet
+                        <h2 className="connect-wallet-select-account__title noselect">
+                            Select account to connect with Crystal wallet
                         </h2>
 
                         {window.ObjectExt.values(accountEntries).map((items) =>
@@ -101,7 +101,7 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             <WebsiteIcon origin={origin} />
                             <div className="connect-wallet-select-account-source">{origin}</div>
                         </div>
-                        <h2>{`Connected to ${selectedAccount?.name}`}</h2>
+                        <h2 className="noselect">{`Connected to ${selectedAccount?.name}`}</h2>
                         <div
                             className="connect-wallet-select-account__item-value"
                             style={{ marginBottom: '32px' }}
@@ -113,7 +113,10 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                                     '0'
                             )} TON`}
                         </div>
-                        <h3 style={{ fontWeight: 'bold', marginBottom: '16px' }}>
+                        <h3
+                            style={{ fontWeight: 'bold', marginBottom: '16px' }}
+                            className="noselect"
+                        >
                             Allow this site to:
                         </h3>
                         <div

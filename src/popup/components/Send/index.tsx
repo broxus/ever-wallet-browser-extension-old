@@ -63,7 +63,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
 
     return (
         <>
-            <h2 className="send-screen__form-title">Confirm message</h2>
+            <h2 className="send-screen__form-title nos noselect">Confirm message</h2>
             <div className="send-screen__form-tx-details">
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Recipient</span>
@@ -279,7 +279,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             </div>
             {localStep === PrepareStep.ENTER_ADDRESS && (
                 <div>
-                    <h2 className="send-screen__form-title">Send message</h2>
+                    <h2 className="send-screen__form-title noselect">Send message</h2>
                     <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
                         <Select
                             name="currency"
@@ -294,7 +294,8 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                         />
                         {decimals != null && (
                             <div className="send-screen__form-balance">
-                                Your balance: {convertCurrency(balance.toString(), decimals)}
+                                <span className="noselect">Your balance:&nbsp;</span>
+                                {convertCurrency(balance.toString(), decimals)}
                                 &nbsp;
                                 {currencyName}
                             </div>
@@ -332,7 +333,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                         )}
                         <Input
                             name="recipient"
-                            label={'Receiver address...'}
+                            label={'Recipient address...'}
                             className="send-screen__form-input"
                             onChange={(value) => setValue('recipient', value)}
                             register={register({

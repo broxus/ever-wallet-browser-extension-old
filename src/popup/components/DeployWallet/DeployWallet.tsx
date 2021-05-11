@@ -105,8 +105,8 @@ const DeployWallet: React.FC<IDeployWallet> = ({
                         <p className="deploy-wallet__comment">
                             You need to have at least 0.5 TON on your account balance to deploy.
                         </p>
-                        <h3 className="receive-screen__form-title">
-                            Your address to receive TON funds
+                        <h3 className="receive-screen__form-title noselect">
+                            Your address to receive TON
                         </h3>
                         <div className="receive-screen__qr-code">
                             <div className="receive-screen__qr-code-code">

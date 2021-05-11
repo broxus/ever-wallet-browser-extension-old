@@ -94,7 +94,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <WebsiteIcon origin={origin} />
                     <div className="connect-wallet__address-entry">{origin}</div>
                 </div>
-                <h3 className="connect-wallet__spend-top-panel__header">
+                <h3 className="connect-wallet__spend-top-panel__header noselect">
                     Request to send your WTON
                 </h3>
             </div>

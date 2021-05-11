@@ -23,7 +23,7 @@ const AssetsListItem: React.FC<IAssetsListItem> = ({
     decimals,
     onClick,
 }) => (
-    <div className="assets-list-item" onClick={onClick}>
+    <div className="assets-list-item noselect" onClick={onClick}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <AssetIcon type={type} address={address} className="assets-list-item__logo" />
             <div className="assets-list-item__balance">

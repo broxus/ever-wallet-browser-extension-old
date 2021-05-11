@@ -1,7 +1,10 @@
 @import '../../styles/colors';
 
 .connect-wallet {
-    height: 100vh;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
     &__top-panel {
         align-items: center;
         display: flex;
@@ -79,6 +82,7 @@
             line-height: 32px;
             color: $windowFg;
             margin-bottom: 8px;
+            align-self: start;
         }
 
         &__comment {
@@ -255,7 +259,8 @@
 
     &__buttons {
         display: flex;
-        padding: 0 20px 28px;
+        padding: 0 20px 20px;
+        margin-top: auto;
 
         &-button {
             width: 100%;

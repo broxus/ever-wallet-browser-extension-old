@@ -2,8 +2,8 @@
 
 .account-details {
     background-color: $mainDarkBg;
-    height: 392px;
-    padding: 16px 20px 28px;
+    //padding: 16px 20px 28px; // TODO: use with navigation
+    padding: 16px 20px 24px;
 
     &__top-panel {
         display: flex;
@@ -15,7 +15,7 @@
         background: rgba(255, 255, 255, 0.16);
         border-radius: 91px;
         color: $windowBg;
-        cursor: pointer;
+        //cursor: pointer;
         display: flex;
         justify-content: center;
         height: 30px;

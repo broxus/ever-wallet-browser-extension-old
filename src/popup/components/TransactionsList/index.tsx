@@ -17,7 +17,7 @@ const TransactionsList: React.FC<TransactionListProps> = ({
     onViewTransaction,
 }) => {
     return (
-        <div className="user-assets__transactions-list">
+        <div className="user-assets__transactions-list noselect">
             {!(transactions.length > 0) && (
                 <p className="transactions-list-empty">History is empty</p>
             )}

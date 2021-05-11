@@ -126,7 +126,7 @@ const UserAssets: React.FC<IUserAssets> = ({
     return (
         <>
             <div className="user-assets">
-                <div className="user-assets__panel">
+                <div className="user-assets__panel noselect">
                     <div
                         className={cn('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.ASSETS,

@@ -32,11 +32,9 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
 
     const txHash = transaction.id.hash
 
-    console.log(transaction, 'tramsaction')
-
     return (
         <>
-            <h2 className="transaction-info-title">Transaction information</h2>
+            <h2 className="transaction-info-title noselect">Transaction information</h2>
             <div className="transaction-info-tx-details">
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Date and time</span>

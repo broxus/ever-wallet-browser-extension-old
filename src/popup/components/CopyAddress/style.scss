@@ -12,6 +12,7 @@
     word-break: break-all;
 
     &:hover {
-        color: $activeButtonBg;
+        //color: $activeButtonBg;
+        text-decoration: underline;
     }
 }
