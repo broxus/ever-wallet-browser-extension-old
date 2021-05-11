@@ -229,8 +229,6 @@ export class AccountController extends BaseController<
 
             const entry = await keyStore.addKey(newKey)
 
-            console.log('Added', entry)
-
             this.update({
                 storedKeys: {
                     ...this.state.storedKeys,
@@ -380,12 +378,16 @@ export class AccountController extends BaseController<
             const accountTransactions = { ...this.state.accountTransactions }
             delete accountTransactions[address]
 
+            const accountTokenTransactions = { ...this.state.accountTokenTransactions }
+            delete accountTokenTransactions[address]
+
             // TODO: select current account
 
             this.update({
                 accountEntries,
                 accountContractStates,
                 accountTransactions,
+                accountTokenTransactions,
             })
         })
     }
@@ -408,19 +410,40 @@ export class AccountController extends BaseController<
                                 const tokenSubscriptions = this._tokenWalletSubscriptions.get(
                                     address
                                 )
-                                this._tokenWalletSubscriptions.delete(address)
-                                if (tokenSubscriptions != null) {
-                                    await Promise.all(
-                                        Array.from(tokenSubscriptions.values()).map(
-                                            async (item) => await item.stop()
-                                        )
-                                    )
+                                const subscription = tokenSubscriptions?.get(rootTokenContract)
+                                if (subscription != null) {
+                                    tokenSubscriptions?.delete(rootTokenContract)
+                                    await subscription.stop()
                                 }
                                 await accountsStorage.removeTokenWallet(address, rootTokenContract)
                             }
                         }
                     )
                 )
+
+                const tokenSubscriptions = this._tokenWalletSubscriptions.get(address)
+
+                const accountTokenTransactions = this.state.accountTokenTransactions
+                const ownerTokenTransactions = {
+                    ...accountTokenTransactions[address],
+                }
+
+                const currentTokenContracts = Object.keys(ownerTokenTransactions)
+                for (const rootTokenContract of currentTokenContracts) {
+                    if (tokenSubscriptions?.get(rootTokenContract) == null) {
+                        delete ownerTokenTransactions[rootTokenContract]
+                    }
+                }
+
+                if ((tokenSubscriptions?.size || 0) == 0) {
+                    delete accountTokenTransactions[address]
+                } else {
+                    accountTokenTransactions[address] = ownerTokenTransactions
+                }
+
+                this.update({
+                    accountTokenTransactions,
+                })
 
                 const assetsList = await accountsStorage.getAccount(address)
                 assetsList && this._updateAssetsList(assetsList)

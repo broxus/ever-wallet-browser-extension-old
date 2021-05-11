@@ -208,6 +208,8 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         currencyName = symbol?.name
     }
 
+    const walletInfo = nt.getContractTypeDetails(account.tonWallet.contractType)
+
     useEffect(() => {
         if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
             setValue('amount', messageParams.amount)
@@ -312,25 +314,49 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                             register={register({
                                 required: true,
                                 pattern: decimals != null ? amountPattern(decimals) : /^\d$/,
-                                validate: (value?: string) => {
-                                    if (decimals == null) {
-                                        return false
-                                    }
-                                    try {
-                                        const current = new Decimal(
-                                            parseCurrency(value || '', decimals)
-                                        )
-                                        return current.lessThanOrEqualTo(balance)
-                                    } catch (e) {
-                                        return false
-                                    }
+                                validate: {
+                                    invalidAmount: (value?: string) => {
+                                        if (decimals == null) {
+                                            return false
+                                        }
+                                        try {
+                                            const current = new Decimal(
+                                                parseCurrency(value || '', decimals)
+                                            )
+
+                                            if (selectedAsset.length == 0) {
+                                                return current.greaterThanOrEqualTo(
+                                                    walletInfo.minAmount
+                                                )
+                                            } else {
+                                                return current.greaterThan(0)
+                                            }
+                                        } catch (e) {
+                                            return false
+                                        }
+                                    },
+                                    insufficientBalance: (value?: string) => {
+                                        if (decimals == null) {
+                                            return false
+                                        }
+                                        try {
+                                            const current = new Decimal(
+                                                parseCurrency(value || '', decimals)
+                                            )
+                                            return current.lessThanOrEqualTo(balance)
+                                        } catch (e) {
+                                            return false
+                                        }
+                                    },
                                 },
                             })}
                         />
                         {errors.amount && (
                             <div className="send-screen__form-error">
                                 {errors.amount.type == 'required' && 'This field is required'}
-                                {errors.amount.type == 'validate' && 'Insufficient amount'}
+                                {errors.amount.type == 'invalidAmount' && 'Invalid amount'}
+                                {errors.amount.type == 'insufficientBalance' &&
+                                    'Insufficient balance'}
                                 {errors.amount.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
