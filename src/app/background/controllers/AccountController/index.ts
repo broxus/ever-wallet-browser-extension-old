@@ -3,7 +3,10 @@ import { Mutex } from '@broxus/await-semaphore'
 import { mergeTransactions } from 'ton-inpage-provider'
 import {
     convertAddress,
+    convertCurrency,
     convertTons,
+    extractTokenTransactionAddress,
+    extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
     NekotonRpcError,
@@ -982,6 +985,30 @@ export class AccountController extends BaseController<
         transactions: nt.TokenWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
+        if (info.batchType == 'new') {
+            const symbol = this.state.knownTokens[rootTokenContract]
+            if (symbol != null) {
+                for (const transaction of transactions) {
+                    const value = extractTokenTransactionValue(transaction)
+                    if (value == null) {
+                        continue
+                    }
+
+                    const direction = extractTokenTransactionAddress(transaction)
+
+                    let body: string = `${convertCurrency(value.toString(), symbol.decimals)} ${
+                        symbol.name
+                    } ${value.lt(0) ? 'to' : 'from'} ${direction?.address}`
+
+                    this.config.notificationController.showNotification(
+                        `New token transaction found`,
+                        body,
+                        `https://ton-explorer.com/transactions/${transaction.id.hash}`
+                    )
+                }
+            }
+        }
+
         const currentTransactions = this.state.accountTokenTransactions
 
         const ownerTransactions = currentTransactions[owner] || []
