@@ -11,10 +11,10 @@ import {
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
-import TonLogoS from '@popup/img/ton-logo-s.svg'
 import ReactTooltip from 'react-tooltip'
 
 import './style.scss'
+import AssetIcon from '@popup/components/AssetIcon'
 
 type ITransactionsListItem = {
     symbol?: nt.Symbol
@@ -61,7 +61,10 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
         >
             <div className="transactions-list-item__amount">
                 <div className="transactions-list-item__logo">
-                    <TonLogoS />
+                    <AssetIcon
+                        type={symbol == null ? 'ton_wallet' : 'token_wallet'}
+                        address={symbol?.rootTokenContract || transaction.inMessage.dst!}
+                    />
                 </div>
                 <div>
                     <div
