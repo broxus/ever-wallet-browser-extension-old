@@ -1,7 +1,10 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
     convertAddress,
+    convertCurrency,
     convertTons,
+    extractTokenTransactionAddress,
+    extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
     SelectedAsset,
@@ -39,8 +42,25 @@ const TransferTypeMapping = {
 }
 
 const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) => {
-    const value = extractTransactionValue(transaction)
     const { direction, address } = extractTransactionAddress(transaction)
+
+    const value = useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionValue(transaction)
+        } else {
+            return extractTokenTransactionValue(transaction) || new Decimal(0)
+        }
+    }, [transaction])
+
+    const txAddress = useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionAddress(transaction)
+        } else {
+            return extractTokenTransactionAddress(transaction)
+        }
+    }, [transaction])
+
+    const decimals = symbol == null ? 9 : symbol.decimals
 
     const fee = new Decimal(transaction.totalFees)
 
@@ -91,7 +111,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Amount</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {`${convertTons(value.toString())} ${currencyName} `}
+                        {convertCurrency(value.toString(), decimals)} {currencyName}
                     </span>
                 </div>
                 <div className="transaction-info-tx-details-param">
@@ -103,7 +123,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Total amount</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {`${convertTons(total.toString())} ${currencyName}`}
+                        {`${convertCurrency(total.toString(), decimals)} ${currencyName}`}
                     </span>
                 </div>
             </div>
