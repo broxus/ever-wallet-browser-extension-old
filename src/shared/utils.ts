@@ -633,6 +633,9 @@ export const extractTokenTransactionAddress = ({
 export const convertAddress = (address: string | undefined) =>
     address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
 
+export const trimTokenName = (token: string | undefined) =>
+    token ? `${token?.slice(0, 4)}...${token?.slice(-4)}` : ''
+
 export const multiplier = _.memoize((decimals: number) => new Decimal(10).pow(decimals))
 
 export const amountPattern = _.memoize(

@@ -1,13 +1,11 @@
 import React, { useMemo } from 'react'
 import {
-    convertAddress,
     convertCurrency,
     convertTons,
     extractTokenTransactionAddress,
     extractTokenTransactionValue,
     extractTransactionAddress,
-    extractTransactionValue,
-    SelectedAsset,
+    extractTransactionValue, trimTokenName,
 } from '@shared/utils'
 import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
@@ -119,7 +117,8 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Amount</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {convertCurrency(value.toString(), decimals)} {currencyName}
+                        {convertCurrency(value.toString(), decimals)}{' '}
+                        {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
                     </span>
                 </div>
                 <div className="transaction-info-tx-details-param">
@@ -140,8 +139,8 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 onClick={() =>
                     chrome.tabs.create({
                         url: `https://ton-explorer.com/transactions/${txHash}`,
-                        active: false
-                    },)
+                        active: false,
+                    })
                 }
                 text={'Open in explorer'}
             />

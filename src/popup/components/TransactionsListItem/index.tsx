@@ -8,6 +8,7 @@ import {
     extractTokenTransactionValue,
     extractTokenTransactionAddress,
     convertCurrency,
+    trimTokenName,
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
@@ -72,7 +73,8 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
                             value.lessThan(0) ? 'expense' : 'income'
                         }`}
                     >
-                        {convertCurrency(value.toString(), decimals)} {currencyName}
+                        {convertCurrency(value.toString(), decimals)}{' '}
+                        {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span className="transactions-list-item__description transactions-list-item__fees">
