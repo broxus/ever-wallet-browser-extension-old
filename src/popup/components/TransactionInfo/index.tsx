@@ -52,16 +52,18 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
         }
     }, [transaction])
 
-    let direction, address
+    let direction: string | undefined, address: string | undefined
 
     if (symbol == null) {
         const txAddress = extractTransactionAddress(transaction)
         direction = TRANSACTION_NAMES[txAddress.direction]
         address = txAddress.address
     } else {
-        const txAddress = extractTokenTransactionAddress(transaction)
-        if (txAddress) {
-            direction = TRANSACTION_NAMES[txAddress?.type]
+        const tokenTransaction = transaction as nt.TokenWalletTransaction
+
+        const txAddress = extractTokenTransactionAddress(tokenTransaction)
+        if (txAddress && tokenTransaction.info) {
+            direction = (TRANSACTION_NAMES as any)[tokenTransaction.info.type]
             address = txAddress?.address
         }
     }
@@ -99,10 +101,12 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                     <span className="transaction-info-tx-details-param-desc">Hash (ID)</span>
                     <CopyAddress address={txHash} />
                 </div>
-                <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">{direction}</span>
-                    {address && <CopyAddress address={address} />}
-                </div>
+                {address && (
+                    <div className="transaction-info-tx-details-param">
+                        <span className="transaction-info-tx-details-param-desc">{direction}</span>
+                        <CopyAddress address={address} />
+                    </div>
+                )}
                 {info && (
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">Info</span>
