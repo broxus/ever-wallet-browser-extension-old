@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import Decimal from 'decimal.js'
 import { selectStyles } from '@popup/constants/selectStyle'
 import {
+    amountPattern,
     convertCurrency,
     convertTons,
     parseCurrency,
@@ -306,7 +307,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                             onChange={(value) => setValue('amount', value.trim())}
                             register={register({
                                 required: true,
-                                pattern: /^(?:0|[1-9][0-9]*)(?:.[0-9]{0,9})?$/,
+                                pattern: decimals != null ? amountPattern(decimals) : /^\d$/,
                                 validate: (value?: string) => {
                                     if (decimals == null) {
                                         return false

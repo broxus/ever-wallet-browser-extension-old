@@ -635,6 +635,10 @@ export const convertAddress = (address: string | undefined) =>
 
 export const multiplier = _.memoize((decimals: number) => new Decimal(10).pow(decimals))
 
+export const amountPattern = _.memoize(
+    (decimals: number) => new RegExp(`^(?:0|[1-9][0-9]*)(?:.[0-9]{0,${decimals}})?$`)
+)
+
 export const convertTons = (amount?: string) => convertCurrency(amount, 9)
 
 export const convertCurrency = (amount: string | undefined, decimals: number) =>
