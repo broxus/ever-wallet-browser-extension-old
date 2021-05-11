@@ -950,20 +950,18 @@ export class AccountController extends BaseController<
         info: nt.TransactionsBatchInfo
     ) {
         if (info.batchType == 'new') {
-            let body = ''
             for (const transaction of transactions) {
                 const value = extractTransactionValue(transaction)
                 const { address, direction } = extractTransactionAddress(transaction)
 
-                body += `${convertTons(value.toString())} TON ${direction} ${convertAddress(
+                const body = `${convertTons(value.toString())} TON ${direction} ${convertAddress(
                     address
-                )}\n`
-            }
+                )}`
 
-            if (body.length !== 0) {
                 this.config.notificationController.showNotification(
-                    `New transaction${transactions.length == 1 ? '' : 's'} found`,
-                    body
+                    `New transaction found`,
+                    body,
+                    `https://ton-explorer.com/transactions/${transaction.id.hash}`
                 )
             }
         }
