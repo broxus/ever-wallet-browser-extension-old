@@ -8,8 +8,8 @@ import {
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
 
-const NOTIFICATION_HEIGHT = 600
-const NOTIFICATION_WIDTH = 360
+const NOTIFICATION_HEIGHT = 620
+const NOTIFICATION_WIDTH = 400
 
 export const focusTab = (tabId: number): Promise<chrome.tabs.Tab | undefined> => {
     return new Promise<chrome.tabs.Tab | undefined>((resolve, reject) => {

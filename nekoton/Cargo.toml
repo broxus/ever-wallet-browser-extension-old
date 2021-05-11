@@ -47,6 +47,7 @@ ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
 package = "nekoton"
 git = "https://github.com/broxus/nekoton.git"
 branch = "master"
+#path = "../../nekoton"
 features = ["web"]
 
 [dev-dependencies]

@@ -22,6 +22,10 @@
             margin-bottom: 28px;
         }
 
+        &-input {
+            margin-bottom: 28px;
+        }
+
         &-token-dropdown {
             margin-bottom: 20px;
         }
@@ -38,7 +42,7 @@
             line-height: 20px;
             letter-spacing: 0.75px;
             color: #96a1a7;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
         &-error {
@@ -47,7 +51,8 @@
             font-size: 12px;
             line-height: 16px;
             letter-spacing: 0.4px;
-            margin-top: -16px;
+            margin-top: -26px;
+            margin-bottom: 10px;
             color: darkred;
         }
 
@@ -58,9 +63,11 @@
         &-tx-details {
             background: #f8f9f9;
             margin-bottom: 28px;
+            padding: 20px;
 
             &-param {
                 display: flex;
+                flex-direction: column;
                 justify-content: space-between;
                 &:not(:last-child) {
                     margin-bottom: 16px;
@@ -76,13 +83,14 @@
                 }
 
                 &-value {
+                    color: #000000;
                     font-family: PT Root UI, serif;
                     font-style: normal;
                     font-weight: normal;
                     font-size: 16px;
                     line-height: 20px;
                     letter-spacing: 0.25px;
-                    color: #000000;
+                    word-break: break-all;
                 }
             }
         }

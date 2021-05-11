@@ -1,0 +1,35 @@
+@import '../../styles/colors';
+
+.enter-seed {
+  &__content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    &__seed-form {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      &__title {
+        margin-bottom: 28px;
+      }
+
+      input {
+        cursor: text;
+      }
+    }
+  }
+
+  &__buttons {
+    display: flex;
+    flex-direction: column;
+
+    & > button:not(:last-child),
+    .panel {
+      margin-bottom: 12px;
+    }
+  }
+}

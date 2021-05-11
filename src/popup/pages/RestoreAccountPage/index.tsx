@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { validateMnemonic } from '@popup/store/app/actions'
-import { AccountToCreate } from '@shared/approvalApi'
+import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'
@@ -21,11 +21,19 @@ enum LocalStep {
 
 interface IRestoreAccountPage {
     name: string
-    createAccount: (params: AccountToCreate) => Promise<string>
+    createMasterKey: (params: MasterKeyToCreate) => Promise<nt.KeyStoreEntry>
+    removeKey: (params: KeyToRemove) => Promise<nt.KeyStoreEntry | undefined>
+    createAccount: (params: AccountToCreate) => Promise<nt.AssetsList>
     onBack: () => void
 }
 
-const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ name, createAccount, onBack }) => {
+const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
+    name,
+    createMasterKey,
+    removeKey,
+    createAccount,
+    onBack,
+}) => {
     const [inProcess, setInProcess] = useState<boolean>(false)
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
     const [error, setError] = useState<string>()
@@ -35,14 +43,17 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({ name, createAccount
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
     const onSubmit = async (password: string) => {
+        let key: nt.KeyStoreEntry | undefined
         try {
             setInProcess(true)
             if (seed == null) {
                 throw Error('Seed must be specified')
             }
 
-            await createAccount({ name, contractType, seed, password })
+            key = await createMasterKey({ seed, password })
+            await createAccount({ name, contractType, publicKey: key.publicKey })
         } catch (e) {
+            key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
             setError(e.toString())
         }

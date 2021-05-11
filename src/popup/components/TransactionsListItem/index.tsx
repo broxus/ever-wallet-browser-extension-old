@@ -1,32 +1,57 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useMemo } from 'react'
 import {
+    AssetType,
     extractTransactionValue,
     extractTransactionAddress,
     convertAddress,
     convertTons,
+    extractTokenTransactionValue,
+    extractTokenTransactionAddress,
+    convertCurrency,
+    trimTokenName,
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
-import TonLogoS from '@popup/img/ton-logo-s.svg'
-import Decimal from 'decimal.js'
+import ReactTooltip from 'react-tooltip'
 
 import './style.scss'
-import TransactionInfo from '@popup/components/TransactionInfo'
-import SlidingPanel from '@popup/components/SlidingPanel'
+import AssetIcon from '@popup/components/AssetIcon'
 
 type ITransactionsListItem = {
+    symbol?: nt.Symbol
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
     onViewTransaction: (transaction: nt.Transaction) => void
 }
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({
+    symbol,
     transaction,
-    additionalInfo,
     onViewTransaction,
 }) => {
-    const value = useMemo(() => extractTransactionValue(transaction), [transaction])
-    const txAddress = useMemo(() => extractTransactionAddress(transaction), [transaction])
+    const value = useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionValue(transaction)
+        } else {
+            return extractTokenTransactionValue(transaction) || new Decimal(0)
+        }
+    }, [transaction])
+    const txAddress = useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionAddress(transaction)
+        } else {
+            return extractTokenTransactionAddress(transaction)
+        }
+    }, [transaction])
+
+    const decimals = symbol == null ? 9 : symbol.decimals
+    const currencyName = symbol == null ? 'TON' : symbol.name
+
+    // wip to hide tooltip on click outside
+
+    // for (const tooltip of document.querySelectorAll('.transactions-list-item__tooltip')) {
+    //     tooltip.addEventListener('click', (e) => e.stopPropagation())
+    // }
 
     return (
         <div
@@ -35,42 +60,55 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
                 onViewTransaction(transaction)
             }}
         >
-            <div style={{ display: 'flex', width: '100%' }}>
-                <div style={{ marginRight: '16px', marginTop: '16px', minWidth: '36px' }}>
-                    <TonLogoS />
+            <div className="transactions-list-item__amount">
+                <div className="transactions-list-item__logo">
+                    <AssetIcon
+                        type={symbol == null ? 'ton_wallet' : 'token_wallet'}
+                        address={symbol?.rootTokenContract || transaction.inMessage.dst!}
+                    />
                 </div>
-                <div className="transactions-list-item__description">
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="transactions-list-item__description__date">
-                            {new Date(transaction.createdAt * 1000).toLocaleTimeString()}
-                        </span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span className="transactions-list-item__description__address">
-                            {txAddress.address && convertAddress(txAddress.address)}
-                        </span>
-                        <span
-                            className={`transactions-list-item__description__${
-                                value.lessThan(0) ? 'expense' : 'income'
-                            }`}
-                        >
-                            {convertTons(value.toString())} TON
-                        </span>
+                <div>
+                    <div
+                        className={`transactions-list-item__description transactions-list-item__${
+                            value.lessThan(0) ? 'expense' : 'income'
+                        }`}
+                    >
+                        {convertCurrency(value.toString(), decimals)}{' '}
+                        {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="transactions-list-item__description__fees">
+                        <span className="transactions-list-item__description transactions-list-item__fees">
                             Fees: {convertTons(transaction.totalFees)} TON
                         </span>
                     </div>
-                    {additionalInfo && (
-                        <span
-                            className="transactions-list-item__description__comment"
-                            style={{ color: '#000000', padding: '10px 0 0' }}
-                        >
-                            Staking reward.
-                        </span>
-                    )}
                 </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span
+                    className="transactions-list-item__description transactions-list-item__address"
+                    data-tip={txAddress?.address}
+                >
+                    {txAddress?.address && convertAddress(txAddress.address)}
+                </span>
+                <ReactTooltip
+                    className="transactions-list-item__tooltip"
+                    globalEventOff="click"
+                    type="dark"
+                    multiline
+                    clickable
+                    effect="solid"
+                    place="bottom"
+                />
+
+                <span className="transactions-list-item__description transactions-list-item__date">
+                    {new Date(transaction.createdAt * 1000).toLocaleString('default', {
+                        month: 'long',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: 'numeric',
+                    })}
+                </span>
             </div>
         </div>
     )

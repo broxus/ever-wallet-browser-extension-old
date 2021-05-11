@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { NekotonRpcError, SendMessageCallback, SendMessageRequest } from '@shared/utils'
 import { ContractUpdatesSubscription, ProviderEvent, ProviderEventData } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
@@ -16,7 +15,7 @@ export interface SubscriptionControllerConfig extends BaseConfig {
     connectionController: ConnectionController
     notifyTab?: <T extends ProviderEvent>(
         tabId: number,
-        payload: { method: ProviderEvent; params: ProviderEventData<T> }
+        payload: { method: T; params: ProviderEventData<T> }
     ) => void
     getOriginTabs?: (origin: string) => number[]
 }
@@ -25,13 +24,17 @@ export interface SubscriptionControllerState extends BaseState {
     subscriptionPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
 }
 
-const defaultState: SubscriptionControllerState = {
-    subscriptionPendingMessages: {},
+function makeDefaultState(): SubscriptionControllerState {
+    return {
+        subscriptionPendingMessages: {},
+    }
 }
 
-const defaultSubscriptionState: ContractUpdatesSubscription = {
-    state: false,
-    transactions: false,
+function makeDefaultSubscriptionState(): ContractUpdatesSubscription {
+    return {
+        state: false,
+        transactions: false,
+    }
 }
 
 export class SubscriptionController extends BaseController<
@@ -45,7 +48,7 @@ export class SubscriptionController extends BaseController<
     private readonly _subscriptionTabs: Map<string, Set<number>> = new Map()
 
     constructor(config: SubscriptionControllerConfig, state?: SubscriptionControllerState) {
-        super(config, state || _.cloneDeep(defaultState))
+        super(config, state || makeDefaultState())
         this.initialize()
     }
 
@@ -57,7 +60,7 @@ export class SubscriptionController extends BaseController<
         return this._subscriptionsMutex.use(async () => {
             let tabSubscriptions = this._tabs.get(tabId)
             if (params == {}) {
-                return tabSubscriptions?.get(address) || defaultSubscriptionState
+                return tabSubscriptions?.get(address) || makeDefaultSubscriptionState()
             }
 
             const shouldCreateTab = tabSubscriptions == null
@@ -66,8 +69,8 @@ export class SubscriptionController extends BaseController<
             }
 
             let shouldUnsubscribe = true
-            const currentParams = tabSubscriptions.get(address) || defaultSubscriptionState
-            window.ObjectExt.keys(defaultSubscriptionState).map((param) => {
+            const currentParams = tabSubscriptions.get(address) || makeDefaultSubscriptionState()
+            window.ObjectExt.keys(currentParams).map((param) => {
                 const value = params[param]
                 if (typeof value === 'boolean') {
                     currentParams[param] = value
@@ -81,7 +84,7 @@ export class SubscriptionController extends BaseController<
                 tabSubscriptions?.delete(address)
                 subscriptionTabs?.delete(tabId)
                 await this._tryUnsubscribe(address)
-                return defaultSubscriptionState
+                return currentParams
             }
 
             if (subscriptionTabs == null) {
@@ -328,6 +331,7 @@ export class SubscriptionController extends BaseController<
                 this.config.notifyTab?.(connectionId, {
                     method: 'contractStateChanged',
                     params: {
+                        address,
                         state,
                     },
                 })
@@ -340,7 +344,7 @@ export class SubscriptionController extends BaseController<
         transactions: nt.Transaction[],
         info: nt.TransactionsBatchInfo
     ) {
-        console.log('Transactions found', transactions, info, this._subscriptionTabs)
+        console.debug('Transactions found', transactions, info, this._subscriptionTabs)
 
         const connections = this._subscriptionTabs.get(address)
         if (connections == null) {
@@ -352,6 +356,7 @@ export class SubscriptionController extends BaseController<
                 this.config.notifyTab?.(connectionId, {
                     method: 'transactionsFound',
                     params: {
+                        address,
                         transactions,
                         info,
                     },
@@ -436,11 +441,11 @@ class GenericContractSubscription {
         }
 
         if (this._loopPromise) {
-            console.log('GenericContractSubscription -> awaiting loop promise')
+            console.debug('GenericContractSubscription -> awaiting loop promise')
             await this._loopPromise
         }
 
-        console.log('GenericContractSubscription -> loop started')
+        console.debug('GenericContractSubscription -> loop started')
 
         this._loopPromise = new Promise<void>(async (resolve) => {
             this._isRunning = true
@@ -449,7 +454,7 @@ class GenericContractSubscription {
                     case 'manual': {
                         this._currentBlockId = undefined
 
-                        console.log('GenericContractSubscription -> manual -> waiting begins')
+                        console.debug('GenericContractSubscription -> manual -> waiting begins')
 
                         await new Promise<void>((resolve) => {
                             const timerHandle = window.setTimeout(() => {
@@ -459,23 +464,23 @@ class GenericContractSubscription {
                             this._refreshTimer = [timerHandle, resolve]
                         })
 
-                        console.log('GenericContractSubscription -> manual -> waining ends')
+                        console.debug('GenericContractSubscription -> manual -> waiting ends')
 
                         if (!this._isRunning) {
                             break outer
                         }
 
-                        console.log('GenericContractSubscription -> manual -> refreshing begins')
+                        console.debug('GenericContractSubscription -> manual -> refreshing begins')
                         await this._contractMutex.use(async () => {
                             await this._contract.refresh()
                             this._currentPollingMethod = this._contract.pollingMethod
                         })
-                        console.log('GenericContractSubscription -> manual -> refreshing ends')
+                        console.debug('GenericContractSubscription -> manual -> refreshing ends')
 
                         break
                     }
                     case 'reliable': {
-                        console.log('GenericContractSubscription -> reliable start')
+                        console.debug('GenericContractSubscription -> reliable start')
 
                         if (this._suggestedBlockId != null) {
                             this._currentBlockId = this._suggestedBlockId
@@ -506,7 +511,7 @@ class GenericContractSubscription {
                 }
             }
 
-            console.log('GenericContractSubscription -> loop finished')
+            console.debug('GenericContractSubscription -> loop finished')
 
             resolve()
         })

@@ -9,9 +9,162 @@ use nt::core::models;
 use crate::utils::*;
 
 #[wasm_bindgen(typescript_custom_section)]
+const TRANSACTION_ADDITIONAL_INFO: &str = r#"
+export type TransactionAdditionalInfo =
+    | EnumItem<'comment', string>
+    | EnumItem<'depool_on_round_complete', DePoolOnRoundCompleteNotification>
+    | EnumItem<'depool_receive_answer', DePoolReceiveAnswerNotification>
+    | EnumItem<'token_wallet_deployed', TokenWalletDeployedNotification>
+    | EnumItem<'eth_event_status_changed', EthEventStatusChanged>
+    | EnumItem<'ton_event_status_changed', TonEventStatusChanged>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TransactionAdditionalInfo")]
+    pub type TransactionAdditionalInfo;
+}
+
+pub fn make_transaction_additional_info(
+    data: models::TransactionAdditionalInfo,
+) -> Option<TransactionAdditionalInfo> {
+    let (ty, data) = match data {
+        models::TransactionAdditionalInfo::Comment(comment) => ("comment", JsValue::from(comment)),
+        models::TransactionAdditionalInfo::DePoolOnRoundComplete(notification) => (
+            "depool_on_round_complete",
+            make_depool_on_round_complete_notification(notification).unchecked_into(),
+        ),
+        models::TransactionAdditionalInfo::DePoolReceiveAnswer(notification) => (
+            "depool_receive_answer",
+            make_depool_receive_answer_notification(notification).unchecked_into(),
+        ),
+        models::TransactionAdditionalInfo::TokenWalletDeployed(notification) => (
+            "token_wallet_deployed",
+            make_token_wallet_deployment_notification(notification).unchecked_into(),
+        ),
+        models::TransactionAdditionalInfo::EthEventStatusChanged(status) => (
+            "eth_event_status_changed",
+            JsValue::from(status.to_string()),
+        ),
+        models::TransactionAdditionalInfo::TonEventStatusChanged(status) => (
+            "ton_event_status_changed",
+            JsValue::from(status.to_string()),
+        ),
+        _ => return None,
+    };
+
+    Some(
+        ObjectBuilder::new()
+            .set("type", ty)
+            .set("data", data)
+            .build()
+            .unchecked_into(),
+    )
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const DEPOOL_ON_ROUND_COMPLETE_NOTIFICATION: &str = r#"
+export type DePoolOnRoundCompleteNotification = {
+    roundId: string,
+    reward: string,
+    ordinaryStake: string,
+    vestingStake: string,
+    lockStake: string,
+    reinvest: boolean,
+    reason: number,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "DePoolOnRoundCompleteNotification")]
+    pub type DePoolOnRoundCompleteNotification;
+}
+
+pub fn make_depool_on_round_complete_notification(
+    data: models::DePoolOnRoundCompleteNotification,
+) -> DePoolOnRoundCompleteNotification {
+    ObjectBuilder::new()
+        .set("roundId", data.round_id.to_string())
+        .set("reward", data.reward.to_string())
+        .set("ordinaryStake", data.ordinary_stake.to_string())
+        .set("vestingStake", data.vesting_stake.to_string())
+        .set("lockStake", data.lock_stake.to_string())
+        .set("reinvest", data.reinvest)
+        .set("reason", data.reason)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const DEPOOL_RECEIVE_ANSWER_NOTIFICATION: &str = r#"
+export type DePoolReceiveAnswerNotification = {
+    errorCode: string,
+    // comment code, it is a string because of u64
+    comment: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "DePoolReceiveAnswerNotification")]
+    pub type DePoolReceiveAnswerNotification;
+}
+
+pub fn make_depool_receive_answer_notification(
+    data: models::DePoolReceiveAnswerNotification,
+) -> DePoolReceiveAnswerNotification {
+    ObjectBuilder::new()
+        .set("errorCode", data.error_code.to_string())
+        .set("comment", data.comment.to_string())
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TOKEN_WALLET_DEPLOYMENT_NOTIFICATION: &str = r#"
+export type TokenWalletDeploymentNotification = {
+    rootTokenContract: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TokenWalletDeploymentNotification")]
+    pub type TokenWalletDeploymentNotification;
+}
+
+pub fn make_token_wallet_deployment_notification(
+    data: models::TokenWalletDeployedNotification,
+) -> TokenWalletDeploymentNotification {
+    ObjectBuilder::new()
+        .set("rootTokenContract", data.root_token_contract.to_string())
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const ETH_EVENT_STATUS: &str = r#"
+export type EthEventStatus =
+    | 'InProcess'
+    | 'Confirmed'
+    | 'Executed'
+    | 'Rejected';
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const TON_EVENT_STATUS: &str = r#"
+export type TonEventStatus =
+    | 'InProcess'
+    | 'Confirmed'
+    | 'Rejected';
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
 const SYMBOL: &str = r#"
 export type Symbol = {
     name: string,
+    fullName: string,
     decimals: number,
     rootTokenContract: string,
 };
@@ -25,7 +178,8 @@ extern "C" {
 
 pub fn make_symbol(data: models::Symbol) -> Symbol {
     ObjectBuilder::new()
-        .set("name", data.name)
+        .set("name", data.symbol)
+        .set("fullName", data.name)
         .set("decimals", data.decimals)
         .set("rootTokenContract", data.root_token_contract.to_string())
         .build()

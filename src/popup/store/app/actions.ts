@@ -1,10 +1,19 @@
 import { AppDispatch } from '@popup/store'
-import { Locale, AppState } from './types'
+import { TOKENS_MANIFEST_URL } from '@popup/utils'
+import { Locale, AppState, TokensManifest } from './types'
+import axios from 'axios'
 import * as nt from '@nekoton'
 
 export const Action = {
     setLocale: (locale: Locale) => (draft: AppState) => {
         draft.locale = locale
+    },
+    setManifest: (manifest: TokensManifest) => (draft: AppState) => {
+        draft.tokensManifest = manifest
+        draft.tokensMeta = { ...draft.tokensMeta }
+        for (const token of manifest.tokens) {
+            draft.tokensMeta[token.address] = token
+        }
     },
 }
 
@@ -36,4 +45,11 @@ export const generateSeed = () => {
 
 export const validateMnemonic = (phrase: string, mnemonicType: nt.MnemonicType) => {
     nt.validateMnemonic(phrase, mnemonicType)
+}
+
+export const fetchManifest = () => async (dispatch: AppDispatch) => {
+    const response = await axios.get<TokensManifest>(TOKENS_MANIFEST_URL)
+    if (response.status == 200 && typeof response.data === 'object') {
+        updateStore(dispatch, ActionTypes.setManifest, response.data)
+    }
 }

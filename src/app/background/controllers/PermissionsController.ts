@@ -39,53 +39,97 @@ export interface PermissionsState extends BaseState {
     permissions: { [origin: string]: Partial<Permissions> }
 }
 
-const defaultState: PermissionsState = {
-    permissions: {},
+function makeDefaultState(): PermissionsState {
+    return {
+        permissions: {},
+    }
 }
 
 export class PermissionsController extends BaseController<PermissionsConfig, PermissionsState> {
     constructor(config: PermissionsConfig, state?: PermissionsState) {
-        super(config, state || _.cloneDeep(defaultState))
+        super(config, state || makeDefaultState())
         this.initialize()
+    }
+
+    public async initialSync() {
+        try {
+            await new Promise<void>((resolve) => {
+                chrome.storage.local.get(['permissions'], ({ permissions }) => {
+                    if (typeof permissions === 'object') {
+                        this.update({
+                            permissions,
+                        })
+
+                        for (const origin of Object.keys(permissions)) {
+                            this.config.notifyDomain?.(origin, {
+                                method: 'permissionsChanged',
+                                params: { permissions: {} },
+                            })
+                        }
+                    }
+
+                    resolve()
+                })
+            })
+        } catch (e) {
+            console.warn('Failed to load permissions', e)
+        }
     }
 
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
 
-        const originPermissions: Partial<Permissions> = await this.config.approvalController.addAndShowApprovalRequest(
-            {
-                origin,
-                type: 'requestPermissions',
-                requestData: {
-                    permissions: uniquePermissions,
-                },
-            }
-        )
+        let existingPermissions = this.getPermissions(origin)
 
-        const newPermissions = {
-            ...this.state.permissions,
-            [origin]: originPermissions,
+        let hasNewPermissions = false
+        for (const permission of uniquePermissions) {
+            validatePermission(permission)
+
+            if (existingPermissions[permission] == null) {
+                hasNewPermissions = true
+            }
         }
 
-        this.update(
-            {
-                permissions: newPermissions,
-            },
-            true
-        )
+        if (hasNewPermissions) {
+            const originPermissions: Partial<Permissions> = await this.config.approvalController.addAndShowApprovalRequest(
+                {
+                    origin,
+                    type: 'requestPermissions',
+                    requestData: {
+                        permissions: uniquePermissions,
+                    },
+                }
+            )
+
+            const newPermissions = {
+                ...this.state.permissions,
+                [origin]: originPermissions,
+            }
+
+            this.update(
+                {
+                    permissions: newPermissions,
+                },
+                true
+            )
+
+            await this._savePermissions()
+
+            existingPermissions = originPermissions
+        }
 
         this.config.notifyDomain?.(origin, {
             method: 'permissionsChanged',
-            params: { permissions },
+            params: { permissions: existingPermissions },
         })
-        return originPermissions
+        return existingPermissions
     }
 
     public getPermissions(origin: string): Partial<Permissions> {
         return this.state.permissions[origin] || {}
     }
 
-    public removeOrigin(origin: string) {
+    public async removeOrigin(origin: string) {
         const permissions = this.state.permissions
         const originPermissions = permissions[origin]
 
@@ -99,7 +143,29 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             true
         )
 
+        await this._savePermissions()
+
         if (originPermissions != null) {
+            this.config.notifyDomain?.(origin, {
+                method: 'permissionsChanged',
+                params: { permissions: {} },
+            })
+        }
+    }
+
+    public async clear() {
+        const permissions = this.state.permissions
+
+        this.update(
+            {
+                permissions: {},
+            },
+            true
+        )
+
+        await this._savePermissions()
+
+        for (const origin of Object.keys(permissions)) {
             this.config.notifyDomain?.(origin, {
                 method: 'permissionsChanged',
                 params: { permissions: {} },
@@ -124,5 +190,13 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
                 )
             }
         }
+    }
+
+    private async _savePermissions(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ permissions: this.state.permissions }, () => {
+                resolve()
+            })
+        })
     }
 }

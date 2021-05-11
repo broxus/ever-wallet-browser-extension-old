@@ -1,17 +1,19 @@
 @import '../../styles/colors';
 
 .connect-wallet {
-    height: 100vh;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
     &__top-panel {
         align-items: center;
-        background-color: $mainDarkBg;
         display: flex;
         flex-direction: column;
         height: 269px;
         padding: 16px 20px 0;
 
         &__title {
-            color: $accountName;
+            color: $windowFg;
             font-style: normal;
             font-size: 14px;
             line-height: 20px;
@@ -46,10 +48,8 @@
 
     &__spend-top-panel {
         align-items: center;
-        background-color: $mainDarkBg;
         display: flex;
         flex-direction: column;
-        height: 337px;
         padding: 16px 20px 0;
 
         &__network {
@@ -57,7 +57,7 @@
             justify-content: space-between;
             display: flex;
             padding-bottom: 16px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+            border-bottom: 1px solid #ebedee;
             margin-bottom: 24px;
             width: 100%;
         }
@@ -65,7 +65,7 @@
         &__site {
             align-items: center;
             display: flex;
-            color: #ffffff;
+            color: $windowFg;
             font-style: normal;
             font-weight: bold;
             font-size: 14px;
@@ -80,8 +80,9 @@
             font-weight: bold;
             font-size: 24px;
             line-height: 32px;
-            color: #ffffff;
+            color: $windowFg;
             margin-bottom: 8px;
+            align-self: start;
         }
 
         &__comment {
@@ -90,7 +91,7 @@
             font-size: 14px;
             line-height: 20px;
             letter-spacing: 0.75px;
-            color: #ffffff;
+            color: $windowFg;
             opacity: 0.6;
         }
         &__account {
@@ -99,7 +100,7 @@
             font-size: 14px;
             line-height: 20px;
             letter-spacing: 0.75px;
-            color: #ffffff;
+            color: $windowFg;
             padding: 0 8px;
         }
     }
@@ -113,7 +114,7 @@
             line-height: 24px;
             letter-spacing: 0.15px;
             margin-bottom: 10px;
-            color: #000000;
+            color: $windowFg;
         }
     }
 
@@ -187,55 +188,79 @@
 
         &__description {
             padding: 20px;
-            background: #f8f9f9;
+            background: $lightGreyBg;
             margin-bottom: 28px;
 
             &-param {
                 display: flex;
+                flex-direction: column;
                 justify-content: space-between;
+
                 &:not(:last-child) {
                     margin-bottom: 16px;
+                    border-bottom: 1px solid #ebedee;
                 }
 
                 &-desc {
                     font-style: normal;
                     font-weight: normal;
-                    font-size: 16px;
+                    font-size: 14px;
                     line-height: 20px;
-                    letter-spacing: 0.25px;
+                    letter-spacing: 0.75px;
+                    margin-bottom: 4px;
                     color: #7d8b92;
                 }
 
                 &-value {
-                    font-family: PT Root UI, serif;
+                    color: $windowFg;
                     font-style: normal;
                     font-weight: normal;
-                    font-size: 16px;
+                    font-size: 14px;
                     line-height: 20px;
-                    letter-spacing: 0.25px;
-                    color: #000000;
+                    letter-spacing: 0.75px;
+                    margin-bottom: 16px;
+                    word-break: break-all;
+                }
+
+                &-data {
+                    font-family: PT Mono, sans-serif;
+                    font-style: normal;
+                    font-weight: normal;
+                    font-size: 12px;
+                    line-height: 20px;
+                    letter-spacing: 0.75px;
+                    color: $windowFg;
+
+                    &__method {
+                        display: flex;
+                        flex-direction: column;
+                        margin-bottom: 8px;
+                    }
+
+                    &__block {
+                        background: #e9e9e9;
+                        display: flex;
+                        flex-direction: column;
+                        margin-bottom: 8px;
+                        padding: 12px;
+
+                        &--param-name {
+                            font-weight: bold;
+                        }
+
+                        &--value {
+                            word-break: break-all;
+                        }
+                    }
                 }
             }
-        }
-        &__data {
-            font-style: normal;
-            font-weight: normal;
-            font-size: 16px;
-            line-height: 20px;
-            letter-spacing: 0.25px;
-            height: 180px;
-            overflow: scroll;
-            color: #000000;
-            padding-bottom: 20px;
-            width: 100%;
-            //max-width: 360px;
-            word-break: break-word;
         }
     }
 
     &__buttons {
         display: flex;
-        padding: 0 20px 28px;
+        padding: 0 20px 20px;
+        margin-top: auto;
 
         &-button {
             width: 100%;
@@ -301,6 +326,44 @@
                 line-height: 16px;
                 letter-spacing: 0.4px;
                 color: #96a1a7;
+            }
+        }
+    }
+
+    &__slider {
+        background: $lightGreyBg;
+        color: $windowFg;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+        padding: 8px 20px;
+        width: 100%;
+
+        &__counter {
+            color: #96a1a7;
+            padding: 0 12px;
+        }
+
+        &__nav {
+            display: flex;
+        }
+
+        &__button {
+            cursor: pointer;
+            height: 32px;
+
+            &:hover {
+                background: rgba(0, 136, 204, 0.1);
+                border-radius: 50%;
+                transition: 400ms ease-in;
+            }
+            &:not(:last-child) {
+                margin-right: 8px;
             }
         }
     }

@@ -17,8 +17,8 @@ import AddAccount from '@popup/img/add-account.svg'
 import './style.scss'
 
 type AccountDetailsParams = {
-    account: nt.AssetsList | null
-    tonWalletState: nt.ContractState | null
+    account: nt.AssetsList | undefined
+    tonWalletState: nt.ContractState | undefined
     network: string
     onToggleNetwork: () => void
     onSend: () => void
@@ -76,7 +76,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
             <div className="account-details">
                 <div className="account-details__top-panel">
                     <Notifications />
-                    <div className="account-details__network" onClick={onToggleNetwork}>
+                    <div className="account-details__network noselect" onClick={onToggleNetwork}>
                         {network}
                     </div>
                     <div

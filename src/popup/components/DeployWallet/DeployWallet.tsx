@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { convertTons } from '@shared/utils'
+import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import QRCode from 'react-qr-code'
@@ -14,7 +15,8 @@ import './style.scss'
 
 interface IDeployWallet {
     account: nt.AssetsList
-    tonWalletState: nt.ContractState | null
+    keyEntry: nt.KeyStoreEntry
+    tonWalletState: nt.ContractState | undefined
     estimateFees: () => Promise<string>
     prepareDeployMessage: (keyPassword: nt.KeyPassword) => Promise<nt.SignedMessage>
     sendMessage: (params: nt.SignedMessage) => Promise<nt.Transaction>
@@ -23,6 +25,7 @@ interface IDeployWallet {
 
 const DeployWallet: React.FC<IDeployWallet> = ({
     account,
+    keyEntry,
     tonWalletState,
     estimateFees,
     prepareDeployMessage,
@@ -48,9 +51,9 @@ const DeployWallet: React.FC<IDeployWallet> = ({
 
     const submitPassword = async (password: string) => {
         const keyPassword: nt.KeyPassword = {
-            type: 'encrypted_key',
+            type: keyEntry.signerName,
             data: {
-                publicKey: account.tonWallet.publicKey,
+                publicKey: keyEntry.publicKey,
                 password,
             },
         }
@@ -68,10 +71,13 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     }
 
     if (pendingResponse == null) {
+        const balance = new Decimal(tonWalletState?.balance || '0')
+        const totalAmount = new Decimal('0.1').add(fees || '0')
+
         return (
             <>
                 <h2 className="send-screen__form-title">Deploy your wallet</h2>
-                {tonWalletState?.balance !== '0' ? (
+                {balance.greaterThanOrEqualTo(totalAmount) ? (
                     <>
                         <p className="deploy-wallet__comment">
                             Funds will be debited from your balance to deploy.
@@ -101,28 +107,25 @@ const DeployWallet: React.FC<IDeployWallet> = ({
                 ) : (
                     <>
                         <p className="deploy-wallet__comment">
-                            You need to have at least 1 TON on your account balance to deploy.
+                            You need to have at least 0.1 TON on your account balance to deploy.
                         </p>
-                        <h3 className="receive-screen__form-title">
-                            Your address to receive TON funds
+                        <h3 className="receive-screen__form-title noselect">
+                            Your address to receive TON
                         </h3>
                         <div className="receive-screen__qr-code">
                             <div className="receive-screen__qr-code-code">
                                 <QRCode
-                                    value={`ton://chat/${account?.tonWallet.address}`}
+                                    value={`ton://chat/${account.tonWallet.address}`}
                                     size={80}
                                 />
                             </div>
                             <div className="receive-screen__qr-code-address">
-                                {account?.tonWallet.address}
+                                {account.tonWallet.address}
                             </div>
                         </div>
-
-                        {account && (
-                            <CopyButton text={account.tonWallet.address}>
-                                <Button text={'Copy address'} />
-                            </CopyButton>
-                        )}
+                        <CopyButton text={account.tonWallet.address}>
+                            <Button text={'Copy address'} />
+                        </CopyButton>
                     </>
                 )}
                 <SlidingPanel

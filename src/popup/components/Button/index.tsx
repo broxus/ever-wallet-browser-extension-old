@@ -16,6 +16,7 @@ type IButton = {
 
 const Button: React.FC<IButton> = ({ text, white, disabled, noBorder, onClick, type, form }) => {
     let className = cn('button', {
+        noselect: true,
         _white: white,
         _blue: !white,
         _disabled: disabled,

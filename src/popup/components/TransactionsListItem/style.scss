@@ -1,57 +1,67 @@
 @import '../../styles/colors';
 
 .transactions-list-item {
-    align-items: center;
     border-bottom: 1px solid #ebedee;
     cursor: pointer;
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
     padding: 20px 0;
+
+    &__amount {
+        display: flex;
+        width: 100%;
+    }
+
+    &__logo {
+        margin-right: 16px;
+
+        img, svg {
+            min-width: 36px;
+            width: 36px;
+            height: 36px;
+        }
+    }
 
     &__description {
         display: flex;
         flex-direction: column;
         white-space: nowrap;
         width: 100%;
+        font-style: normal;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+    }
 
-        &__date,
-        &__fees,
-        &__comment {
-            font-style: normal;
-            font-weight: normal;
-            font-size: 14px;
-            line-height: 20px;
-            letter-spacing: 0.75px;
-            color: $inactiveTab;
-        }
+    &__tooltip {
+        max-width: 260px;
+        word-break: break-all;
+        padding: 12px !important;
+    }
 
-        &__address {
-            font-style: normal;
-            font-weight: bold;
-            font-size: 18px;
-            line-height: 24px;
-            letter-spacing: 0.5px;
-            color: #000000;
-        }
+    &__fees {
+        color: $txFee;
+        margin-bottom: 8px;
+        white-space: nowrap;
+    }
 
-        &__income {
-            font-style: normal;
-            font-weight: bold;
-            font-size: 16px;
-            line-height: 20px;
-            text-align: right;
-            letter-spacing: 0.25px;
-            color: #00ac47;
-        }
+    &__address {
+        color: #000000;
+        padding-left: 52px;
+    }
 
-        &__expense {
-            font-style: normal;
-            font-weight: bold;
-            font-size: 16px;
-            line-height: 20px;
-            text-align: right;
-            letter-spacing: 0.25px;
-            color: #000000;
-        }
+    &__income {
+        font-weight: bold;
+        color: #00ac47;
+    }
+
+    &__expense {
+        font-weight: bold;
+        color: #cc0022;
+    }
+
+    &__date {
+        width: auto;
     }
 }

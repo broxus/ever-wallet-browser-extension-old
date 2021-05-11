@@ -9,14 +9,14 @@ import {
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
+import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import { ApprovalController } from './controllers/ApprovalController'
-import { PermissionsController, validatePermission } from './controllers/PermissionsController'
+import { PermissionsController } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { AccountController } from './controllers/AccountController'
 import { SubscriptionController } from './controllers/SubscriptionController'
-import { LastTransactionId } from '@nekoton'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`, data)
@@ -160,7 +160,7 @@ function requireLastTransactionId<T, O, P extends keyof O>(
     key: P
 ) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as LastTransactionId
+    const property = (object[key] as unknown) as nt.LastTransactionId
     requireBoolean(req, property, 'isExact')
     requireString(req, property, 'lt')
     requireOptionalString(req, property, 'hash')
@@ -216,34 +216,14 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
     const { permissions } = req.params
     requireArray(req, req.params, 'permissions')
 
-    const existingPermissions = permissionsController.getPermissions(origin)
-
-    let hasNewPermissions = false
-    for (const permission of permissions) {
-        validatePermission(permission)
-
-        if (existingPermissions[permission] == null) {
-            hasNewPermissions = true
-        }
-    }
-
-    if (hasNewPermissions) {
-        res.result = await permissionsController.requestPermissions(
-            origin,
-            permissions as Permission[]
-        )
-    } else {
-        res.result = existingPermissions
-    }
+    res.result = await permissionsController.requestPermissions(origin, permissions as Permission[])
     end()
 }
 
 const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
-    requirePermissions(ctx, [])
-
     const { origin, tabId, permissionsController, subscriptionsController } = ctx
 
-    permissionsController.removeOrigin(origin)
+    await permissionsController.removeOrigin(origin)
     await subscriptionsController.unsubscribeOriginFromAllContracts(origin, tabId)
     res.result = {}
     end()
@@ -269,7 +249,6 @@ const subscribe: ProviderMethod<'subscribe'> = async (req, res, _next, end, ctx)
 }
 
 const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, [])
     requireParams(req)
 
     const { address } = req.params
@@ -288,7 +267,6 @@ const unsubscribe: ProviderMethod<'unsubscribe'> = async (req, res, _next, end, 
 }
 
 const unsubscribeAll: ProviderMethod<'unsubscribeAll'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, [])
     const { tabId, subscriptionsController } = ctx
     requireTabid(req, tabId)
 
@@ -549,7 +527,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         }
     }
 
-    const fees = await accountController.useSubscription(selectedAddress, async (wallet) => {
+    const fees = await accountController.useTonWallet(selectedAddress, async (wallet) => {
         const contractState = await wallet.getContractState()
         if (contractState == null) {
             throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
@@ -618,7 +596,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         }
     }
 
-    const { unsignedMessage, fees } = await accountController.useSubscription(
+    const { unsignedMessage, fees } = await accountController.useTonWallet(
         selectedAddress,
         async (wallet) => {
             const contractState = await wallet.getContractState()
@@ -630,7 +608,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             try {
                 unsignedMessage = wallet.prepareTransfer(
                     contractState,
-                    selectedAddress,
+                    recipient,
                     amount,
                     false,
                     body,
@@ -681,7 +659,15 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         unsignedMessage.free()
     }
 
-    const transaction = await accountController.sendMessage(selectedAddress, signedMessage)
+    const transaction: nt.Transaction = await accountController.sendMessage(
+        selectedAddress,
+        signedMessage
+    )
+
+    if (transaction.outMessages.findIndex((message: nt.Message) => message.dst == recipient) < 0) {
+        throw invalidRequest(req, 'No output messages produced')
+    }
+
     res.result = {
         transaction,
     }

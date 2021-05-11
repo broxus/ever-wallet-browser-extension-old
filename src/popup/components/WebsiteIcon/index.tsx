@@ -8,7 +8,7 @@ interface IWebsiteIcon {
 }
 
 const WebsiteIcon: React.FC<IWebsiteIcon> = ({ origin }) => (
-    <img className="website-icon" src={getIconUrl(origin)} alt="page" />
+    <img className="website-icon noselect" src={getIconUrl(origin)} alt="page" />
 )
 
 export default WebsiteIcon

@@ -11,3 +11,50 @@ a {
     letter-spacing: 0.25px;
     color: $windowBgActive;
 }
+
+.transaction-info {
+    &-title {
+        margin-bottom: 28px;
+    }
+
+    &-tx-details {
+        margin-bottom: 28px;
+        max-height: 410px;
+        overflow-y: auto;
+        &-separator {
+            background: #ebedee;
+            height: 1px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        &-param {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            &:not(:last-child) {
+                margin-bottom: 16px;
+            }
+
+            &-desc {
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                margin-bottom: 4px;
+                color: #7d8b92;
+            }
+
+            &-value {
+                color: #000000;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                word-break: break-all;
+            }
+        }
+    }
+}

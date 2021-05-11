@@ -21,14 +21,12 @@
                 cursor: text;
             }
         }
+    }
+    &__buttons {
+        display: flex;
 
-        &-buttons {
-            display: flex;
-            flex-direction: column;
-
-            & > button:not(:last-child) {
-                margin-bottom: 12px;
-            }
+        & > button:not(:last-child) {
+            margin-right: 12px;
         }
     }
 }

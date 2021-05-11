@@ -16,11 +16,18 @@
 
     &__info {
         align-items: center;
-        cursor: pointer;
         display: flex;
         justify-content: space-between;
         z-index: 1;
         margin-bottom: 28px;
+
+        &__icon {
+            margin-right: 16px;
+            min-width: 40px;
+            width: 40px;
+            height: 40px;
+            z-index: 1
+        }
 
         &-token {
             display: flex;
@@ -47,13 +54,17 @@
             }
         }
     }
-    &__buttons {
-        display: flex;
-        margin-bottom: 48px;
 
-        &-button {
+    &__controls {
+        display: flex;
+        margin-bottom: 26px;
+
+        &__button {
+            $accountButtonBg: rgba(#c5e4f3, 1.0);
+            $accountButtonBgHover: rgba(#bcdae7, 1.0);
+
             display: flex;
-            background: #c5e4f3;
+            background: $accountButtonBg;
             flex-direction: row;
             justify-content: center;
             align-content: center;
@@ -63,16 +74,16 @@
             padding: 0.8em 1em;
             width: 100%;
 
-            &:first-child {
+            &:not(:last-child) {
                 margin-right: 12px;
             }
 
             &:hover {
-                background-color: #b6e4fa;
+                background-color: $accountButtonBgHover;
             }
 
             span.ripple {
-                background-color: #7484d8;
+                background-color: rgba(#293166, 0.1);
             }
 
             &__content {
@@ -92,7 +103,8 @@
 
     &__history {
         overflow-y: scroll;
-        height: 340px;
+        height: 380px;
+
         &-title {
             font-style: normal;
             font-weight: bold;

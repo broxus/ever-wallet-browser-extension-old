@@ -16,7 +16,8 @@ const CopyAddress: React.FC<ICopyAddress> = ({ address }) => (
             }}
         >
             <span className="clickable-address" data-tip="Click to copy">
-                {convertAddress(address)}
+                {/*{convertAddress(address)}*/}
+                {address}
             </span>
         </CopyToClipboard>
         <ReactTooltip type="dark" effect="solid" place="bottom" />

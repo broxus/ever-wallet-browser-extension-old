@@ -60,6 +60,7 @@ const Input: React.FC<ISimpleInput> = ({
         <input
             className={`simple-input ${className || ''}`}
             readOnly={readOnly}
+            spellCheck={false}
             name={name}
             id={id}
             ref={register}

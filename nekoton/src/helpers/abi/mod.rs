@@ -402,7 +402,7 @@ export type AbiToken =
     | number
     | { [K in string]: AbiToken }
     | AbiToken[]
-    | [AbiToken, AbiToken][];
+    | (readonly [AbiToken, AbiToken])[];
     
 type TokensObject = { [K in string]: AbiToken };
 "#;

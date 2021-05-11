@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { SelectedAsset } from '@shared/utils'
 import * as nt from '@nekoton'
 
 import AccountDetails from '@popup/components/AccountDetails'
@@ -9,9 +10,10 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import Receive from '@popup/components/Receive'
 import Send from '@popup/components/Send'
 import KeyStorage from '@popup/components/KeyStorage'
-import AssetFull from '@popup/components/AssetFull'
 import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import TransactionInfo from '@popup/components/TransactionInfo'
+import AssetFull from '@popup/components/AssetFull'
+import CollectTokens from '@popup/components/CollectTokens'
 
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
@@ -26,6 +28,7 @@ enum Panel {
     RECEIVE,
     SEND,
     DEPLOY,
+    COLLECT_TOKENS,
     KEY_STORAGE,
     CREATE_ACCOUNT,
     ASSET,
@@ -35,6 +38,8 @@ enum Panel {
 const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
+    const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
+    const [ethEventContract, setEthEventContract] = useState<string>()
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -42,17 +47,25 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
+        setSelectedAsset(undefined)
+        setEthEventContract(undefined)
         setOpenedPanel(undefined)
     }
 
-    const { selectedAccount, selectedConnection } = controllerState
+    const { selectedAccount, selectedConnection, storedKeys, knownTokens } = controllerState
+
+    const selectedKey = storedKeys[selectedAccount.tonWallet.publicKey]
+    if (selectedKey == null) {
+        return null
+    }
 
     const accountName = selectedAccount.name
     const accountAddress = selectedAccount.tonWallet.address
 
-    const tonWalletState = controllerState.accountContractStates[
-        accountAddress
-    ] as nt.ContractState | null
+    const tonWalletState = controllerState.accountContractStates[accountAddress] as
+        | nt.ContractState
+        | undefined
+    const tokenWalletStates = controllerState.accountTokenStates[accountAddress] || {}
 
     const transactions = controllerState.accountTransactions[accountAddress] || []
     const network = selectedConnection.name
@@ -75,10 +88,20 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         setOpenedPanel(Panel.TRANSACTION)
     }
 
+    const showAsset = (selectedAsset: SelectedAsset) => {
+        setSelectedAsset(selectedAsset)
+        setOpenedPanel(Panel.ASSET)
+    }
+
+    const collectTokens = (ethEventContract: string) => {
+        setEthEventContract(ethEventContract)
+        setOpenedPanel(Panel.COLLECT_TOKENS)
+    }
+
     return (
         <>
             <AccountDetails
-                account={controllerState.selectedAccount}
+                account={selectedAccount}
                 tonWalletState={tonWalletState}
                 network={network}
                 onToggleNetwork={toggleNetwork}
@@ -92,10 +115,16 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                 onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
             />
             <UserAssets
+                account={selectedAccount}
                 tonWalletState={tonWalletState}
-                setActiveContent={setOpenedPanel}
+                tokenWalletStates={tokenWalletStates}
+                knownTokens={knownTokens}
                 transactions={transactions}
+                updateTokenWallets={async (params) =>
+                    await controllerRpc.updateTokenWallets(accountAddress, params)
+                }
                 onViewTransaction={showTransaction}
+                onViewAsset={showAsset}
             />
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <>
@@ -105,7 +134,10 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
                             account={selectedAccount}
+                            keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
+                            tokenWalletStates={tokenWalletStates}
+                            knownTokens={knownTokens}
                             onBack={closePanel}
                             estimateFees={async (params) =>
                                 await controllerRpc.estimateFees(accountAddress, params)
@@ -113,16 +145,20 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             prepareMessage={async (params, password) =>
                                 controllerRpc.prepareMessage(accountAddress, params, password)
                             }
+                            prepareTokenMessage={async (owner, rootTokenContract, params) =>
+                                controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
+                            }
                             sendMessage={sendMessage}
                         />
                     )}
                     {openedPanel == Panel.DEPLOY && (
                         <DeployWallet
                             account={selectedAccount}
+                            keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
                             onBack={closePanel}
                             estimateFees={async () =>
-                                await controllerRpc.estimateDeploymentFees(accountAddress)
+                                controllerRpc.estimateDeploymentFees(accountAddress)
                             }
                             prepareDeployMessage={async (password) =>
                                 controllerRpc.prepareDeploymentMessage(accountAddress, password)
@@ -130,12 +166,32 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             sendMessage={sendMessage}
                         />
                     )}
+                    {openedPanel == Panel.COLLECT_TOKENS && ethEventContract && (
+                        <CollectTokens
+                            account={selectedAccount}
+                            keyEntry={selectedKey}
+                            ethEventAddress={ethEventContract}
+                            tonWalletState={tonWalletState}
+                            onBack={closePanel}
+                            estimateFees={async (params) =>
+                                controllerRpc.estimateFees(accountAddress, params)
+                            }
+                            prepareMessage={async (params, password) =>
+                                controllerRpc.prepareMessage(accountAddress, params, password)
+                            }
+                            sendMessage={sendMessage}
+                        />
+                    )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
-                    {openedPanel == Panel.ASSET && (
+                    {openedPanel == Panel.ASSET && selectedAsset && (
                         <AssetFull
-                            handleSendReceive={() => {}}
-                            onViewTransaction={showTransaction}
+                            account={selectedAccount}
+                            tokenWalletStates={tokenWalletStates}
+                            selectedKey={selectedKey}
+                            selectedAsset={selectedAsset}
+                            controllerState={controllerState}
+                            controllerRpc={controllerRpc}
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (

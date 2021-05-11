@@ -1,28 +1,36 @@
 import React from 'react'
-import { convertTons, estimateUsd } from '@shared/utils'
-import * as nt from '@nekoton'
+import { AssetType, convertCurrency, convertTons } from '@shared/utils'
 
-import TonLogo from '@popup/img/ton-logo.svg'
+import AssetIcon from '@popup/components/AssetIcon'
 import Arrow from '@popup/img/arrow.svg'
 
 import './style.scss'
 
 type IAssetsListItem = {
-    tonWalletState: nt.ContractState
+    type: AssetType
+    address: string
+    balance?: string
+    name?: string
+    decimals?: number
+    onClick: () => void
 }
 
-const AssetsListItem: React.FC<IAssetsListItem> = ({ tonWalletState }) => (
-    <div className="assets-list-item">
-        <div style={{ display: 'flex' }}>
-            {/*// @ts-ignore*/}
-            <TonLogo className="assets-list-item__logo" />
+const AssetsListItem: React.FC<IAssetsListItem> = ({
+    type,
+    address,
+    balance,
+    name,
+    decimals,
+    onClick,
+}) => (
+    <div className="assets-list-item noselect" onClick={onClick}>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+            <AssetIcon type={type} address={address} className="assets-list-item__logo" />
             <div className="assets-list-item__balance">
                 <span className="assets-list-item__balance__amount">
-                    {convertTons(tonWalletState.balance)} TON
+                    {decimals && convertCurrency(balance || '0', decimals)}
                 </span>
-                <span className="assets-list-item__balance__dollars">
-                    {`$${estimateUsd(tonWalletState?.balance)}`}
-                </span>
+                <span className="assets-list-item__balance__dollars">{name}</span>
             </div>
         </div>
         <Arrow />

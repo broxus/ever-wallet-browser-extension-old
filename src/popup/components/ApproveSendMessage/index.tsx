@@ -1,19 +1,20 @@
 import React, { useState } from 'react'
-import { convertAddress, convertTons } from '@shared/utils'
+import { convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
+import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import EnterPassword from '@popup/components/EnterPassword'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
-
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
+import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
-    account: nt.AssetsList
-    tonWalletState: nt.ContractState | null
+    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountContractStates: { [address: string]: nt.ContractState }
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
@@ -21,28 +22,45 @@ interface IApproveSendMessage {
 
 const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     approval,
-    account,
-    tonWalletState,
+    accountEntries,
+    accountContractStates,
+    storedKeys,
     checkPassword,
     onReject,
     onSubmit,
 }) => {
     const { origin } = approval
-    const { recipient, amount, fees, payload } = approval.requestData
-
-    const balance = convertTons(tonWalletState?.balance || '0').toLocaleString()
+    const { sender, recipient, amount, fees, payload } = approval.requestData
 
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
 
+    const account = findAccountByAddress(accountEntries, sender)
+    if (account == null) {
+        !inProcess && onReject()
+        setInProcess(true)
+        return null
+    }
+
+    const contractState = accountContractStates[account.tonWallet.address]
+    const balance = new Decimal(contractState?.balance || '0')
+
+    console.log(contractState, balance, sender)
+
     const trySubmit = async (password: string) => {
+        const keyEntry = storedKeys[account.tonWallet.publicKey]
+        if (keyEntry == null) {
+            setError('Key entry not found')
+            return
+        }
+
         setInProcess(true)
         try {
             const keyPassword: nt.KeyPassword = {
-                type: 'encrypted_key',
+                type: keyEntry.signerName,
                 data: {
-                    publicKey: account.tonWallet.publicKey,
+                    publicKey: keyEntry.publicKey,
                     password,
                 },
             }
@@ -65,7 +83,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
             <div className="connect-wallet__spend-top-panel">
                 <div className="connect-wallet__spend-top-panel__network">
                     <div className="connect-wallet__address-entry">
-                        <UserPicS />
+                        <UserAvatar address={account.tonWallet.address} small />
                         <div className="connect-wallet__spend-top-panel__account">
                             {account?.name}
                         </div>
@@ -78,21 +96,18 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <WebsiteIcon origin={origin} />
                     <div className="connect-wallet__address-entry">{origin}</div>
                 </div>
-                <h3 className="connect-wallet__spend-top-panel__header">
-                    This site wants to spend your TON
+                <h3 className="connect-wallet__spend-top-panel__header noselect">
+                    Send internal message
                 </h3>
-                <p className="connect-wallet__spend-top-panel__comment">
-                    {`Do you trust this site? By granting this permission, you’re allowing
-                    ${origin} to withdraw your WTON and automate transactions for you.`}
-                </p>
             </div>
             <div className="connect-wallet__spend-details">
-                <p className="connect-wallet__spend-details-title">Transaction details</p>
                 <div className="connect-wallet__details__description">
                     <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">Fee</span>
+                        <span className="connect-wallet__details__description-param-desc">
+                            Recipient
+                        </span>
                         <span className="connect-wallet__details__description-param-value">
-                            {convertTons(fees)} TON
+                            {recipient}
                         </span>
                     </div>
                     <div className="connect-wallet__details__description-param">
@@ -102,16 +117,56 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                         <span className="connect-wallet__details__description-param-value">
                             {convertTons(amount)} TON
                         </span>
+                        {balance.lessThan(amount) && (
+                            <div
+                                className="check-seed__content-error"
+                                style={{ marginBottom: '16px', marginTop: '-12px' }}
+                            >
+                                Insufficient funds
+                            </div>
+                        )}
                     </div>
                     <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">To</span>
+                        <span className="connect-wallet__details__description-param-desc">
+                            Blockchain fee
+                        </span>
                         <span className="connect-wallet__details__description-param-value">
-                            {convertAddress(recipient)}
+                            ~{convertTons(fees)} TON
                         </span>
                     </div>
+                    {payload && (
+                        <div className="connect-wallet__details__description-param">
+                            <span className="connect-wallet__details__description-param-desc">
+                                Data
+                            </span>
+                            <div className="connect-wallet__details__description-param-data">
+                                <div className="connect-wallet__details__description-param-data__method">
+                                    <span>Method:</span>
+                                    <span>{payload.method}</span>
+                                </div>
+                                {Object.entries(payload.params).map(([key, value], i) => (
+                                    <div
+                                        className="connect-wallet__details__description-param-data__block"
+                                        key={i}
+                                    >
+                                        <div className="connect-wallet__details__description-param-data__block--param-name">
+                                            {key}
+                                        </div>
+                                        {value instanceof Array ? (
+                                            <div className="connect-wallet__details__description-param-data__block--value">
+                                                {JSON.stringify(value, undefined, 4)}
+                                            </div>
+                                        ) : (
+                                            <div className="connect-wallet__details__description-param-data__block--value">
+                                                {value.toString()}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
-                <p className="connect-wallet__spend-details-title">Data</p>
-                <div className="connect-wallet__details__data">{JSON.stringify(payload)}</div>
             </div>
             <div className="connect-wallet__buttons">
                 <div className="connect-wallet__buttons-button">
@@ -121,6 +176,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <Button
                         type="submit"
                         text="Send"
+                        disabled={balance.lessThan(amount)}
                         onClick={() => {
                             setPasswordModalVisible(true)
                         }}

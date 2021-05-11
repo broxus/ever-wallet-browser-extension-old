@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { AccountToCreate } from '@shared/approvalApi'
+import { AccountToCreate, KeyToDerive, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
@@ -16,13 +17,19 @@ enum LocalStep {
 }
 
 interface IWelcomePage {
-    createAccount: (params: AccountToCreate) => Promise<any>
+    controllerState: ControllerState
+    controllerRpc: IControllerRpcClient
 }
 
-const WelcomePage: React.FC<IWelcomePage> = ({ createAccount }) => {
+const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.WELCOME)
 
     const FIRST_ACCOUNT_NAME = 'Account 1'
+
+    const createAccount = async (params: AccountToCreate) => controllerRpc.createAccount(params)
+    const createMasterKey = async (params: MasterKeyToCreate) =>
+        controllerRpc.createMasterKey(params)
+    const removeKey = async (params: KeyToRemove) => controllerRpc.removeKey(params)
 
     return (
         <>
@@ -63,6 +70,8 @@ const WelcomePage: React.FC<IWelcomePage> = ({ createAccount }) => {
                 <NewAccountPage
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
+                    createMasterKey={createMasterKey}
+                    removeKey={removeKey}
                     onBack={() => {
                         setLocalStep(LocalStep.WELCOME)
                     }}
@@ -72,6 +81,8 @@ const WelcomePage: React.FC<IWelcomePage> = ({ createAccount }) => {
                 <RestoreAccountPage
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
+                    createMasterKey={createMasterKey}
+                    removeKey={removeKey}
                     onBack={() => {
                         setLocalStep(LocalStep.WELCOME)
                     }}

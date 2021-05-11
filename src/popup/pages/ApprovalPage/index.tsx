@@ -7,6 +7,8 @@ import * as nt from '@nekoton'
 import ApproveContractInteraction from '@popup/components/ApproveContractInteraction'
 import ApproveRequestPermissions from '@popup/components/ApproveRequestPermissions'
 import ApproveSendMessage from '@popup/components/ApproveSendMessage'
+import Right from '@popup/img/right-arrow-blue.svg'
+import Left from '@popup/img/left-arrow-blue.svg'
 
 import './style.scss'
 
@@ -16,8 +18,9 @@ const rejectedByUser = serializeError(
 
 interface IApprovalPage {
     pendingApprovals: PendingApproval<keyof ApprovalApi>[]
-    selectedAccount: nt.AssetsList
-    tonWalletStates: { [address: string]: nt.ContractState }
+    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
+    accountContractStates: { [address: string]: nt.ContractState }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     resolvePendingApproval: (id: string, params: any) => Promise<void>
     rejectPendingApproval: (id: string, params: JsonRpcError) => Promise<void>
@@ -25,17 +28,14 @@ interface IApprovalPage {
 
 const ApprovalPage: React.FC<IApprovalPage> = ({
     pendingApprovals,
-    selectedAccount,
-    tonWalletStates,
+    accountEntries,
+    storedKeys,
+    accountContractStates,
     checkPassword,
     resolvePendingApproval,
     rejectPendingApproval,
 }) => {
     const [approvalIndex, setApprovalIndex] = useState(0)
-
-    const tonWalletState = tonWalletStates[
-        selectedAccount.tonWallet.address
-    ] as nt.ContractState | null
 
     const selectNextApproval = () => {
         if (pendingApprovals.length === 0) {
@@ -55,13 +55,39 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
         return null
     }
 
+    const decrementIndex = () => {
+        setApprovalIndex((approvalIndex + pendingApprovals.length - 1) % pendingApprovals.length)
+    }
+
+    const incrementIndex = () => {
+        setApprovalIndex((approvalIndex + 1) % pendingApprovals.length)
+    }
+
     return (
         <>
+            {pendingApprovals.length !== 1 && (
+                <div className="connect-wallet__slider">
+                    <div>
+                        Pending approval{' '}
+                        <span className="connect-wallet__slider__counter">{`${
+                            approvalIndex + 1
+                        } of ${pendingApprovals.length}`}</span>
+                    </div>
+                    <div className="connect-wallet__slider__nav">
+                        <div className="connect-wallet__slider__button" onClick={decrementIndex}>
+                            <Left />
+                        </div>
+                        <div className="connect-wallet__slider__button" onClick={incrementIndex}>
+                            <Right />
+                        </div>
+                    </div>
+                </div>
+            )}
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
                     approval={approval}
-                    account={selectedAccount}
-                    tonWalletState={tonWalletState}
+                    accountEntries={accountEntries}
+                    accountContractStates={accountContractStates}
                     onSubmit={(params) => {
                         resolvePendingApproval(approval.id, params).then(() => {})
                     }}
@@ -73,8 +99,9 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             {approval.type === 'sendMessage' && (
                 <ApproveSendMessage
                     approval={approval}
-                    account={selectedAccount}
-                    tonWalletState={tonWalletState}
+                    accountEntries={accountEntries}
+                    accountContractStates={accountContractStates}
+                    storedKeys={storedKeys}
                     checkPassword={checkPassword}
                     onSubmit={(password) => {
                         resolvePendingApproval(approval.id, password).then(() => {})
@@ -87,7 +114,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             {approval.type === 'callContractMethod' && (
                 <ApproveContractInteraction
                     approval={approval}
-                    account={selectedAccount}
+                    storedKeys={storedKeys}
                     checkPassword={checkPassword}
                     onSubmit={(password) => {
                         resolvePendingApproval(approval.id, password).then(() => {})

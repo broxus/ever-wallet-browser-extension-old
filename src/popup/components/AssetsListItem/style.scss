@@ -1,9 +1,9 @@
-@import "../../styles/colors";
+@import '../../styles/colors';
 
 .assets-list-item {
     align-items: center;
     border-bottom: 1px solid #ebedee;
-    //cursor: pointer;
+    cursor: pointer;
     display: flex;
     justify-content: space-between;
     padding: 20px 0;
@@ -11,6 +11,15 @@
     &__logo {
         margin-right: 16px;
         min-width: 40px;
+        width: 40px;
+        height: 40px;
+    }
+
+    &__icon {
+        margin-right: 16px;
+        min-width: 36px;
+        width: 36px;
+        height: 36px;
     }
 
     &__balance {

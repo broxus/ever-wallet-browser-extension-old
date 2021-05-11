@@ -1,5 +1,6 @@
 import '../polyfills'
 
+import _ from 'lodash'
 import safeStringify from 'fast-safe-stringify'
 import { EventEmitter } from 'events'
 import { Duplex } from 'readable-stream'
@@ -570,6 +571,8 @@ export const extractTransactionValue = (transaction: nt.Transaction) => {
     return new Decimal(transaction.inMessage.value).sub(outgoing)
 }
 
+export type TransactionDirection = 'from' | 'to' | 'service'
+
 export const extractTransactionAddress = (
     transaction: nt.Transaction
 ): { direction: TransactionDirection; address: string } => {
@@ -586,19 +589,86 @@ export const extractTransactionAddress = (
     }
 }
 
-export type TransactionDirection = 'from' | 'to' | 'service'
+const OUTGOING_TOKEN_TRANSACTION_TYPES: Exclude<
+    nt.TokenWalletTransaction['info'],
+    undefined
+>['type'][] = ['outgoing_transfer', 'swap_back']
+
+export const extractTokenTransactionValue = ({ info }: nt.TokenWalletTransaction) => {
+    if (info == null) {
+        return undefined
+    }
+
+    const tokens = new Decimal(info.data.tokens)
+    if (OUTGOING_TOKEN_TRANSACTION_TYPES.includes(info.type)) {
+        return tokens.negated()
+    } else {
+        return tokens
+    }
+}
+
+export type TokenTransactionAddress =
+    | undefined
+    | nt.TransferRecipient
+    | { type: 'eth_account'; address: string }
+
+export const extractTokenTransactionAddress = ({
+    info,
+}: nt.TokenWalletTransaction): TokenTransactionAddress => {
+    if (info == null) {
+        return undefined
+    }
+
+    if (info.type == 'incoming_transfer') {
+        return { type: 'owner_wallet', address: info.data.senderAddress }
+    } else if (info.type == 'outgoing_transfer') {
+        return info.data.to
+    } else if (info.type == 'swap_back') {
+        return { type: 'eth_account', address: info.data.to }
+    } else {
+        return undefined
+    }
+}
 
 export const convertAddress = (address: string | undefined) =>
     address ? `${address?.slice(0, 6)}...${address?.slice(-4)}` : ''
 
-export const convertTons = (amount?: string) => new Decimal(amount || '0').div(ONE_TON).toFixed()
+export const trimTokenName = (token: string | undefined) =>
+    token ? `${token?.slice(0, 4)}...${token?.slice(-4)}` : ''
+
+export const multiplier = _.memoize((decimals: number) => new Decimal(10).pow(decimals))
+
+export const amountPattern = _.memoize(
+    (decimals: number) => new RegExp(`^(?:0|[1-9][0-9]*)(?:.[0-9]{0,${decimals}})?$`)
+)
+
+export const convertTons = (amount?: string) => convertCurrency(amount, 9)
+
+export const convertCurrency = (amount: string | undefined, decimals: number) =>
+    new Decimal(amount || '0').div(multiplier(decimals)).toFixed()
 
 export const estimateUsd = (amount: string) => {
-    return `${new Decimal(amount || '0').div(ONE_TON).mul('0.6').toFixed(2).toString()}`
+    return `${new Decimal(amount || '0').div(multiplier(9)).mul('0.6').toFixed(2).toString()}`
 }
 
-export const parseTons = (amount: string) => {
-    return new Decimal(amount).mul(ONE_TON).ceil().toFixed(0)
+export const parseTons = (amount: string) => parseCurrency(amount, 9)
+
+export const parseCurrency = (amount: string, decimals: number) => {
+    return new Decimal(amount).mul(multiplier(decimals)).ceil().toFixed(0)
+}
+
+export function findAccountByAddress(
+    accountEntries: { [publicKey: string]: nt.AssetsList[] },
+    address: string
+): nt.AssetsList | undefined {
+    for (const accounts of window.ObjectExt.values(accountEntries)) {
+        for (const account of accounts) {
+            if (account.tonWallet.address == address) {
+                return account
+            }
+        }
+    }
+    return undefined
 }
 
 export interface SendMessageRequest {
@@ -609,4 +679,14 @@ export interface SendMessageRequest {
 export interface SendMessageCallback {
     resolve: (transaction: nt.Transaction) => void
     reject: (error?: Error) => void
+}
+
+export type SelectedAsset =
+    | nt.EnumItem<'ton_wallet', { address: string }>
+    | nt.EnumItem<'token_wallet', { owner: string; rootTokenContract: string }>
+
+export type AssetType = SelectedAsset['type']
+
+export interface TokenWalletState {
+    balance: string
 }

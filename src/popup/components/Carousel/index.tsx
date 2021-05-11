@@ -37,30 +37,30 @@ const Carousel: React.FC<ICarousel> = ({ content }) => {
                 <div className="carousel__content__slide">{content[active]}</div>
             </div>
             <div className="carousel__navigation">
-                <div className="carousel__navigation-dots">
-                    {content.map((_el, i) => (
-                        <div
-                            key={i}
-                            className={`carousel__navigation-dots-elem${
-                                active === i ? '--active' : ''
-                            }`}
-                        />
-                    ))}
-                </div>
-                <div className="carousel__navigation-arrows">
-                    <div
-                        className="carousel__navigation-arrows-elem"
-                        onClick={() => decrementIndex()}
-                    >
-                        <LeftArrow />
-                    </div>
-                    <div
-                        className="carousel__navigation-arrows-elem"
-                        onClick={() => incrementIndex()}
-                    >
-                        <RightArrow />
-                    </div>
-                </div>
+                {/*<div className="carousel__navigation-dots">*/}
+                {/*    {content.map((_el, i) => (*/}
+                {/*        <div*/}
+                {/*            key={i}*/}
+                {/*            className={`carousel__navigation-dots-elem${*/}
+                {/*                active === i ? '--active' : ''*/}
+                {/*            }`}*/}
+                {/*        />*/}
+                {/*    ))}*/}
+                {/*</div>*/}
+                {/*<div className="carousel__navigation-arrows">*/}
+                {/*    <div*/}
+                {/*        className="carousel__navigation-arrows-elem"*/}
+                {/*        onClick={() => decrementIndex()}*/}
+                {/*    >*/}
+                {/*        <LeftArrow />*/}
+                {/*    </div>*/}
+                {/*    <div*/}
+                {/*        className="carousel__navigation-arrows-elem"*/}
+                {/*        onClick={() => incrementIndex()}*/}
+                {/*    >*/}
+                {/*        <RightArrow />*/}
+                {/*    </div>*/}
+                {/*</div>*/}
             </div>
         </>
     )

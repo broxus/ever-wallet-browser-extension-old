@@ -6,14 +6,14 @@ import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 
-import UserPicS from '@popup/img/user-avatar-placeholder-s.svg'
 import Arrow from '@popup/img/arrow.svg'
 import EnterPassword from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
+import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
-    account: nt.AssetsList | null
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
@@ -21,7 +21,7 @@ interface IApproveContractInteraction {
 
 const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     approval,
-    account,
+    storedKeys,
     checkPassword,
     onSubmit,
     onReject,
@@ -34,10 +34,16 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
 
     const trySubmit = async (password: string) => {
+        const keyEntry = storedKeys[publicKey]
+        if (keyEntry == null) {
+            setError('Key entry not found')
+            return
+        }
+
         setInProcess(true)
         try {
             const keyPassword: nt.KeyPassword = {
-                type: 'encrypted_key',
+                type: keyEntry.signerName,
                 data: {
                     publicKey,
                     password,
@@ -56,23 +62,24 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
             setInProcess(false)
         }
     }
+
     return (
         <div className="connect-wallet">
             <div className="connect-wallet__top-panel">
-                <div className="connect-wallet__network">Mainnet</div>
+                {/*<div className="connect-wallet__network">Mainnet</div>
                 <div className="connect-wallet__address">
                     <div className="connect-wallet__address-entry">
-                        <UserPicS />
-                        <div className="connect-wallet__address-entry">{account?.name}</div>
+                        <UserAvatar address={account.tonWallet.address} small />
+                        <div className="connect-wallet__address-entry">{account.name}</div>
                     </div>
                     <Arrow />
                     <div className="connect-wallet__address-entry">
-                        <UserPicS />
+                        <UserAvatar address={account.tonWallet.address} small />
                         <div className="connect-wallet__address-entry">
                             {convertAddress(account?.tonWallet.address)}
                         </div>
                     </div>
-                </div>
+                </div>*/}
                 <p className="connect-wallet__top-panel__title">Contract interaction</p>
                 <p className="connect-wallet__top-panel__source">{origin}</p>
             </div>

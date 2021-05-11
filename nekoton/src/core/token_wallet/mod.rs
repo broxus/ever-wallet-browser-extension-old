@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
+use nt::core::models as core_models;
 use nt::core::token_wallet;
 use nt::utils::*;
 
@@ -16,9 +17,11 @@ pub struct TokenWallet {
     #[wasm_bindgen(skip)]
     pub version: String,
     #[wasm_bindgen(skip)]
-    pub symbol: nt::core::models::Symbol,
+    pub symbol: core_models::Symbol,
     #[wasm_bindgen(skip)]
     pub owner: String,
+    #[wasm_bindgen(skip)]
+    pub address: String,
     #[wasm_bindgen(skip)]
     pub inner: Arc<TokenWalletImpl>,
 }
@@ -32,6 +35,7 @@ impl TokenWallet {
             version: wallet.version().to_string(),
             symbol: wallet.symbol().clone(),
             owner: wallet.owner().to_string(),
+            address: wallet.address().to_string(),
             inner: Arc::new(TokenWalletImpl {
                 transport,
                 wallet: Mutex::new(wallet),
@@ -47,7 +51,8 @@ impl TokenWallet {
         eth_event_address: &str,
     ) -> Result<crate::core::InternalMessage, JsValue> {
         let eth_event_address = parse_address(eth_event_address)?;
-        Ok(token_wallet::make_collect_tokens_call(eth_event_address).into())
+        let internal_message = token_wallet::make_collect_tokens_call(eth_event_address);
+        crate::core::make_internal_message(internal_message)
     }
 
     #[wasm_bindgen(getter)]
@@ -67,6 +72,11 @@ impl TokenWallet {
     }
 
     #[wasm_bindgen(getter)]
+    pub fn address(&self) -> String {
+        self.address.clone()
+    }
+
+    #[wasm_bindgen(getter)]
     pub fn balance(&self) -> String {
         self.inner.wallet.lock().trust_me().balance().to_string()
     }
@@ -74,7 +84,10 @@ impl TokenWallet {
     #[wasm_bindgen(js_name = "prepareDeploy")]
     pub fn prepare_deploy(&self) -> Result<crate::core::InternalMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
-        wallet.prepare_deploy().handle_error().map(From::from)
+        wallet
+            .prepare_deploy()
+            .handle_error()
+            .and_then(crate::core::make_internal_message)
     }
 
     #[wasm_bindgen(js_name = "prepareTransfer")]
@@ -93,12 +106,10 @@ impl TokenWallet {
 
             // TODO: resolve token wallet by owner and send directly
             let message = wallet
-                .prepare_transfer(
-                    nt::core::models::TransferRecipient::OwnerWallet(dest),
-                    tokens,
-                )
+                .prepare_transfer(core_models::TransferRecipient::OwnerWallet(dest), tokens)
                 .handle_error()?;
-            Ok(JsValue::from(crate::core::InternalMessage::from(message)))
+
+            crate::core::make_internal_message(message).map(JsValue::from)
         })))
     }
 
@@ -120,7 +131,8 @@ impl TokenWallet {
             let message = wallet
                 .prepare_swap_back(dest, tokens, proxy_address)
                 .handle_error()?;
-            Ok(JsValue::from(crate::core::InternalMessage::from(message)))
+
+            crate::core::make_internal_message(message).map(JsValue::from)
         })))
     }
 
@@ -164,7 +176,7 @@ impl TokenWallet {
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = nt::core::models::TransactionId {
+        let from = core_models::TransactionId {
             lt: u64::from_str(&lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };
@@ -222,8 +234,8 @@ impl token_wallet::TokenWalletSubscriptionHandler for TokenWalletSubscriptionHan
 
     fn on_transactions_found(
         &self,
-        transactions: Vec<nt::core::models::TokenWalletTransaction>,
-        batch_info: nt::core::models::TransactionsBatchInfo,
+        transactions: Vec<core_models::TransactionWithData<core_models::TokenWalletTransaction>>,
+        batch_info: core_models::TransactionsBatchInfo,
     ) {
         use crate::core::models::*;
 
@@ -241,7 +253,33 @@ impl token_wallet::TokenWalletSubscriptionHandler for TokenWalletSubscriptionHan
 
 #[wasm_bindgen(typescript_custom_section)]
 const TOKEN_WALLET_TRANSACTION: &str = r#"
-export type TokenWalletTransaction =
+export type TokenWalletTransaction = Transaction & { info?: TokenWalletTransactionInfo };
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TokenWalletTransaction")]
+    pub type TokenWalletTransaction;
+}
+
+fn make_token_wallet_transaction(
+    data: core_models::TransactionWithData<core_models::TokenWalletTransaction>,
+) -> TokenWalletTransaction {
+    let transaction = crate::core::models::make_transaction(data.transaction);
+    if let Some(data) = data.data {
+        js_sys::Reflect::set(
+            &transaction,
+            &JsValue::from_str("info"),
+            &make_token_wallet_transaction_info(data),
+        )
+        .trust_me();
+    }
+    transaction.unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TOKEN_WALLET_TRANSACTION_INFO: &str = r#"
+export type TokenWalletTransactionInfo =
     | EnumItem<'incoming_transfer', { tokens: string, senderAddress: string }>
     | EnumItem<'outgoing_transfer', { to: TransferRecipient, tokens: string }>
     | EnumItem<'swap_back', { tokens: string, to: string }>
@@ -252,50 +290,48 @@ export type TokenWalletTransaction =
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "TokenWalletTransaction")]
-    pub type TokenWalletTransaction;
+    #[wasm_bindgen(typescript_type = "TokenWalletTransactionInfo")]
+    pub type TokenWalletTransactionInfo;
 }
 
-fn make_token_wallet_transaction(
-    data: nt::core::models::TokenWalletTransaction,
-) -> TokenWalletTransaction {
-    use nt::core::models;
-
+fn make_token_wallet_transaction_info(
+    data: core_models::TokenWalletTransaction,
+) -> TokenWalletTransactionInfo {
     let (ty, data) = match data {
-        models::TokenWalletTransaction::IncomingTransfer(transfer) => (
+        core_models::TokenWalletTransaction::IncomingTransfer(transfer) => (
             "incoming_transfer",
             ObjectBuilder::new()
                 .set("tokens", transfer.tokens.to_string())
                 .set("senderAddress", transfer.sender_address.to_string())
                 .build(),
         ),
-        models::TokenWalletTransaction::OutgoingTransfer(transfer) => (
+        core_models::TokenWalletTransaction::OutgoingTransfer(transfer) => (
             "outgoing_transfer",
             ObjectBuilder::new()
                 .set("to", make_transfer_recipient(transfer.to))
                 .set("tokens", transfer.tokens.to_string())
                 .build(),
         ),
-        models::TokenWalletTransaction::SwapBack(swap_back) => (
+        core_models::TokenWalletTransaction::SwapBack(swap_back) => (
             "swap_back",
             ObjectBuilder::new()
                 .set("to", swap_back.to)
                 .set("tokens", swap_back.tokens.to_string())
                 .build(),
         ),
-        models::TokenWalletTransaction::Accept(tokens) => (
+        core_models::TokenWalletTransaction::Accept(tokens) => (
             "accept",
             ObjectBuilder::new()
                 .set("tokens", tokens.to_string())
                 .build(),
         ),
-        models::TokenWalletTransaction::TransferBounced(tokens) => (
+        core_models::TokenWalletTransaction::TransferBounced(tokens) => (
             "transfer_bounced",
             ObjectBuilder::new()
                 .set("tokens", tokens.to_string())
                 .build(),
         ),
-        models::TokenWalletTransaction::SwapBackBounced(tokens) => (
+        core_models::TokenWalletTransaction::SwapBackBounced(tokens) => (
             "swap_back_bounced",
             ObjectBuilder::new()
                 .set("tokens", tokens.to_string())
@@ -324,12 +360,10 @@ extern "C" {
     pub type TransferRecipient;
 }
 
-fn make_transfer_recipient(data: nt::core::models::TransferRecipient) -> TransferRecipient {
-    use nt::core::models;
-
+fn make_transfer_recipient(data: core_models::TransferRecipient) -> TransferRecipient {
     let (ty, address) = match data {
-        models::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
-        models::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
+        core_models::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
+        core_models::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
     };
 
     ObjectBuilder::new()

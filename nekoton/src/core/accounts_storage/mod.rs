@@ -17,7 +17,7 @@ pub struct AccountsStorage {
 #[wasm_bindgen]
 impl AccountsStorage {
     #[wasm_bindgen]
-    pub fn load(storage: &crate::storage::Storage) -> PromiseAccountsStorage {
+    pub fn load(storage: &crate::external::Storage) -> PromiseAccountsStorage {
         let storage = storage.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -55,12 +55,48 @@ impl AccountsStorage {
         })))
     }
 
+    #[wasm_bindgen(js_name = "addTokenWallet")]
+    pub fn add_token_wallet(
+        &self,
+        account: String,
+        root_token_contract: String,
+    ) -> Result<PromiseAssetsList, JsValue> {
+        let inner = self.inner.clone();
+        let root_token_contract = parse_address(&root_token_contract)?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let assets_list = inner
+                .add_token_wallet(&account, root_token_contract)
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(make_assets_list(assets_list)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "removeTokenWallet")]
+    pub fn remove_token_wallet(
+        &self,
+        account: String,
+        root_token_contract: String,
+    ) -> Result<PromiseAssetsList, JsValue> {
+        let inner = self.inner.clone();
+        let root_token_contract = parse_address(&root_token_contract)?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let assets_list = inner
+                .remove_token_wallet(&account, &root_token_contract)
+                .await
+                .handle_error()?;
+            Ok(JsValue::from(make_assets_list(assets_list)))
+        })))
+    }
+
     #[wasm_bindgen(js_name = "removeAccount")]
-    pub fn remove_account(&self, address: String) -> PromiseOptionAssetsList {
+    pub fn remove_account(&self, account: String) -> PromiseOptionAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let assets_list = inner.remove_account(&address).await.handle_error()?;
+            let assets_list = inner.remove_account(&account).await.handle_error()?;
             Ok(JsValue::from(assets_list.map(make_assets_list)))
         }))
     }
@@ -76,7 +112,7 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "getAccount")]
-    pub fn get_account(&self, address: String) -> PromiseOptionAssetsList {
+    pub fn get_account(&self, account: String) -> PromiseOptionAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -84,7 +120,7 @@ impl AccountsStorage {
             Ok(JsValue::from(
                 state
                     .accounts()
-                    .get(&address)
+                    .get(&account)
                     .cloned()
                     .map(make_assets_list),
             ))
@@ -92,7 +128,7 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "getStoredAccounts")]
-    pub fn get_stored_accounts(&self) -> PromiseStoredAccountsEntriesList {
+    pub fn get_stored_accounts(&self) -> PromiseAssetsListList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
@@ -100,14 +136,7 @@ impl AccountsStorage {
             Ok(state
                 .accounts()
                 .iter()
-                .map(|(address, assets)| {
-                    make_account_storage_entry(
-                        address.clone(),
-                        assets.name.clone(),
-                        hex::encode(assets.ton_wallet.public_key.as_bytes()),
-                        assets.ton_wallet.contract.into(),
-                    )
-                })
+                .map(|(_, assets)| make_assets_list(assets.clone()))
                 .map(JsValue::from)
                 .collect::<js_sys::Array>()
                 .unchecked_into())
@@ -115,11 +144,11 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "setCurrentAccount")]
-    pub fn set_current_account(&self, address: String) -> PromiseAssetsList {
+    pub fn set_current_account(&self, account: String) -> PromiseAssetsList {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let assets_list = inner.set_current_account(&address).await.handle_error()?;
+            let assets_list = inner.set_current_account(&account).await.handle_error()?;
             Ok(make_assets_list(assets_list).unchecked_into())
         }))
     }
@@ -137,37 +166,6 @@ impl AccountsStorage {
                 .unwrap_or_else(JsValue::undefined))
         }))
     }
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const ACCOUNT_STORAGE_ENTRY: &str = r#"
-export type AccountsStorageEntry = {
-    address: string,
-    name: string,
-    publicKey: string,
-    contractType: ContractType,
-};
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "AccountsStorageEntry")]
-    pub type AccountsStorageEntry;
-}
-
-pub fn make_account_storage_entry(
-    address: String,
-    name: String,
-    public_key: String,
-    contract_type: crate::core::ton_wallet::ContractType,
-) -> AccountsStorageEntry {
-    ObjectBuilder::new()
-        .set("address", address)
-        .set("name", name)
-        .set("publicKey", public_key)
-        .set("contractType", contract_type)
-        .build()
-        .unchecked_into()
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -191,7 +189,7 @@ fn make_assets_list(data: nt::core::accounts_storage::AssetsList) -> AssetsList 
         .set("name", data.name)
         .set("tonWallet", make_ton_wallet_asset(data.ton_wallet))
         .set(
-            "tokenWallet",
+            "tokenWallets",
             data.token_wallets
                 .into_iter()
                 .map(make_token_wallet_asset)
@@ -240,7 +238,7 @@ fn make_ton_wallet_asset(data: nt::core::accounts_storage::TonWalletAsset) -> To
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type TokenWalletAsset = {
-    symbol: Symbol,
+    rootTokenContract: string,
 };
 "#;
 
@@ -251,9 +249,8 @@ extern "C" {
 }
 
 fn make_token_wallet_asset(data: nt::core::accounts_storage::TokenWalletAsset) -> TokenWalletAsset {
-    use crate::core::models::*;
     ObjectBuilder::new()
-        .set("symbol", make_symbol(data.symbol))
+        .set("rootTokenContract", data.root_token_contract.to_string())
         .build()
         .unchecked_into()
 }
@@ -280,8 +277,8 @@ fn make_depool_asset(data: nt::core::accounts_storage::DePoolAsset) -> DePoolAss
 
 #[wasm_bindgen]
 extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<Array<AccountsStorageEntry>>")]
-    pub type PromiseStoredAccountsEntriesList;
+    #[wasm_bindgen(typescript_type = "Promise<Array<AssetsList>>")]
+    pub type PromiseAssetsListList;
 
     #[wasm_bindgen(typescript_type = "Promise<AssetsList | undefined>")]
     pub type PromiseOptionAssetsList;

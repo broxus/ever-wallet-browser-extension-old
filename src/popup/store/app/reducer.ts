@@ -4,6 +4,8 @@ import { Action, AppState } from './types'
 
 export const initialState: AppState = {
     locale: 'en_US',
+    tokensManifest: undefined,
+    tokensMeta: {},
 }
 
 export default (state: AppState = initialState, action: Action): AppState =>

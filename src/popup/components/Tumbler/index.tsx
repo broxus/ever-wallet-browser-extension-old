@@ -5,19 +5,20 @@ import './style.scss'
 type ITumbler = {
     checked: boolean
     onChange: (checked: boolean) => void
+    id: string
 }
 
-const Tumbler: React.FC<ITumbler> = ({ checked, onChange }) => (
+const Tumbler: React.FC<ITumbler> = ({ checked, onChange, id }) => (
     <>
         <input
             type="checkbox"
-            id="toggle"
+            id={`${id}-toggle`}
             checked={checked}
             onChange={() => {
                 onChange(!checked)
             }}
         />
-        <label htmlFor="toggle" className="toggle">
+        <label htmlFor={`${id}-toggle`} className="toggle">
             <div className="slider" />
         </label>
     </>

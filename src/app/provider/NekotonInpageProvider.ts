@@ -154,6 +154,10 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         return super.addListener(eventName, listener)
     }
 
+    public removeListener(eventName: string, listener: (...args: unknown[]) => void) {
+        return super.removeListener(eventName, listener)
+    }
+
     public on(eventName: string, listener: (...args: unknown[]) => void) {
         return super.on(eventName, listener)
     }

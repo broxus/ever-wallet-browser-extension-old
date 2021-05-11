@@ -1,4 +1,4 @@
-mod abi;
+pub mod abi;
 
 use std::convert::TryFrom;
 use std::str::FromStr;
@@ -55,6 +55,17 @@ pub fn unpack_address(address: &str, is_url_safe: bool) -> Result<String, JsValu
 #[wasm_bindgen(js_name = "checkAddress")]
 pub fn check_address(address: &str) -> bool {
     nt::helpers::address::validate_address(address)
+}
+
+#[wasm_bindgen(js_name = "checkEthAddress")]
+pub fn check_eth_address(address: &str) -> bool {
+    match address.strip_prefix("0x") {
+        Some(address) => hex::decode(address)
+            .ok()
+            .and_then(|bytes| (bytes.len() == 20).then(|| ()))
+            .is_some(),
+        None => false,
+    }
 }
 
 #[wasm_bindgen(js_name = "getBip39Hints")]

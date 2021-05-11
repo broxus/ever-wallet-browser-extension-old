@@ -104,6 +104,7 @@ export class NekotonController extends EventEmitter {
         await connectionController.initialSync()
         await accountController.initialSync()
         await accountController.startSubscriptions()
+        await permissionsController.initialSync()
 
         notificationController.setHidden(false)
 
@@ -197,13 +198,20 @@ export class NekotonController extends EventEmitter {
             },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
+            createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
+            createDerivedKey: nodeifyAsync(accountController, 'createDerivedKey'),
+            removeKey: nodeifyAsync(accountController, 'removeKey'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
+            removeAccount: nodeifyAsync(accountController, 'removeAccount'),
+            updateTokenWallets: nodeifyAsync(accountController, 'updateTokenWallets'),
             logOut: nodeifyAsync(this, 'logOut'),
             estimateFees: nodeifyAsync(accountController, 'estimateFees'),
             estimateDeploymentFees: nodeifyAsync(accountController, 'estimateDeploymentFees'),
             prepareMessage: nodeifyAsync(accountController, 'prepareMessage'),
             prepareDeploymentMessage: nodeifyAsync(accountController, 'prepareDeploymentMessage'),
+            prepareTokenMessage: nodeifyAsync(accountController, 'prepareTokenMessage'),
+            prepareSwapBackMessage: nodeifyAsync(accountController, 'prepareSwapBackMessage'),
             sendMessage: nodeifyAsync(accountController, 'sendMessage'),
             preloadTransactions: nodeifyAsync(accountController, 'preloadTransactions'),
             resolvePendingApproval: nodeify(approvalController, 'resolve'),
@@ -238,6 +246,8 @@ export class NekotonController extends EventEmitter {
     public async logOut() {
         await this._components.accountController.logOut()
         await this._components.subscriptionsController.stopSubscriptions()
+        await this._components.approvalController.clear()
+        await this._components.permissionsController.clear()
 
         this._notifyAllConnections({
             method: 'loggedOut',
