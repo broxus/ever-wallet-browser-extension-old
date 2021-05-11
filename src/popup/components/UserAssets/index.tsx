@@ -18,7 +18,7 @@ type AssetsListProps = {
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
     updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
-    onSeeFull: (asset: SelectedAsset) => void
+    onViewAsset: (asset: SelectedAsset) => void
 }
 
 enum Panel {
@@ -31,7 +31,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
     tokenWalletStates,
     knownTokens,
     updateTokenWallets,
-    onSeeFull,
+    onViewAsset,
 }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
 
@@ -46,7 +46,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
                 name={'TON'}
                 decimals={9}
                 onClick={() =>
-                    onSeeFull({
+                    onViewAsset({
                         type: 'ton_wallet',
                         data: {
                             address: account.tonWallet.address,
@@ -66,7 +66,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
                         name={symbol?.name}
                         decimals={symbol?.decimals}
                         onClick={() => {
-                            onSeeFull({
+                            onViewAsset({
                                 type: 'token_wallet',
                                 data: {
                                     owner: account.tonWallet.address,
@@ -103,7 +103,7 @@ type IUserAssets = {
     transactions: nt.Transaction[]
     onViewTransaction: (transaction: nt.Transaction) => void
     updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
-    onSeeFull: (asset: SelectedAsset) => void
+    onViewAsset: (asset: SelectedAsset) => void
 }
 
 enum AssetsTab {
@@ -119,7 +119,7 @@ const UserAssets: React.FC<IUserAssets> = ({
     transactions,
     updateTokenWallets,
     onViewTransaction,
-    onSeeFull,
+    onViewAsset,
 }) => {
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
@@ -148,7 +148,7 @@ const UserAssets: React.FC<IUserAssets> = ({
                     <AssetsList
                         account={account}
                         tonWalletState={tonWalletState}
-                        onSeeFull={onSeeFull}
+                        onViewAsset={onViewAsset}
                         knownTokens={knownTokens}
                         tokenWalletStates={tokenWalletStates}
                         updateTokenWallets={updateTokenWallets}

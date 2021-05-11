@@ -22,5 +22,5 @@ export const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
     circle.style.left = `${event.clientX - (rect.left + radius)}px`
     circle.style.top = `${event.clientY - (rect.top + radius)}px`
     circle.classList.add('ripple')
-    button.appendChild(circle)
+    button.prepend(circle)
 }

@@ -21,7 +21,7 @@ type ITransactionExpired = {
 const TransactionExpired: React.FC<ITransactionExpired> = ({ onBack }) => {
     return (
         <>
-            <h2 className="send-screen__form-title">Transaction expired</h2>
+            <h2 className="send-screen__form-title">Message expired</h2>
             <div className="send-screen__tx-sending">
                 <Lottie
                     loop
@@ -42,7 +42,7 @@ type ITransactionSent = {
 const TransactionSent: React.FC<ITransactionSent> = ({ onBack }) => {
     return (
         <>
-            <h2 className="send-screen__form-title">Transaction has been sent</h2>
+            <h2 className="send-screen__form-title">Message has been sent</h2>
             <div className="send-screen__tx-sending">
                 <Lottie
                     loop
@@ -63,7 +63,7 @@ type ITransactionSending = {
 const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
     return (
         <>
-            <h2 className="send-screen__form-title">Transaction is sending...</h2>
+            <h2 className="send-screen__form-title">Message is sending...</h2>
             <div className="send-screen__tx-sending">
                 <Lottie
                     loop
