@@ -199,7 +199,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     )}
                 </>
             </SlidingPanel>
-        </Loader>
+        </>
     )
 }
 
