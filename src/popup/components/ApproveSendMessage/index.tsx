@@ -33,7 +33,9 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
 
     const contractState = accountContractStates[sender]
 
-    const balance = convertTons(contractState?.balance || '0').toLocaleString()
+    const balance = new Decimal(contractState?.balance || '0')
+
+    console.log(contractState, balance, sender)
 
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
@@ -115,7 +117,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                         <span className="connect-wallet__details__description-param-value">
                             {convertTons(amount)} TON
                         </span>
-                        {amount > contractState?.balance && (
+                        {balance.lessThan(amount) && (
                             <div
                                 className="check-seed__content-error"
                                 style={{ marginBottom: '16px', marginTop: '-12px' }}
@@ -174,7 +176,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <Button
                         type="submit"
                         text="Send"
-                        disabled={amount > contractState?.balance}
+                        disabled={balance.lessThan(amount)}
                         onClick={() => {
                             setPasswordModalVisible(true)
                         }}
