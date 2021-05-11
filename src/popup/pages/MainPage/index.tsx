@@ -148,6 +148,13 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
                                 controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
                             }
+                            prepareSwapBackMessage={async (owner, rootTokenContract, params) =>
+                                controllerRpc.prepareSwapBackMessage(
+                                    owner,
+                                    rootTokenContract,
+                                    params
+                                )
+                            }
                             sendMessage={sendMessage}
                         />
                     )}

@@ -11,7 +11,11 @@ import {
     SelectedAsset,
     TokenWalletState,
 } from '@shared/utils'
-import { MessageToPrepare, TokenMessageToPrepare } from '@shared/approvalApi'
+import {
+    MessageToPrepare,
+    SwapBackMessageToPrepare,
+    TokenMessageToPrepare,
+} from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import Select from 'react-select'
@@ -140,6 +144,11 @@ type IPrepareMessage = {
         rootTokenContract: string,
         params: TokenMessageToPrepare
     ) => Promise<nt.InternalMessage>
+    prepareSwapBackMessage: (
+        owner: string,
+        rootTokenContract: string,
+        params: SwapBackMessageToPrepare
+    ) => Promise<nt.InternalMessage>
     onSubmit: (message: nt.SignedMessage) => void
     onBack: () => void
 }
@@ -160,6 +169,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     estimateFees,
     prepareMessage,
     prepareTokenMessage,
+    prepareSwapBackMessage,
     onSubmit,
     onBack,
 }) => {
@@ -232,14 +242,16 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                 return
             }
 
-            const internalMessage = await prepareTokenMessage(
-                account.tonWallet.address,
-                selectedAsset,
-                {
-                    recipient: data.recipient,
-                    amount: parseCurrency(data.amount, decimals),
-                }
-            )
+            const internalMessage = data.recipient.startsWith('0x')
+                ? await prepareSwapBackMessage(account.tonWallet.address, selectedAsset, {
+                      amount: parseCurrency(data.amount, decimals),
+                      ethAddress: data.recipient,
+                  })
+                : await prepareTokenMessage(account.tonWallet.address, selectedAsset, {
+                      amount: parseCurrency(data.amount, decimals),
+                      recipient: data.recipient,
+                  })
+
             messageToPrepare = {
                 recipient: internalMessage.destination,
                 amount: internalMessage.amount,
@@ -367,8 +379,20 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                             onChange={(value) => setValue('recipient', value)}
                             register={register({
                                 required: true,
-                                pattern: /(?:-1|0):[0-9a-fA-F]{64}/,
-                                validate: (value: string) => nt.checkAddress(value),
+                                pattern:
+                                    selectedAsset.length == 0
+                                        ? /^(?:-1|0):[0-9a-fA-F]{64}$/
+                                        : /(^(?:-1|0):[0-9a-fA-F]{64}$)|(^0x[a-fA-F0-9]{40}$)/,
+                                validate: (value: string) => {
+                                    if (nt.checkAddress(value)) {
+                                        return true
+                                    }
+                                    return (
+                                        selectedAsset.length != 0 &&
+                                        value != null &&
+                                        nt.checkEthAddress(value)
+                                    )
+                                },
                             })}
                             type="text"
                         />
@@ -437,6 +461,11 @@ interface ISend {
         rootTokenContract: string,
         params: TokenMessageToPrepare
     ) => Promise<nt.InternalMessage>
+    prepareSwapBackMessage: (
+        owner: string,
+        rootTokenContract: string,
+        params: SwapBackMessageToPrepare
+    ) => Promise<nt.InternalMessage>
     sendMessage: (params: nt.SignedMessage) => Promise<nt.Transaction>
     onBack: () => void
 }
@@ -451,6 +480,7 @@ const Send: React.FC<ISend> = ({
     estimateFees,
     prepareMessage,
     prepareTokenMessage,
+    prepareSwapBackMessage,
     sendMessage,
     onBack,
 }) => {
@@ -478,6 +508,7 @@ const Send: React.FC<ISend> = ({
                 knownTokens={knownTokens}
                 prepareMessage={prepareMessage}
                 prepareTokenMessage={prepareTokenMessage}
+                prepareSwapBackMessage={prepareSwapBackMessage}
                 estimateFees={estimateFees}
                 onBack={onBack}
                 onSubmit={(message) => {
