@@ -16,10 +16,7 @@ import Button from '@popup/components/Button'
 import CopyAddress from '@popup/components/CopyAddress'
 
 import './style.scss'
-import { ControllerState } from '@popup/utils/ControllerRpcClient'
 import { TokenWalletTransactionInfo } from '@nekoton'
-import { EnumItem } from '@nekoton'
-import { TransferRecipient } from '@nekoton'
 
 interface ITransactionInfo {
     symbol?: nt.Symbol
@@ -30,6 +27,9 @@ const TRANSACTION_NAMES = {
     to: 'Recipient',
     service: 'Recipient',
     from: 'Sender',
+    incoming_transfer: 'Sender',
+    outgoing_transfer: 'Recipient',
+    swap_back: 'Recipient',
 }
 
 const TransferTypeMapping = {
@@ -42,7 +42,7 @@ const TransferTypeMapping = {
 }
 
 const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) => {
-    const { direction, address } = extractTransactionAddress(transaction)
+    // const { direction, address } = extractTransactionAddress(transaction)
 
     const value = useMemo(() => {
         if (symbol == null) {
@@ -52,13 +52,20 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
         }
     }, [transaction])
 
-    const txAddress = useMemo(() => {
-        if (symbol == null) {
-            return extractTransactionAddress(transaction)
-        } else {
-            return extractTokenTransactionAddress(transaction)
+    let direction, address
+
+    if (symbol == null) {
+        const txAddress = extractTransactionAddress(transaction)
+        direction = TRANSACTION_NAMES[txAddress.direction]
+        address = txAddress.address
+
+    } else {
+        const txAddress = extractTokenTransactionAddress(transaction)
+        if (txAddress) {
+            direction = TRANSACTION_NAMES[txAddress?.type]
+            address = txAddress?.address
         }
-    }, [transaction])
+    }
 
     const decimals = symbol == null ? 9 : symbol.decimals
 
@@ -94,10 +101,8 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                     <CopyAddress address={txHash} />
                 </div>
                 <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">
-                        {TRANSACTION_NAMES[direction]}
-                    </span>
-                    <CopyAddress address={address} />
+                    <span className="transaction-info-tx-details-param-desc">{direction}</span>
+                    {address && <CopyAddress address={address} />}
                 </div>
                 {info && (
                     <div className="transaction-info-tx-details-param">
@@ -123,7 +128,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Total amount</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {`${convertCurrency(total.toString(), decimals)} ${currencyName}`}
+                        {`${convertTons(total.toString())} ${currencyName} `}
                     </span>
                 </div>
             </div>
