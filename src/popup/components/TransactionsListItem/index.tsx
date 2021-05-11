@@ -1,9 +1,13 @@
 import React, { useMemo } from 'react'
 import {
+    AssetType,
     extractTransactionValue,
     extractTransactionAddress,
     convertAddress,
     convertTons,
+    extractTokenTransactionValue,
+    extractTokenTransactionAddress,
+    convertCurrency,
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
@@ -13,17 +17,34 @@ import ReactTooltip from 'react-tooltip'
 import './style.scss'
 
 type ITransactionsListItem = {
+    symbol: nt.Symbol | undefined
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
     onViewTransaction: (transaction: nt.Transaction) => void
 }
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({
+    symbol,
     transaction,
     onViewTransaction,
 }) => {
-    const value = useMemo(() => extractTransactionValue(transaction), [transaction])
-    const txAddress = useMemo(() => extractTransactionAddress(transaction), [transaction])
+    const value = useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionValue(transaction)
+        } else {
+            return extractTokenTransactionValue(transaction) || new Decimal(0)
+        }
+    }, [transaction])
+    const txAddress = useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionAddress(transaction)
+        } else {
+            return extractTokenTransactionAddress(transaction)
+        }
+    }, [transaction])
+
+    const decimals = symbol == null ? 0 : symbol.decimals
+    const currencyName = symbol == null ? 'TON' : symbol.name
 
     // wip to hide tooltip on click outside
 
@@ -48,7 +69,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
                             value.lessThan(0) ? 'expense' : 'income'
                         }`}
                     >
-                        {convertTons(value.toString())} TON
+                        {convertCurrency(value.toString(), decimals)} {currencyName}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span className="transactions-list-item__description transactions-list-item__fees">
@@ -63,7 +84,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
                     className="transactions-list-item__description transactions-list-item__address"
                     data-tip={txAddress?.address}
                 >
-                    {txAddress.address && convertAddress(txAddress.address)}
+                    {txAddress?.address && convertAddress(txAddress.address)}
                 </span>
                 <ReactTooltip
                     className="transactions-list-item__tooltip"

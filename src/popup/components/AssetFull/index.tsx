@@ -56,6 +56,7 @@ const AssetFull: React.FC<IAssetFull> = ({
     let shouldDeploy: boolean
     let balance: string | undefined
     let transactions: nt.Transaction[] | undefined
+    let symbol: nt.Symbol | undefined
     let currencyName: string | undefined
     let decimals: number | undefined
 
@@ -78,7 +79,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                 selectedAsset.data.rootTokenContract
             ]
 
-        const symbol = controllerState.knownTokens[rootTokenContract]
+        symbol = controllerState.knownTokens[rootTokenContract]
         currencyName = symbol.name
         decimals = symbol.decimals
     }
@@ -181,6 +182,7 @@ const AssetFull: React.FC<IAssetFull> = ({
 
                 <div className="asset-full__history">
                     <TransactionsList
+                        symbol={symbol}
                         transactions={transactions || []}
                         onViewTransaction={showTransaction}
                     />
