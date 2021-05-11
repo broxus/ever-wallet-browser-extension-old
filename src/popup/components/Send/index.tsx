@@ -2,8 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import Decimal from 'decimal.js'
 import { selectStyles } from '@popup/constants/selectStyle'
-import { convertTons, parseTons } from '@shared/utils'
-import { MessageToPrepare } from '@shared/approvalApi'
+import {
+    convertCurrency,
+    convertTons,
+    parseCurrency,
+    parseTons,
+    SelectedAsset,
+    TokenWalletState,
+} from '@shared/utils'
+import { MessageToPrepare, TokenMessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import Select from 'react-select'
@@ -14,8 +21,6 @@ import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
-const options = [{ value: 'TON', label: 'TON' }]
-
 enum PrepareStep {
     ENTER_ADDRESS,
     ENTER_PASSWORD,
@@ -25,6 +30,7 @@ type IEnterPassword = {
     keyEntry: nt.KeyStoreEntry
     params?: IMessage
     fees?: string
+    currencyName?: string
     error?: string
     disabled: boolean
     onSubmit: (password: nt.KeyPassword) => void
@@ -35,6 +41,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
     keyEntry,
     params,
     fees,
+    currencyName,
     error,
     disabled,
     onSubmit,
@@ -55,7 +62,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
 
     return (
         <>
-            <h2 className="send-screen__form-title">Enter your password to confirm transaction</h2>
+            <h2 className="send-screen__form-title">Confirm message</h2>
             <div className="send-screen__form-tx-details">
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Recipient</span>
@@ -66,7 +73,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                 <div className="send-screen__form-tx-details-param">
                     <span className="send-screen__form-tx-details-param-desc">Amount</span>
                     <span className="send-screen__form-tx-details-param-value">
-                        {params?.amount} TON
+                        {params?.amount} {currencyName}
                     </span>
                 </div>
                 <div className="send-screen__form-tx-details-param">
@@ -117,13 +124,21 @@ type MessageParams = {
 
 type IPrepareMessage = {
     account: nt.AssetsList
+    defaultAsset: SelectedAsset
     keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState
+    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
+    knownTokens: { [rootTokenContract: string]: nt.Symbol }
     estimateFees: (params: MessageToPrepare) => Promise<string>
     prepareMessage: (
         params: MessageToPrepare,
         password: nt.KeyPassword
     ) => Promise<nt.SignedMessage>
+    prepareTokenMessage: (
+        owner: string,
+        rootTokenContract: string,
+        params: TokenMessageToPrepare
+    ) => Promise<nt.InternalMessage>
     onSubmit: (message: nt.SignedMessage) => void
     onBack: () => void
 }
@@ -136,21 +151,58 @@ type IMessage = {
 
 const PrepareMessage: React.FC<IPrepareMessage> = ({
     account,
+    defaultAsset,
     keyEntry,
     tonWalletState,
+    tokenWalletStates,
+    knownTokens,
     estimateFees,
     prepareMessage,
+    prepareTokenMessage,
     onSubmit,
     onBack,
 }) => {
     const [localStep, setLocalStep] = useState(PrepareStep.ENTER_ADDRESS)
     const [inProcess, setInProcess] = useState(false)
-    const [error, setError] = useState()
+    const [error, setError] = useState<string>()
     const [messageToPrepare, setMessageToPrepare] = useState<MessageToPrepare>()
     const [fees, setFees] = useState<string>()
     const [messageParams, setMessageParams] = useState<IMessage>()
+    const [selectedAsset, setSelectedAsset] = useState<string>(
+        defaultAsset.type == 'ton_wallet' ? '' : defaultAsset.data.rootTokenContract
+    )
 
     const { register, setValue, handleSubmit, errors, getValues } = useForm<MessageParams>()
+
+    let defaultValue: { value: string; label: string } = { value: '', label: 'TON' }
+    const options: { value: string; label: string }[] = [defaultValue]
+    for (const { rootTokenContract } of account.tokenWallets) {
+        const symbol = knownTokens[rootTokenContract]
+
+        options.push({
+            value: rootTokenContract,
+            label: symbol?.name || 'Unknown',
+        })
+
+        if (defaultAsset.type == 'token_wallet') {
+            defaultValue = options[options.length - 1]
+        }
+    }
+
+    let balance: Decimal
+    let decimals: number | undefined
+    let currencyName: string | undefined
+    if (selectedAsset.length == 0) {
+        balance = new Decimal(tonWalletState?.balance || '0')
+        decimals = 9
+        currencyName = 'TON'
+    } else {
+        balance = new Decimal(tokenWalletStates[selectedAsset]?.balance || '0')
+
+        const symbol = knownTokens[selectedAsset] as nt.Symbol | undefined
+        decimals = symbol?.decimals
+        currencyName = symbol?.name
+    }
 
     useEffect(() => {
         if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
@@ -160,11 +212,33 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         }
     }, [localStep])
 
-    const submitMessageParams = (data: MessageParams) => {
-        const messageToPrepare: MessageToPrepare = {
-            recipient: data.recipient,
-            amount: parseTons(data.amount),
-            payload: data.comment ? nt.encodeComment(data.comment) : undefined,
+    const submitMessageParams = async (data: MessageParams) => {
+        let messageToPrepare: MessageToPrepare
+        if (selectedAsset.length == 0) {
+            messageToPrepare = {
+                recipient: data.recipient,
+                amount: parseTons(data.amount),
+                payload: data.comment ? nt.encodeComment(data.comment) : undefined,
+            }
+        } else {
+            if (decimals == null) {
+                setError('Invalid decimals')
+                return
+            }
+
+            const internalMessage = await prepareTokenMessage(
+                account.tonWallet.address,
+                selectedAsset,
+                {
+                    recipient: data.recipient,
+                    amount: parseCurrency(data.amount, decimals),
+                }
+            )
+            messageToPrepare = {
+                recipient: internalMessage.destination,
+                amount: internalMessage.amount,
+                payload: internalMessage.body,
+            }
         }
 
         setFees(undefined)
@@ -175,7 +249,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             .catch(console.error)
 
         setMessageToPrepare(messageToPrepare)
-        setMessageParams(getValues())
+        setMessageParams(data)
         setLocalStep(PrepareStep.ENTER_PASSWORD)
     }
 
@@ -196,8 +270,6 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         }
     }
 
-    const balance = new Decimal(tonWalletState?.balance || '0')
-
     return (
         <>
             <div className="send-screen__account_details">
@@ -206,19 +278,26 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             </div>
             {localStep === PrepareStep.ENTER_ADDRESS && (
                 <div>
-                    <h2 className="send-screen__form-title">Send your funds</h2>
+                    <h2 className="send-screen__form-title">Send message</h2>
                     <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
                         <Select
                             name="currency"
                             className="send-screen__form-token-dropdown"
-                            options={options}
-                            defaultValue={options?.[0]}
+                            options={options as any}
+                            defaultValue={defaultValue}
                             placeholder={'Select currency'}
                             styles={selectStyles}
+                            onChange={(asset) => {
+                                asset && setSelectedAsset(asset.value)
+                            }}
                         />
-                        <div className="send-screen__form-balance">
-                            Your balance: {convertTons(tonWalletState?.balance)} TON
-                        </div>
+                        {decimals != null && (
+                            <div className="send-screen__form-balance">
+                                Your balance: {convertCurrency(balance.toString(), decimals)}
+                                &nbsp;
+                                {currencyName}
+                            </div>
+                        )}
                         <Input
                             name="amount"
                             type="text"
@@ -229,11 +308,15 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                                 required: true,
                                 pattern: /^(?:0|[1-9][0-9]*)(?:.[0-9]{0,9})?$/,
                                 validate: (value?: string) => {
+                                    if (decimals == null) {
+                                        return false
+                                    }
                                     try {
-                                        const current = new Decimal(parseTons(value || ''))
+                                        const current = new Decimal(
+                                            parseCurrency(value || '', decimals)
+                                        )
                                         return current.lessThanOrEqualTo(balance)
                                     } catch (e) {
-                                        console.error(e)
                                         return false
                                     }
                                 },
@@ -265,14 +348,16 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                                 {errors.recipient.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
-                        <Input
-                            name="comment"
-                            label={'Comment...'}
-                            className="send-screen__form-comment"
-                            onChange={(value) => setValue('comment', value)}
-                            register={register()}
-                            type="text"
-                        />
+                        {selectedAsset.length == 0 && (
+                            <Input
+                                name="comment"
+                                label={'Comment...'}
+                                className="send-screen__form-comment"
+                                onChange={(value) => setValue('comment', value)}
+                                register={register()}
+                                type="text"
+                            />
+                        )}
                     </form>
                     <div style={{ display: 'flex' }}>
                         <div style={{ width: '50%', marginRight: '12px' }}>
@@ -289,6 +374,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             {localStep == PrepareStep.ENTER_PASSWORD && (
                 <EnterPassword
                     keyEntry={keyEntry}
+                    currencyName={currencyName}
                     params={messageParams}
                     fees={fees}
                     error={error}
@@ -305,23 +391,35 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
 
 interface ISend {
     account: nt.AssetsList
+    defaultAsset?: SelectedAsset
     keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState
+    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
+    knownTokens: { [rootTokenContract: string]: nt.Symbol }
     estimateFees: (params: MessageToPrepare) => Promise<string>
     prepareMessage: (
         params: MessageToPrepare,
         keyPassword: nt.KeyPassword
     ) => Promise<nt.SignedMessage>
+    prepareTokenMessage: (
+        owner: string,
+        rootTokenContract: string,
+        params: TokenMessageToPrepare
+    ) => Promise<nt.InternalMessage>
     sendMessage: (params: nt.SignedMessage) => Promise<nt.Transaction>
     onBack: () => void
 }
 
 const Send: React.FC<ISend> = ({
     account,
+    defaultAsset,
     keyEntry,
     tonWalletState,
+    tokenWalletStates,
+    knownTokens,
     estimateFees,
     prepareMessage,
+    prepareTokenMessage,
     sendMessage,
     onBack,
 }) => {
@@ -335,9 +433,20 @@ const Send: React.FC<ISend> = ({
         return (
             <PrepareMessage
                 account={account}
+                defaultAsset={
+                    defaultAsset || {
+                        type: 'ton_wallet',
+                        data: {
+                            address: account.tonWallet.address,
+                        },
+                    }
+                }
                 keyEntry={keyEntry}
                 tonWalletState={tonWalletState}
+                tokenWalletStates={tokenWalletStates}
+                knownTokens={knownTokens}
                 prepareMessage={prepareMessage}
+                prepareTokenMessage={prepareTokenMessage}
                 estimateFees={estimateFees}
                 onBack={onBack}
                 onSubmit={(message) => {

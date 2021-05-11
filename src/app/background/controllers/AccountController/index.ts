@@ -654,12 +654,23 @@ export class AccountController extends BaseController<
             subscription.skipRefreshTimer()
             subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
         })
+        this._tokenWalletSubscriptions.forEach((subscriptions) => {
+            subscriptions.forEach((subscription) => {
+                subscription.skipRefreshTimer()
+                subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
+            })
+        })
     }
 
     public disableIntensivePolling() {
         console.debug('Disable intensive polling')
         this._tonWalletSubscriptions.forEach((subscription) => {
             subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+        })
+        this._tokenWalletSubscriptions.forEach((subscriptions) => {
+            subscriptions.forEach((subscription) => {
+                subscription.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
+            })
         })
     }
 

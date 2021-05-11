@@ -58,7 +58,7 @@
 
     &__controls {
         display: flex;
-        margin-bottom: 48px;
+        margin-bottom: 26px;
 
         &__button {
             $accountButtonBg: rgba(#c5e4f3, 1.0);
@@ -75,7 +75,7 @@
             padding: 0.8em 1em;
             width: 100%;
 
-            &:first-child {
+            &:not(:last-child) {
                 margin-right: 12px;
             }
 

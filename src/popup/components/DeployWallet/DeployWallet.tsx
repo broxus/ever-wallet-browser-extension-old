@@ -73,7 +73,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({
         return (
             <>
                 <h2 className="send-screen__form-title">Deploy your wallet</h2>
-                {tonWalletState?.balance !== '0' ? (
+                {(tonWalletState?.balance || '0') !== '0' ? (
                     <>
                         <p className="deploy-wallet__comment">
                             Funds will be debited from your balance to deploy.
@@ -103,7 +103,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({
                 ) : (
                     <>
                         <p className="deploy-wallet__comment">
-                            You need to have at least 1 TON on your account balance to deploy.
+                            You need to have at least 0.5 TON on your account balance to deploy.
                         </p>
                         <h3 className="receive-screen__form-title">
                             Your address to receive TON funds

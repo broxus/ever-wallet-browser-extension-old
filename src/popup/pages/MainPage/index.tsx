@@ -127,12 +127,17 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             account={selectedAccount}
                             keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
+                            tokenWalletStates={tokenWalletStates}
+                            knownTokens={knownTokens}
                             onBack={closePanel}
                             estimateFees={async (params) =>
                                 await controllerRpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
                                 controllerRpc.prepareMessage(accountAddress, params, password)
+                            }
+                            prepareTokenMessage={async (owner, rootTokenContract, params) =>
+                                controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
                             }
                             sendMessage={sendMessage}
                         />
@@ -157,6 +162,8 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     {openedPanel == Panel.ASSET && selectedAsset && (
                         <AssetFull
                             account={selectedAccount}
+                            tokenWalletStates={tokenWalletStates}
+                            selectedKey={selectedKey}
                             selectedAsset={selectedAsset}
                             controllerState={controllerState}
                             controllerRpc={controllerRpc}

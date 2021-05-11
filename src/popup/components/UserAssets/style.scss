@@ -47,6 +47,10 @@
         &__add-new-btn {
             margin-bottom: 16px;
         }
+
+        & > .assets-list-item:last-of-type {
+            border-bottom: none;
+        }
     }
 
     &__transactions-list {

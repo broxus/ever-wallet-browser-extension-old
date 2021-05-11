@@ -10,16 +10,19 @@ import './style.scss'
 interface IReceive {
     accountName?: string
     address: string
+    currencyName?: string
 }
 
-const Receive: React.FC<IReceive> = ({ accountName, address }) => (
+const Receive: React.FC<IReceive> = ({ accountName, address, currencyName }) => (
     <>
         <div className="receive-screen__account_details">
             <UserAvatar address={address} />
             <span className="receive-screen__account_details-title">{accountName || ''}</span>
         </div>
 
-        <h3 className="receive-screen__form-title">Your address to receive TON funds</h3>
+        <h3 className="receive-screen__form-title">
+            Your address to receive {currencyName || 'TON'}
+        </h3>
         <div className="receive-screen__qr-code">
             <div className="receive-screen__qr-code-code">
                 <QRCode value={`ton://chat/${address}`} size={80} />
