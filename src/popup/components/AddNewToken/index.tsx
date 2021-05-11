@@ -36,10 +36,12 @@ export const Token: React.FC<IToken> = ({ token, enabled, onToggle }) => {
                         alt=""
                         height="36px"
                         width="36px"
-                        className="assets-list-item__icon"
+                        className="assets-list-item__icon noselect"
                     />
                 )}
-                {!logoURI && <UserAvatar address={address} className="assets-list-item__icon" />}
+                {!logoURI && (
+                    <UserAvatar address={address} className="assets-list-item__icon noselect" />
+                )}
                 <div className="assets-list-item__balance">
                     <span className="assets-list-item__balance__amount">{name}</span>
                     <span className="assets-list-item__balance__dollars">{symbol}</span>
@@ -204,9 +206,9 @@ const AddNewToken: React.FC<IAddNewToken> = ({
         <>
             {/*step === SelectTokenStep.SELECT && ( */}
             <>
-                <h2>Select assets</h2>
+                <h2 className="noselect">Select assets</h2>
                 <div className="add-new-token">
-                    <div className="add-new-token__panel">
+                    <div className="add-new-token__panel noselect">
                         <div
                             className={cn('add-new-token__panel-tab', {
                                 _active: activeTab == Tab.PREDEFINED,
@@ -215,14 +217,14 @@ const AddNewToken: React.FC<IAddNewToken> = ({
                         >
                             Search
                         </div>
-                        <div
-                            className={cn('add-new-token__panel-tab', {
-                                _active: activeTab == Tab.CUSTOM,
-                            })}
-                            onClick={() => setActiveTab(Tab.CUSTOM)}
-                        >
-                            Custom token
-                        </div>
+                        {/*<div*/}
+                        {/*    className={cn('add-new-token__panel-tab', {*/}
+                        {/*        _active: activeTab == Tab.CUSTOM,*/}
+                        {/*    })}*/}
+                        {/*    onClick={() => setActiveTab(Tab.CUSTOM)}*/}
+                        {/*>*/}
+                        {/*    Custom token*/}
+                        {/*</div>*/}
                     </div>
                     {activeTab == Tab.PREDEFINED &&
                         ((tokensManifest?.tokens.length || 0) > 0 ? (

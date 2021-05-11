@@ -13,6 +13,7 @@ import KeyStorage from '@popup/components/KeyStorage'
 import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import TransactionInfo from '@popup/components/TransactionInfo'
 import AssetFull from '@popup/components/AssetFull'
+import CollectTokens from '@popup/components/CollectTokens'
 
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
@@ -27,6 +28,7 @@ enum Panel {
     RECEIVE,
     SEND,
     DEPLOY,
+    COLLECT_TOKENS,
     KEY_STORAGE,
     CREATE_ACCOUNT,
     ASSET,
@@ -37,6 +39,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
+    const [ethEventContract, setEthEventContract] = useState<string>()
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -45,6 +48,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const closePanel = () => {
         setSelectedTransaction(undefined)
         setSelectedAsset(undefined)
+        setEthEventContract(undefined)
         setOpenedPanel(undefined)
     }
 
@@ -87,6 +91,11 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const showAsset = (selectedAsset: SelectedAsset) => {
         setSelectedAsset(selectedAsset)
         setOpenedPanel(Panel.ASSET)
+    }
+
+    const collectTokens = (ethEventContract: string) => {
+        setEthEventContract(ethEventContract)
+        setOpenedPanel(Panel.COLLECT_TOKENS)
     }
 
     return (
@@ -153,6 +162,22 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                             }
                             prepareDeployMessage={async (password) =>
                                 controllerRpc.prepareDeploymentMessage(accountAddress, password)
+                            }
+                            sendMessage={sendMessage}
+                        />
+                    )}
+                    {openedPanel == Panel.COLLECT_TOKENS && ethEventContract && (
+                        <CollectTokens
+                            account={selectedAccount}
+                            keyEntry={selectedKey}
+                            ethEventAddress={ethEventContract}
+                            tonWalletState={tonWalletState}
+                            onBack={closePanel}
+                            estimateFees={async (params) =>
+                                controllerRpc.estimateFees(accountAddress, params)
+                            }
+                            prepareMessage={async (params, password) =>
+                                controllerRpc.prepareMessage(accountAddress, params, password)
                             }
                             sendMessage={sendMessage}
                         />
