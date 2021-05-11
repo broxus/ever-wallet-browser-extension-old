@@ -138,7 +138,10 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
             <Button
                 white
                 onClick={() =>
-                    window.open(`https://ton-explorer.com/transactions/${txHash}`, '_blank')
+                    chrome.tabs.create({
+                        url: `https://ton-explorer.com/transactions/${txHash}`,
+                        active: false
+                    },)
                 }
                 text={'Open in explorer'}
             />
