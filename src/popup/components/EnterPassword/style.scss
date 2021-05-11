@@ -24,10 +24,9 @@
     }
     &__buttons {
         display: flex;
-        flex-direction: column;
 
         & > button:not(:last-child) {
-            margin-bottom: 12px;
+            margin-right: 12px;
         }
     }
 }

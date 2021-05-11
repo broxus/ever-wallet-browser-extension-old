@@ -58,9 +58,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
             <h2 className="send-screen__form-title">Enter your password to confirm transaction</h2>
             <div className="send-screen__form-tx-details">
                 <div className="send-screen__form-tx-details-param">
-                    <span className="send-screen__form-tx-details-param-desc">
-                        Recipient
-                    </span>
+                    <span className="send-screen__form-tx-details-param-desc">Recipient</span>
                     <span className="send-screen__form-tx-details-param-value">
                         {params?.recipient}
                     </span>
@@ -218,9 +216,13 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                             placeholder={'Select currency'}
                             styles={selectStyles}
                         />
+                        <div className="send-screen__form-balance">
+                            Your balance: {convertTons(tonWalletState?.balance)} TON
+                        </div>
                         <Input
                             name="amount"
                             type="text"
+                            className="send-screen__form-input"
                             label={'Amount...'}
                             onChange={(value) => setValue('amount', value.trim())}
                             register={register({
@@ -244,12 +246,10 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                                 {errors.amount.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
-                        <div className="send-screen__form-balance">
-                            Your balance: {convertTons(tonWalletState?.balance)} TON
-                        </div>
                         <Input
                             name="recipient"
                             label={'Receiver address...'}
+                            className="send-screen__form-input"
                             onChange={(value) => setValue('recipient', value)}
                             register={register({
                                 required: true,
