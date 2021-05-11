@@ -31,12 +31,6 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     const { origin } = approval
     const { sender, recipient, amount, fees, payload } = approval.requestData
 
-    const contractState = accountContractStates[sender]
-
-    const balance = new Decimal(contractState?.balance || '0')
-
-    console.log(contractState, balance, sender)
-
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
@@ -47,6 +41,11 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
         setInProcess(true)
         return null
     }
+
+    const contractState = accountContractStates[account.tonWallet.address]
+    const balance = new Decimal(contractState?.balance || '0')
+
+    console.log(contractState, balance, sender)
 
     const trySubmit = async (password: string) => {
         const keyEntry = storedKeys[account.tonWallet.publicKey]
