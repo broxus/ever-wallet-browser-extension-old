@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
+import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
