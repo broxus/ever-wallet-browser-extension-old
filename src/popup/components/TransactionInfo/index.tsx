@@ -43,11 +43,17 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
     const { direction, address } = extractTransactionAddress(transaction)
 
     const fee = new Decimal(transaction.totalFees)
-    const total = value.sub(fee)
+
+    let total = value.abs().add(fee.abs())
+
+    if (value.lessThan(0)) {
+        total = new Decimal(-total)
+    }
 
     const txHash = transaction.id.hash
 
     let info: TokenWalletTransactionInfo | undefined
+    const currencyName = symbol == null ? 'TON' : symbol.name
 
     if (symbol) {
         info = (transaction as nt.TokenWalletTransaction).info
@@ -85,21 +91,21 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Amount</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {convertTons(value.toString())}
+                        {`${convertTons(value.toString())} ${currencyName} `}
                     </span>
                 </div>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Blockchain fee</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {convertTons(fee.toString())}
+                        {`${convertTons(fee.toString())} ${currencyName} `}
                     </span>
                 </div>
-                {/*<div className="transaction-info-tx-details-param">*/}
-                {/*    <span className="transaction-info-tx-details-param-desc">Total amount</span>*/}
-                {/*    <span className="transaction-info-tx-details-param-value">*/}
-                {/*        {convertTons(total.toString())}*/}
-                {/*    </span>*/}
-                {/*</div>*/}
+                <div className="transaction-info-tx-details-param">
+                    <span className="transaction-info-tx-details-param-desc">Total amount</span>
+                    <span className="transaction-info-tx-details-param-value">
+                        {`${convertTons(total.toString())} ${currencyName}`}
+                    </span>
+                </div>
             </div>
             <Button
                 white
