@@ -44,9 +44,11 @@ body {
 body.fullscreen {
     width: 100%;
     height: 100%;
+    align-items: center;
 
     #root {
         max-width: min(90vw, 600px);
+        max-height: min(60vh, 600px);
     }
 }
 
