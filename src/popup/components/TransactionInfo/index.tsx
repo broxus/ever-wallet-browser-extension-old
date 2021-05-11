@@ -58,7 +58,6 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
         const txAddress = extractTransactionAddress(transaction)
         direction = TRANSACTION_NAMES[txAddress.direction]
         address = txAddress.address
-
     } else {
         const txAddress = extractTokenTransactionAddress(transaction)
         if (txAddress) {
@@ -122,13 +121,13 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Blockchain fee</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {`${convertTons(fee.toString())} ${currencyName} `}
+                        {`${convertTons(fee.toString())} TON`}
                     </span>
                 </div>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Total amount</span>
                     <span className="transaction-info-tx-details-param-value">
-                        {`${convertTons(total.toString())} ${currencyName} `}
+                        {`${convertTons(total.toString())} TON `}
                     </span>
                 </div>
             </div>
