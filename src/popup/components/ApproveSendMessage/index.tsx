@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
 import * as nt from '@nekoton'
@@ -8,7 +8,6 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import EnterPassword from '@popup/components/EnterPassword'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
 import UserAvatar from '@popup/components/UserAvatar'
-import { tonwallet_contractState } from '../../../../nekoton/pkg/index_bg.wasm'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
