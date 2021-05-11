@@ -124,12 +124,12 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                         {`${convertTons(fee.toString())} TON`}
                     </span>
                 </div>
-                <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">Total amount</span>
-                    <span className="transaction-info-tx-details-param-value">
-                        {`${convertTons(total.toString())} TON `}
-                    </span>
-                </div>
+                {/*<div className="transaction-info-tx-details-param">*/}
+                {/*    <span className="transaction-info-tx-details-param-desc">Total amount</span>*/}
+                {/*    <span className="transaction-info-tx-details-param-value">*/}
+                {/*        {`${convertTons(total.toString())} TON `}*/}
+                {/*    </span>*/}
+                {/*</div>*/}
             </div>
             <Button
                 white
