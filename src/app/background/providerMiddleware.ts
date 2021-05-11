@@ -604,14 +604,6 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
                 throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
             }
 
-            try {
-                if (new Decimal(amount).greaterThan(contractState.balance)) {
-                    throw new Error(`Insufficient balance`)
-                }
-            } catch (e) {
-                throw invalidRequest(req, e.toString())
-            }
-
             let unsignedMessage: nt.UnsignedMessage | undefined = undefined
             try {
                 unsignedMessage = wallet.prepareTransfer(
