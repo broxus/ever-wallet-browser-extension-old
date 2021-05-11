@@ -19,6 +19,8 @@ a {
 
     &-tx-details {
         margin-bottom: 28px;
+        max-height: 420px;
+        overflow-y: auto;
         &-separator {
             background: #ebedee;
             height: 1px;

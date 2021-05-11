@@ -4,6 +4,7 @@ import {
     convertTons,
     extractTransactionAddress,
     extractTransactionValue,
+    SelectedAsset,
 } from '@shared/utils'
 import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
@@ -12,6 +13,10 @@ import Button from '@popup/components/Button'
 import CopyAddress from '@popup/components/CopyAddress'
 
 import './style.scss'
+import { ControllerState } from '@popup/utils/ControllerRpcClient'
+import { TokenWalletTransactionInfo } from '@nekoton'
+import { EnumItem } from '@nekoton'
+import { TransferRecipient } from '@nekoton'
 
 interface ITransactionInfo {
     symbol?: nt.Symbol
@@ -24,7 +29,16 @@ const TRANSACTION_NAMES = {
     from: 'Sender',
 }
 
-const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
+const TransferTypeMapping = {
+    incoming_transfer: 'Incoming transfer',
+    outgoing_transfer: 'Outgoing transfer',
+    swap_back: 'Swap back',
+    accept: 'Accept',
+    transfer_bounced: 'Transfer bounced',
+    swap_back_bounced: 'Swap back bounced',
+}
+
+const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) => {
     const value = extractTransactionValue(transaction)
     const { direction, address } = extractTransactionAddress(transaction)
 
@@ -32,6 +46,12 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
     const total = value.sub(fee)
 
     const txHash = transaction.id.hash
+
+    let info: TokenWalletTransactionInfo | undefined
+
+    if (symbol) {
+        info = (transaction as nt.TokenWalletTransaction).info
+    }
 
     return (
         <>
@@ -53,6 +73,14 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
                     </span>
                     <CopyAddress address={address} />
                 </div>
+                {info && (
+                    <div className="transaction-info-tx-details-param">
+                        <span className="transaction-info-tx-details-param-desc">Info</span>
+                        <span className="transaction-info-tx-details-param-value">
+                            {TransferTypeMapping?.[info?.type]}
+                        </span>
+                    </div>
+                )}
                 <div className="transaction-info-tx-details-separator" />
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Amount</span>

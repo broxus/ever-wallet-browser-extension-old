@@ -52,6 +52,8 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
     //     tooltip.addEventListener('click', (e) => e.stopPropagation())
     // }
 
+    console.log('tramsaction', transaction)
+
     return (
         <div
             className="transactions-list-item"
