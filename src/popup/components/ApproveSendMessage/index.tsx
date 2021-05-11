@@ -166,6 +166,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     <Button
                         type="submit"
                         text="Send"
+                        disabled={amount > contractState?.balance}
                         onClick={() => {
                             setPasswordModalVisible(true)
                         }}
