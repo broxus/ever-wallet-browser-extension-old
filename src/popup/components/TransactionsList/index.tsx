@@ -26,7 +26,6 @@ const TransactionsList: React.FC<TransactionListProps> = ({
                     return (
                         <TransactionListItem
                             key={`${transaction.id.lt}`}
-                            symbol={symbol}
                             transaction={transaction}
                             onViewTransaction={onViewTransaction}
                         />

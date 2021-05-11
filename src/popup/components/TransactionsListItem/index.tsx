@@ -17,7 +17,7 @@ import ReactTooltip from 'react-tooltip'
 import './style.scss'
 
 type ITransactionsListItem = {
-    symbol: nt.Symbol | undefined
+    symbol?: nt.Symbol
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
     onViewTransaction: (transaction: nt.Transaction) => void
@@ -43,7 +43,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
         }
     }, [transaction])
 
-    const decimals = symbol == null ? 0 : symbol.decimals
+    const decimals = symbol == null ? 9 : symbol.decimals
     const currencyName = symbol == null ? 'TON' : symbol.name
 
     // wip to hide tooltip on click outside
