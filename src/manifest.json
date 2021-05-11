@@ -2,6 +2,7 @@
   "manifest_version": 2,
   "name": "TON Crystal Wallet",
   "version": "0.1.0",
+  "description": "Manage Free TON wallets and access dApps directly from your Chrome browser",
   "browser_action": {
     "default_title": "TON Crystal Wallet",
     "default_popup": "popup.html"
