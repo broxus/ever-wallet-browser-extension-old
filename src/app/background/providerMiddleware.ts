@@ -608,7 +608,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             try {
                 unsignedMessage = wallet.prepareTransfer(
                     contractState,
-                    selectedAddress,
+                    recipient,
                     amount,
                     false,
                     body,
