@@ -614,6 +614,10 @@ export class AccountController extends BaseController<
         requireTokenWalletSubscription(owner, rootTokenContract, subscription)
 
         return subscription.use(async (wallet) => {
+            if (params.proxyAddress == null) {
+                params.proxyAddress = await wallet.getProxyAddress()
+            }
+
             try {
                 return await wallet.prepareSwapBack(
                     params.ethAddress,

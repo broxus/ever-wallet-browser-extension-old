@@ -14,6 +14,7 @@ import CopyAddress from '@popup/components/CopyAddress'
 import './style.scss'
 
 interface ITransactionInfo {
+    symbol?: nt.Symbol
     transaction: nt.Transaction
 }
 

@@ -238,7 +238,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                         />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (
-                        <TransactionInfo transaction={selectedTransaction} />
+                        <TransactionInfo symbol={symbol} transaction={selectedTransaction} />
                     )}
                 </>
             </SlidingPanel>

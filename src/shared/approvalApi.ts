@@ -39,7 +39,7 @@ export type TokenMessageToPrepare = {
 export type SwapBackMessageToPrepare = {
     amount: string
     ethAddress: string
-    proxyAddress: string
+    proxyAddress?: string
 }
 
 export interface Approval<T extends string, D> {
