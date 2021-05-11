@@ -8,6 +8,7 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import EnterPassword from '@popup/components/EnterPassword'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
 import UserAvatar from '@popup/components/UserAvatar'
+import { tonwallet_contractState } from '../../../../nekoton/pkg/index_bg.wasm'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
@@ -76,6 +77,9 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
         }
     }
 
+    console.log('amount', amount)
+    console.log('tonbalance', contractState.balance)
+
     return (
         <div className="connect-wallet">
             <div className="connect-wallet__spend-top-panel">
@@ -115,6 +119,14 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                         <span className="connect-wallet__details__description-param-value">
                             {convertTons(amount)} TON
                         </span>
+                        {amount > contractState?.balance && (
+                            <div
+                                className="check-seed__content-error"
+                                style={{ marginBottom: '16px', marginTop: '-12px' }}
+                            >
+                                Insufficient funds
+                            </div>
+                        )}
                     </div>
                     <div className="connect-wallet__details__description-param">
                         <span className="connect-wallet__details__description-param-desc">
