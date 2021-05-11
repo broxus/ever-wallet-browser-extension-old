@@ -36,6 +36,6 @@ export const selectStyles = {
     indicatorsContainer: (styles: any) => ({ ...styles, cursor: 'pointer' }),
     placeholder: (styles: any) => ({ ...styles, color: '#96A1A7' }),
     menu: (styles: any) => ({ ...styles, marginTop: 2, borderRadius: 0, zIndex: '5' }),
-    valueContainer: (styles: any) => ({ ...styles, paddingBottom: '12px' }),
+    valueContainer: (styles: any) => ({ ...styles,  padding: '0 0 12px 16px' }),
     singleValue: (styles: any) => ({ ...styles, color: '#000000' }),
 }

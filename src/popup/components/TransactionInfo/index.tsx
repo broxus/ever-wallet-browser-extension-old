@@ -32,12 +32,12 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
 
     const txHash = transaction.id.hash
 
+    console.log(transaction, 'tramsaction')
+
     return (
         <>
             <h2 className="transaction-info-title">Transaction information</h2>
-            <div
-                className="transaction-info-tx-details"
-            >
+            <div className="transaction-info-tx-details">
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Date and time</span>
                     <span className="transaction-info-tx-details-param-value">
@@ -54,9 +54,7 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction }) => {
                     </span>
                     <CopyAddress address={address} />
                 </div>
-                <div
-                    className="transaction-info-tx-details-separator"
-                />
+                <div className="transaction-info-tx-details-separator" />
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Amount</span>
                     <span className="transaction-info-tx-details-param-value">
