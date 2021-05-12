@@ -32,8 +32,9 @@ import { ConnectionController } from '../ConnectionController'
 import { NotificationController } from '../NotificationController'
 
 import { DEFAULT_POLLING_INTERVAL, BACKGROUND_POLLING_INTERVAL } from './constants'
-import { ITonWalletHandler, TonWalletSubscription } from './TonWalletSubscription'
+import { TonWalletSubscription } from './TonWalletSubscription'
 import { ITokenWalletHandler, TokenWalletSubscription } from './TokenWalletSubscription'
+import { IContractHandler } from '../../utils/ContractSubscription'
 
 export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
@@ -713,7 +714,7 @@ export class AccountController extends BaseController<
             return
         }
 
-        class TonWalletHandler implements ITonWalletHandler {
+        class TonWalletHandler implements IContractHandler<nt.TonWalletTransaction> {
             private readonly _address: string
             private readonly _controller: AccountController
 
