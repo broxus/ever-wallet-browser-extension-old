@@ -16,8 +16,9 @@ pub struct KeyStore {
 #[wasm_bindgen]
 impl KeyStore {
     #[wasm_bindgen]
-    pub fn load(storage: &crate::external::Storage) -> PromiseKeyStore {
+    pub fn load(storage: &crate::external::Storage, ledger_connection: &crate::external::LedgerConnection) -> PromiseKeyStore {
         let storage = storage.inner.clone();
+        let ledger_connection = ledger_connection.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
@@ -25,6 +26,8 @@ impl KeyStore {
                     .with_signer(DERIVED_SIGNER, nt::crypto::DerivedKeySigner::new())
                     .handle_error()?
                     .with_signer(ENCRYPTED_SIGNER, nt::crypto::EncryptedKeySigner::new())
+                    .handle_error()?
+                    .with_signer(LEDGER_SIGNER, nt::crypto::LedgerKeySigner::new(ledger_connection))
                     .handle_error()?
                     .load()
                     .await
@@ -72,6 +75,15 @@ impl KeyStore {
                             phrase: phrase.into(),
                             mnemonic_type: mnemonic_type.into(),
                             password: password.into(),
+                        })
+                        .await
+                }
+                ParsedNewKey::LedgerKey {
+                    account_id
+                } => {
+                    inner
+                        .add_key::<LedgerKeySigner>(LedgerKeyCreateInput {
+                            account_id
                         })
                         .await
                 }
@@ -297,12 +309,14 @@ extern "C" {
 
 const DERIVED_SIGNER: &str = "master_key";
 const ENCRYPTED_SIGNER: &str = "encrypted_key";
+const LEDGER_SIGNER: &str = "ledger_key";
 
 #[wasm_bindgen(typescript_custom_section)]
 const NEW_KEY: &str = r#"
 export type NewKey =
     | EnumItem<'master_key', { params: MasterKeyParams | DerivedKeyParams, password: string }>
-    | EnumItem<'encrypted_key', { phrase: string, mnemonicType: MnemonicType, password: string }>;
+    | EnumItem<'encrypted_key', { phrase: string, mnemonicType: MnemonicType, password: string }>
+    | EnumItem<'ledger_key', { accountId: number }>;
 "#;
 
 #[wasm_bindgen]
@@ -324,6 +338,10 @@ enum ParsedNewKey {
         phrase: String,
         mnemonic_type: crate::crypto::ParsedMnemonicType,
         password: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    LedgerKey {
+        account_id: u16,
     },
 }
 

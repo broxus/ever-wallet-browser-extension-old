@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
 use anyhow::{anyhow, Result};
@@ -375,4 +376,105 @@ enum AdnlConnectionState {
     Uninitialized,
     WaitingInitialization(Option<nt::transport::adnl::ClientState>),
     Initialized(nt::transport::adnl::ClientState),
+}
+
+#[wasm_bindgen]
+extern "C" {
+    pub type LedgerConnector;
+
+    #[wasm_bindgen(method, js_name = "getPublicKey")]
+    pub fn get_public_key(this: &LedgerConnector, account: u16, handler: LedgerQueryResultHandler);
+
+    #[wasm_bindgen(method)]
+    pub fn sign(this: &LedgerConnector, account: u16, message: &[u8], handler: LedgerQueryResultHandler);
+}
+
+unsafe impl Send for LedgerConnector {}
+unsafe impl Sync for LedgerConnector {}
+
+#[wasm_bindgen]
+pub struct LedgerQueryResultHandler {
+    #[wasm_bindgen(skip)]
+    pub inner: QueryResultHandler<Vec<u8>>,
+}
+
+#[wasm_bindgen]
+impl LedgerQueryResultHandler {
+    #[wasm_bindgen(js_name = "onResult")]
+    pub fn on_result(self, data: Vec<u8>) {
+        self.inner.send(Ok(data))
+    }
+
+    #[wasm_bindgen(js_name = "onError")]
+    pub fn on_error(self, _: JsValue) {
+        self.inner.send(Err(LedgerConnectionError::QueryFailed.into()))
+    }
+}
+
+#[wasm_bindgen]
+pub struct LedgerConnection {
+    #[wasm_bindgen(skip)]
+    pub inner: Arc<LedgerConnectionImpl>,
+}
+
+#[wasm_bindgen]
+impl LedgerConnection {
+    #[wasm_bindgen(constructor)]
+    pub fn new(connector: LedgerConnector) -> LedgerConnection {
+        LedgerConnection {
+            inner: Arc::new(LedgerConnectionImpl::new(connector)),
+        }
+    }
+}
+
+pub struct LedgerConnectionImpl {
+    connector: Arc<LedgerConnector>,
+}
+
+impl LedgerConnectionImpl {
+    fn new(connector: LedgerConnector) -> Self {
+        Self {
+            connector: Arc::new(connector),
+        }
+    }
+}
+
+#[async_trait]
+impl nt::external::LedgerConnection for LedgerConnectionImpl {
+    async fn get_public_key(&self, account: u16) -> Result<[u8; ed25519_dalek::PUBLIC_KEY_LENGTH]> {
+        let (tx, rx) = oneshot::channel();
+        self.connector.get_public_key(
+            account,
+            LedgerQueryResultHandler {
+                inner: QueryHandler::new(tx),
+            },
+        );
+        match rx.await.map_err(|_| LedgerConnectionError::QueryDropped)? {
+            Ok(vec) => Ok(<[u8; ed25519_dalek::PUBLIC_KEY_LENGTH]>::try_from(vec.as_slice())?),
+            Err(err) => Err(err),
+        }
+    }
+
+    async fn sign(&self, account:u16, message: &[u8]) -> Result<[u8; ed25519_dalek::SIGNATURE_LENGTH]> {
+        let (tx, rx) = oneshot::channel();
+        self.connector.sign(
+            account,
+            message,
+            LedgerQueryResultHandler {
+                inner: QueryHandler::new(tx),
+            },
+        );
+        match rx.await.map_err(|_| LedgerConnectionError::QueryDropped)? {
+            Ok(vec) => Ok(<[u8; ed25519_dalek::SIGNATURE_LENGTH]>::try_from(vec.as_slice())?),
+            Err(err) => Err(err),
+        }
+    }
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum LedgerConnectionError {
+    #[error("Ledger query dropped")]
+    QueryDropped,
+    #[error("Query failed")]
+    QueryFailed,
 }
