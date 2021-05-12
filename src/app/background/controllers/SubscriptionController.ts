@@ -6,10 +6,9 @@ import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ConnectionController } from './ConnectionController'
+import { ContractSubscription, IContractHandler } from '../utils/ContractSubscription'
 
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s
-
-const NEXT_BLOCK_TIMEOUT = 60 // 60s
 
 export interface SubscriptionControllerConfig extends BaseConfig {
     connectionController: ConnectionController
@@ -184,7 +183,7 @@ export class SubscriptionController extends BaseController<
     }
 
     private async _createSubscription(address: string, subscriptionTabs: Set<number>) {
-        class ContractHandler implements IGenericContractHandler {
+        class ContractHandler implements IContractHandler<nt.Transaction> {
             private readonly _address: string
             private readonly _controller: SubscriptionController
             private _enabled: boolean = false
@@ -240,6 +239,7 @@ export class SubscriptionController extends BaseController<
             address,
             handler
         )
+        subscription.setPollingInterval(DEFAULT_POLLING_INTERVAL)
         handler.enableNotifications()
         this._subscriptions.set(address, subscription)
         this._subscriptionTabs.set(address, subscriptionTabs)
@@ -366,34 +366,11 @@ export class SubscriptionController extends BaseController<
     }
 }
 
-interface IGenericContractHandler {
-    onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction): void
-
-    onMessageExpired(pendingTransaction: nt.PendingTransaction): void
-
-    onStateChanged(newState: nt.ContractState): void
-
-    onTransactionsFound(transactions: Array<nt.Transaction>, info: nt.TransactionsBatchInfo): void
-}
-
-class GenericContractSubscription {
-    private readonly _connection: nt.GqlConnection
-    private readonly _address: string
-    private readonly _contract: nt.GenericContract
-    private readonly _contractMutex: Mutex = new Mutex()
-    private _releaseConnection?: () => void
-    private _loopPromise?: Promise<void>
-    private _refreshTimer?: [number, () => void]
-    private _pollingInterval: number = DEFAULT_POLLING_INTERVAL
-    private _currentPollingMethod: typeof nt.GenericContract.prototype.pollingMethod
-    private _isRunning: boolean = false
-    private _currentBlockId?: string
-    private _suggestedBlockId?: string
-
+class GenericContractSubscription extends ContractSubscription<nt.GenericContract> {
     public static async subscribe(
         connectionController: ConnectionController,
         address: string,
-        handler: IGenericContractHandler
+        handler: IContractHandler<nt.Transaction>
     ) {
         const {
             connection: {
@@ -413,161 +390,5 @@ class GenericContractSubscription {
             release()
             throw e
         }
-    }
-
-    private constructor(
-        connection: nt.GqlConnection,
-        release: () => void,
-        address: string,
-        contract: nt.GenericContract
-    ) {
-        this._releaseConnection = release
-        this._connection = connection
-        this._address = address
-        this._contract = contract
-        this._currentPollingMethod = this._contract.pollingMethod
-    }
-
-    public setPollingInterval(interval: number) {
-        this._pollingInterval = interval
-    }
-
-    public async start() {
-        if (this._releaseConnection == null) {
-            throw new NekotonRpcError(
-                RpcErrorCode.INTERNAL,
-                'Contract subscription must not be started after being closed'
-            )
-        }
-
-        if (this._loopPromise) {
-            console.debug('GenericContractSubscription -> awaiting loop promise')
-            await this._loopPromise
-        }
-
-        console.debug('GenericContractSubscription -> loop started')
-
-        this._loopPromise = new Promise<void>(async (resolve) => {
-            this._isRunning = true
-            outer: while (this._isRunning) {
-                switch (this._currentPollingMethod) {
-                    case 'manual': {
-                        this._currentBlockId = undefined
-
-                        console.debug('GenericContractSubscription -> manual -> waiting begins')
-
-                        await new Promise<void>((resolve) => {
-                            const timerHandle = window.setTimeout(() => {
-                                this._refreshTimer = undefined
-                                resolve()
-                            }, this._pollingInterval)
-                            this._refreshTimer = [timerHandle, resolve]
-                        })
-
-                        console.debug('GenericContractSubscription -> manual -> waiting ends')
-
-                        if (!this._isRunning) {
-                            break outer
-                        }
-
-                        console.debug('GenericContractSubscription -> manual -> refreshing begins')
-                        await this._contractMutex.use(async () => {
-                            await this._contract.refresh()
-                            this._currentPollingMethod = this._contract.pollingMethod
-                        })
-                        console.debug('GenericContractSubscription -> manual -> refreshing ends')
-
-                        break
-                    }
-                    case 'reliable': {
-                        console.debug('GenericContractSubscription -> reliable start')
-
-                        if (this._suggestedBlockId != null) {
-                            this._currentBlockId = this._suggestedBlockId
-                            this._suggestedBlockId = undefined
-                        }
-
-                        let nextBlockId: string
-                        if (this._currentBlockId == null) {
-                            console.warn('Starting reliable connection with unknown block')
-                            const latestBlock = await this._connection.getLatestBlock(this._address)
-                            this._currentBlockId = latestBlock.id
-                            nextBlockId = this._currentBlockId
-                        } else {
-                            nextBlockId = await this._connection.waitForNextBlock(
-                                this._currentBlockId,
-                                this._address,
-                                NEXT_BLOCK_TIMEOUT
-                            )
-                        }
-
-                        await this._contractMutex.use(async () => {
-                            await this._contract.handleBlock(nextBlockId)
-                            this._currentPollingMethod = this._contract.pollingMethod
-                            this._currentBlockId = nextBlockId
-                        })
-                        break
-                    }
-                }
-            }
-
-            console.debug('GenericContractSubscription -> loop finished')
-
-            resolve()
-        })
-    }
-
-    public skipRefreshTimer() {
-        window.clearTimeout(this._refreshTimer?.[0])
-        this._refreshTimer?.[1]()
-        this._refreshTimer = undefined
-    }
-
-    public async pause() {
-        if (!this._isRunning) {
-            return
-        }
-
-        this._isRunning = false
-
-        this.skipRefreshTimer()
-
-        await this._loopPromise
-        this._loopPromise = undefined
-
-        this._currentPollingMethod = await this._contractMutex.use(async () => {
-            return this._contract.pollingMethod
-        })
-
-        this._currentBlockId = undefined
-        this._suggestedBlockId = undefined
-    }
-
-    public async stop() {
-        await this.pause()
-        this._contract.free()
-        this._releaseConnection?.()
-        this._releaseConnection = undefined
-    }
-
-    public async prepareReliablePolling() {
-        try {
-            this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
-        }
-    }
-
-    public async use<T>(f: (contract: nt.GenericContract) => Promise<T>) {
-        const release = await this._contractMutex.acquire()
-        return f(this._contract)
-            .then((res) => {
-                release()
-                return res
-            })
-            .catch((err) => {
-                release()
-                throw err
-            })
     }
 }
