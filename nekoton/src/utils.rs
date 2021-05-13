@@ -31,13 +31,10 @@ where
     type Output = T;
 
     fn handle_error(self) -> Result<Self::Output, JsValue> {
-        match self {
-            Ok(value) => value,
-            Err(e) => {
-                let error = e.to_string();
-                js_sys::Error::new(&error).unchecked_into()
-            }
-        }
+        self.map_err(|e| {
+            let error = e.to_string();
+            js_sys::Error::new(&error).unchecked_into()
+        })
     }
 }
 
