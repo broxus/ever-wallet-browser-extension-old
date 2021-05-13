@@ -33,7 +33,7 @@ syn = "=1.0.72"
 thiserror = "1.0"
 wasm-bindgen = { version = "=0.2.74", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
-wee_alloc = "0.4"
+#wee_alloc = "0.4"
 x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
 wasm-logger = "0.2"
