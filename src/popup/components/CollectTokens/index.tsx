@@ -73,13 +73,21 @@ const CollectTokens: React.FC<ICollectTokens> = ({
             return
         }
 
-        const keyPassword: nt.KeyPassword = {
-            type: keyEntry.signerName,
-            data: {
-                publicKey: keyEntry.publicKey,
-                password,
-            },
-        }
+        const keyPassword: nt.KeyPassword =
+            keyEntry.signerName != 'ledger_key'
+                ? {
+                    type: keyEntry.signerName,
+                    data: {
+                        publicKey: keyEntry.publicKey,
+                        password,
+                    },
+                }
+                : {
+                    type:  keyEntry.signerName,
+                    data: {
+                        publicKey: keyEntry.publicKey,
+                    },
+                }
 
         setError(undefined)
         setInProcess(true)

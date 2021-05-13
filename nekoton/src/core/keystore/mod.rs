@@ -284,6 +284,15 @@ async fn sign_data(
                 password: password.into(),
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
+        },
+        ParsedKeyPassword::LedgerKey {
+            public_key,
+        } => {
+            let public_key = parse_public_key(&public_key)?;
+            let input = LedgerKeyPublic {
+                public_key,
+            };
+            key_store.sign::<LedgerKeySigner>(data, input).await
         }
     }
     .handle_error()
@@ -454,7 +463,8 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
     | EnumItem<'master_key', { publicKey: string, password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>
+    | EnumItem<'ledger_key', { publicKey: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -476,12 +486,16 @@ enum ParsedKeyPassword {
         public_key: String,
         password: String,
     },
+    #[serde(rename_all = "camelCase")]
+    LedgerKey {
+        public_key: String,
+    },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type KeyStoreEntry = {
-    signerName: 'master_key' | 'encrypted_key',
+    signerName: 'master_key' | 'encrypted_key' | 'ledger_key',
     publicKey: string,
     accountId: number,
 };

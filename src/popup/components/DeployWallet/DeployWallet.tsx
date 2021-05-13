@@ -50,13 +50,21 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     const [pendingResponse, setPendingResponse] = useState<Promise<nt.Transaction>>()
 
     const submitPassword = async (password: string) => {
-        const keyPassword: nt.KeyPassword = {
-            type: keyEntry.signerName,
-            data: {
-                publicKey: keyEntry.publicKey,
-                password,
-            },
-        }
+        const keyPassword: nt.KeyPassword =
+            keyEntry.signerName != 'ledger_key'
+                ? {
+                    type: keyEntry.signerName,
+                    data: {
+                        publicKey: keyEntry.publicKey,
+                        password,
+                    },
+                }
+                : {
+                    type:  keyEntry.signerName,
+                    data: {
+                        publicKey: keyEntry.publicKey,
+                    },
+                }
 
         setError(undefined)
         setInProcess(true)
