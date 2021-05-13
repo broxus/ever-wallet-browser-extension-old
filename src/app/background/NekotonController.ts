@@ -348,7 +348,7 @@ export class NekotonController extends EventEmitter {
         if (tabId) {
             engine.push(createTabIdMiddleware({ tabId }))
         }
-        engine.push(createLoggerMiddleware({ origin }))
+        //engine.push(createLoggerMiddleware({ origin }))
 
         engine.push(
             createProviderMiddleware({

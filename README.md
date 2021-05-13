@@ -22,6 +22,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.2 (2021-05-14)
+
+Bugfixes:
+* Fixed wasm-bindgen module resolution.
+* Fixed outdated wasm-pack.
+* Fixed memory leaks due to invalid allocator.
+
 ### 0.1.1 (2021-05-13)
 
 Bugfixes:
