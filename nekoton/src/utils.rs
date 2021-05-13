@@ -4,7 +4,7 @@ use anyhow::Error;
 use futures::channel::oneshot;
 use ton_block::{Deserializable, MsgAddressInt};
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsCast, JsValue};
 
 use nt::utils::*;
 
