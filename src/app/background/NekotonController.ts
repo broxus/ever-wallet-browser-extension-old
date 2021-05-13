@@ -36,6 +36,10 @@ import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
 import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
 
+import TransportWebHID from '@ledgerhq/hw-transport-webhid'
+import Transport from '@ledgerhq/hw-transport'
+import LedgerApp from './ledger/LedgerApp'
+
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
     openPopup: () => void
@@ -75,8 +79,9 @@ export class NekotonController extends EventEmitter {
 
     public static async load(options: NekotonControllerOptions) {
         const storage = new nt.Storage(new StorageConnector())
+        const ledgerConnection = new nt.LedgerConnection(new LedgerConnection())
         const accountsStorage = await nt.AccountsStorage.load(storage)
-        const keyStore = await nt.KeyStore.load(storage)
+        const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
 
         const connectionController = new ConnectionController({})
 
@@ -343,7 +348,7 @@ export class NekotonController extends EventEmitter {
         if (tabId) {
             engine.push(createTabIdMiddleware({ tabId }))
         }
-        engine.push(createLoggerMiddleware({ origin }))
+        //engine.push(createLoggerMiddleware({ origin }))
 
         engine.push(
             createProviderMiddleware({
@@ -499,6 +504,40 @@ export class StorageConnector {
 
     removeUnchecked(key: string) {
         chrome.storage.local.remove([key], () => {})
+    }
+}
+
+export class LedgerConnection {
+    async getPublicKey(account: number, handler: nt.LedgerQueryResultHandler) {
+        let transport: Transport<string> | undefined
+        try {
+            transport = await TransportWebHID.create()
+            const ledger = new LedgerApp(transport)
+            const { publicKey } = await ledger.getPublicKey(account)
+            handler.onResult(publicKey)
+        } catch (error) {
+            handler.onError(error)
+        } finally {
+            if (transport != undefined) {
+                await transport.close()
+            }
+        }
+    }
+
+    async sign(account: number, message: Buffer, handler: nt.LedgerQueryResultHandler) {
+        let transport: Transport<string> | undefined
+        try {
+            transport = await TransportWebHID.create()
+            const ledger = new LedgerApp(transport)
+            const { signature } = await ledger.signHash(account, message)
+            handler.onResult(signature)
+        } catch (error) {
+            handler.onError(error)
+        } finally {
+            if (transport != undefined) {
+                await transport.close()
+            }
+        }
     }
 }
 

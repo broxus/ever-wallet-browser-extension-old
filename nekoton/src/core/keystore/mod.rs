@@ -16,8 +16,9 @@ pub struct KeyStore {
 #[wasm_bindgen]
 impl KeyStore {
     #[wasm_bindgen]
-    pub fn load(storage: &crate::external::Storage) -> PromiseKeyStore {
+    pub fn load(storage: &crate::external::Storage, ledger_connection: &crate::external::LedgerConnection) -> PromiseKeyStore {
         let storage = storage.inner.clone();
+        let ledger_connection = ledger_connection.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
@@ -25,6 +26,8 @@ impl KeyStore {
                     .with_signer(DERIVED_SIGNER, nt::crypto::DerivedKeySigner::new())
                     .handle_error()?
                     .with_signer(ENCRYPTED_SIGNER, nt::crypto::EncryptedKeySigner::new())
+                    .handle_error()?
+                    .with_signer(LEDGER_SIGNER, nt::crypto::LedgerKeySigner::new(ledger_connection))
                     .handle_error()?
                     .load()
                     .await
@@ -72,6 +75,15 @@ impl KeyStore {
                             phrase: phrase.into(),
                             mnemonic_type: mnemonic_type.into(),
                             password: password.into(),
+                        })
+                        .await
+                }
+                ParsedNewKey::LedgerKey {
+                    account_id
+                } => {
+                    inner
+                        .add_key::<LedgerKeySigner>(LedgerKeyCreateInput {
+                            account_id
                         })
                         .await
                 }
@@ -272,6 +284,15 @@ async fn sign_data(
                 password: password.into(),
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
+        },
+        ParsedKeyPassword::LedgerKey {
+            public_key,
+        } => {
+            let public_key = parse_public_key(&public_key)?;
+            let input = LedgerKeyPublic {
+                public_key,
+            };
+            key_store.sign::<LedgerKeySigner>(data, input).await
         }
     }
     .handle_error()
@@ -297,12 +318,14 @@ extern "C" {
 
 const DERIVED_SIGNER: &str = "master_key";
 const ENCRYPTED_SIGNER: &str = "encrypted_key";
+const LEDGER_SIGNER: &str = "ledger_key";
 
 #[wasm_bindgen(typescript_custom_section)]
 const NEW_KEY: &str = r#"
 export type NewKey =
     | EnumItem<'master_key', { params: MasterKeyParams | DerivedKeyParams, password: string }>
-    | EnumItem<'encrypted_key', { phrase: string, mnemonicType: MnemonicType, password: string }>;
+    | EnumItem<'encrypted_key', { phrase: string, mnemonicType: MnemonicType, password: string }>
+    | EnumItem<'ledger_key', { accountId: number }>;
 "#;
 
 #[wasm_bindgen]
@@ -324,6 +347,10 @@ enum ParsedNewKey {
         phrase: String,
         mnemonic_type: crate::crypto::ParsedMnemonicType,
         password: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    LedgerKey {
+        account_id: u16,
     },
 }
 
@@ -436,7 +463,8 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
     | EnumItem<'master_key', { publicKey: string, password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>
+    | EnumItem<'ledger_key', { publicKey: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -458,12 +486,16 @@ enum ParsedKeyPassword {
         public_key: String,
         password: String,
     },
+    #[serde(rename_all = "camelCase")]
+    LedgerKey {
+        public_key: String,
+    },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type KeyStoreEntry = {
-    signerName: 'master_key' | 'encrypted_key',
+    signerName: 'master_key' | 'encrypted_key' | 'ledger_key',
     publicKey: string,
     accountId: number,
 };

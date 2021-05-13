@@ -42,13 +42,21 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
 
         setInProcess(true)
         try {
-            const keyPassword: nt.KeyPassword = {
-                type: keyEntry.signerName,
-                data: {
-                    publicKey,
-                    password,
-                },
-            }
+            const keyPassword: nt.KeyPassword =
+                keyEntry.signerName != 'ledger_key'
+                    ? {
+                        type: keyEntry.signerName,
+                        data: {
+                            publicKey: keyEntry.publicKey,
+                            password,
+                        },
+                    }
+                    : {
+                        type:  keyEntry.signerName,
+                        data: {
+                            publicKey: keyEntry.publicKey,
+                        },
+                    }
 
             const isValid = await checkPassword(keyPassword)
             if (isValid) {

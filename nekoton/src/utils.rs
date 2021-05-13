@@ -4,7 +4,7 @@ use anyhow::Error;
 use futures::channel::oneshot;
 use ton_block::{Deserializable, MsgAddressInt};
 use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsValue;
+use wasm_bindgen::{JsCast, JsValue};
 
 use nt::utils::*;
 
@@ -31,7 +31,10 @@ where
     type Output = T;
 
     fn handle_error(self) -> Result<Self::Output, JsValue> {
-        self.map_err(|e| js_sys::Error::new(&e.to_string()).into())
+        self.map_err(|e| {
+            let error = e.to_string();
+            js_sys::Error::new(&error).unchecked_into()
+        })
     }
 }
 

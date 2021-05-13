@@ -57,13 +57,21 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
 
         setInProcess(true)
         try {
-            const keyPassword: nt.KeyPassword = {
-                type: keyEntry.signerName,
-                data: {
-                    publicKey: keyEntry.publicKey,
-                    password,
-                },
-            }
+            const keyPassword: nt.KeyPassword =
+                keyEntry.signerName != 'ledger_key'
+                    ? {
+                        type: keyEntry.signerName,
+                        data: {
+                            publicKey: keyEntry.publicKey,
+                            password,
+                        },
+                    }
+                    : {
+                        type:  keyEntry.signerName,
+                        data: {
+                            publicKey: keyEntry.publicKey,
+                        },
+                    }
 
             const isValid = await checkPassword(keyPassword)
             if (isValid) {

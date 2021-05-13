@@ -39,6 +39,6 @@ RUN set -eux; \
 
 RUN set -eux; \
     rustup target add wasm32-unknown-unknown; \
-    cargo install wasm-pack;
+    cargo install --git https://github.com/broxus/wasm-pack.git;
 
 CMD ["/app/build.sh"]
