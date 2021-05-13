@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/Rexagon/nekoton#readme",
   "devDependencies": {
+    "@broxus/wasm-pack-plugin": "^1.4.0",
     "@ledgerhq/hw-transport-webhid": "^5.51.1",
     "@svgr/webpack": "^5.5.0",
     "@types/chrome": "0.0.133",
@@ -39,7 +40,6 @@
     "@types/react-copy-to-clipboard": "^5.0.0",
     "@types/react-select": "^4.0.13",
     "@types/react-virtualized": "^9.21.11",
-    "@wasm-tool/wasm-pack-plugin": "^1.3.3",
     "clean-webpack-plugin": "^3.0.0",
     "copy-webpack-plugin": "^7.0.0",
     "css-loader": "^5.0.2",

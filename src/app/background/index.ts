@@ -3,7 +3,7 @@
 import '../../polyfills'
 
 import endOfStream from 'end-of-stream'
-import init from '@nekoton'
+import init, * as nt from '@nekoton'
 import { PortDuplexStream, checkForError } from '@shared/utils'
 import {
     ENVIRONMENT_TYPE_POPUP,

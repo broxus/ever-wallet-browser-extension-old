@@ -36,8 +36,8 @@ import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
 import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
 
-import TransportWebHID from "@ledgerhq/hw-transport-webhid"
-import Transport from "@ledgerhq/hw-transport";
+import TransportWebHID from '@ledgerhq/hw-transport-webhid'
+import Transport from '@ledgerhq/hw-transport'
 import LedgerApp from './ledger/LedgerApp'
 
 interface NekotonControllerOptions {
@@ -509,33 +509,33 @@ export class StorageConnector {
 
 export class LedgerConnection {
     async getPublicKey(account: number, handler: nt.LedgerQueryResultHandler) {
-        let transport: Transport<string> | undefined;
+        let transport: Transport<string> | undefined
         try {
-            transport = await TransportWebHID.create();
-            const ledger = new LedgerApp(transport);
-            const { publicKey } = await ledger.getPublicKey(account);
+            transport = await TransportWebHID.create()
+            const ledger = new LedgerApp(transport)
+            const { publicKey } = await ledger.getPublicKey(account)
             handler.onResult(publicKey)
         } catch (error) {
             handler.onError(error)
         } finally {
             if (transport != undefined) {
-                await transport.close();
+                await transport.close()
             }
         }
     }
 
     async sign(account: number, message: Buffer, handler: nt.LedgerQueryResultHandler) {
-        let transport: Transport<string> | undefined;
+        let transport: Transport<string> | undefined
         try {
-            transport = await TransportWebHID.create();
-            const ledger = new LedgerApp(transport);
-            const { signature } = await ledger.signHash(account, message);
+            transport = await TransportWebHID.create()
+            const ledger = new LedgerApp(transport)
+            const { signature } = await ledger.signHash(account, message)
             handler.onResult(signature)
         } catch (error) {
             handler.onError(error)
         } finally {
             if (transport != undefined) {
-                await transport.close();
+                await transport.close()
             }
         }
     }

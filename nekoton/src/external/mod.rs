@@ -386,7 +386,12 @@ extern "C" {
     pub fn get_public_key(this: &LedgerConnector, account: u16, handler: LedgerQueryResultHandler);
 
     #[wasm_bindgen(method)]
-    pub fn sign(this: &LedgerConnector, account: u16, message: &[u8], handler: LedgerQueryResultHandler);
+    pub fn sign(
+        this: &LedgerConnector,
+        account: u16,
+        message: &[u8],
+        handler: LedgerQueryResultHandler,
+    );
 }
 
 unsafe impl Send for LedgerConnector {}
@@ -407,7 +412,8 @@ impl LedgerQueryResultHandler {
 
     #[wasm_bindgen(js_name = "onError")]
     pub fn on_error(self, _: JsValue) {
-        self.inner.send(Err(LedgerConnectionError::QueryFailed.into()))
+        self.inner
+            .send(Err(LedgerConnectionError::QueryFailed.into()))
     }
 }
 
@@ -450,12 +456,18 @@ impl nt::external::LedgerConnection for LedgerConnectionImpl {
             },
         );
         match rx.await.map_err(|_| LedgerConnectionError::QueryDropped)? {
-            Ok(vec) => Ok(<[u8; ed25519_dalek::PUBLIC_KEY_LENGTH]>::try_from(vec.as_slice())?),
+            Ok(vec) => Ok(<[u8; ed25519_dalek::PUBLIC_KEY_LENGTH]>::try_from(
+                vec.as_slice(),
+            )?),
             Err(err) => Err(err),
         }
     }
 
-    async fn sign(&self, account:u16, message: &[u8]) -> Result<[u8; ed25519_dalek::SIGNATURE_LENGTH]> {
+    async fn sign(
+        &self,
+        account: u16,
+        message: &[u8],
+    ) -> Result<[u8; ed25519_dalek::SIGNATURE_LENGTH]> {
         let (tx, rx) = oneshot::channel();
         self.connector.sign(
             account,
@@ -465,7 +477,9 @@ impl nt::external::LedgerConnection for LedgerConnectionImpl {
             },
         );
         match rx.await.map_err(|_| LedgerConnectionError::QueryDropped)? {
-            Ok(vec) => Ok(<[u8; ed25519_dalek::SIGNATURE_LENGTH]>::try_from(vec.as_slice())?),
+            Ok(vec) => Ok(<[u8; ed25519_dalek::SIGNATURE_LENGTH]>::try_from(
+                vec.as_slice(),
+            )?),
             Err(err) => Err(err),
         }
     }
