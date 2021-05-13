@@ -98,7 +98,7 @@ export class TokenWalletSubscription {
                     this._refreshTimer = [timerHandle, resolve]
                 })
 
-                console.debug('TokenWalletSubscription -> manual -> waining ends')
+                console.debug('TokenWalletSubscription -> manual -> waiting ends')
 
                 if (!this._isRunning) {
                     break
