@@ -22,10 +22,11 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
-### 0.1.3 (2021-05-14)
+### 0.1.3 (2021-05-15)
 
 Features:
 * Add `Notify receiver` checkbox for token transfer.
+* Add version label to account modal.
 
 Bugfixes:
 * Fixed password input for duplicated words.
