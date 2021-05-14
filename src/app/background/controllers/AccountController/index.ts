@@ -597,9 +597,15 @@ export class AccountController extends BaseController<
         const subscription = await this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
         requireTokenWalletSubscription(owner, rootTokenContract, subscription)
 
+        console.log(params)
+
         return subscription.use(async (wallet) => {
             try {
-                return await wallet.prepareTransfer(params.recipient, params.amount)
+                return await wallet.prepareTransfer(
+                    params.recipient,
+                    params.amount,
+                    params.notifyReceiver
+                )
             } catch (e) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }

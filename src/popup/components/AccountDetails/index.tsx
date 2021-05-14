@@ -138,40 +138,42 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         </div>
                     </button>
 
-                    <button
-                        className="account-details__controls__button"
-                        onClick={() => {}}
-                        onMouseDown={createRipple}
-                        onMouseLeave={removeRipple}
-                        onMouseUp={(event) => {
-                            removeRipple(event)
-                            if (
-                                tonWalletState?.isDeployed ||
-                                account.tonWallet.contractType == 'WalletV3'
-                            ) {
-                                onSend?.()
-                            } else {
-                                onDeploy?.()
-                            }
-                        }}
-                    >
-                        <div className="account-details__controls__button__content">
-                            {tonWalletState?.isDeployed ||
-                            account.tonWallet.contractType == 'WalletV3' ? (
-                                <>
-                                    {/*@ts-ignore*/}
-                                    <SendIcon style={{ marginRight: '8px' }} />
-                                    Send
-                                </>
-                            ) : (
-                                <>
-                                    {/*@ts-ignore*/}
-                                    <DeployIcon style={{ marginRight: '8px' }} />
-                                    Deploy
-                                </>
-                            )}
-                        </div>
-                    </button>
+                    {tonWalletState && (
+                        <button
+                            className="account-details__controls__button"
+                            onClick={() => {}}
+                            onMouseDown={createRipple}
+                            onMouseLeave={removeRipple}
+                            onMouseUp={(event) => {
+                                removeRipple(event)
+                                if (
+                                    tonWalletState.isDeployed ||
+                                    account.tonWallet.contractType == 'WalletV3'
+                                ) {
+                                    onSend?.()
+                                } else {
+                                    onDeploy?.()
+                                }
+                            }}
+                        >
+                            <div className="account-details__controls__button__content">
+                                {tonWalletState.isDeployed ||
+                                account.tonWallet.contractType == 'WalletV3' ? (
+                                    <>
+                                        {/*@ts-ignore*/}
+                                        <SendIcon style={{ marginRight: '8px' }} />
+                                        Send
+                                    </>
+                                ) : (
+                                    <>
+                                        {/*@ts-ignore*/}
+                                        <DeployIcon style={{ marginRight: '8px' }} />
+                                        Deploy
+                                    </>
+                                )}
+                            </div>
+                        </button>
+                    )}
                 </div>
             </div>
         </>

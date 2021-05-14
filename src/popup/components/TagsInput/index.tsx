@@ -45,19 +45,24 @@ const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount }) => {
     }
 
     const onSelectTag = (_e: React.ChangeEvent<{}>, values: string[]) => {
-        setWords(values)
+        setWords(
+            values.filter((item, i) => {
+                return i < words.length || hints.includes(item)
+            })
+        )
     }
 
     return (
         <div className={classes.root}>
-            <Autocomplete
+            <Autocomplete<string, true, undefined, true>
                 multiple
+                freeSolo
                 id="tags-standard"
                 options={hints}
-                getOptionLabel={(option) => option}
                 value={words}
                 onInputChange={(event, values) => onInputChange(event, values)}
                 onChange={(event, values) => onSelectTag(event, values)}
+                getOptionSelected={() => false}
                 renderInput={(params) => (
                     <TextField
                         {...params}

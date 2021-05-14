@@ -95,6 +95,7 @@ impl TokenWallet {
         &self,
         dest: &str,
         tokens: &str,
+        notify_receiver: bool,
     ) -> Result<PromiseInternalMessage, JsValue> {
         let dest = parse_address(dest)?;
         let tokens = BigUint::from_str(tokens).handle_error()?;
@@ -106,7 +107,12 @@ impl TokenWallet {
 
             // TODO: resolve token wallet by owner and send directly
             let message = wallet
-                .prepare_transfer(core_models::TransferRecipient::OwnerWallet(dest), tokens)
+                .prepare_transfer(
+                    core_models::TransferRecipient::OwnerWallet(dest),
+                    tokens,
+                    notify_receiver,
+                    ton_types::Cell::default(),
+                )
                 .handle_error()?;
 
             crate::core::make_internal_message(message).map(JsValue::from)
