@@ -22,6 +22,16 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.3 (2021-05-14)
+
+Features:
+* Add `Notify receiver` checkbox for token transfer.
+
+Bugfixes:
+* Fixed password input for duplicated words.
+* Hide `Send` button for empty WalletV3.
+* Fix public key label in account card.
+
 ### 0.1.2 (2021-05-14)
 
 Bugfixes:
