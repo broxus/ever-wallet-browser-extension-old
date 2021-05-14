@@ -7,6 +7,8 @@ import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
+import manifest from '../../../manifest.json'
+
 type IAccountModal = {
     account: nt.AssetsList
     tonWalletState: nt.ContractState | undefined
@@ -90,6 +92,9 @@ const AccountModal: React.FC<IAccountModal> = ({
             {/*<div className="account-settings-separator" />*/}
             <div className="account-settings-section-item-log-out" onClick={() => onLogOut()}>
                 Log out
+            </div>
+            <div className="account-settings-section-item-version">
+                Version: {(manifest as any).version}
             </div>
         </Wrapper>
     )
