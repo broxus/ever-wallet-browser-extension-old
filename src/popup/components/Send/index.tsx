@@ -19,6 +19,7 @@ import {
 import * as nt from '@nekoton'
 
 import Select from 'react-select'
+import Checkbox from '@popup/components/Checkbox'
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import TransactionProgress from '@popup/components/TransactionProgress'
@@ -58,18 +59,18 @@ const EnterPassword: React.FC<IEnterPassword> = ({
         const keyPassword: nt.KeyPassword =
             keyEntry.signerName != 'ledger_key'
                 ? {
-                    type: keyEntry.signerName,
-                    data: {
-                        publicKey: keyEntry.publicKey,
-                        password,
-                    },
-                }
+                      type: keyEntry.signerName,
+                      data: {
+                          publicKey: keyEntry.publicKey,
+                          password,
+                      },
+                  }
                 : {
-                    type:  keyEntry.signerName,
-                    data: {
-                        publicKey: keyEntry.publicKey,
-                    },
-                }
+                      type: keyEntry.signerName,
+                      data: {
+                          publicKey: keyEntry.publicKey,
+                      },
+                  }
         onSubmit(keyPassword)
     }
 
@@ -180,6 +181,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     const [error, setError] = useState<string>()
     const [messageToPrepare, setMessageToPrepare] = useState<MessageToPrepare>()
     const [fees, setFees] = useState<string>()
+    const [notifyReceiver, setNotifyReceiver] = useState<boolean>(false)
     const [messageParams, setMessageParams] = useState<IMessage>()
     const [selectedAsset, setSelectedAsset] = useState<string>(
         defaultAsset.type == 'ton_wallet' ? '' : defaultAsset.data.rootTokenContract
@@ -250,6 +252,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                 {
                     amount: parseCurrency(data.amount, decimals),
                     recipient: data.recipient,
+                    notifyReceiver,
                 }
             )
 
@@ -402,6 +405,14 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                                 register={register()}
                                 type="text"
                             />
+                        )}
+                        {selectedAsset.length > 0 && (
+                            <div className="send-screen__form-checkbox">
+                                <Checkbox checked={notifyReceiver} setChecked={setNotifyReceiver} />
+                                <span className="send-screen__form-checkbox-label">
+                                    Notify receiver
+                                </span>
+                            </div>
                         )}
                     </form>
                     <div style={{ display: 'flex' }}>

@@ -34,6 +34,7 @@ export type MessageToPrepare = {
 export type TokenMessageToPrepare = {
     amount: string
     recipient: string
+    notifyReceiver: boolean
 }
 
 export type SwapBackMessageToPrepare = {

@@ -60,6 +60,21 @@
             margin-bottom: 40px;
         }
 
+        &-checkbox {
+            display: flex;
+            margin-bottom: 40px;
+
+            &-label {
+                font-family: PT Root UI, serif;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                color: #96a1a7;
+            }
+        }
+
         &-tx-details {
             background: #f8f9f9;
             margin-bottom: 28px;
