@@ -1,5 +1,5 @@
 import React from 'react'
-import { convertAddress } from '@shared/utils'
+import { convertAddress, convertPublicKey } from '@shared/utils'
 
 import ReactTooltip from 'react-tooltip'
 import CopyToClipboard from 'react-copy-to-clipboard'
@@ -37,7 +37,7 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
                                 className="account-card__info-details-public-key-value"
                                 data-tip="Click to copy"
                             >
-                                {convertAddress(publicKey)}
+                                {convertPublicKey(publicKey)}
                             </span>
                         </CopyToClipboard>
                         <ReactTooltip type="dark" effect="solid" place="bottom" />

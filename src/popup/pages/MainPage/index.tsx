@@ -93,11 +93,6 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         setOpenedPanel(Panel.ASSET)
     }
 
-    const collectTokens = (ethEventContract: string) => {
-        setEthEventContract(ethEventContract)
-        setOpenedPanel(Panel.COLLECT_TOKENS)
-    }
-
     return (
         <>
             <AccountDetails
