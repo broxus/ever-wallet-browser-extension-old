@@ -406,8 +406,8 @@ pub struct LedgerQueryResultHandler {
 #[wasm_bindgen]
 impl LedgerQueryResultHandler {
     #[wasm_bindgen(js_name = "onResult")]
-    pub fn on_result(self, data: Vec<u8>) {
-        self.inner.send(Ok(data))
+    pub fn on_result(self, data: &[u8]) {
+        self.inner.send(Ok(data.to_vec()))
     }
 
     #[wasm_bindgen(js_name = "onError")]

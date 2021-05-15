@@ -39,6 +39,7 @@ import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/plat
 import TransportWebHID from '@ledgerhq/hw-transport-webhid'
 import Transport from '@ledgerhq/hw-transport'
 import LedgerApp from './ledger/LedgerApp'
+import LedgerBridge from './ledger/LedgerBridge'
 
 interface NekotonControllerOptions {
     showUserConfirmation: () => void
@@ -509,36 +510,32 @@ export class StorageConnector {
 }
 
 export class LedgerConnection {
+    private readonly bridge: LedgerBridge = new LedgerBridge()
+
     async getPublicKey(account: number, handler: nt.LedgerQueryResultHandler) {
-        let transport: Transport<string> | undefined
-        try {
-            transport = await TransportWebHID.create()
-            const ledger = new LedgerApp(transport)
-            const { publicKey } = await ledger.getPublicKey(account)
-            handler.onResult(publicKey)
-        } catch (error) {
-            handler.onError(error)
-        } finally {
-            if (transport != undefined) {
-                await transport.close()
-            }
-        }
+        await this.bridge
+            .getPublicKey(account)
+            .then((publicKey) => {
+                console.log(publicKey)
+                handler.onResult(publicKey)
+            })
+            .catch((err) => {
+                console.error(err)
+                handler.onError(err)
+            })
     }
 
     async sign(account: number, message: Buffer, handler: nt.LedgerQueryResultHandler) {
-        let transport: Transport<string> | undefined
-        try {
-            transport = await TransportWebHID.create()
-            const ledger = new LedgerApp(transport)
-            const { signature } = await ledger.signHash(account, message)
-            handler.onResult(signature)
-        } catch (error) {
-            handler.onError(error)
-        } finally {
-            if (transport != undefined) {
-                await transport.close()
-            }
-        }
+        await this.bridge
+            .signHash(account, new Uint8Array(message))
+            .then((signature) => {
+                console.log(signature)
+                handler.onResult(signature.slice(1))
+            })
+            .catch((err) => {
+                console.error(err)
+                handler.onError(err)
+            })
     }
 }
 

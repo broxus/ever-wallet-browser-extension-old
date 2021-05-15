@@ -74,12 +74,7 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
                 />
             )}
             {localStep == LocalStep.CONNECT_LEDGER && (
-                <SelectLedgerKey
-                    onSubmit={() => {
-                        // TODO
-                    }}
-                    onBack={onBack}
-                />
+                <SelectLedgerKey onSubmit={onSubmit} onBack={onBack} />
             )}
             {error && (
                 <Modal
