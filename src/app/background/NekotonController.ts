@@ -205,6 +205,7 @@ export class NekotonController extends EventEmitter {
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
             createDerivedKey: nodeifyAsync(accountController, 'createDerivedKey'),
+            createLedgerKey: nodeifyAsync(accountController, 'createLedgerKey'),
             removeKey: nodeifyAsync(accountController, 'removeKey'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),

@@ -15,6 +15,10 @@ export type KeyToRemove = {
     publicKey: string
 }
 
+export type LedgerKeyToCreate = {
+    accountId: number
+}
+
 export type TokenWalletsToUpdate = {
     [rootTokenContract: string]: boolean
 }
