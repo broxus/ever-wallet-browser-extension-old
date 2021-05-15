@@ -862,6 +862,14 @@ export class AccountController extends BaseController<
         this._tonWalletSubscriptions.clear()
         this._tokenWalletSubscriptions.clear()
         this._clearSendMessageRequests()
+
+        this.update({
+            accountContractStates: {},
+            accountTokenStates: {},
+            accountTransactions: {},
+            accountTokenTransactions: {},
+            accountPendingMessages: {},
+        })
     }
 
     private _updateAssetsList(assetsList: nt.AssetsList) {

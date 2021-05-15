@@ -234,7 +234,11 @@ export class NekotonController extends EventEmitter {
 
     public async changeNetwork(params: NamedConnectionData) {
         await this._components.accountController.stopSubscriptions()
+        console.debug('Stopped account subscriptions')
+
         await this._components.subscriptionsController.stopSubscriptions()
+        console.debug('Stopped contract subscriptions')
+
         await this._components.connectionController
             .startSwitchingNetwork(params)
             .then((handle) => handle.switch())
@@ -246,6 +250,8 @@ export class NekotonController extends EventEmitter {
                 selectedConnection: params.name,
             },
         })
+
+        this._sendUpdate()
     }
 
     public async logOut() {
