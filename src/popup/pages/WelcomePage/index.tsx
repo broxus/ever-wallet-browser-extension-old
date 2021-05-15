@@ -1,10 +1,16 @@
 import React, { useState } from 'react'
-import { AccountToCreate, KeyToDerive, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
+import {
+    AccountToCreate,
+    KeyToRemove,
+    LedgerKeyToCreate,
+    MasterKeyToCreate,
+} from '@shared/approvalApi'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
 import RestoreAccountPage from '@popup/pages/RestoreAccountPage'
+import NewAccountLedgerPage from '@popup/pages/NewAccountLedgerPage'
 
 import SittingMan from '@popup/img/welcome.svg'
 
@@ -13,6 +19,7 @@ import './style.scss'
 enum LocalStep {
     WELCOME,
     CREATE_ACCOUNT,
+    CREATE_LEDGER_ACCOUNT,
     RESTORE_ACCOUNT,
 }
 
@@ -29,6 +36,8 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
     const createAccount = async (params: AccountToCreate) => controllerRpc.createAccount(params)
     const createMasterKey = async (params: MasterKeyToCreate) =>
         controllerRpc.createMasterKey(params)
+    const createLedgerKey = async (params: LedgerKeyToCreate) =>
+        controllerRpc.createLedgerKey(params)
     const removeKey = async (params: KeyToRemove) => controllerRpc.removeKey(params)
 
     return (
@@ -55,6 +64,14 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
                                     }}
                                 />
                             </div>
+                            <div className="welcome-page__content-button">
+                                <Button
+                                    text="Sign in with ledger"
+                                    onClick={() => {
+                                        setLocalStep(LocalStep.CREATE_LEDGER_ACCOUNT)
+                                    }}
+                                />
+                            </div>
                             <Button
                                 text="Sign in with seed phrase"
                                 white
@@ -71,6 +88,17 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
                     createMasterKey={createMasterKey}
+                    removeKey={removeKey}
+                    onBack={() => {
+                        setLocalStep(LocalStep.WELCOME)
+                    }}
+                />
+            )}
+            {localStep == LocalStep.CREATE_LEDGER_ACCOUNT && (
+                <NewAccountLedgerPage
+                    name={FIRST_ACCOUNT_NAME}
+                    createAccount={createAccount}
+                    createLedgerKey={createLedgerKey}
                     removeKey={removeKey}
                     onBack={() => {
                         setLocalStep(LocalStep.WELCOME)

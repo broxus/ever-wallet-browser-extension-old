@@ -19,6 +19,7 @@ import {
     AccountToCreate,
     KeyToDerive,
     KeyToRemove,
+    LedgerKeyToCreate,
     MasterKeyToCreate,
     MessageToPrepare,
     SwapBackMessageToPrepare,
@@ -252,6 +253,30 @@ export class AccountController extends BaseController<
                 data: {
                     password,
                     params: { accountId },
+                },
+            })
+
+            this.update({
+                storedKeys: {
+                    ...this.state.storedKeys,
+                    [entry.publicKey]: entry,
+                },
+            })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async createLedgerKey({ accountId }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
+
+        try {
+            const entry = await keyStore.addKey({
+                type: 'ledger_key',
+                data: {
+                    accountId,
                 },
             })
 
