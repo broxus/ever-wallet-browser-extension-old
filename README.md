@@ -1,5 +1,15 @@
-# TON Crystal Wallet
-TON Wallet browser extension. Manage Free TON wallets and access dApps directly from your Chrome browser.
+<p align="center">
+    <h3 align="center">TON Crystal Wallet</h3>
+    <p align="center">TON Wallet browser extension. Manage Free TON wallets and access dApps directly from your Chrome browser.</p>
+    <p align="center">
+        <a href="/LICENSE">
+            <img alt="GitHub" src="https://img.shields.io/github/license/broxus/ton-wallet-crystal-browser-extension" />
+        </a>
+        <a href="https://chrome.google.com/webstore/detail/ton-crystal-wallet/cgeeodpfagjceefieflmdfphplkenlfk">
+            <img alt="Chrome Web Store" src="https://img.shields.io/chrome-web-store/v/cgeeodpfagjceefieflmdfphplkenlfk">
+        </a>
+    </p>
+</p>
 
 ## How to build
 
