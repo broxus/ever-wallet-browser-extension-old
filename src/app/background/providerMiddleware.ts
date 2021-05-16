@@ -358,7 +358,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
 
     const { address, cachedState, functionCall } = req.params
     requireString(req, req.params, 'address')
-    requireOptionalString(req, req.params, 'cachedState')
+    requireOptional(req, req.params, 'cachedState', requireContractState)
     requireFunctionCall(req, req.params, 'functionCall')
 
     const { connectionController } = ctx
