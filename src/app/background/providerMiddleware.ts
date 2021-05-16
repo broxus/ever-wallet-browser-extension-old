@@ -155,6 +155,13 @@ function requireTabid<T>(
     }
 }
 
+function requireTransactionId<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as nt.TransactionId
+    requireString(req, property, 'lt')
+    requireString(req, property, 'hash')
+}
+
 function requireLastTransactionId<T, O, P extends keyof O>(
     req: JsonRpcRequest<T>,
     object: O,
@@ -327,29 +334,25 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
 
-    const { address, beforeLt, limit, inclusive } = req.params
+    const { address, continuation, limit } = req.params
     requireString(req, req.params, 'address')
-    requireOptionalString(req, req.params, 'beforeLt')
+    requireOptional(req, req.params, 'continuation', requireTransactionId)
     requireOptionalNumber(req, req.params, 'limit')
-    requireOptionalBoolean(req, req.params, 'inclusive')
 
     const { connectionController } = ctx
 
     try {
         const transactions = await connectionController.use(
             async ({ data: { connection } }) =>
-                await connection.getTransactions(address, beforeLt, limit || 50, inclusive || false)
+                await connection.getTransactions(address, continuation?.lt, limit || 50, true)
         )
-
-        const oldestLt =
-            transactions.length > 0 ? transactions[transactions.length - 1].id.lt : undefined
 
         res.result = {
             transactions,
-            oldestLt,
-            idEnd:
-                transactions.length == 0 ||
-                transactions[transactions.length - 1].prevTransactionId == null,
+            continuation:
+                transactions.length > 0
+                    ? transactions[transactions.length - 1].prevTransactionId
+                    : undefined,
         }
         end()
     } catch (e) {

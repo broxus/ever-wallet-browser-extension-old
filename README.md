@@ -27,12 +27,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 Features:
 * Added network switch.
 * Added `decodeEvent` and `decodeTransactionEvents` methods to the provider api.
-* Added flag `idEnd` for provider api `getTransactions` method response.
 * Added `version` for provider api `getProviderState` method response.
+* Changed provider api `getTransactions` method.
 
 Bugfixes:
-* Fix `cachedState` param for provider api `runLocal` method.
-* Fix `decodeTransaction` on function calls with outputs.
+* Fixed `cachedState` param for provider api `runLocal` method.
+* Fixed `decodeTransaction` on function calls with outputs.
 
 ### 0.1.3 (2021-05-15)
 
