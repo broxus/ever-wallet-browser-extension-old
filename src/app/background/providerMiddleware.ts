@@ -9,7 +9,6 @@ import {
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
-import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import { ApprovalController } from './controllers/ApprovalController'
@@ -17,6 +16,8 @@ import { PermissionsController } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { AccountController } from './controllers/AccountController'
 import { SubscriptionController } from './controllers/SubscriptionController'
+
+import manifest from '../../manifest.json'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`, data)
@@ -287,6 +288,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     const permissions = permissionsController.getPermissions(origin)
 
     res.result = {
+        version: (manifest as any).version,
         selectedConnection: selectedConnection.name,
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
@@ -460,6 +462,23 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     }
 }
 
+const decodeEvent: ProviderMethod<'decodeEvent'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { body, abi, event } = req.params
+    requireString(req, req.params, 'body')
+    requireString(req, req.params, 'abi')
+    requireMethodOrArray(req, req.params, 'event')
+
+    try {
+        res.result = nt.decodeEvent(body, abi, event) || null
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
@@ -493,6 +512,29 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
 
     try {
         res.result = nt.decodeTransaction(transaction, abi, method) || null
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { transaction, abi } = req.params
+    requireString(req, req.params, 'abi')
+
+    try {
+        res.result = {
+            events: nt.decodeTransactionEvents(transaction, abi),
+        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -767,8 +809,10 @@ const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     getExpectedAddress,
     encodeInternalInput,
     decodeInput,
+    decodeEvent,
     decodeOutput,
     decodeTransaction,
+    decodeTransactionEvents,
     estimateFees,
     sendMessage,
     sendExternalMessage,

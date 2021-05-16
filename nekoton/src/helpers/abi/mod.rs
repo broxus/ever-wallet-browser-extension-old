@@ -149,6 +149,56 @@ pub fn decode_input(
     ))
 }
 
+#[wasm_bindgen(js_name = "decodeEvent")]
+pub fn decode_event(
+    message_body: &str,
+    contract_abi: &str,
+    event: JsMethodName,
+) -> Result<Option<DecodedEvent>, JsValue> {
+    let message_body = parse_slice(message_body)?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let events = contract_abi.events();
+    let event = match parse_method_name(event)? {
+        MethodName::Known(name) => match events.get(&name) {
+            Some(event) => event,
+            None => return Ok(None),
+        },
+        MethodName::Guess(names) => {
+            let id = match read_input_function_id(&contract_abi, message_body.clone(), true) {
+                Ok(id) => id,
+                Err(_) => return Ok(None),
+            };
+
+            let mut event = None;
+            for name in names.iter() {
+                let function = match events.get(name) {
+                    Some(function) => function,
+                    None => continue,
+                };
+
+                if function.id == id {
+                    event = Some(function);
+                    break;
+                }
+            }
+
+            match event {
+                Some(event) => event,
+                None => return Ok(None),
+            }
+        }
+    };
+
+    let data = event.decode_input(message_body).handle_error()?;
+    Ok(Some(
+        ObjectBuilder::new()
+            .set("event", &event.name)
+            .set("data", make_tokens_object(&data)?)
+            .build()
+            .unchecked_into(),
+    ))
+}
+
 #[wasm_bindgen(js_name = "decodeOutput")]
 pub fn decode_output(
     message_body: &str,
@@ -232,14 +282,14 @@ pub fn decode_transaction(
         .unchecked_into::<js_sys::Array>()
         .iter()
         .filter_map(|message| {
-            match js_sys::Reflect::get(&message, &body_key) {
+            match js_sys::Reflect::get(&message, &dst_key) {
                 Ok(dst) if dst.is_string() => return None,
                 Err(error) => return Some(Err(error)),
                 _ => {}
             };
 
             Some(
-                match js_sys::Reflect::get(&message, &dst_key).map(|item| item.as_string()) {
+                match js_sys::Reflect::get(&message, &body_key).map(|item| item.as_string()) {
                     Ok(Some(body)) => parse_slice(&body),
                     Ok(None) => Err(AbiError::ExpectedMessageBody).handle_error(),
                     Err(error) => Err(error),
@@ -258,6 +308,69 @@ pub fn decode_transaction(
             .build()
             .unchecked_into(),
     ))
+}
+
+#[wasm_bindgen(js_name = "decodeTransactionEvents")]
+pub fn decode_transaction_events(
+    transaction: crate::core::models::Transaction,
+    contract_abi: &str,
+) -> Result<DecodedTransactionEvents, JsValue> {
+    let transaction: JsValue = transaction.unchecked_into();
+    if !transaction.is_object() {
+        return Err(AbiError::ExpectedObject).handle_error();
+    }
+
+    let contract_abi = parse_contract_abi(contract_abi)?;
+
+    let out_msgs = js_sys::Reflect::get(&transaction, &JsValue::from_str("outMessages"))?;
+    if !js_sys::Array::is_array(&out_msgs) {
+        return Err(AbiError::ExpectedArray).handle_error();
+    }
+
+    let body_key = JsValue::from_str("body");
+    let dst_key = JsValue::from_str("dst");
+    let ext_out_msgs = out_msgs
+        .unchecked_into::<js_sys::Array>()
+        .iter()
+        .filter_map(|message| {
+            match js_sys::Reflect::get(&message, &dst_key) {
+                Ok(dst) if dst.is_string() => return None,
+                Err(error) => return Some(Err(error)),
+                _ => {}
+            };
+
+            Some(
+                match js_sys::Reflect::get(&message, &body_key).map(|item| item.as_string()) {
+                    Ok(Some(body)) => parse_slice(&body),
+                    Ok(None) => return None,
+                    Err(error) => Err(error),
+                },
+            )
+        })
+        .collect::<Result<Vec<_>, JsValue>>()?;
+
+    let events = ext_out_msgs
+        .into_iter()
+        .filter_map(|body| {
+            let id = read_u32(&body).ok()?;
+            let event = contract_abi.event_by_id(id).ok()?;
+            let tokens = event.decode_input(body).ok()?;
+
+            let data = match make_tokens_object(&tokens) {
+                Ok(data) => data,
+                Err(e) => return Some(Err(e)),
+            };
+
+            Some(Ok(JsValue::from(
+                ObjectBuilder::new()
+                    .set("event", &event.name)
+                    .set("data", data)
+                    .build(),
+            )))
+        })
+        .collect::<Result<js_sys::Array, JsValue>>()?;
+
+    Ok(events.unchecked_into())
 }
 
 fn guess_method_by_input<'a>(
@@ -357,6 +470,14 @@ export type DecodedInput = {
 "#;
 
 #[wasm_bindgen(typescript_custom_section)]
+const DECODED_EVENT: &str = r#"
+export type DecodedEvent = {
+    event: string,
+    data: TokensObject,
+};
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
 const DECODED_OUTPUT: &str = r#"
 export type DecodedOutput = {
     method: string,
@@ -371,6 +492,11 @@ export type DecodedTransaction = {
     input: TokensObject,
     output: TokensObject,
 };
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const DECODED_TRANSACTION_EVENTS: &str = r#"
+export type DecodedTransactionEvents = Array<DecodedEvent>;
 "#;
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -849,6 +975,12 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "DecodedInput")]
     pub type DecodedInput;
+
+    #[wasm_bindgen(typescript_type = "DecodedEvent")]
+    pub type DecodedEvent;
+
+    #[wasm_bindgen(typescript_type = "DecodedTransactionEvents")]
+    pub type DecodedTransactionEvents;
 
     #[wasm_bindgen(typescript_type = "DecodedOutput")]
     pub type DecodedOutput;
