@@ -347,6 +347,9 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
         res.result = {
             transactions,
             oldestLt,
+            idEnd:
+                transactions.length == 0 ||
+                transactions[transactions.length - 1].prevTransactionId == null,
         }
         end()
     } catch (e) {
