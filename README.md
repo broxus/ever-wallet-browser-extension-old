@@ -22,16 +22,28 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.4 (2021-05-17)
+
+Features:
+* Added network switch.
+* Added `decodeEvent` and `decodeTransactionEvents` methods to the provider api.
+* Added `version` for provider api `getProviderState` method response.
+* Changed provider api `getTransactions` method.
+
+Bugfixes:
+* Fixed `cachedState` param for provider api `runLocal` method.
+* Fixed `decodeTransaction` on function calls with outputs.
+
 ### 0.1.3 (2021-05-15)
 
 Features:
-* Add `Notify receiver` checkbox for token transfer.
-* Add version label to account modal.
+* Added `Notify receiver` checkbox for token transfer.
+* Added version label to account modal.
 
 Bugfixes:
 * Fixed password input for duplicated words.
 * Hide `Send` button for empty WalletV3.
-* Fix public key label in account card.
+* Fixed public key label in account card.
 
 ### 0.1.2 (2021-05-14)
 

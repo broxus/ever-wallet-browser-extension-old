@@ -18,6 +18,7 @@ import CollectTokens from '@popup/components/CollectTokens'
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
+import { NamedConnectionData } from '@shared/approvalApi'
 
 interface IMainPage {
     controllerState: ControllerState
@@ -70,8 +71,18 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const transactions = controllerState.accountTransactions[accountAddress] || []
     const network = selectedConnection.name
 
-    const toggleNetwork = () => {
-        // TODO
+    const toggleNetwork = async () => {
+        const networks = await controllerRpc.getAvailableNetworks()
+
+        let nextNetwork: NamedConnectionData | undefined
+        for (const item of networks) {
+            if (item.name != network) {
+                nextNetwork = item
+            }
+        }
+
+        console.log('Next network:', nextNetwork)
+        nextNetwork && (await controllerRpc.changeNetwork(nextNetwork))
     }
 
     const logOut = async () => {
