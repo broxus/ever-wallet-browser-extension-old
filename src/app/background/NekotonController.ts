@@ -36,9 +36,6 @@ import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
 import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
 
-import TransportWebHID from '@ledgerhq/hw-transport-webhid'
-import Transport from '@ledgerhq/hw-transport'
-import LedgerApp from './ledger/LedgerApp'
 import LedgerBridge from './ledger/LedgerBridge'
 
 interface NekotonControllerOptions {
@@ -516,12 +513,10 @@ export class LedgerConnection {
         await this.bridge
             .getPublicKey(account)
             .then((publicKey) => {
-                console.log(publicKey)
                 handler.onResult(publicKey)
             })
             .catch((err) => {
-                console.error(err)
-                handler.onError(err)
+                handler.onError(err.message)
             })
     }
 
@@ -529,12 +524,10 @@ export class LedgerConnection {
         await this.bridge
             .signHash(account, new Uint8Array(message))
             .then((signature) => {
-                console.log(signature)
-                handler.onResult(signature.slice(1))
+                handler.onResult(signature)
             })
             .catch((err) => {
-                console.error(err)
-                handler.onError(err)
+                handler.onError(err.message)
             })
     }
 }
