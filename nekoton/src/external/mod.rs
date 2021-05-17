@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::convert::TryFrom;
 use std::sync::{Arc, Mutex};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Result, Error};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use ton_api::ton;
@@ -411,9 +411,12 @@ impl LedgerQueryResultHandler {
     }
 
     #[wasm_bindgen(js_name = "onError")]
-    pub fn on_error(self, _: JsValue) {
-        self.inner
-            .send(Err(LedgerConnectionError::QueryFailed.into()))
+    pub fn on_error(self, err: JsValue) {
+        let error = match err.as_string() {
+            Some(v) => Error::msg(v),
+            None => LedgerConnectionError::QueryFailed.into(),
+        };
+        self.inner.send(Err(error))
     }
 }
 
