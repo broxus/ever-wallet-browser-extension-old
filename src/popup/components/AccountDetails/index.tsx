@@ -10,11 +10,12 @@ import Carousel from '@popup/components/Carousel'
 import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
 import DeployIcon from '@popup/img/deploy-icon.svg'
-import Notifications from '@popup/img/notifications.svg'
+import NotificationsIcon from '@popup/img/notifications.svg'
 import Profile from '@popup/img/profile.svg'
 import AddAccount from '@popup/img/add-account.svg'
 
 import './style.scss'
+import Notifications from '@popup/components/Notifications'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | undefined
@@ -61,6 +62,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     onOpenKeyStore,
 }) => {
     const [modalVisible, setModalVisible] = useState(false)
+    const [notificationsVisible, setNotificationsVisible] = useState(false)
 
     if (account == null) {
         return null
@@ -75,7 +77,12 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
         <>
             <div className="account-details">
                 <div className="account-details__top-panel">
-                    <Notifications />
+                    <div
+                        onClick={() => setNotificationsVisible(true)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <NotificationsIcon />
+                    </div>
                     <div className="account-details__network noselect" onClick={onToggleNetwork}>
                         {network}
                     </div>
@@ -94,6 +101,9 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             onLogOut={accountModalAction(onLogOut)}
                             onClose={accountModalAction(() => {})}
                         />
+                    )}
+                    {notificationsVisible && (
+                        <Notifications onClose={() => setNotificationsVisible(false)} />
                     )}
                 </div>
                 <Carousel
