@@ -1,6 +1,7 @@
 mod deserialize;
 mod serialize;
 
+pub use deserialize::unpack_from_cell;
 pub use serialize::pack_into_cell;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -365,12 +366,10 @@ pub fn decode_transaction_events(
                 Err(e) => return Some(Err(e)),
             };
 
-            Some(Ok(JsValue::from(
-                ObjectBuilder::new()
-                    .set("event", &event.name)
-                    .set("data", data)
-                    .build(),
-            )))
+            Some(Ok(ObjectBuilder::new()
+                .set("event", &event.name)
+                .set("data", data)
+                .build()))
         })
         .collect::<Result<js_sys::Array, JsValue>>()?;
 

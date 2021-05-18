@@ -1,5 +1,4 @@
 use anyhow::Result;
-use serde;
 use serde::de::Error;
 use serde::{Deserialize, Deserializer};
 use ton_abi::{Param, ParamType};
@@ -30,17 +29,18 @@ impl<'a> Deserialize<'a> for ParamWrapper {
         fn set_components(ptype: &mut ParamTypeDef, components: Vec<ParamWrapper>) -> Result<()> {
             match ptype {
                 ParamTypeDef::Tuple(params) => {
-                    if components.len() == 0 {
+                    if components.is_empty() {
                         anyhow::bail!(AbiError::EmptyComponents)
                     } else {
-                        Ok(*params = components)
+                        *params = components;
+                        Ok(())
                     }
                 }
                 ParamTypeDef::Array(array_type) => set_components(array_type, components),
                 ParamTypeDef::FixedArray(array_type, _) => set_components(array_type, components),
                 ParamTypeDef::Map(_, value_type) => set_components(value_type, components),
                 _ => {
-                    if components.len() != 0 {
+                    if !components.is_empty() {
                         anyhow::bail!(AbiError::UnusedComponents)
                     } else {
                         Ok(())
@@ -59,7 +59,7 @@ impl<'a> Deserialize<'a> for ParamWrapper {
         if value.is_string() {
             let type_str = value.as_str().unwrap();
             let param_type: ParamTypeDef =
-                serde_json::from_value(value.clone()).map_err(|err| D::Error::custom(err))?;
+                serde_json::from_value(value.clone()).map_err(D::Error::custom)?;
             match param_type {
                 ParamTypeDef::Tuple(_) |
                 ParamTypeDef::Array(_) |
@@ -76,7 +76,7 @@ impl<'a> Deserialize<'a> for ParamWrapper {
             })
         } else {
             let serde_param: SerdeParam =
-                serde_json::from_value(value).map_err(|err| D::Error::custom(err))?;
+                serde_json::from_value(value).map_err(D::Error::custom)?;
 
             let mut result = Self {
                 name: serde_param.name,
@@ -90,12 +90,13 @@ impl<'a> Deserialize<'a> for ParamWrapper {
     }
 }
 
+#[allow(clippy::boxed_local)]
 fn unbox<T>(value: Box<T>) -> T {
     *value
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-struct ParamWrapper {
+pub struct ParamWrapper {
     // Param name.
     pub name: String,
     // Param type.
@@ -142,7 +143,7 @@ impl From<ParamTypeDef> for ParamType {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
-enum ParamTypeDef {
+pub enum ParamTypeDef {
     Unknown,
     /// uint<M>: unsigned integer type of M bits.
     Uint(usize),
@@ -193,7 +194,7 @@ pub fn pack_into_cell(abi: TokensObject, params: JsValue) -> Result<String, JsVa
             ))
         })
         .handle_error()?
-        .map(|x| base64::encode(x))
+        .map(base64::encode)
         .map_err(|e| AbiError::FailedtoPackIntoCell(e.to_string()))
         .handle_error()
 }

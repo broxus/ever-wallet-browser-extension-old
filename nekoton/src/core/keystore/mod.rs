@@ -16,7 +16,10 @@ pub struct KeyStore {
 #[wasm_bindgen]
 impl KeyStore {
     #[wasm_bindgen]
-    pub fn load(storage: &crate::external::Storage, ledger_connection: &crate::external::LedgerConnection) -> PromiseKeyStore {
+    pub fn load(
+        storage: &crate::external::Storage,
+        ledger_connection: &crate::external::LedgerConnection,
+    ) -> PromiseKeyStore {
         let storage = storage.inner.clone();
         let ledger_connection = ledger_connection.inner.clone();
 
@@ -27,7 +30,10 @@ impl KeyStore {
                     .handle_error()?
                     .with_signer(ENCRYPTED_SIGNER, nt::crypto::EncryptedKeySigner::new())
                     .handle_error()?
-                    .with_signer(LEDGER_SIGNER, nt::crypto::LedgerKeySigner::new(ledger_connection))
+                    .with_signer(
+                        LEDGER_SIGNER,
+                        nt::crypto::LedgerKeySigner::new(ledger_connection),
+                    )
                     .handle_error()?
                     .load()
                     .await
@@ -78,13 +84,9 @@ impl KeyStore {
                         })
                         .await
                 }
-                ParsedNewKey::LedgerKey {
-                    account_id
-                } => {
+                ParsedNewKey::LedgerKey { account_id } => {
                     inner
-                        .add_key::<LedgerKeySigner>(LedgerKeyCreateInput {
-                            account_id
-                        })
+                        .add_key::<LedgerKeySigner>(LedgerKeyCreateInput { account_id })
                         .await
                 }
             }
@@ -284,14 +286,10 @@ async fn sign_data(
                 password: password.into(),
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
-        },
-        ParsedKeyPassword::LedgerKey {
-            public_key,
-        } => {
+        }
+        ParsedKeyPassword::LedgerKey { public_key } => {
             let public_key = parse_public_key(&public_key)?;
-            let input = LedgerKeyPublic {
-                public_key,
-            };
+            let input = LedgerKeyPublic { public_key };
             key_store.sign::<LedgerKeySigner>(data, input).await
         }
     }
@@ -334,6 +332,7 @@ extern "C" {
     pub type JsNewKey;
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 enum ParsedNewKey {
@@ -349,9 +348,7 @@ enum ParsedNewKey {
         password: String,
     },
     #[serde(rename_all = "camelCase")]
-    LedgerKey {
-        account_id: u16,
-    },
+    LedgerKey { account_id: u16 },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -473,6 +470,7 @@ extern "C" {
     pub type JsKeyPassword;
 }
 
+#[allow(clippy::enum_variant_names)]
 #[derive(Deserialize)]
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 enum ParsedKeyPassword {
@@ -487,9 +485,7 @@ enum ParsedKeyPassword {
         password: String,
     },
     #[serde(rename_all = "camelCase")]
-    LedgerKey {
-        public_key: String,
-    },
+    LedgerKey { public_key: String },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
