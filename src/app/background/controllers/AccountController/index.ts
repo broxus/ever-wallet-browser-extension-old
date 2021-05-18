@@ -37,10 +37,13 @@ import { TonWalletSubscription } from './TonWalletSubscription'
 import { ITokenWalletHandler, TokenWalletSubscription } from './TokenWalletSubscription'
 import { IContractHandler } from '../../utils/ContractSubscription'
 
+import LedgerBridge from '../../ledger/LedgerBridge'
+
 export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
+    ledgerBridge: LedgerBridge
     connectionController: ConnectionController
     notificationController: NotificationController
 }
@@ -291,6 +294,21 @@ export class AccountController extends BaseController<
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public async getLedgerFirstPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getFirstPage()
+    }
+
+    public async getLedgerNextPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getNextPage()
+    }
+
+    public async getLedgerPreviousPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getPreviousPage()
     }
 
     public async removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {

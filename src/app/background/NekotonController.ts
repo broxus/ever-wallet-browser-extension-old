@@ -80,6 +80,7 @@ export class NekotonController extends EventEmitter {
         const ledgerConnection = new nt.LedgerConnection(new LedgerConnection())
         const accountsStorage = await nt.AccountsStorage.load(storage)
         const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
+        const ledgerBridge = new LedgerBridge()
 
         const connectionController = new ConnectionController({})
 
@@ -91,6 +92,7 @@ export class NekotonController extends EventEmitter {
             storage,
             accountsStorage,
             keyStore,
+            ledgerBridge,
             connectionController,
             notificationController,
         })
@@ -205,6 +207,9 @@ export class NekotonController extends EventEmitter {
             createDerivedKey: nodeifyAsync(accountController, 'createDerivedKey'),
             createLedgerKey: nodeifyAsync(accountController, 'createLedgerKey'),
             removeKey: nodeifyAsync(accountController, 'removeKey'),
+            getLedgerFirstPage: nodeifyAsync(accountController, 'getLedgerFirstPage'),
+            getLedgerNextPage: nodeifyAsync(accountController, 'getLedgerNextPage'),
+            getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
