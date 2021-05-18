@@ -153,13 +153,13 @@ dependencies = [
  "dyn-clone",
  "ed25519-dalek",
  "futures",
- "getrandom",
+ "getrandom 0.1.16",
  "hex 0.4.3",
  "js-sys",
  "nekoton",
  "num-bigint",
  "pin-project-lite",
- "rand",
+ "rand 0.7.3",
  "serde",
  "serde_json",
  "sha2 0.9.5",
@@ -335,9 +335,9 @@ dependencies = [
 
 [[package]]
 name = "cpufeatures"
-version = "0.1.1"
+version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dec1028182c380cc45a2e2c5ec841134f2dfd0f8f5f0a5bcd68004f81b5efdf4"
+checksum = "ed00c67cb5d0a7d64a44f6ad2668db7e7530311dd53ea79bcd4fb022c64911c8"
 dependencies = [
  "libc",
 ]
@@ -400,7 +400,7 @@ checksum = "639891fde0dbea823fc3d798a0fdf9d2f9440a42d64a78ab3488b0ca025117b3"
 dependencies = [
  "byteorder",
  "digest 0.9.0",
- "rand_core",
+ "rand_core 0.5.1",
  "subtle 2.4.0",
  "zeroize",
 ]
@@ -464,7 +464,7 @@ checksum = "c762bae6dcaf24c4c84667b8579785430908723d5c889f469d76a41d59cc7a9d"
 dependencies = [
  "curve25519-dalek",
  "ed25519",
- "rand",
+ "rand 0.7.3",
  "serde",
  "sha2 0.9.5",
  "zeroize",
@@ -646,6 +646,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "getrandom"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c9495705279e7140bf035dde1f6e750c162df8b625267cd52cc44e0b156732c8"
+dependencies = [
+ "cfg-if 1.0.0",
+ "libc",
+ "wasi 0.10.0+wasi-snapshot-preview1",
+]
+
+[[package]]
 name = "gimli"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -784,9 +795,9 @@ checksum = "dd25036021b0de88a0aff6b850051563c6516d0bf53f8638938edbb9de732736"
 
 [[package]]
 name = "js-sys"
-version = "0.3.47"
+version = "0.3.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cfb73131c35423a367daf8cbd24100af0d077668c8c2943f0e7dd775fef0f65"
+checksum = "83bdfbace3a0e81a4253f73b49e960b053e396a11012cbd49b9b74d6a2b67062"
 dependencies = [
  "wasm-bindgen",
 ]
@@ -813,7 +824,7 @@ dependencies = [
  "crunchy",
  "digest 0.8.1",
  "hmac-drbg",
- "rand",
+ "rand 0.7.3",
  "sha2 0.8.2",
  "subtle 2.4.0",
  "typenum",
@@ -870,7 +881,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#47fa8199a4e9aa4d099aab42d58d884c970b65fd"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#d969ea8e467993dbb605c29eb3dc7b0da86aa649"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -884,7 +895,7 @@ dependencies = [
  "ed25519-dalek",
  "failure",
  "futures",
- "getrandom",
+ "getrandom 0.1.16",
  "graphql_client",
  "hex 0.4.3",
  "log",
@@ -893,7 +904,7 @@ dependencies = [
  "once_cell",
  "parking_lot",
  "pin-project-lite",
- "rand",
+ "rand 0.7.3",
  "ring",
  "secstr",
  "serde",
@@ -1177,11 +1188,23 @@ version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6a6b1679d49b24bbfe0c803429aa1874472f50d9b363131f0e89fc356b544d03"
 dependencies = [
- "getrandom",
+ "getrandom 0.1.16",
  "libc",
- "rand_chacha",
- "rand_core",
- "rand_hc",
+ "rand_chacha 0.2.2",
+ "rand_core 0.5.1",
+ "rand_hc 0.2.0",
+]
+
+[[package]]
+name = "rand"
+version = "0.8.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ef9e7e66b4468674bfcb0c81af8b7fa0bb154fa9f28eb840da5c447baeb8d7e"
+dependencies = [
+ "libc",
+ "rand_chacha 0.3.0",
+ "rand_core 0.6.2",
+ "rand_hc 0.3.0",
 ]
 
 [[package]]
@@ -1191,7 +1214,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4c8ed856279c9737206bf725bf36935d8666ead7aa69b52be55af369d193402"
 dependencies = [
  "ppv-lite86",
- "rand_core",
+ "rand_core 0.5.1",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e12735cf05c9e10bf21534da50a147b924d555dc7a547c42e6bb2d5b6017ae0d"
+dependencies = [
+ "ppv-lite86",
+ "rand_core 0.6.2",
 ]
 
 [[package]]
@@ -1200,7 +1233,16 @@ version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "90bde5296fc891b0cef12a6d03ddccc162ce7b2aff54160af9338f8d40df6d19"
 dependencies = [
- "getrandom",
+ "getrandom 0.1.16",
+]
+
+[[package]]
+name = "rand_core"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "34cf66eb183df1c5876e2dcf6b13d57340741e8dc255b48e40a26de954d06ae7"
+dependencies = [
+ "getrandom 0.2.2",
 ]
 
 [[package]]
@@ -1209,7 +1251,16 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ca3129af7b92a17112d59ad498c6f81eaf463253766b90396d39ea7a39d6613c"
 dependencies = [
- "rand_core",
+ "rand_core 0.5.1",
+]
+
+[[package]]
+name = "rand_hc"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3190ef7066a446f2e7f42e239d161e905420ccab01eb967c9eb27d21b2322a73"
+dependencies = [
+ "rand_core 0.6.2",
 ]
 
 [[package]]
@@ -1443,7 +1494,7 @@ dependencies = [
  "hmac 0.8.1",
  "once_cell",
  "pbkdf2",
- "rand",
+ "rand 0.7.3",
  "rustc-hash",
  "sha2 0.9.5",
  "thiserror",
@@ -1481,9 +1532,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.5.0"
+version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83f0c8e7c0addab50b663055baf787d0af7f413a46e6e7fb9559a4e4db7137a5"
+checksum = "bd3076b5c8cc18138b8f8814895c11eb4de37114a5d127bafdc5e55798ceef37"
 dependencies = [
  "autocfg",
  "pin-project-lite",
@@ -1492,7 +1543,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-abi.git#53b84ead97054620f2a11a064cfb74a99deffe88"
+source = "git+https://github.com/tonlabs/ton-labs-abi.git#a31773891cc64dbba8fcc0f9ac93d6acb3d36918"
 dependencies = [
  "base64 0.10.1",
  "byteorder",
@@ -1515,7 +1566,7 @@ dependencies = [
 [[package]]
 name = "ton_api"
 version = "0.0.1"
-source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#362cf6ce03dc5216a86ab5a207f3a74c07da62d0"
+source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fe816c317954caf649dca6f42cc30149dcc1024a"
 dependencies = [
  "byteorder",
  "erased-serde",
@@ -1524,7 +1575,7 @@ dependencies = [
  "hex 0.4.3",
  "lazy_static",
  "ordered-float",
- "rand",
+ "rand 0.7.3",
  "secstr",
  "serde",
  "ton_block",
@@ -1534,8 +1585,8 @@ dependencies = [
 
 [[package]]
 name = "ton_block"
-version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-block.git#aa7482592c3c1bb67264604a5a7e03b9dd89faac"
+version = "1.0.13"
+source = "git+https://github.com/tonlabs/ton-labs-block.git#be9c8506f363a7b1f2ee3e41400e8790f55781ea"
 dependencies = [
  "base64 0.10.1",
  "clear_on_drop",
@@ -1547,7 +1598,7 @@ dependencies = [
  "log",
  "num",
  "num-traits",
- "rand",
+ "rand 0.7.3",
  "sha2 0.8.2",
  "ton_types",
 ]
@@ -1572,8 +1623,8 @@ dependencies = [
 
 [[package]]
 name = "ton_labs_assembler"
-version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#dbc3334804e7cde89d05b2b6e0c0fdd628b1b966"
+version = "1.0.13"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#a50745741f5f9877a8da7912bbb9e0d1d764f6be"
 dependencies = [
  "failure",
  "hex 0.4.3",
@@ -1588,7 +1639,7 @@ dependencies = [
 [[package]]
 name = "ton_tl_codegen"
 version = "0.0.1"
-source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#362cf6ce03dc5216a86ab5a207f3a74c07da62d0"
+source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fe816c317954caf649dca6f42cc30149dcc1024a"
 dependencies = [
  "crc",
  "failure",
@@ -1600,8 +1651,8 @@ dependencies = [
 
 [[package]]
 name = "ton_types"
-version = "1.0.0"
-source = "git+https://github.com/broxus/ton-labs-types.git#851829b7492833fdd0b73e7e29ad4e49a69d1eca"
+version = "1.0.13"
+source = "git+https://github.com/tonlabs/ton-labs-types.git#a1b5fe0ae1e52136d22ce1fccef10dd0f5cbcbea"
 dependencies = [
  "base64 0.11.0",
  "crc",
@@ -1612,7 +1663,7 @@ dependencies = [
  "num",
  "num-derive",
  "num-traits",
- "rand",
+ "rand 0.8.3",
  "sha2 0.8.2",
 ]
 
@@ -1628,7 +1679,7 @@ dependencies = [
  "log",
  "num",
  "num-traits",
- "rand",
+ "rand 0.7.3",
  "sha2 0.8.2",
  "ton_labs_assembler",
  "ton_types",
@@ -1745,9 +1796,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.20"
+version = "0.4.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3de431a2910c86679c34283a33f66f4e4abd7e0aec27b6669060148872aadf94"
+checksum = "5fba7978c679d53ce2d0ac80c8c175840feb849a161664365d1287b41f2e67f1"
 dependencies = [
  "cfg-if 1.0.0",
  "js-sys",
@@ -1786,9 +1837,9 @@ checksum = "d7cff876b8f18eed75a66cf49b65e7f967cb354a7aa16003fb55dbfd25b44b4f"
 
 [[package]]
 name = "wasm-bindgen-test"
-version = "0.3.20"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f0d4da138503a4cf86801b94d95781ee3619faa8feca830569cc6b54997b8b5c"
+checksum = "8cab416a9b970464c2882ed92d55b0c33046b08e0bdc9d59b3b718acd4e1bae8"
 dependencies = [
  "console_error_panic_hook",
  "js-sys",
@@ -1800,9 +1851,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-test-macro"
-version = "0.3.20"
+version = "0.3.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3199c33f06500c731d5544664c24d0c2b742b98debc6b1c6f0c6d6e8fb7c19b"
+checksum = "dd4543fc6cf3541ef0d98bf720104cc6bd856d7eba449fd2aa365ef4fed0e782"
 dependencies = [
  "proc-macro2 1.0.26",
  "quote 1.0.9",
@@ -1821,9 +1872,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.47"
+version = "0.3.51"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c40dc691fc48003eba817c38da7113c15698142da971298003cac3ef175680b3"
+checksum = "e828417b379f3df7111d3a2a9e5753706cae29c41f7c4029ee9fd77f3e09e582"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
@@ -1858,7 +1909,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a0c105152107e3b96f6a00a65e86ce82d9b125230e1c4302940eca58ff71f4f"
 dependencies = [
  "curve25519-dalek",
- "rand_core",
+ "rand_core 0.5.1",
  "zeroize",
 ]
 
@@ -1882,3 +1933,8 @@ dependencies = [
  "syn 1.0.72",
  "synstructure",
 ]
+
+[[patch.unused]]
+name = "ton_types"
+version = "1.0.0"
+source = "git+https://github.com/broxus/ton-labs-types.git#851829b7492833fdd0b73e7e29ad4e49a69d1eca"

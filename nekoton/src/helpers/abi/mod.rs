@@ -1,3 +1,7 @@
+mod deserialize;
+mod serialize;
+
+pub use serialize::pack_into_cell;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -950,6 +954,12 @@ enum AbiError {
     TuplePropertyNotFound,
     #[error("Unsupported header")]
     UnsupportedHeader,
+    #[error("Failed to pack into cell: {0}")]
+    FailedtoPackIntoCell(String),
+    #[error("Empty components")]
+    EmptyComponents,
+    #[error("Unused components")]
+    UnusedComponents,
 }
 
 fn parse_contract_abi(contract_abi: &str) -> Result<ton_abi::Contract, JsValue> {
