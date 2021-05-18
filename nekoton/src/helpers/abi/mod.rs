@@ -1,8 +1,3 @@
-mod deserialize;
-mod serialize;
-
-pub use deserialize::unpack_from_cell;
-pub use serialize::pack_into_cell;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::str::FromStr;
@@ -909,6 +904,78 @@ fn insert_init_data(
     map.write_to_new_cell().map(From::from).handle_error()
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const PARAM: &str = r#"
+type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
+type NumberBits = 
+    | Exclude<Digit, '0'>                           // 1-9
+    | `${Exclude<Digit, '0'>}${Digit}`              // 10-99 
+    | `1${Digit}${Digit}`                           // 100-199 
+    | `2${'0' | '1' | '2' | '3' | '4'}${Digit}`     // 200-249
+    | `25${'0' | '1' | '2' | '4' | '5' | '6'}`;     // 250-256
+
+type ParamKindUint = 'uint${NumberBits}'
+type ParamKindInt = 'int${NumberBits}'
+type ParamKindTuple = 'tuple'
+type ParamKindBool = 'bool'
+type ParamKindCell = 'cell'
+type ParamKindAddress = 'address'
+type ParamKindBytes = 'bytes'
+type ParamKindGram = 'gram'
+type ParamKindTime = 'time'
+type ParamKindExpire = 'expire'
+type ParamKindPublicKey = 'pubkey'
+type ParamKindArray = ParamKind[]
+
+type ParamKindMap = `map(${ParamKindInt | ParamKindUint | ParamKindAddress},${
+    | ParamKind
+    | `${ParamKind}[]`})`
+
+type ParamKind =
+    | ParamKindUint
+    | ParamKindInt
+    | ParamKindTuple
+    | ParamKindBool
+    | ParamKindCell
+    | ParamKindAddress
+    | ParamKindBytes
+    | ParamKindGram
+    | ParamKindTime
+    | ParamKindExpire
+    | ParamKindPublicKey
+
+type Param = {
+    name: string;
+    type: ParamKind | ParamKindMap | ParamKindArray; 
+    components?: Param[];
+};
+"#;
+
+#[wasm_bindgen(js_name = "packIntoCell")]
+pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String, JsValue> {
+    let params: Vec<ton_abi::Param> = JsValue::into_serde(&params).handle_error()?;
+    let tokens = parse_tokens_object(&params, tokens).handle_error()?;
+
+    let cell = nt::helpers::abi::pack_into_cell(&tokens).handle_error()?;
+    let bytes = ton_types::serialize_toc(&cell).handle_error()?;
+    Ok(hex::encode(&bytes))
+}
+
+#[wasm_bindgen(js_name = "unpackFromCell")]
+pub fn unpack_from_cell(
+    params: ParamsList,
+    boc: &str,
+    allow_partial: bool,
+) -> Result<TokensObject, JsValue> {
+    let params: Vec<ton_abi::Param> = JsValue::into_serde(&params).handle_error()?;
+    let body = base64::decode(boc).handle_error()?;
+    let cell =
+        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    nt::helpers::abi::unpack_from_cell(&params, cell.into(), allow_partial)
+        .handle_error()
+        .and_then(|tokens| make_tokens_object(&tokens))
+}
+
 #[derive(thiserror::Error, Debug)]
 enum AbiError {
     #[error("Unexpected token")]
@@ -953,12 +1020,6 @@ enum AbiError {
     TuplePropertyNotFound,
     #[error("Unsupported header")]
     UnsupportedHeader,
-    #[error("Failed to pack into cell: {0}")]
-    FailedtoPackIntoCell(String),
-    #[error("Empty components")]
-    EmptyComponents,
-    #[error("Unused components")]
-    UnusedComponents,
 }
 
 fn parse_contract_abi(contract_abi: &str) -> Result<ton_abi::Contract, JsValue> {
@@ -993,4 +1054,7 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "DecodedOutput")]
     pub type DecodedOutput;
+
+    #[wasm_bindgen(typescript_type = "Array<Param>")]
+    pub type ParamsList;
 }
