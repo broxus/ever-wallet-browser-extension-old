@@ -1,18 +1,16 @@
-import React, { useRef, useState } from 'react'
-import { EventEmitter } from 'events'
+import React, { useRef } from 'react'
 
 import Button from '@popup/components/Button'
 
-const LEDGER_BRIDGE_URL = 'https://pashinov.github.io/ton-ledger-bridge'
+const LEDGER_BRIDGE_URL = 'https://broxus.github.io/ton-ledger-bridge'
 
 interface ISelectWallet {
-    onSubmit: (publicKey: string) => void
+    onSubmit: () => void
     onBack?: () => void
     onSkip?: () => void
 }
 
 const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) => {
-    const [publicKey, setPublicKey] = useState<string>()
     const ref = useRef<HTMLIFrameElement>(null)
 
     return (
@@ -27,15 +25,11 @@ const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) 
                         onLoad={() => {
                             const message = {
                                 target: 'LEDGER-IFRAME',
-                                action: 'ledger-get-public-key',
-                                params: {
-                                    account: 0,
-                                },
+                                action: 'ledger-get-configuration',
                             }
 
                             const handleMessage = (reply: any) => {
                                 if (reply.data?.success === true) {
-                                    setPublicKey(reply?.data?.payload.publicKey)
                                 }
 
                                 window.removeEventListener('message', handleMessage)
@@ -47,11 +41,7 @@ const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) 
                     />
                 </div>
                 <div className="select-wallet__content-buttons">
-                    <Button
-                        text={'Next'}
-                        disabled={publicKey == null}
-                        onClick={() => onSubmit(publicKey!)}
-                    />
+                    <Button text={'Next'} disabled={false} onClick={() => onSubmit()} />
                     {onBack && <Button text={'Back'} white onClick={onBack} />}
                     {onSkip && <Button text={'Skip'} white onClick={onSkip} />}
                 </div>
