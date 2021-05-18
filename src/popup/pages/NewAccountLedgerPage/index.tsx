@@ -45,6 +45,7 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
             key = await createLedgerKey({
                 accountId,
             })
+
             await createAccount({ name, publicKey: key.publicKey, contractType })
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)

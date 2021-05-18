@@ -1,6 +1,6 @@
 const { EventEmitter } = require('events')
 
-const BRIDGE_URL = 'https://pashinov.github.io/ton-ledger-bridge'
+const BRIDGE_URL = 'https://broxus.github.io/ton-ledger-bridge'
 
 type IBridgeApi = {
     'ledger-get-public-key': {
@@ -9,6 +9,7 @@ type IBridgeApi = {
         }
         output: {
             publicKey: Uint8Array
+            error: Error
         }
     }
     'ledger-sign-hash': {
@@ -18,6 +19,7 @@ type IBridgeApi = {
         }
         output: {
             signature: Uint8Array
+            error: Error
         }
     }
     'ledger-close-bridge': {
@@ -39,7 +41,6 @@ export default class LedgerBridge extends EventEmitter {
     private readonly perPage = 5
     private page: number = 0
     private iframe?: HTMLIFrameElement
-    private background: boolean = true
     private iframeLoaded: boolean = false
 
     constructor() {
@@ -86,17 +87,13 @@ export default class LedgerBridge extends EventEmitter {
     }
 
     public async close() {
-        const { success, payload, error } = await this._sendMessage('ledger-close-bridge', {})
+        const { success, error } = await this._sendMessage('ledger-close-bridge', {})
 
-        if (success && payload) {
-            return payload
+        if (success) {
+            return
         } else {
             throw error || new Error('Unknown error')
         }
-    }
-
-    public setBackground(background: boolean) {
-        this.background = background
     }
 
     private _setupIframe() {
@@ -121,7 +118,6 @@ export default class LedgerBridge extends EventEmitter {
     ): Promise<IBridgeResponse<T>> {
         const message = {
             target: 'LEDGER-IFRAME',
-            background: this.background,
             action,
             params,
         }
@@ -129,7 +125,7 @@ export default class LedgerBridge extends EventEmitter {
         return new Promise<IBridgeResponse<T>>((resolve, reject) => {
             const eventListener = ({ origin, data }: MessageEvent) => {
                 if (origin !== this._getOrigin()) {
-                    return false
+                    reject(new Error('Invalid origin'))
                 }
 
                 window.removeEventListener('message', eventListener)
@@ -140,7 +136,7 @@ export default class LedgerBridge extends EventEmitter {
                     reject(new Error('Invalid reply'))
                 }
 
-                return undefined
+                reject(new Error('Unknown error'))
             }
             window.addEventListener('message', eventListener)
 
