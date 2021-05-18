@@ -1,0 +1,40 @@
+.notification {
+    padding: 10px;
+
+    &-wrapper {
+        top: 56px;
+        width: 89%;
+        padding: 0;
+        left: 20px;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        box-sizing: border-box;
+        box-shadow: 0px 8px 16px rgba(43, 51, 56, 0.08);
+        backdrop-filter: blur(120px);
+        z-index: 1;
+    }
+
+    &__record {
+        display: flex;
+        align-items: center;
+        padding: 10px;
+        background: rgba(242, 242, 249, 0.96);
+        &-title {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #000000;
+        }
+
+        &-timestamp {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 12px;
+            line-height: 16px;
+            letter-spacing: 0.4px;
+            color: #96a1a7;
+        }
+    }
+}
