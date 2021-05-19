@@ -906,32 +906,22 @@ fn insert_init_data(
 
 #[wasm_bindgen(typescript_custom_section)]
 const PARAM: &str = r#"
-type Digit = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9';
-type NumberBits = 
-    | Exclude<Digit, '0'>                           // 1-9
-    | `${Exclude<Digit, '0'>}${Digit}`              // 10-99 
-    | `1${Digit}${Digit}`                           // 100-199 
-    | `2${'0' | '1' | '2' | '3' | '4'}${Digit}`     // 200-249
-    | `25${'0' | '1' | '2' | '4' | '5' | '6'}`;     // 250-256
+export type ParamKindUint = 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint128' | 'uint160' | 'uint256'
+export type ParamKindInt = 'int8' | 'int16' | 'int32' | 'int64' | 'int128' | 'int160' | 'int256'
+export type ParamKindTuple = 'tuple'
+export type ParamKindBool = 'bool'
+export type ParamKindCell = 'cell'
+export type ParamKindAddress = 'address'
+export type ParamKindBytes = 'bytes'
+export type ParamKindGram = 'gram'
+export type ParamKindTime = 'time'
+export type ParamKindExpire = 'expire'
+export type ParamKindPublicKey = 'pubkey'
+export type ParamKindArray = ParamKind[]
 
-type ParamKindUint = 'uint${NumberBits}'
-type ParamKindInt = 'int${NumberBits}'
-type ParamKindTuple = 'tuple'
-type ParamKindBool = 'bool'
-type ParamKindCell = 'cell'
-type ParamKindAddress = 'address'
-type ParamKindBytes = 'bytes'
-type ParamKindGram = 'gram'
-type ParamKindTime = 'time'
-type ParamKindExpire = 'expire'
-type ParamKindPublicKey = 'pubkey'
-type ParamKindArray = ParamKind[]
+export type ParamKindMap = `map(${ParamKindInt | ParamKindUint | ParamKindAddress},${ParamKind | `${ParamKind}[]`})`;
 
-type ParamKindMap = `map(${ParamKindInt | ParamKindUint | ParamKindAddress},${
-    | ParamKind
-    | `${ParamKind}[]`})`
-
-type ParamKind =
+export type ParamKind =
     | ParamKindUint
     | ParamKindInt
     | ParamKindTuple
@@ -944,10 +934,10 @@ type ParamKind =
     | ParamKindExpire
     | ParamKindPublicKey
 
-type Param = {
-    name: string;
-    type: ParamKind | ParamKindMap | ParamKindArray; 
-    components?: Param[];
+export type AbiParam = {
+  name: string;
+  type: ParamKind | ParamKindMap | ParamKindArray;
+  components?: AbiParam[];
 };
 "#;
 
@@ -1055,6 +1045,6 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "DecodedOutput")]
     pub type DecodedOutput;
 
-    #[wasm_bindgen(typescript_type = "Array<Param>")]
+    #[wasm_bindgen(typescript_type = "Array<AbiParam>")]
     pub type ParamsList;
 }

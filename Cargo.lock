@@ -870,7 +870,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#d969ea8e467993dbb605c29eb3dc7b0da86aa649"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1f545e1a885bb0e277e3b43f35731d9d9e357c91"
 dependencies = [
  "aes-ctr",
  "anyhow",
