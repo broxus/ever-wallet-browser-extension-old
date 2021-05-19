@@ -32,6 +32,15 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.5 (2021-05-19)
+
+Features:
+* Added support for [TIP3v4](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/4.0)
+
+Bugfixes:
+* Fixed hex numbers in provider api.
+* Fixed strange behavior on sites from atlassian.
+
 ### 0.1.4 (2021-05-17)
 
 Features:
