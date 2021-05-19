@@ -158,6 +158,7 @@ dependencies = [
  "js-sys",
  "nekoton",
  "num-bigint",
+ "num-traits",
  "pin-project-lite",
  "rand",
  "serde",
@@ -870,7 +871,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#47fa8199a4e9aa4d099aab42d58d884c970b65fd"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1f545e1a885bb0e277e3b43f35731d9d9e357c91"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -1492,7 +1493,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-abi.git#53b84ead97054620f2a11a064cfb74a99deffe88"
+source = "git+https://github.com/tonlabs/ton-labs-abi.git#a31773891cc64dbba8fcc0f9ac93d6acb3d36918"
 dependencies = [
  "base64 0.10.1",
  "byteorder",
@@ -1515,7 +1516,7 @@ dependencies = [
 [[package]]
 name = "ton_api"
 version = "0.0.1"
-source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#362cf6ce03dc5216a86ab5a207f3a74c07da62d0"
+source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fe816c317954caf649dca6f42cc30149dcc1024a"
 dependencies = [
  "byteorder",
  "erased-serde",
@@ -1534,8 +1535,8 @@ dependencies = [
 
 [[package]]
 name = "ton_block"
-version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-block.git#aa7482592c3c1bb67264604a5a7e03b9dd89faac"
+version = "1.0.13"
+source = "git+https://github.com/tonlabs/ton-labs-block.git#be9c8506f363a7b1f2ee3e41400e8790f55781ea"
 dependencies = [
  "base64 0.10.1",
  "clear_on_drop",
@@ -1572,8 +1573,8 @@ dependencies = [
 
 [[package]]
 name = "ton_labs_assembler"
-version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#dbc3334804e7cde89d05b2b6e0c0fdd628b1b966"
+version = "1.0.13"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#a50745741f5f9877a8da7912bbb9e0d1d764f6be"
 dependencies = [
  "failure",
  "hex 0.4.3",
@@ -1588,7 +1589,7 @@ dependencies = [
 [[package]]
 name = "ton_tl_codegen"
 version = "0.0.1"
-source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#362cf6ce03dc5216a86ab5a207f3a74c07da62d0"
+source = "git+https://github.com/broxus/ton-labs-tl.git?branch=original#fe816c317954caf649dca6f42cc30149dcc1024a"
 dependencies = [
  "crc",
  "failure",

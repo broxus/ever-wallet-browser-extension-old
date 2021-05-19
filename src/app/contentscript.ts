@@ -38,7 +38,26 @@ const checkDocumentElement = () => {
     return true
 }
 
-const shouldInjectProvider = () => checkDoctype() && checkSuffix() && checkDocumentElement()
+function checkExcludedDomains() {
+    const excludedDomains = ['dropbox.com', 'atlassian.net', 'atlassian.com']
+
+    const currentUrl = window.location.href
+
+    let currentRegex: RegExp | undefined
+    for (let i = 0; i < excludedDomains.length; i++) {
+        const blockedDomain = excludedDomains[i].replace('.', '\\.')
+        currentRegex = new RegExp(`(?:https?:\\/\\/)(?:(?!${blockedDomain}).)*$`, 'u')
+
+        if (!currentRegex.test(currentUrl)) {
+            return false
+        }
+    }
+
+    return true
+}
+
+const shouldInjectProvider = () =>
+    checkDoctype() && checkSuffix() && checkDocumentElement() && checkExcludedDomains()
 
 const injectScript = () => {
     try {

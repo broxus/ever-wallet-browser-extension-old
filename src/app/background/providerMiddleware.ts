@@ -294,8 +294,32 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     const { selectedConnection } = connectionController.state
     const permissions = permissionsController.getPermissions(origin)
 
+    const convertVersionToInt32 = (version: string): number => {
+        let parts = version.split('.')
+        if (parts.length !== 3) {
+            throw new Error('Received invalid version string')
+        }
+
+        parts.forEach((part) => {
+            if (~~part > 999) {
+                throw new Error(`Version string invalid, ${part} is too large`)
+            }
+        })
+
+        let multiplier = 1000000
+        let numericVersion = 0
+        for (let i = 0; i < 3; i++) {
+            numericVersion += ~~parts[i] * multiplier
+            multiplier /= 1000
+        }
+        return numericVersion
+    }
+
+    const version = (manifest as any).version
+
     res.result = {
-        version: (manifest as any).version,
+        version,
+        numericVersion: convertVersionToInt32(version),
         selectedConnection: selectedConnection.name,
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},

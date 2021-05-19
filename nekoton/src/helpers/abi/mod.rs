@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
+use num_traits::Num;
 use ton_block::{Deserializable, GetRepresentationHash, MsgAddressInt, Serializable};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -361,12 +362,10 @@ pub fn decode_transaction_events(
                 Err(e) => return Some(Err(e)),
             };
 
-            Some(Ok(JsValue::from(
-                ObjectBuilder::new()
-                    .set("event", &event.name)
-                    .set("data", data)
-                    .build(),
-            )))
+            Some(Ok(ObjectBuilder::new()
+                .set("event", &event.name)
+                .set("data", data)
+                .build()))
         })
         .collect::<Result<js_sys::Array, JsValue>>()?;
 
@@ -540,7 +539,12 @@ fn parse_token_value(
     let value = match param {
         &ton_abi::ParamType::Uint(size) => {
             let number = if let Some(value) = value.as_string() {
-                BigUint::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if value.starts_with("0x") {
+                    BigUint::from_str_radix(&value, 16)
+                } else {
+                    BigUint::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
                 if value >= 0.0 {
                     Ok(BigUint::from(value as u64))
@@ -555,7 +559,12 @@ fn parse_token_value(
         }
         &ton_abi::ParamType::Int(size) => {
             let number = if let Some(value) = value.as_string() {
-                BigInt::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if value.starts_with("0x") {
+                    BigInt::from_str_radix(&value, 16)
+                } else {
+                    BigInt::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
                 Ok(BigInt::from(value as u64))
             } else {
@@ -906,6 +915,68 @@ fn insert_init_data(
     map.write_to_new_cell().map(From::from).handle_error()
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const PARAM: &str = r#"
+export type ParamKindUint = 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint128' | 'uint160' | 'uint256'
+export type ParamKindInt = 'int8' | 'int16' | 'int32' | 'int64' | 'int128' | 'int160' | 'int256'
+export type ParamKindTuple = 'tuple'
+export type ParamKindBool = 'bool'
+export type ParamKindCell = 'cell'
+export type ParamKindAddress = 'address'
+export type ParamKindBytes = 'bytes'
+export type ParamKindGram = 'gram'
+export type ParamKindTime = 'time'
+export type ParamKindExpire = 'expire'
+export type ParamKindPublicKey = 'pubkey'
+export type ParamKindArray = ParamKind[]
+
+export type ParamKindMap = `map(${ParamKindInt | ParamKindUint | ParamKindAddress},${ParamKind | `${ParamKind}[]`})`;
+
+export type ParamKind =
+    | ParamKindUint
+    | ParamKindInt
+    | ParamKindTuple
+    | ParamKindBool
+    | ParamKindCell
+    | ParamKindAddress
+    | ParamKindBytes
+    | ParamKindGram
+    | ParamKindTime
+    | ParamKindExpire
+    | ParamKindPublicKey
+
+export type AbiParam = {
+  name: string;
+  type: ParamKind | ParamKindMap | ParamKindArray;
+  components?: AbiParam[];
+};
+"#;
+
+#[wasm_bindgen(js_name = "packIntoCell")]
+pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String, JsValue> {
+    let params: Vec<ton_abi::Param> = JsValue::into_serde(&params).handle_error()?;
+    let tokens = parse_tokens_object(&params, tokens).handle_error()?;
+
+    let cell = nt::helpers::abi::pack_into_cell(&tokens).handle_error()?;
+    let bytes = ton_types::serialize_toc(&cell).handle_error()?;
+    Ok(hex::encode(&bytes))
+}
+
+#[wasm_bindgen(js_name = "unpackFromCell")]
+pub fn unpack_from_cell(
+    params: ParamsList,
+    boc: &str,
+    allow_partial: bool,
+) -> Result<TokensObject, JsValue> {
+    let params: Vec<ton_abi::Param> = JsValue::into_serde(&params).handle_error()?;
+    let body = base64::decode(boc).handle_error()?;
+    let cell =
+        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    nt::helpers::abi::unpack_from_cell(&params, cell.into(), allow_partial)
+        .handle_error()
+        .and_then(|tokens| make_tokens_object(&tokens))
+}
+
 #[derive(thiserror::Error, Debug)]
 enum AbiError {
     #[error("Unexpected token")]
@@ -984,4 +1055,7 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "DecodedOutput")]
     pub type DecodedOutput;
+
+    #[wasm_bindgen(typescript_type = "Array<AbiParam>")]
+    pub type ParamsList;
 }
