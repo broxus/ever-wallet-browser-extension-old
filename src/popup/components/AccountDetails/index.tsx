@@ -78,7 +78,9 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
             <div className="account-details">
                 <div className="account-details__top-panel">
                     <div
-                        onClick={() => setNotificationsVisible(true)}
+                        onClick={() => {
+                            /*setNotificationsVisible(true)*/
+                        }}
                         style={{ cursor: 'pointer' }}
                     >
                         <NotificationsIcon />

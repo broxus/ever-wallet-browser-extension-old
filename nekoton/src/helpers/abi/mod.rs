@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
+use num_traits::Num;
 use ton_block::{Deserializable, GetRepresentationHash, MsgAddressInt, Serializable};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -538,7 +539,12 @@ fn parse_token_value(
     let value = match param {
         &ton_abi::ParamType::Uint(size) => {
             let number = if let Some(value) = value.as_string() {
-                BigUint::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if value.starts_with("0x") {
+                    BigUint::from_str_radix(&value, 16)
+                } else {
+                    BigUint::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
                 if value >= 0.0 {
                     Ok(BigUint::from(value as u64))
@@ -553,7 +559,12 @@ fn parse_token_value(
         }
         &ton_abi::ParamType::Int(size) => {
             let number = if let Some(value) = value.as_string() {
-                BigInt::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if value.starts_with("0x") {
+                    BigInt::from_str_radix(&value, 16)
+                } else {
+                    BigInt::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
                 Ok(BigInt::from(value as u64))
             } else {
