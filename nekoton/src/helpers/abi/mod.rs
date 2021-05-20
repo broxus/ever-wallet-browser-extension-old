@@ -539,8 +539,8 @@ fn parse_token_value(
     let value = match param {
         &ton_abi::ParamType::Uint(size) => {
             let number = if let Some(value) = value.as_string() {
-                if value.starts_with("0x") {
-                    BigUint::from_str_radix(&value, 16)
+                if let Some(value) = value.strip_prefix("0x") {
+                    BigUint::from_str_radix(value, 16)
                 } else {
                     BigUint::from_str(&value)
                 }
@@ -559,8 +559,8 @@ fn parse_token_value(
         }
         &ton_abi::ParamType::Int(size) => {
             let number = if let Some(value) = value.as_string() {
-                if value.starts_with("0x") {
-                    BigInt::from_str_radix(&value, 16)
+                if let Some(value) = value.strip_prefix("0x") {
+                    BigInt::from_str_radix(value, 16)
                 } else {
                     BigInt::from_str(&value)
                 }
@@ -709,7 +709,12 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Gram => {
             let value = if let Some(value) = value.as_string() {
-                u128::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if let Some(value) = value.strip_prefix("0x") {
+                    u128::from_str_radix(value, 16)
+                } else {
+                    u128::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
                 if value >= 0.0 {
                     Ok(value as u128)
@@ -724,7 +729,12 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Time => {
             let value = if let Some(value) = value.as_string() {
-                u64::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if let Some(value) = value.strip_prefix("0x") {
+                    u64::from_str_radix(value, 16)
+                } else {
+                    u64::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
                 if value >= 0.0 {
                     Ok(value as u64)
@@ -745,7 +755,12 @@ fn parse_token_value(
                     Err(AbiError::ExpectedUnsignedNumber)
                 }
             } else if let Some(value) = value.as_string() {
-                u32::from_str(&value).map_err(|_| AbiError::InvalidNumber)
+                if let Some(value) = value.strip_prefix("0x") {
+                    u32::from_str_radix(value, 16)
+                } else {
+                    u32::from_str(&value)
+                }
+                .map_err(|_| AbiError::InvalidNumber)
             } else {
                 Err(AbiError::ExpectedStringOrNumber)
             }?;
@@ -757,7 +772,7 @@ fn parse_token_value(
                 if value.is_empty() {
                     Ok(None)
                 } else {
-                    hex::decode(&value)
+                    hex::decode(value.strip_prefix("0x").unwrap_or(&value))
                         .map_err(|_| AbiError::InvalidPublicKey)
                         .and_then(|value| {
                             ed25519_dalek::PublicKey::from_bytes(&value)

@@ -1003,11 +1003,11 @@ export class AccountController extends BaseController<
                     address
                 )}`
 
-                this.config.notificationController.showNotification(
-                    `New transaction found`,
+                this.config.notificationController.showNotification({
+                    title: `New transaction found`,
                     body,
-                    `https://ton-explorer.com/transactions/${transaction.id.hash}`
-                )
+                    link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                })
             }
         }
 
@@ -1042,11 +1042,11 @@ export class AccountController extends BaseController<
                         symbol.name
                     } ${value.lt(0) ? 'to' : 'from'} ${direction?.address}`
 
-                    this.config.notificationController.showNotification(
-                        `New token transaction found`,
+                    this.config.notificationController.showNotification({
+                        title: `New token transaction found`,
                         body,
-                        `https://ton-explorer.com/transactions/${transaction.id.hash}`
-                    )
+                        link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                    })
                 }
             }
         }
