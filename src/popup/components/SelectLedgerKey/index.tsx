@@ -1,6 +1,8 @@
 import React, { useRef } from 'react'
 
 import Button from '@popup/components/Button'
+import ConnectLedger from '@popup/components/ConnectLedger'
+import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
 
 const LEDGER_BRIDGE_URL = 'https://broxus.github.io/ton-ledger-bridge'
 
@@ -17,7 +19,8 @@ const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) 
         <div className="select-wallet">
             <div className="select-wallet__content">
                 <div className="select-wallet__content-options">
-                    <h2 className="select-wallet__content-options-title">Connect ledger</h2>
+                    {/*<ConnectLedger onBack={onBack} onNext={onSubmit} />*/}
+                    {/*<SelectLedgerAccount onBack={onBack} onNext={onSubmit} />*/}
                     <iframe
                         allow="hid"
                         src={LEDGER_BRIDGE_URL}
@@ -31,7 +34,6 @@ const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) 
                             const handleMessage = (reply: any) => {
                                 if (reply.data?.success === true) {
                                 }
-
                                 window.removeEventListener('message', handleMessage)
                             }
                             window.addEventListener('message', handleMessage)

@@ -70,12 +70,19 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
                         setContractType(contractType)
                         setLocalStep(LocalStep.CONNECT_LEDGER)
                     }}
-                    onBack={onBack}
+                    onBack={() => {
+                        setLocalStep(LocalStep.SIGN_POLICY)
+                    }}
                     excludedContracts={['WalletV3']}
                 />
             )}
             {localStep == LocalStep.CONNECT_LEDGER && (
-                <SelectLedgerKey onSubmit={onSubmit} onBack={onBack} />
+                <SelectLedgerKey
+                    onSubmit={onSubmit}
+                    onBack={() => {
+                        setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
+                    }}
+                />
             )}
             {error && (
                 <Modal
