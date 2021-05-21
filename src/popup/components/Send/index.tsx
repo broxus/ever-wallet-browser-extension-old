@@ -11,11 +11,7 @@ import {
     SelectedAsset,
     TokenWalletState,
 } from '@shared/utils'
-import {
-    MessageToPrepare,
-    SwapBackMessageToPrepare,
-    TokenMessageToPrepare,
-} from '@shared/approvalApi'
+import { MessageToPrepare, TokenMessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import Select from 'react-select'
@@ -96,16 +92,6 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                         {fees ? `~${convertTons(fees)} TON` : 'calculating...'}
                     </span>
                 </div>
-
-                {/*TODO password form doesn't fit, wait for design update*/}
-                {/*{params?.comment && (*/}
-                {/*    <div className="send-screen__form-tx-details-param">*/}
-                {/*        <span className="send-screen__form-tx-details-param-desc">Comment</span>*/}
-                {/*        <span className="send-screen__form-tx-details-param-value">*/}
-                {/*            {params?.comment}*/}
-                {/*        </span>*/}
-                {/*    </div>*/}
-                {/*)}*/}
             </div>
             <Input
                 className="send-screen__form-comment"

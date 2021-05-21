@@ -90,8 +90,19 @@ pub fn validate_mnemonic(
 
 #[wasm_bindgen(js_name = "encodeComment")]
 pub fn encode_comment(comment: &str) -> Result<String, JsValue> {
-    let body = nt::helpers::abi::create_comment_payload(comment).handle_error()?;
+    let body = base64::decode(comment.trim())
+        .ok()
+        .and_then(|bytes| {
+            ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&bytes)).ok()
+        })
+        .map(Result::<_, JsValue>::Ok)
+        .unwrap_or_else(|| {
+            nt::helpers::abi::create_comment_payload(comment)
+                .handle_error()
+                .map(|slice| slice.into_cell())
+        })?;
+
     Ok(base64::encode(
-        ton_types::serialize_toc(&body.into_cell()).handle_error()?,
+        ton_types::serialize_toc(&body).handle_error()?,
     ))
 }
