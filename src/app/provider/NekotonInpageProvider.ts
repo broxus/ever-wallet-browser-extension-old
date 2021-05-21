@@ -105,7 +105,7 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
         jsonRpcConnection.events.on('notification', (payload) => {
             const { method, params } = payload
 
-            this._log.info('Got notification: ', method, params)
+            this._log.debug('Got notification: ', method, params)
 
             if (method === 'NEKOTON_STREAM_FAILURE') {
                 connectionStream.destroy(new Error('Permanently disconnected'))

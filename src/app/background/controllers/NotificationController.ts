@@ -1,8 +1,18 @@
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 
+const DEFAULT_NOTIFICATION_TIMEOUT = 60000 // 60s
+
 export interface NotificationControllerConfig extends BaseConfig {}
 
 export interface NotificationControllerState extends BaseState {}
+
+export interface INotification {
+    title: string
+    body: string
+    link?: string
+    eventTime?: number
+    timeout?: number
+}
 
 export class NotificationController extends BaseController<
     NotificationControllerConfig,
@@ -29,7 +39,13 @@ export class NotificationController extends BaseController<
         this.config.disabled = hidden
     }
 
-    public showNotification(title: string, body: string, link?: string) {
+    public showNotification({
+        title,
+        body,
+        link,
+        eventTime,
+        timeout = DEFAULT_NOTIFICATION_TIMEOUT,
+    }: INotification) {
         if (this.config.disabled) {
             return
         }
@@ -41,10 +57,18 @@ export class NotificationController extends BaseController<
                 message: body,
                 iconUrl: `${chrome.extension.getURL('icon128.png')}`,
                 requireInteraction: true,
+                eventTime,
             },
             (notificationId) => {
                 if (link) {
                     this._notificationLinks[notificationId] = link
+                }
+
+                if (timeout > 0) {
+                    setTimeout(() => {
+                        chrome.notifications.clear(notificationId)
+                        delete this._notificationLinks[notificationId]
+                    }, timeout)
                 }
             }
         )

@@ -1,4 +1,9 @@
-import { WalletContractType, Permissions, Permission, FunctionCall } from 'ton-inpage-provider'
+import {
+    WalletContractType,
+    RawPermissions,
+    Permission,
+    RawFunctionCall,
+} from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
 export type MasterKeyToCreate = {
@@ -66,13 +71,13 @@ export type ApprovalApi = {
         input: {
             permissions: Permission[]
         }
-        output: Partial<Permissions>
+        output: Partial<RawPermissions>
     }
     callContractMethod: {
         input: {
             publicKey: string
             recipient: string
-            payload: FunctionCall
+            payload: RawFunctionCall
         }
         output: nt.KeyPassword
     }
@@ -82,7 +87,7 @@ export type ApprovalApi = {
             recipient: string
             amount: string
             bounce: boolean
-            payload?: FunctionCall
+            payload?: RawFunctionCall
             fees: string
         }
         output: nt.KeyPassword

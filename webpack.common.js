@@ -1,6 +1,6 @@
 const path = require('path')
 
-const { ProvidePlugin, IgnorePlugin } = require('webpack')
+const { ProvidePlugin, DefinePlugin, IgnorePlugin } = require('webpack')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
@@ -81,6 +81,9 @@ module.exports = {
                 { from: path.resolve(__dirname, './src/popup/icons/icon128.png') },
                 { from: path.resolve(__dirname, './src/manifest.json') },
             ],
+        }),
+        new DefinePlugin({
+            'process.env.NEKOTON_DEBUG': process.env.NEKOTON_DEBUG != null,
         }),
         new HtmlWebpackPlugin({
             template: path.resolve(__dirname, './src/popup/popup.html'),

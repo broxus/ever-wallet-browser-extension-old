@@ -32,6 +32,16 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.6 (2021-05-22)
+
+Features:
+* Added `packIntoCell` and `unpackFromCell` methods to the provider api.
+* Added support for base64 encoded BOC in message comments.
+
+Bugfixes:
+* Fixed hex numbers in provider api (finally).
+* Fixed potential connection error.
+
 ### 0.1.5 (2021-05-19)
 
 Features:

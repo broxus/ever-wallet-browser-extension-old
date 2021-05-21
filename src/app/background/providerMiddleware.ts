@@ -1,10 +1,10 @@
 import {
-    ProviderApi,
+    RawProviderApi,
     Permission,
-    FunctionCall,
+    RawFunctionCall,
     FullContractState,
     GenTimings,
-    TokensObject,
+    RawTokensObject,
 } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
@@ -33,7 +33,7 @@ interface CreateProviderMiddlewareOptions {
     subscriptionsController: SubscriptionController
 }
 
-type ProviderMethod<T extends keyof ProviderApi> = ProviderApi[T] extends {
+type ProviderMethod<T extends keyof RawProviderApi> = RawProviderApi[T] extends {
     input?: infer I
     output?: infer O
 }
@@ -192,7 +192,7 @@ function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, o
 
 function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as FunctionCall
+    const property = (object[key] as unknown) as RawFunctionCall
     requireString(req, property, 'abi')
     requireString(req, property, 'method')
     requireObject(req, property, 'params')
@@ -411,7 +411,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     }
 
     try {
-        res.result = nt.runLocal(
+        const { output, code } = nt.runLocal(
             contractState.genTimings,
             contractState.lastTransactionId,
             contractState.boc,
@@ -419,6 +419,11 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
             functionCall.method,
             functionCall.params
         )
+
+        res.result = {
+            output,
+            code,
+        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -444,6 +449,42 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
     try {
         res.result = {
             address: nt.getExpectedAddress(tvc, abi, workchain || 0, publicKey, initParams),
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const packIntoCell: ProviderMethod<'packIntoCell'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { structure, data } = req.params
+    requireArray(req, req.params, 'structure')
+
+    try {
+        res.result = {
+            boc: nt.packIntoCell(structure as nt.AbiParam[], data),
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const unpackFromCell: ProviderMethod<'unpackFromCell'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { structure, boc, allowPartial } = req.params
+    requireArray(req, req.params, 'structure')
+    requireString(req, req.params, 'boc')
+    requireBoolean(req, req.params, 'allowPartial')
+
+    try {
+        res.result = {
+            data: nt.unpackFromCell(structure as nt.AbiParam[], boc, allowPartial),
         }
         end()
     } catch (e) {
@@ -813,7 +854,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     }
 
     const transaction = await subscriptionsController.sendMessage(recipient, signedMessage)
-    let output: TokensObject | undefined
+    let output: RawTokensObject | undefined
     try {
         const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)
         output = decoded?.output
@@ -826,7 +867,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     end()
 }
 
-const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
+const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     requestPermissions,
     disconnect,
     subscribe,
@@ -837,6 +878,8 @@ const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     getTransactions,
     runLocal,
     getExpectedAddress,
+    packIntoCell,
+    unpackFromCell,
     encodeInternalInput,
     decodeInput,
     decodeEvent,

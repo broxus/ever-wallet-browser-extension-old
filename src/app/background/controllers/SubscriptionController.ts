@@ -1,5 +1,9 @@
 import { NekotonRpcError, SendMessageCallback, SendMessageRequest } from '@shared/utils'
-import { ContractUpdatesSubscription, ProviderEvent, ProviderEventData } from 'ton-inpage-provider'
+import {
+    ContractUpdatesSubscription,
+    ProviderEvent,
+    RawProviderEventData,
+} from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
 import { Mutex } from '@broxus/await-semaphore'
 import * as nt from '@nekoton'
@@ -14,7 +18,7 @@ export interface SubscriptionControllerConfig extends BaseConfig {
     connectionController: ConnectionController
     notifyTab?: <T extends ProviderEvent>(
         tabId: number,
-        payload: { method: T; params: ProviderEventData<T> }
+        payload: { method: T; params: RawProviderEventData<T> }
     ) => void
     getOriginTabs?: (origin: string) => number[]
 }
