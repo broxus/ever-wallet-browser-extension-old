@@ -77,10 +77,12 @@ export class NekotonController extends EventEmitter {
 
     public static async load(options: NekotonControllerOptions) {
         const storage = new nt.Storage(new StorageConnector())
-        const ledgerConnection = new nt.LedgerConnection(new LedgerConnection())
         const accountsStorage = await nt.AccountsStorage.load(storage)
-        const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
+
         const ledgerBridge = new LedgerBridge()
+        const ledgerConnection = new nt.LedgerConnection(new LedgerConnection(ledgerBridge))
+
+        const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
 
         const connectionController = new ConnectionController({})
 
@@ -92,9 +94,9 @@ export class NekotonController extends EventEmitter {
             storage,
             accountsStorage,
             keyStore,
-            ledgerBridge,
             connectionController,
             notificationController,
+            ledgerBridge,
         })
         const approvalController = new ApprovalController({
             showApprovalRequest: options.showUserConfirmation,
@@ -518,7 +520,7 @@ export class StorageConnector {
 }
 
 export class LedgerConnection {
-    private readonly bridge: LedgerBridge = new LedgerBridge()
+    constructor(private readonly bridge: LedgerBridge) {}
 
     async getPublicKey(account: number, handler: nt.LedgerQueryResultHandler) {
         await this.bridge
