@@ -1100,7 +1100,7 @@ pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String
 
     let cell = nt::helpers::abi::pack_into_cell(&tokens).handle_error()?;
     let bytes = ton_types::serialize_toc(&cell).handle_error()?;
-    Ok(hex::encode(&bytes))
+    Ok(base64::encode(&bytes))
 }
 
 #[wasm_bindgen(js_name = "unpackFromCell")]
