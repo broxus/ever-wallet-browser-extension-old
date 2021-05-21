@@ -32,7 +32,7 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
-### 0.1.6 (2021-05-19)
+### 0.1.6 (2021-05-22)
 
 Features:
 * Added `packIntoCell` and `unpackFromCell` methods to the provider api.

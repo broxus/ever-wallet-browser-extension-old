@@ -411,7 +411,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     }
 
     try {
-        res.result = nt.runLocal(
+        const { output, code } = nt.runLocal(
             contractState.genTimings,
             contractState.lastTransactionId,
             contractState.boc,
@@ -419,6 +419,11 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
             functionCall.method,
             functionCall.params
         )
+
+        res.result = {
+            output,
+            code,
+        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())

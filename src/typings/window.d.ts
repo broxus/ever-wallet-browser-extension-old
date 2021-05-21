@@ -16,4 +16,10 @@ declare global {
 
         define?: Define
     }
+
+    namespace NodeJS {
+        export interface ProcessEnv {
+            NEKOTON_DEBUG: boolean
+        }
+    }
 }
