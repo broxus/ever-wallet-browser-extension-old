@@ -1,27 +1,21 @@
 {
   "name": "ton-crystal-wallet",
-  "version": "0.1.5",
-  "description": "Simple TON wallet browser plugin",
+  "version": "0.1.6",
+  "description": "TON Crystal Wallet browser extension",
   "scripts": {
     "start": "webpack --watch --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Rexagon/nekoton.git"
+    "url": "git+https://github.com/broxus/ton-wallet-crystal-browser-extension.git"
   },
   "author": "",
-  "license": "Apache-2.0",
-  "licenses": [
-    {
-      "type": "Apache-2.0",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0"
-    }
-  ],
+  "license": "GNU GPL v3.0",
   "bugs": {
-    "url": "https://github.com/Rexagon/nekoton/issues"
+    "url": "https://github.com/broxus/ton-wallet-crystal-browser-extension/issues"
   },
-  "homepage": "https://github.com/Rexagon/nekoton#readme",
+  "homepage": "https://github.com/broxus/ton-wallet-crystal-browser-extension#readme",
   "devDependencies": {
     "@broxus/wasm-pack-plugin": "^1.4.0",
     "@ledgerhq/hw-transport-webhid": "^5.51.1",
