@@ -1,5 +1,10 @@
 import _ from 'lodash'
-import { Permissions, Permission, ProviderEvent, ProviderEventData } from 'ton-inpage-provider'
+import {
+    RawPermissions,
+    Permission,
+    ProviderEvent,
+    RawProviderEventData,
+} from 'ton-inpage-provider'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 
@@ -31,12 +36,12 @@ export interface PermissionsConfig extends BaseConfig {
     approvalController: ApprovalController
     notifyDomain?: <T extends ProviderEvent>(
         origin: string,
-        payload: { method: ProviderEvent; params: ProviderEventData<T> }
+        payload: { method: ProviderEvent; params: RawProviderEventData<T> }
     ) => void
 }
 
 export interface PermissionsState extends BaseState {
-    permissions: { [origin: string]: Partial<Permissions> }
+    permissions: { [origin: string]: Partial<RawPermissions> }
 }
 
 function makeDefaultState(): PermissionsState {
@@ -91,7 +96,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
 
         if (hasNewPermissions) {
-            const originPermissions: Partial<Permissions> = await this.config.approvalController.addAndShowApprovalRequest(
+            const originPermissions: Partial<RawPermissions> = await this.config.approvalController.addAndShowApprovalRequest(
                 {
                     origin,
                     type: 'requestPermissions',
@@ -125,7 +130,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         return existingPermissions
     }
 
-    public getPermissions(origin: string): Partial<Permissions> {
+    public getPermissions(origin: string): Partial<RawPermissions> {
         return this.state.permissions[origin] || {}
     }
 

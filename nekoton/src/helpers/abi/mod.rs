@@ -932,44 +932,170 @@ fn insert_init_data(
 
 #[wasm_bindgen(typescript_custom_section)]
 const PARAM: &str = r#"
-export type ParamKindUint = 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint128' | 'uint160' | 'uint256'
-export type ParamKindInt = 'int8' | 'int16' | 'int32' | 'int64' | 'int128' | 'int160' | 'int256'
-export type ParamKindTuple = 'tuple'
-export type ParamKindBool = 'bool'
-export type ParamKindCell = 'cell'
-export type ParamKindAddress = 'address'
-export type ParamKindBytes = 'bytes'
-export type ParamKindGram = 'gram'
-export type ParamKindTime = 'time'
-export type ParamKindExpire = 'expire'
-export type ParamKindPublicKey = 'pubkey'
-export type ParamKindArray = ParamKind[]
+export type AbiParamKindUint = 'uint8' | 'uint16' | 'uint32' | 'uint64' | 'uint128' | 'uint160' | 'uint256';
+export type AbiParamKindInt = 'int8' | 'int16' | 'int32' | 'int64' | 'int128' | 'int160' | 'int256';
+export type AbiParamKindTuple = 'tuple';
+export type AbiParamKindBool = 'bool';
+export type AbiParamKindCell = 'cell';
+export type AbiParamKindAddress = 'address';
+export type AbiParamKindBytes = 'bytes';
+export type AbiParamKindGram = 'gram';
+export type AbiParamKindTime = 'time';
+export type AbiParamKindExpire = 'expire';
+export type AbiParamKindPublicKey = 'pubkey';
+export type AbiParamKindArray = `${AbiParamKind}[]`;
 
-export type ParamKindMap = `map(${ParamKindInt | ParamKindUint | ParamKindAddress},${ParamKind | `${ParamKind}[]`})`;
+export type AbiParamKindMap = `map(${AbiParamKindInt | AbiParamKindUint | AbiParamKindAddress},${AbiParamKind | `${AbiParamKind}[]`})`;
 
-export type ParamKind =
-    | ParamKindUint
-    | ParamKindInt
-    | ParamKindTuple
-    | ParamKindBool
-    | ParamKindCell
-    | ParamKindAddress
-    | ParamKindBytes
-    | ParamKindGram
-    | ParamKindTime
-    | ParamKindExpire
-    | ParamKindPublicKey
+export type AbiParamKind =
+  | AbiParamKindUint
+  | AbiParamKindInt
+  | AbiParamKindTuple
+  | AbiParamKindBool
+  | AbiParamKindCell
+  | AbiParamKindAddress
+  | AbiParamKindBytes
+  | AbiParamKindGram
+  | AbiParamKindTime
+  | AbiParamKindExpire
+  | AbiParamKindPublicKey;
 
 export type AbiParam = {
   name: string;
-  type: ParamKind | ParamKindMap | ParamKindArray;
+  type: AbiParamKind | AbiParamKindMap | AbiParamKindArray;
   components?: AbiParam[];
 };
 "#;
 
+fn parse_params_list(params: ParamsList) -> Result<Vec<ton_abi::Param>, AbiError> {
+    if !js_sys::Array::is_array(&params) {
+        return Err(AbiError::ExpectedObject);
+    }
+    let params: js_sys::Array = params.unchecked_into();
+    params.iter().map(parse_param).collect()
+}
+
+fn parse_param(param: JsValue) -> Result<ton_abi::Param, AbiError> {
+    if !param.is_object() {
+        return Err(AbiError::ExpectedObject);
+    }
+
+    let name = match js_sys::Reflect::get(&param, &JsValue::from_str("name"))
+        .ok()
+        .and_then(|value| value.as_string())
+    {
+        Some(name) => name,
+        _ => return Err(AbiError::ExpectedString),
+    };
+
+    let mut kind: ton_abi::ParamType =
+        match js_sys::Reflect::get(&param, &JsValue::from_str("type"))
+            .ok()
+            .and_then(|value| value.as_string())
+        {
+            Some(kind) => parse_param_type(&kind)?,
+            _ => return Err(AbiError::ExpectedString),
+        };
+
+    let components: Vec<ton_abi::Param> =
+        match js_sys::Reflect::get(&param, &JsValue::from_str("components")) {
+            Ok(components) => {
+                if js_sys::Array::is_array(&components) {
+                    let components: js_sys::Array = components.unchecked_into();
+                    components
+                        .iter()
+                        .map(parse_param)
+                        .collect::<Result<_, AbiError>>()?
+                } else if components.is_undefined() {
+                    Vec::new()
+                } else {
+                    return Err(AbiError::ExpectedObject);
+                }
+            }
+            _ => return Err(AbiError::ExpectedObject),
+        };
+
+    kind.set_components(components)
+        .map_err(|_| AbiError::InvalidComponents)?;
+
+    Ok(ton_abi::Param { name, kind })
+}
+
+fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
+    if let Some(']') = kind.chars().last() {
+        let num: String = kind
+            .chars()
+            .rev()
+            .skip(1)
+            .take_while(|c| *c != '[')
+            .collect::<String>()
+            .chars()
+            .rev()
+            .collect();
+
+        let count = kind.len();
+        return if num.is_empty() {
+            let subtype = parse_param_type(&kind[..count - 2])?;
+            Ok(ton_abi::ParamType::Array(Box::new(subtype)))
+        } else {
+            let len = usize::from_str_radix(&num, 10).map_err(|_| AbiError::ExpectedParamType)?;
+
+            let subtype = parse_param_type(&kind[..count - num.len() - 2])?;
+            Ok(ton_abi::ParamType::FixedArray(Box::new(subtype), len))
+        };
+    }
+
+    let result = match kind {
+        "bool" => ton_abi::ParamType::Bool,
+        "tuple" => ton_abi::ParamType::Tuple(Vec::new()),
+        s if s.starts_with("int") => {
+            let len =
+                usize::from_str_radix(&s[3..], 10).map_err(|_| AbiError::ExpectedParamType)?;
+            ton_abi::ParamType::Int(len)
+        }
+        s if s.starts_with("uint") => {
+            let len =
+                usize::from_str_radix(&s[4..], 10).map_err(|_| AbiError::ExpectedParamType)?;
+            ton_abi::ParamType::Uint(len)
+        }
+        s if s.starts_with("map(") && s.ends_with(")") => {
+            let types: Vec<&str> = kind[4..kind.len() - 1].splitn(2, ",").collect();
+            if types.len() != 2 {
+                return Err(AbiError::ExpectedParamType);
+            }
+
+            let key_type = parse_param_type(types[0])?;
+            let value_type = parse_param_type(types[1])?;
+
+            match key_type {
+                ton_abi::ParamType::Int(_)
+                | ton_abi::ParamType::Uint(_)
+                | ton_abi::ParamType::Address => {
+                    ton_abi::ParamType::Map(Box::new(key_type), Box::new(value_type))
+                }
+                _ => return Err(AbiError::ExpectedParamType),
+            }
+        }
+        "cell" => ton_abi::ParamType::Cell,
+        "address" => ton_abi::ParamType::Address,
+        "gram" => ton_abi::ParamType::Gram,
+        "bytes" => ton_abi::ParamType::Bytes,
+        s if s.starts_with("fixedbytes") => {
+            let len =
+                usize::from_str_radix(&s[10..], 10).map_err(|_| AbiError::ExpectedParamType)?;
+            ton_abi::ParamType::FixedBytes(len)
+        }
+        "time" => ton_abi::ParamType::Time,
+        "expire" => ton_abi::ParamType::Expire,
+        "pubkey" => ton_abi::ParamType::PublicKey,
+        _ => return Err(AbiError::ExpectedParamType),
+    };
+
+    Ok(result)
+}
 #[wasm_bindgen(js_name = "packIntoCell")]
 pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String, JsValue> {
-    let params: Vec<ton_abi::Param> = JsValue::into_serde(&params).handle_error()?;
+    let params = parse_params_list(params).handle_error()?;
     let tokens = parse_tokens_object(&params, tokens).handle_error()?;
 
     let cell = nt::helpers::abi::pack_into_cell(&tokens).handle_error()?;
@@ -983,7 +1109,7 @@ pub fn unpack_from_cell(
     boc: &str,
     allow_partial: bool,
 ) -> Result<TokensObject, JsValue> {
-    let params: Vec<ton_abi::Param> = JsValue::into_serde(&params).handle_error()?;
+    let params = parse_params_list(params).handle_error()?;
     let body = base64::decode(boc).handle_error()?;
     let cell =
         ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
@@ -1000,6 +1126,8 @@ enum AbiError {
     ExpectedBoolean,
     #[error("Expected string")]
     ExpectedString,
+    #[error("Expected param type")]
+    ExpectedParamType,
     #[error("Expected string or array")]
     ExpectedStringOrArray,
     #[error("Expected string or number")]
@@ -1032,6 +1160,8 @@ enum AbiError {
     InvalidPublicKey,
     #[error("Invalid mapping key")]
     InvalidMappingKey,
+    #[error("Invalid components")]
+    InvalidComponents,
     #[error("Tuple property not found")]
     TuplePropertyNotFound,
     #[error("Unsupported header")]
