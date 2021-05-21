@@ -53,29 +53,6 @@ interface INetworkSwitchHandle {
     switch(): Promise<void>
 }
 
-class AcquiredConnection {
-    private readonly _release: () => void
-    private _counter: number = 1
-
-    constructor(release: () => void) {
-        this._release = release
-    }
-
-    public increase() {
-        this._counter += 1
-    }
-
-    public decrease() {
-        this._counter -= 1
-        if (this._counter <= 0) {
-            this._release()
-            return true
-        } else {
-            return false
-        }
-    }
-}
-
 export class ConnectionController extends BaseController<
     ConnectionConfig,
     ConnectionControllerState
@@ -83,7 +60,8 @@ export class ConnectionController extends BaseController<
     private _initializedConnection?: InitializedConnection
     // Used to prevent network switch during some working subscriptions
     private _networkMutex: Mutex
-    private _acquiredConnection?: AcquiredConnection
+    private _release?: () => void
+    private _acquiredConnectionCounter: number = 0
 
     constructor(config: ConnectionConfig, state?: ConnectionControllerState) {
         super(config, state || makeDefaultState())
@@ -205,23 +183,29 @@ export class ConnectionController extends BaseController<
     private async _acquireConnection() {
         console.debug('_acquireConnection')
 
-        if (this._acquiredConnection) {
+        if (this._acquiredConnectionCounter > 0) {
             console.debug('_acquireConnection -> increase')
-            this._acquiredConnection.increase()
+            this._acquiredConnectionCounter += 1
         } else {
-            console.debug('_acquireConnection -> await')
-            const release = await this._networkMutex.acquire()
-            console.debug('_acquireConnection -> create')
-            this._acquiredConnection = new AcquiredConnection(release)
+            this._acquiredConnectionCounter = 1
+            if (this._release != null) {
+                console.warn('mutex is already acquired')
+            } else {
+                console.debug('_acquireConnection -> await')
+                this._release = await this._networkMutex.acquire()
+                console.debug('_acquireConnection -> create')
+            }
         }
     }
 
     private _releaseConnection() {
         console.debug('_releaseConnection')
 
-        if (this._acquiredConnection?.decrease()) {
+        this._acquiredConnectionCounter -= 1
+        if (this._acquiredConnectionCounter <= 0) {
             console.debug('_releaseConnection -> release')
-            this._acquiredConnection = undefined
+            this._release?.()
+            this._release = undefined
         }
     }
 }
