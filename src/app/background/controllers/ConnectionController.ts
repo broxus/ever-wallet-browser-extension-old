@@ -1,7 +1,12 @@
 import { Mutex } from '@broxus/await-semaphore'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
-import { ConnectionData, GqlSocketParams, NamedConnectionData } from '@shared/approvalApi'
+import {
+    ConnectionData,
+    GqlSocketParams,
+    JrpcSocketParams,
+    NamedConnectionData
+} from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import { BaseController, BaseConfig, BaseState } from './BaseController'
@@ -249,5 +254,36 @@ export class GqlSocket {
         }
 
         return new nt.GqlConnection(new GqlSender(params))
+    }
+}
+
+export class JrpcSocket {
+    public async connect(params: JrpcSocketParams): Promise<nt.GqlConnection> {
+        class JrpcSender {
+            private readonly params: JrpcSocketParams
+
+            constructor(params: JrpcSocketParams) {
+                this.params = params
+            }
+
+            send(data: string, handler: nt.JrpcQuery) {
+                ;(async () => {
+                    try {
+                        const response = await fetch(this.params.endpoint, {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: data,
+                        }).then((response) => response.text())
+                        handler.onReceive(response)
+                    } catch (e) {
+                        handler.onError(e)
+                    }
+                })()
+            }
+        }
+
+        return new nt.GqlConnection(new JrpcSender(params))
     }
 }

@@ -1,6 +1,6 @@
 pub mod adnl;
 pub mod gql;
-
+pub mod jrpc;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;

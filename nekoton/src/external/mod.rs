@@ -497,10 +497,6 @@ pub enum LedgerConnectionError {
     QueryFailed,
 }
 
-pub struct JrpcConnector {
-    sender: JrpcSender,
-}
-
 unsafe impl Send for JrpcSender {}
 unsafe impl Sync for JrpcSender {}
 
@@ -509,6 +505,19 @@ extern "C" {
     pub type JrpcSender;
     #[wasm_bindgen(method)]
     pub fn send(this: &JrpcSender, data: &str, query: JrpcQuery);
+}
+
+#[derive(Clone)]
+pub struct JrpcConnector {
+    sender: Arc<JrpcSender>,
+}
+
+impl JrpcConnector {
+    pub fn new(sender: JrpcSender) -> Self {
+        Self {
+            sender: Arc::new(sender),
+        }
+    }
 }
 
 #[wasm_bindgen]

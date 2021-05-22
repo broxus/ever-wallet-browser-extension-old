@@ -11,6 +11,7 @@ use nt::core::ton_wallet;
 use nt::utils::*;
 
 use crate::utils::*;
+use nt::transport::Transport;
 
 #[wasm_bindgen]
 pub struct TonWallet {
@@ -27,10 +28,7 @@ pub struct TonWallet {
 }
 
 impl TonWallet {
-    pub fn new(
-        transport: Arc<nt::transport::gql::GqlTransport>,
-        wallet: ton_wallet::TonWallet,
-    ) -> Self {
+    pub fn new(transport: Arc<dyn Transport>, wallet: ton_wallet::TonWallet) -> Self {
         Self {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
@@ -125,7 +123,6 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "getContractState")]
     pub fn get_contract_state(&self) -> PromiseOptionRawContractState {
         use nt::transport::models;
-        use nt::transport::Transport;
 
         let address = self.inner.wallet.lock().trust_me().address().clone();
         let transport = self.inner.transport.clone();
@@ -235,7 +232,7 @@ impl TonWallet {
 }
 
 pub struct TonWalletImpl {
-    transport: Arc<nt::transport::gql::GqlTransport>,
+    transport: Arc<dyn Transport>,
     wallet: Mutex<ton_wallet::TonWallet>,
 }
 
