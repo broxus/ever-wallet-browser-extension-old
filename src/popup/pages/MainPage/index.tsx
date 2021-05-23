@@ -75,9 +75,10 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
         const networks = await controllerRpc.getAvailableNetworks()
 
         let nextNetwork: NamedConnectionData | undefined
-        for (const item of networks) {
-            if (item.name != network) {
-                nextNetwork = item
+        for (let i = 0; i < networks.length; ++i) {
+            const item = networks[i]
+            if (item.name == network) {
+                nextNetwork = networks[(i + 1) % networks.length]
             }
         }
 

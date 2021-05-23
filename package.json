@@ -3,7 +3,7 @@
   "version": "0.1.6",
   "description": "TON Crystal Wallet browser extension",
   "scripts": {
-    "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js ",
+    "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js"
   },
   "repository": {
