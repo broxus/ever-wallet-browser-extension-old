@@ -335,6 +335,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "convert_case"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6245d59a3e82a7fc217c5828a6692dbc6dfb63a0c8c90495621f7b9d79704a0e"
+
+[[package]]
 name = "cpufeatures"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -404,6 +410,18 @@ dependencies = [
  "rand_core",
  "subtle 2.4.0",
  "zeroize",
+]
+
+[[package]]
+name = "derive_more"
+version = "0.99.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5cc7b9cef1e351660e5443924e4f43ab25fbbed3e9a5f052df3677deb4d6b320"
+dependencies = [
+ "convert_case",
+ "proc-macro2 1.0.26",
+ "quote 1.0.9",
+ "syn 1.0.72",
 ]
 
 [[package]]
@@ -871,7 +889,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.1.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#a5975a906a45bb347dd109dfd7c700db6b752b59"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#0cd250374fc2226d5448eaf89d4989ba7c1dd13e"
 dependencies = [
  "aes-ctr",
  "anyhow",
@@ -903,6 +921,7 @@ dependencies = [
  "thiserror",
  "tiny-bip39",
  "tiny-hderive",
+ "tiny-jsonrpc",
  "tokio",
  "ton_abi",
  "ton_api",
@@ -1463,6 +1482,19 @@ dependencies = [
  "libsecp256k1",
  "memzero",
  "sha2 0.8.2",
+]
+
+[[package]]
+name = "tiny-jsonrpc"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6871bf3c27b9cf5df7176e953c0dc1e68a2ab9fd2e0201b332af33479aa7060a"
+dependencies = [
+ "anyhow",
+ "derive_more",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

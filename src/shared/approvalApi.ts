@@ -63,6 +63,10 @@ export type GqlSocketParams = {
     timeout: number
 }
 
+export type JrpcSocketParams = {
+    endpoint: string
+}
+
 export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
 export type NamedConnectionData = { name: string } & ConnectionData
 

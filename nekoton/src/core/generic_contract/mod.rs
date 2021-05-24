@@ -9,6 +9,7 @@ use nt::core::generic_contract;
 use nt::utils::*;
 
 use crate::utils::*;
+use nt::transport::Transport;
 
 #[wasm_bindgen]
 pub struct GenericContract {
@@ -19,10 +20,7 @@ pub struct GenericContract {
 }
 
 impl GenericContract {
-    pub fn new(
-        transport: Arc<nt::transport::gql::GqlTransport>,
-        contract: generic_contract::GenericContract,
-    ) -> Self {
+    pub fn new(transport: Arc<dyn Transport>, contract: generic_contract::GenericContract) -> Self {
         Self {
             address: contract.address().to_string(),
             inner: Arc::new(GenericContractImpl {
@@ -136,7 +134,7 @@ impl GenericContract {
 }
 
 pub struct GenericContractImpl {
-    transport: Arc<nt::transport::gql::GqlTransport>,
+    transport: Arc<dyn Transport>,
     contract: Mutex<generic_contract::GenericContract>,
 }
 

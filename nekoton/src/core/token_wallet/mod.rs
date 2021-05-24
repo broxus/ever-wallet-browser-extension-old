@@ -11,6 +11,7 @@ use nt::core::token_wallet;
 use nt::utils::*;
 
 use crate::utils::*;
+use nt::transport::Transport;
 
 #[wasm_bindgen]
 pub struct TokenWallet {
@@ -27,10 +28,7 @@ pub struct TokenWallet {
 }
 
 impl TokenWallet {
-    pub fn new(
-        transport: Arc<nt::transport::gql::GqlTransport>,
-        wallet: token_wallet::TokenWallet,
-    ) -> Self {
+    pub fn new(transport: Arc<dyn Transport>, wallet: token_wallet::TokenWallet) -> Self {
         Self {
             version: wallet.version().to_string(),
             symbol: wallet.symbol().clone(),
