@@ -19,6 +19,8 @@ interface INewAccountLedgerPage {
     createLedgerKey: (params: LedgerKeyToCreate) => Promise<nt.KeyStoreEntry>
     removeKey: (params: KeyToRemove) => Promise<nt.KeyStoreEntry | undefined>
     createAccount: (params: AccountToCreate) => Promise<nt.AssetsList>
+    selectAccount: (params: string) => Promise<void>
+    getLedgerFirstPage: () => Promise<{publicKey: string, index: number}[]>
     onBack: () => void
 }
 
@@ -27,6 +29,8 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
     createLedgerKey,
     removeKey,
     createAccount,
+    selectAccount,
+    getLedgerFirstPage,
     onBack,
 }) => {
     const [inProcess, setInProcess] = useState<boolean>(false)
@@ -82,6 +86,11 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
                     onBack={() => {
                         setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
                     }}
+                    createLedgerKey={createLedgerKey}
+                    removeKey={removeKey}
+                    createAccount={createAccount}
+                    selectAccount={selectAccount}
+                    getLedgerFirstPage={getLedgerFirstPage}
                 />
             )}
             {error && (

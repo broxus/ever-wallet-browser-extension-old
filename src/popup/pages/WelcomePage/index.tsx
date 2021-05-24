@@ -33,12 +33,16 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
 
     const FIRST_ACCOUNT_NAME = 'Account 1'
 
-    const createAccount = async (params: AccountToCreate) => controllerRpc.createAccount(params)
     const createMasterKey = async (params: MasterKeyToCreate) =>
         controllerRpc.createMasterKey(params)
     const createLedgerKey = async (params: LedgerKeyToCreate) =>
         controllerRpc.createLedgerKey(params)
     const removeKey = async (params: KeyToRemove) => controllerRpc.removeKey(params)
+
+    const createAccount = async (params: AccountToCreate) => controllerRpc.createAccount(params)
+    const selectAccount = async (params: string) => controllerRpc.selectAccount(params)
+
+    const getLedgerFirstPage = async () => controllerRpc.getLedgerFirstPage()
 
     return (
         <>
@@ -98,8 +102,10 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
                 <NewAccountLedgerPage
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
+                    selectAccount={selectAccount}
                     createLedgerKey={createLedgerKey}
                     removeKey={removeKey}
+                    getLedgerFirstPage={getLedgerFirstPage}
                     onBack={() => {
                         setLocalStep(LocalStep.WELCOME)
                     }}
