@@ -23,6 +23,7 @@ const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) 
                     {/*<SelectLedgerAccount onBack={onBack} onNext={onSubmit} />*/}
                     <iframe
                         allow="hid"
+                        height="260px"
                         src={LEDGER_BRIDGE_URL}
                         ref={ref}
                         onLoad={() => {
