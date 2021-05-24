@@ -46,6 +46,7 @@ export interface AccountControllerConfig extends BaseConfig {
     ledgerBridge: LedgerBridge
     connectionController: ConnectionController
     notificationController: NotificationController
+    ledgerBridge: LedgerBridge
 }
 
 export interface AccountControllerState extends BaseState {
@@ -905,6 +906,14 @@ export class AccountController extends BaseController<
         this._tonWalletSubscriptions.clear()
         this._tokenWalletSubscriptions.clear()
         this._clearSendMessageRequests()
+
+        this.update({
+            accountContractStates: {},
+            accountTokenStates: {},
+            accountTransactions: {},
+            accountTokenTransactions: {},
+            accountPendingMessages: {},
+        })
     }
 
     private _updateAssetsList(assetsList: nt.AssetsList) {
@@ -1038,11 +1047,11 @@ export class AccountController extends BaseController<
                     address
                 )}`
 
-                this.config.notificationController.showNotification(
-                    `New transaction found`,
+                this.config.notificationController.showNotification({
+                    title: `New transaction found`,
                     body,
-                    `https://ton-explorer.com/transactions/${transaction.id.hash}`
-                )
+                    link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                })
             }
         }
 
@@ -1077,11 +1086,11 @@ export class AccountController extends BaseController<
                         symbol.name
                     } ${value.lt(0) ? 'to' : 'from'} ${direction?.address}`
 
-                    this.config.notificationController.showNotification(
-                        `New token transaction found`,
+                    this.config.notificationController.showNotification({
+                        title: `New token transaction found`,
                         body,
-                        `https://ton-explorer.com/transactions/${transaction.id.hash}`
-                    )
+                        link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                    })
                 }
             }
         }

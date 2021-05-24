@@ -15,7 +15,7 @@ const ConnectLedger: React.FC<IConnectLedger> = ({ onBack, onNext }) => {
             <div className="connect-ledger__icon">
                 <ConnectLedgerIcon />
             </div>
-            <h2 className="connect-ledger__title">Connect ledger</h2>
+            <h2 className="connect-ledger__title">Connect Ledger</h2>
             <span className="connect-ledger__comment">
                 Be sure that your Ledger is connected to computer and unlocked.
             </span>

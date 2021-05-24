@@ -1,5 +1,15 @@
-# TON Crystal Wallet
-TON Wallet browser extension. Manage Free TON wallets and access dApps directly from your Chrome browser.
+<p align="center">
+    <h3 align="center">TON Crystal Wallet</h3>
+    <p align="center">TON Wallet browser extension. Manage Free TON wallets and access dApps directly from your Chrome browser.</p>
+    <p align="center">
+        <a href="/LICENSE">
+            <img alt="GitHub" src="https://img.shields.io/github/license/broxus/ton-wallet-crystal-browser-extension" />
+        </a>
+        <a href="https://chrome.google.com/webstore/detail/ton-crystal-wallet/cgeeodpfagjceefieflmdfphplkenlfk">
+            <img alt="Chrome Web Store" src="https://img.shields.io/chrome-web-store/v/cgeeodpfagjceefieflmdfphplkenlfk">
+        </a>
+    </p>
+</p>
 
 ## How to build
 
@@ -22,16 +32,37 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.5 (2021-05-19)
+
+Features:
+* Added support for [TIP3v4](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/4.0)
+
+Bugfixes:
+* Fixed hex numbers in provider api.
+* Fixed strange behavior on sites from atlassian.
+
+### 0.1.4 (2021-05-17)
+
+Features:
+* Added network switch.
+* Added `decodeEvent` and `decodeTransactionEvents` methods to the provider api.
+* Added `version` for provider api `getProviderState` method response.
+* Changed provider api `getTransactions` method.
+
+Bugfixes:
+* Fixed `cachedState` param for provider api `runLocal` method.
+* Fixed `decodeTransaction` on function calls with outputs.
+
 ### 0.1.3 (2021-05-15)
 
 Features:
-* Add `Notify receiver` checkbox for token transfer.
-* Add version label to account modal.
+* Added `Notify receiver` checkbox for token transfer.
+* Added version label to account modal.
 
 Bugfixes:
 * Fixed password input for duplicated words.
 * Hide `Send` button for empty WalletV3.
-* Fix public key label in account card.
+* Fixed public key label in account card.
 
 ### 0.1.2 (2021-05-14)
 

@@ -4,10 +4,11 @@ import Right from '@popup/img/right-arrow-blue.svg'
 import Left from '@popup/img/left-arrow-blue.svg'
 import Button from '@popup/components/Button'
 
-import './style.scss'
 import Checkbox from '@popup/components/Checkbox'
 import UserAvatar from '@popup/components/UserAvatar'
 import { convertAddress, convertTons } from '@shared/utils'
+
+import './style.scss'
 
 interface ISelectLedgerAccount {
     onBack?: () => void
@@ -52,19 +53,19 @@ const mockAccounts = [
         balance: '2001200',
     },
     {
-        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
+        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1tt09f8f9c80bc21b',
         balance: '18000',
     },
     {
-        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
+        address: '0:18b8fdf6bd451196ed70d649786tteb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
         balance: '20000',
     },
     {
-        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
-        balance: '20000',
+        address: '0:18b8fdf6bd451196ed70d64978teb83cfd4a3f7bte22f9f1cd09f8f9c80bc21b',
+        balance: '18567',
     },
     {
-        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
+        address: '0:18b8fdf6bd451196ett0d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
         balance: '20000',
     },
 ]
@@ -72,15 +73,12 @@ const mockAccounts = [
 const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ onBack, onNext }) => {
     const [currentPage, setCurrentPage] = useState(0)
 
-    //MOCK
-    const pages = new Array('100')
-
     const decrementIndex = () => {
-        setCurrentPage((currentPage + pages.length - 1) % pages.length)
+        setCurrentPage((currentPage + mockAccounts.length - 1) % mockAccounts.length)
     }
 
     const incrementIndex = () => {
-        setCurrentPage((currentPage + 1) % pages.length)
+        setCurrentPage((currentPage + 1) % mockAccounts.length)
     }
 
     return (
@@ -95,9 +93,11 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ onBack, onNext })
                 </div>
             </div>
             <div>
-                {mockAccounts.map(({ address, balance }) => (
-                    <LedgerAccount key={address} address={address} balance={balance} />
-                ))}
+                {mockAccounts
+                    .slice(currentPage * 5, (currentPage + 1) * 5)
+                    .map(({ address, balance }) => (
+                        <LedgerAccount key={address} address={address} balance={balance} />
+                    ))}
             </div>
 
             <div className="select-ledger-account__buttons">

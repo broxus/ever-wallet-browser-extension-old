@@ -9,7 +9,6 @@ import {
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
-import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import { ApprovalController } from './controllers/ApprovalController'
@@ -17,6 +16,8 @@ import { PermissionsController } from './controllers/PermissionsController'
 import { ConnectionController } from './controllers/ConnectionController'
 import { AccountController } from './controllers/AccountController'
 import { SubscriptionController } from './controllers/SubscriptionController'
+
+import manifest from '../../manifest.json'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`, data)
@@ -154,6 +155,13 @@ function requireTabid<T>(
     }
 }
 
+function requireTransactionId<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as nt.TransactionId
+    requireString(req, property, 'lt')
+    requireString(req, property, 'hash')
+}
+
 function requireLastTransactionId<T, O, P extends keyof O>(
     req: JsonRpcRequest<T>,
     object: O,
@@ -286,7 +294,32 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     const { selectedConnection } = connectionController.state
     const permissions = permissionsController.getPermissions(origin)
 
+    const convertVersionToInt32 = (version: string): number => {
+        let parts = version.split('.')
+        if (parts.length !== 3) {
+            throw new Error('Received invalid version string')
+        }
+
+        parts.forEach((part) => {
+            if (~~part > 999) {
+                throw new Error(`Version string invalid, ${part} is too large`)
+            }
+        })
+
+        let multiplier = 1000000
+        let numericVersion = 0
+        for (let i = 0; i < 3; i++) {
+            numericVersion += ~~parts[i] * multiplier
+            multiplier /= 1000
+        }
+        return numericVersion
+    }
+
+    const version = (manifest as any).version
+
     res.result = {
+        version,
+        numericVersion: convertVersionToInt32(version),
         selectedConnection: selectedConnection.name,
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
@@ -325,26 +358,25 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
 
-    const { address, beforeLt, limit, inclusive } = req.params
+    const { address, continuation, limit } = req.params
     requireString(req, req.params, 'address')
-    requireOptionalString(req, req.params, 'beforeLt')
+    requireOptional(req, req.params, 'continuation', requireTransactionId)
     requireOptionalNumber(req, req.params, 'limit')
-    requireOptionalBoolean(req, req.params, 'inclusive')
 
     const { connectionController } = ctx
 
     try {
         const transactions = await connectionController.use(
             async ({ data: { connection } }) =>
-                await connection.getTransactions(address, beforeLt, limit || 50, inclusive || false)
+                await connection.getTransactions(address, continuation?.lt, limit || 50, true)
         )
-
-        const oldestLt =
-            transactions.length > 0 ? transactions[transactions.length - 1].id.lt : undefined
 
         res.result = {
             transactions,
-            oldestLt,
+            continuation:
+                transactions.length > 0
+                    ? transactions[transactions.length - 1].prevTransactionId
+                    : undefined,
         }
         end()
     } catch (e) {
@@ -358,7 +390,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
 
     const { address, cachedState, functionCall } = req.params
     requireString(req, req.params, 'address')
-    requireOptionalString(req, req.params, 'cachedState')
+    requireOptional(req, req.params, 'cachedState', requireContractState)
     requireFunctionCall(req, req.params, 'functionCall')
 
     const { connectionController } = ctx
@@ -460,6 +492,23 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     }
 }
 
+const decodeEvent: ProviderMethod<'decodeEvent'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { body, abi, event } = req.params
+    requireString(req, req.params, 'body')
+    requireString(req, req.params, 'abi')
+    requireMethodOrArray(req, req.params, 'event')
+
+    try {
+        res.result = nt.decodeEvent(body, abi, event) || null
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
@@ -493,6 +542,29 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
 
     try {
         res.result = nt.decodeTransaction(transaction, abi, method) || null
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { transaction, abi } = req.params
+    requireString(req, req.params, 'abi')
+
+    try {
+        res.result = {
+            events: nt.decodeTransactionEvents(transaction, abi),
+        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -767,8 +839,10 @@ const providerRequests: { [K in keyof ProviderApi]: ProviderMethod<K> } = {
     getExpectedAddress,
     encodeInternalInput,
     decodeInput,
+    decodeEvent,
     decodeOutput,
     decodeTransaction,
+    decodeTransactionEvents,
     estimateFees,
     sendMessage,
     sendExternalMessage,
