@@ -5,7 +5,6 @@ declare module '*.svg' {
 
     const ReactComponent: React.FC<IReactComponent>
     const content: string
-
     export { ReactComponent }
     export default content
 }

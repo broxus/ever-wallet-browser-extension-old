@@ -81,7 +81,8 @@ h3 {
 }
 
 ::-webkit-scrollbar {
-    display: none;
+    //display: none;
+    width: 0;
 }
 
 .page {

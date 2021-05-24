@@ -34,4 +34,42 @@
             }
         }
     }
+    &__options {
+        display: flex;
+
+        &-icon {
+            margin-bottom: 28px;
+        }
+
+        &-option {
+            cursor: pointer;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #dde1e2;
+            font-style: normal;
+            font-weight: bold;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            margin-bottom: 40px;
+            color: #5e6e77;
+
+            &:first-child {
+                margin-right: 12px;
+            }
+
+            &:hover {
+                border: 1px solid rgba(0, 136, 204, 0.3);
+                color: #0088cc;
+
+                svg {
+                    path,
+                    rect {
+                        fill: rgba(0, 136, 204, 1);
+                    }
+                }
+            }
+        }
+    }
 }

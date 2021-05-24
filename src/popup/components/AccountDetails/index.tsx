@@ -128,7 +128,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         //     publicKey={account?.tonWallet.publicKey}
                         //     balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
                         // />,
-                        // <AddNewAccountCard handleCreateNewAcc={onCreateAccount} />,
+                        <AddNewAccountCard handleCreateNewAcc={onCreateAccount} />,
                     ]}
                 />
 

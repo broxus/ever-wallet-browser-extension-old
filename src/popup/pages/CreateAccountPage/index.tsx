@@ -7,6 +7,8 @@ import Input from '@popup/components/Input'
 import EnterPassword from '@popup/components/EnterPassword'
 import CheckSeed from '@popup/components/CheckSeed'
 import Button from '@popup/components/Button'
+import PlusSign from '@popup/img/plus-sign-grey.svg'
+import LedgerIcon from '@popup/img/ledger.svg'
 
 import './style.scss'
 
@@ -101,10 +103,33 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
     )
 }
 
+const SelectAccountType: React.FC<IAccountName> = ({ setStep }) => {
+    return (
+        <div className="create-account-page__content">
+            <h2 style={{ marginBottom: '28px' }}>Add account</h2>
+            <div className="create-account-page__options">
+                <div className="create-account-page__options-option">
+                    {/*@ts-ignore*/}
+                    <PlusSign className="create-account-page__options-icon" />
+                    Create account
+                </div>
+                <div className="create-account-page__options-option">
+                    {/*@ts-ignore*/}
+                    <LedgerIcon className="create-account-page__options-icon" />
+                    Connect Ledger
+                </div>
+            </div>
+
+            <Button text={'Next'} onClick={() => setStep(1)} />
+        </div>
+    )
+}
+
 const CreateAccountPage = () => {
     const [step, setStep] = useState<number>(0)
 
     const createAccountContent = [
+        <SelectAccountType setStep={setStep} />,
         <AccountName setStep={setStep} />,
         <AccountSelectKey setStep={setStep} />,
         <EnterPassword handleBack={() => setStep(1)} handleNext={() => setStep(3)} />,
