@@ -86,6 +86,12 @@ const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
     )
 }
 
+interface ISelectAccountType {
+    setStep: Dispatch<SetStateAction<number>>
+    selected: string
+    setSelected: Dispatch<SetStateAction<string>>
+}
+
 interface IAccountName {
     setStep: Dispatch<SetStateAction<number>>
 }
@@ -103,17 +109,27 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
     )
 }
 
-const SelectAccountType: React.FC<IAccountName> = ({ setStep }) => {
+const SelectAccountType: React.FC<ISelectAccountType> = ({ setStep, selected, setSelected }) => {
     return (
         <div className="create-account-page__content">
             <h2 style={{ marginBottom: '28px' }}>Add account</h2>
             <div className="create-account-page__options">
-                <div className="create-account-page__options-option">
+                <div
+                    className={`create-account-page__options-option ${
+                        selected === 'new' ? 'create-account-page__options-option-selected' : ''
+                    }`}
+                    onClick={() => setSelected('new')}
+                >
                     {/*@ts-ignore*/}
                     <PlusSign className="create-account-page__options-icon" />
                     Create account
                 </div>
-                <div className="create-account-page__options-option">
+                <div
+                    className={`create-account-page__options-option ${
+                        selected === 'ledger' ? 'create-account-page__options-option-selected' : ''
+                    }`}
+                    onClick={() => setSelected('ledger')}
+                >
                     {/*@ts-ignore*/}
                     <LedgerIcon className="create-account-page__options-icon" />
                     Connect Ledger
@@ -127,9 +143,10 @@ const SelectAccountType: React.FC<IAccountName> = ({ setStep }) => {
 
 const CreateAccountPage = () => {
     const [step, setStep] = useState<number>(0)
+    const [accountType, setAccountType] = useState('new')
 
     const createAccountContent = [
-        <SelectAccountType setStep={setStep} />,
+        <SelectAccountType setStep={setStep} selected={accountType} setSelected={setAccountType} />,
         <AccountName setStep={setStep} />,
         <AccountSelectKey setStep={setStep} />,
         <EnterPassword handleBack={() => setStep(1)} handleNext={() => setStep(3)} />,
