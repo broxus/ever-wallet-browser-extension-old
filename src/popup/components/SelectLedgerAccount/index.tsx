@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import Right from '@popup/img/right-arrow-blue.svg'
 import Left from '@popup/img/left-arrow-blue.svg'
@@ -15,14 +15,14 @@ interface ISelectLedgerAccount {
     onNext?: () => void
 }
 
-// TODO update types
 interface ILedgerAccount {
+    checked: boolean
+    setChecked: (arg0: boolean) => void
     address: string
     balance: string
 }
 
-const LedgerAccount: React.FC<ILedgerAccount> = ({ address, balance }) => {
-    const [checked, setChecked] = useState(false)
+const LedgerAccount: React.FC<ILedgerAccount> = ({ address, balance, checked, setChecked }) => {
     return (
         <div className="select-ledger-account__account">
             <Checkbox checked={checked} setChecked={setChecked} />
@@ -72,6 +72,8 @@ const mockAccounts = [
 
 const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ onBack, onNext }) => {
     const [currentPage, setCurrentPage] = useState(0)
+    // TODO update to list account number
+    const [selected, setSelected] = useState<string[]>([])
 
     const decrementIndex = () => {
         setCurrentPage((currentPage + mockAccounts.length - 1) % mockAccounts.length)
@@ -95,9 +97,22 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ onBack, onNext })
             <div>
                 {mockAccounts
                     .slice(currentPage * 5, (currentPage + 1) * 5)
-                    .map(({ address, balance }) => (
-                        <LedgerAccount key={address} address={address} balance={balance} />
-                    ))}
+                    .map(({ address, balance }) => {
+                        const checked = selected.includes(address)
+                        return (
+                            <LedgerAccount
+                                key={address}
+                                address={address}
+                                balance={balance}
+                                checked={checked}
+                                setChecked={() => {
+                                    checked
+                                        ? setSelected(selected.filter((el) => el !== address))
+                                        : setSelected([...selected, address])
+                                }}
+                            />
+                        )
+                    })}
             </div>
 
             <div className="select-ledger-account__buttons">

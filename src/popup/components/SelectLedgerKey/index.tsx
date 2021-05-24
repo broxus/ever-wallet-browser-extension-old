@@ -1,8 +1,9 @@
-import React, { useRef } from 'react'
+import React, { useRef, useState } from 'react'
 
 import Button from '@popup/components/Button'
 import ConnectLedger from '@popup/components/ConnectLedger'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
+import Loader from '@popup/components/Loader'
 
 const LEDGER_BRIDGE_URL = 'https://broxus.github.io/ton-ledger-bridge'
 
@@ -15,18 +16,26 @@ interface ISelectWallet {
 const SelectLedgerKey: React.FC<ISelectWallet> = ({ onSubmit, onBack, onSkip }) => {
     const ref = useRef<HTMLIFrameElement>(null)
 
+    const [loading, setLoading] = useState(true)
+
     return (
         <div className="select-wallet">
             <div className="select-wallet__content">
                 <div className="select-wallet__content-options">
                     {/*<ConnectLedger onBack={onBack} onNext={onSubmit} />*/}
                     {/*<SelectLedgerAccount onBack={onBack} onNext={onSubmit} />*/}
+                    {loading && (
+                        <div className="select-wallet__loader">
+                            <Loader />
+                        </div>
+                    )}
                     <iframe
                         allow="hid"
-                        height="260px"
+                        height="270px"
                         src={LEDGER_BRIDGE_URL}
                         ref={ref}
                         onLoad={() => {
+                            setLoading(false)
                             const message = {
                                 target: 'LEDGER-IFRAME',
                                 action: 'ledger-get-configuration',
