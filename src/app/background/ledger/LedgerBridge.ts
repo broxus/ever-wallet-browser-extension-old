@@ -149,7 +149,7 @@ export default class LedgerBridge extends EventEmitter {
         for (let i = from; i < to; i++) {
             const publicKey = await this.getPublicKey(i)
             publicKeys.push({
-                publicKey,
+                publicKey: Buffer.from(publicKey).toString('hex'),
                 index: i,
             })
         }

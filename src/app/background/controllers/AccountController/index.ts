@@ -43,7 +43,6 @@ export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
-    ledgerBridge: LedgerBridge
     connectionController: ConnectionController
     notificationController: NotificationController
     ledgerBridge: LedgerBridge
