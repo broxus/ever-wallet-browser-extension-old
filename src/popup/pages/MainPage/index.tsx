@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import { SelectedAsset } from '@shared/utils'
 import * as nt from '@nekoton'
@@ -41,6 +41,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
     const [ethEventContract, setEthEventContract] = useState<string>()
+    const scrollArea = useRef<HTMLDivElement>(null)
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -107,32 +108,35 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
 
     return (
         <>
-            <AccountDetails
-                account={selectedAccount}
-                tonWalletState={tonWalletState}
-                network={network}
-                onToggleNetwork={toggleNetwork}
-                onLogOut={async () => {
-                    await logOut()
-                }}
-                onReceive={() => setOpenedPanel(Panel.RECEIVE)}
-                onSend={() => setOpenedPanel(Panel.SEND)}
-                onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
-                onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
-                onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
-            />
-            <UserAssets
-                account={selectedAccount}
-                tonWalletState={tonWalletState}
-                tokenWalletStates={tokenWalletStates}
-                knownTokens={knownTokens}
-                transactions={transactions}
-                updateTokenWallets={async (params) =>
-                    await controllerRpc.updateTokenWallets(accountAddress, params)
-                }
-                onViewTransaction={showTransaction}
-                onViewAsset={showAsset}
-            />
+            <div className="main-page__content" ref={scrollArea}>
+                <AccountDetails
+                    account={selectedAccount}
+                    tonWalletState={tonWalletState}
+                    network={network}
+                    onToggleNetwork={toggleNetwork}
+                    onLogOut={async () => {
+                        await logOut()
+                    }}
+                    onReceive={() => setOpenedPanel(Panel.RECEIVE)}
+                    onSend={() => setOpenedPanel(Panel.SEND)}
+                    onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
+                    onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
+                    onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
+                />
+                <UserAssets
+                    account={selectedAccount}
+                    tonWalletState={tonWalletState}
+                    tokenWalletStates={tokenWalletStates}
+                    knownTokens={knownTokens}
+                    transactions={transactions}
+                    scrollArea={scrollArea}
+                    updateTokenWallets={async (params) =>
+                        await controllerRpc.updateTokenWallets(accountAddress, params)
+                    }
+                    onViewTransaction={showTransaction}
+                    onViewAsset={showAsset}
+                />
+            </div>
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <>
                     {openedPanel == Panel.RECEIVE && (

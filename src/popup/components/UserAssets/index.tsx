@@ -102,6 +102,7 @@ type IUserAssets = {
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
     transactions: nt.Transaction[]
+    scrollArea: React.RefObject<HTMLDivElement>
     onViewTransaction: (transaction: nt.Transaction) => void
     updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
     onViewAsset: (asset: SelectedAsset) => void
@@ -118,6 +119,7 @@ const UserAssets: React.FC<IUserAssets> = ({
     tokenWalletStates,
     knownTokens,
     transactions,
+    scrollArea,
     updateTokenWallets,
     onViewTransaction,
     onViewAsset,
@@ -157,6 +159,7 @@ const UserAssets: React.FC<IUserAssets> = ({
                 )}
                 {activeTab == AssetsTab.TRANSACTIONS && (
                     <TransactionsList
+                        scrollArea={scrollArea}
                         transactions={transactions}
                         onViewTransaction={onViewTransaction}
                     />

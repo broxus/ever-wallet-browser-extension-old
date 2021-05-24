@@ -1,7 +1,8 @@
 import React from 'react'
-import { AssetType, convertCurrency, convertTons } from '@shared/utils'
+import { AssetType, convertCurrency } from '@shared/utils'
 
 import AssetIcon from '@popup/components/AssetIcon'
+
 import Arrow from '@popup/img/arrow.svg'
 
 import './style.scss'
@@ -33,7 +34,7 @@ const AssetsListItem: React.FC<IAssetsListItem> = ({
                 <span className="assets-list-item__balance__dollars">{name}</span>
             </div>
         </div>
-        <Arrow />
+        <img src={Arrow} alt="" />
     </div>
 )
 

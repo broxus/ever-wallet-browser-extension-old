@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { createRipple, removeRipple } from '@popup/common'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
@@ -44,6 +44,7 @@ const AssetFull: React.FC<IAssetFull> = ({
 }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
+    const scrollArea = useRef<HTMLDivElement>(null)
 
     const { knownTokens } = controllerState
 
@@ -140,8 +141,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                         }}
                     >
                         <div className="asset-full__controls__button__content">
-                            {/*@ts-ignore*/}
-                            <ReceiveIcon style={{ marginRight: '8px' }} />
+                            <img src={ReceiveIcon} alt="" style={{ marginRight: '8px' }} />
                             Receive
                         </div>
                     </button>
@@ -164,14 +164,16 @@ const AssetFull: React.FC<IAssetFull> = ({
                             <div className="asset-full__controls__button__content">
                                 {shouldDeploy ? (
                                     <>
-                                        {/*@ts-ignore*/}
-                                        <DeployIcon style={{ marginRight: '8px' }} />
+                                        <img
+                                            src={DeployIcon}
+                                            alt=""
+                                            style={{ marginRight: '8px' }}
+                                        />
                                         Deploy
                                     </>
                                 ) : (
                                     <>
-                                        {/*@ts-ignore*/}
-                                        <SendIcon style={{ marginRight: '8px' }} />
+                                        <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
                                         Send
                                     </>
                                 )}
@@ -180,8 +182,9 @@ const AssetFull: React.FC<IAssetFull> = ({
                     )}
                 </div>
 
-                <div className="asset-full__history">
+                <div className="asset-full__history" ref={scrollArea}>
                     <TransactionsList
+                        scrollArea={scrollArea}
                         symbol={symbol}
                         transactions={transactions || []}
                         onViewTransaction={showTransaction}

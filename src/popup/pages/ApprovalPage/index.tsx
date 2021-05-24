@@ -7,6 +7,7 @@ import * as nt from '@nekoton'
 import ApproveContractInteraction from '@popup/components/ApproveContractInteraction'
 import ApproveRequestPermissions from '@popup/components/ApproveRequestPermissions'
 import ApproveSendMessage from '@popup/components/ApproveSendMessage'
+
 import Right from '@popup/img/right-arrow-blue.svg'
 import Left from '@popup/img/left-arrow-blue.svg'
 
@@ -75,10 +76,10 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
                     </div>
                     <div className="connect-wallet__slider__nav">
                         <div className="connect-wallet__slider__button" onClick={decrementIndex}>
-                            <Left />
+                            <img src={Left} alt="" />
                         </div>
                         <div className="connect-wallet__slider__button" onClick={incrementIndex}>
-                            <Right />
+                            <img src={Right} alt="" />
                         </div>
                     </div>
                 </div>

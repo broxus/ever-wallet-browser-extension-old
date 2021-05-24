@@ -6,6 +6,7 @@ import * as nt from '@nekoton'
 import AccountModal from '@popup/components/AccountModal'
 import AccountCard from '@popup/components/AccountCard'
 import Carousel from '@popup/components/Carousel'
+import Notifications from '@popup/components/Notifications'
 
 import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
@@ -15,7 +16,6 @@ import Profile from '@popup/img/profile.svg'
 import AddAccount from '@popup/img/add-account.svg'
 
 import './style.scss'
-import Notifications from '@popup/components/Notifications'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | undefined
@@ -39,7 +39,7 @@ const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc })
         <div className="new-account">
             {/*@ts-ignore*/}
             <div onClick={() => handleCreateNewAcc()} className="new-account-icon">
-                <AddAccount />
+                <img src={AddAccount} alt="" />
             </div>
             <div className="new-account-title">Add account</div>
             <div className="new-account-comment">
@@ -83,7 +83,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         }}
                         style={{ cursor: 'pointer' }}
                     >
-                        <NotificationsIcon />
+                        <img src={NotificationsIcon} alt="" />
                     </div>
                     <div className="account-details__network noselect" onClick={onToggleNetwork}>
                         {network}
@@ -92,7 +92,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         onClick={() => setModalVisible(true)}
                         style={{ cursor: 'pointer', position: 'relative' }}
                     >
-                        <Profile />
+                        <img src={Profile} alt="" />
                     </div>
                     {modalVisible && (
                         <AccountModal
@@ -144,8 +144,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         }}
                     >
                         <div className="account-details__controls__button__content">
-                            {/*@ts-ignore*/}
-                            <ReceiveIcon style={{ marginRight: '8px' }} />
+                            <img src={ReceiveIcon} alt="" style={{ marginRight: '8px' }} />
                             Receive
                         </div>
                     </button>
@@ -172,14 +171,16 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                                 {tonWalletState.isDeployed ||
                                 account.tonWallet.contractType == 'WalletV3' ? (
                                     <>
-                                        {/*@ts-ignore*/}
-                                        <SendIcon style={{ marginRight: '8px' }} />
+                                        <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
                                         Send
                                     </>
                                 ) : (
                                     <>
-                                        {/*@ts-ignore*/}
-                                        <DeployIcon style={{ marginRight: '8px' }} />
+                                        <img
+                                            src={DeployIcon}
+                                            alt=""
+                                            style={{ marginRight: '8px' }}
+                                        />
                                         Deploy
                                     </>
                                 )}

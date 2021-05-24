@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import {
-    AssetType,
     extractTransactionValue,
     extractTransactionAddress,
     convertAddress,
@@ -12,21 +11,26 @@ import {
 } from '@shared/utils'
 import * as nt from '@nekoton'
 
-import ReactTooltip from 'react-tooltip'
-
 import './style.scss'
 import AssetIcon from '@popup/components/AssetIcon'
+
+const splitAddress = (address: string | undefined) => {
+    const half = address != null ? Math.ceil(address.length / 2) : 0
+    return half > 0 ? `${address!.slice(0, half)}\n${address!.slice(-half)}` : ''
+}
 
 type ITransactionsListItem = {
     symbol?: nt.Symbol
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
+    style?: React.CSSProperties
     onViewTransaction: (transaction: nt.Transaction) => void
 }
 
 const TransactionListItem: React.FC<ITransactionsListItem> = ({
     symbol,
     transaction,
+    style,
     onViewTransaction,
 }) => {
     const value = useMemo(() => {
@@ -56,6 +60,7 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
     return (
         <div
             className="transactions-list-item"
+            style={style}
             onClick={() => {
                 onViewTransaction(transaction)
             }}
@@ -87,20 +92,10 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span
                     className="transactions-list-item__description transactions-list-item__address"
-                    data-tip={txAddress?.address}
+                    data-tooltip={splitAddress(txAddress?.address)}
                 >
                     {txAddress?.address && convertAddress(txAddress.address)}
                 </span>
-                <ReactTooltip
-                    className="transactions-list-item__tooltip"
-                    globalEventOff="click"
-                    type="dark"
-                    multiline
-                    clickable
-                    effect="solid"
-                    place="bottom"
-                />
-
                 <span className="transactions-list-item__description transactions-list-item__date">
                     {new Date(transaction.createdAt * 1000).toLocaleString('default', {
                         month: 'long',
