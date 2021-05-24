@@ -10,8 +10,8 @@ use nt::core::models as core_models;
 use nt::core::token_wallet;
 use nt::utils::*;
 
+use crate::transport::TransportHandle;
 use crate::utils::*;
-use nt::transport::Transport;
 
 #[wasm_bindgen]
 pub struct TokenWallet {
@@ -28,7 +28,7 @@ pub struct TokenWallet {
 }
 
 impl TokenWallet {
-    pub fn new(transport: Arc<dyn Transport>, wallet: token_wallet::TokenWallet) -> Self {
+    pub fn new(transport: TransportHandle, wallet: token_wallet::TokenWallet) -> Self {
         Self {
             version: wallet.version().to_string(),
             symbol: wallet.symbol().clone(),
@@ -169,7 +169,7 @@ impl TokenWallet {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let block = inner.transport.get_block(&block_id).await.handle_error()?;
+            let block = inner.transport.get_block(&block_id).await?;
 
             let mut wallet = inner.wallet.lock().trust_me();
             wallet.handle_block(&block).await.handle_error()?;
@@ -197,7 +197,7 @@ impl TokenWallet {
 }
 
 pub struct TokenWalletImpl {
-    transport: Arc<nt::transport::gql::GqlTransport>,
+    transport: TransportHandle,
     wallet: Mutex<token_wallet::TokenWallet>,
 }
 

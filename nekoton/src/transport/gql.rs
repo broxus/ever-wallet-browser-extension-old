@@ -1,6 +1,5 @@
 use std::convert::TryFrom;
 use std::convert::TryInto;
-use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -14,6 +13,7 @@ use super::{
     PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
 };
 use crate::external::{GqlConnectionImpl, GqlSender};
+use crate::transport::{IntoHandle, TransportHandle};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -54,7 +54,10 @@ impl GqlConnection {
             .await
             .handle_error()?;
 
-            Ok(JsValue::from(GenericContract::new(transport, wallet)))
+            Ok(JsValue::from(GenericContract::new(
+                transport.into_handle(),
+                wallet,
+            )))
         })))
     }
 
@@ -83,7 +86,10 @@ impl GqlConnection {
             .await
             .handle_error()?;
 
-            Ok(JsValue::from(TonWallet::new(transport, wallet)))
+            Ok(JsValue::from(TonWallet::new(
+                transport.into_handle(),
+                wallet,
+            )))
         })))
     }
 
@@ -112,7 +118,10 @@ impl GqlConnection {
             .await
             .handle_error()?;
 
-            Ok(JsValue::from(TokenWallet::new(transport, wallet)))
+            Ok(JsValue::from(TokenWallet::new(
+                transport.into_handle(),
+                wallet,
+            )))
         })))
     }
 
@@ -172,19 +181,16 @@ impl GqlConnection {
     pub fn get_transactions(
         &self,
         address: &str,
-        before_lt: Option<String>,
+        continuation: Option<crate::core::models::TransactionId>,
         limit: u8,
-        inclusive: bool,
     ) -> Result<PromiseTransactionsList, JsValue> {
         use crate::core::models::*;
 
         let address = parse_address(address)?;
-        let before_lt = before_lt
-            .as_deref()
-            .map(u64::from_str)
-            .transpose()
-            .handle_error()?
-            .unwrap_or(u64::MAX);
+        let before_lt = continuation
+            .map(parse_transaction_id)
+            .transpose()?
+            .map(|id| id.lt);
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
@@ -192,7 +198,7 @@ impl GqlConnection {
                 .get_transactions(
                     address,
                     nt::core::models::TransactionId {
-                        lt: if inclusive { before_lt } else { before_lt - 1 },
+                        lt: before_lt.unwrap_or(u64::MAX),
                         hash: Default::default(),
                     },
                     limit,
@@ -214,6 +220,12 @@ impl GqlConnection {
 impl GqlConnection {
     pub fn make_transport(&self) -> gql::GqlTransport {
         gql::GqlTransport::new(self.inner.clone())
+    }
+}
+
+impl IntoHandle for Arc<gql::GqlTransport> {
+    fn into_handle(self) -> TransportHandle {
+        TransportHandle::GraphQl(self)
     }
 }
 

@@ -10,8 +10,8 @@ use nt::core::models as core_models;
 use nt::core::ton_wallet;
 use nt::utils::*;
 
+use crate::transport::TransportHandle;
 use crate::utils::*;
-use nt::transport::Transport;
 
 #[wasm_bindgen]
 pub struct TonWallet {
@@ -28,7 +28,7 @@ pub struct TonWallet {
 }
 
 impl TonWallet {
-    pub fn new(transport: Arc<dyn Transport>, wallet: ton_wallet::TonWallet) -> Self {
+    pub fn new(transport: TransportHandle, wallet: ton_wallet::TonWallet) -> Self {
         Self {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
@@ -129,6 +129,7 @@ impl TonWallet {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let contract_state = transport
+                .transport()
                 .get_contract_state(&address)
                 .await
                 .handle_error()?;
@@ -197,7 +198,7 @@ impl TonWallet {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let block = inner.transport.get_block(&block_id).await.handle_error()?;
+            let block = inner.transport.get_block(&block_id).await?;
 
             let mut wallet = inner.wallet.lock().trust_me();
             wallet.handle_block(&block).await.handle_error()?;
@@ -232,7 +233,7 @@ impl TonWallet {
 }
 
 pub struct TonWalletImpl {
-    transport: Arc<dyn Transport>,
+    transport: TransportHandle,
     wallet: Mutex<ton_wallet::TonWallet>,
 }
 
