@@ -80,7 +80,7 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
                     )}
                     <iframe
                         allow="hid"
-                        height="280px"
+                        height="290px"
                         src={LEDGER_BRIDGE_URL}
                         ref={ref}
                         onLoad={() => {
