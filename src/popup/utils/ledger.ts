@@ -1,13 +1,11 @@
 import * as nt from '@nekoton'
 import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
-export const getFirstPage = async (controllerRpc: IControllerRpcClient): Promise<{publicKey: string, index: number}[] | null> => {
+export const getFirstPage = async (controllerRpc: IControllerRpcClient): Promise<{publicKey: string, index: number}[]> => {
     try {
-        let ledgerFirstPage = await controllerRpc.getLedgerFirstPage()
-        console.log(ledgerFirstPage)
-        return ledgerFirstPage
+        return await controllerRpc.getLedgerFirstPage()
     } catch (e) {
-        return null
+        throw e
     }
 }
 

@@ -58,7 +58,7 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
             console.log('Ledger Bridge Data: ', reply.data?.payload)
             onNext && onNext()
         } else {
-            console.log('Ledger Bridge Error: ', reply.data?.error)
+            console.log('Ledger Bridge Error: ', reply.data?.error.message)
             // onBack && onBack()
         }
         //window.removeEventListener('message', handleMessage)

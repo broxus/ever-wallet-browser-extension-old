@@ -87,7 +87,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
     }
 
     useEffect(() => {
-        console.log(getFirstPage(controllerRpc))
+        getFirstPage(controllerRpc).then(((r) => { console.log(r)} )).catch((err) => { console.log(err) })
     }, [])
 
     return (
