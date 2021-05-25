@@ -75,10 +75,14 @@ const AssetFull: React.FC<IAssetFull> = ({
 
         shouldDeploy = false
         balance = controllerState.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
-        transactions =
+        const tokenTransactions = (transactions =
             controllerState.accountTokenTransactions[accountAddress]?.[
                 selectedAsset.data.rootTokenContract
-            ]
+            ])
+        transactions = tokenTransactions?.filter((transaction: nt.Transaction) => {
+            const tokenTransaction = transaction as nt.TokenWalletTransaction
+            return tokenTransaction.info != null
+        })
 
         symbol = controllerState.knownTokens[rootTokenContract]
         currencyName = symbol.name
@@ -184,10 +188,15 @@ const AssetFull: React.FC<IAssetFull> = ({
 
                 <div className="asset-full__history" ref={scrollArea}>
                     <TransactionsList
+                        topOffset={0}
+                        fullHeight={380}
                         scrollArea={scrollArea}
                         symbol={symbol}
                         transactions={transactions || []}
                         onViewTransaction={showTransaction}
+                        preloadTransactions={({ lt, hash }) =>
+                            controllerRpc.preloadTransactions(account.tonWallet.address, lt, hash)
+                        }
                     />
                 </div>
             </div>

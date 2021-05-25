@@ -2,9 +2,8 @@
 @import '../../styles/shared/animations';
 
 .main-page {
-  //&__content {
-  //  height: 100vh;
-  //  overflow: scroll;
-  //  // todo
-  //}
+  &__content {
+    height: 100vh;
+    overflow-y: scroll;
+  }
 }

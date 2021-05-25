@@ -92,9 +92,9 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
             <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span
                     className="transactions-list-item__description transactions-list-item__address"
-                    data-tooltip={splitAddress(txAddress?.address)}
+                    data-tooltip={txAddress ? splitAddress(txAddress.address) : 'Unknown'}
                 >
-                    {txAddress?.address && convertAddress(txAddress.address)}
+                    {txAddress ? txAddress.address && convertAddress(txAddress.address) : 'Unknown'}
                 </span>
                 <span className="transactions-list-item__description transactions-list-item__date">
                     {new Date(transaction.createdAt * 1000).toLocaleString('default', {

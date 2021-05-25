@@ -135,6 +135,9 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     }
                     onViewTransaction={showTransaction}
                     onViewAsset={showAsset}
+                    preloadTransactions={({ lt, hash }) =>
+                        controllerRpc.preloadTransactions(accountAddress, lt, hash)
+                    }
                 />
             </div>
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
