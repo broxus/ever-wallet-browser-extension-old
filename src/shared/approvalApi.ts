@@ -57,17 +57,21 @@ export interface Approval<T extends string, D> {
 }
 
 export type GqlSocketParams = {
-    // Path to graphql qpi endpoint, e.g. `https://main.ton.dev`
+    // Path to graphql api endpoint, e.g. `https://main.ton.dev`
     endpoint: string
     // Request timeout in milliseconds
     timeout: number
 }
 
 export type JrpcSocketParams = {
+    // Path to jrpc api endpoint
     endpoint: string
 }
 
-export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
+export type ConnectionData =
+    | nt.EnumItem<'graphql', GqlSocketParams>
+    | nt.EnumItem<'jrpc', JrpcSocketParams>
+
 export type NamedConnectionData = { name: string } & ConnectionData
 
 export type ApprovalApi = {

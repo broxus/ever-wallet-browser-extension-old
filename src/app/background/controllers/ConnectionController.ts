@@ -5,7 +5,7 @@ import {
     ConnectionData,
     GqlSocketParams,
     JrpcSocketParams,
-    NamedConnectionData
+    NamedConnectionData,
 } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
@@ -19,6 +19,12 @@ const NETWORK_PRESETS = {
             timeout: 60000,
         },
     } as ConnectionData,
+    ['Mainnet (ADNL)']: ({
+        type: 'jrpc',
+        data: {
+            endpoint: 'http://127.0.0.1:10000/rpc',
+        },
+    } as unknown) as ConnectionData,
     ['Testnet']: {
         type: 'graphql',
         data: {
@@ -29,17 +35,25 @@ const NETWORK_PRESETS = {
 }
 
 const getPreset = <T extends keyof typeof NETWORK_PRESETS>(name: T): NamedConnectionData => ({
-    ...NETWORK_PRESETS[name],
     name,
+    ...(NETWORK_PRESETS[name] as ConnectionData),
 })
 
-export type InitializedConnection = nt.EnumItem<
-    'graphql',
-    {
-        socket: GqlSocket
-        connection: nt.GqlConnection
-    }
->
+export type InitializedConnection =
+    | nt.EnumItem<
+          'graphql',
+          {
+              socket: GqlSocket
+              connection: nt.GqlConnection
+          }
+      >
+    | nt.EnumItem<
+          'jrpc',
+          {
+              socket: JrpcSocket
+              connection: nt.JrpcConnection
+          }
+      >
 
 export interface ConnectionConfig extends BaseConfig {}
 
@@ -148,6 +162,8 @@ export class ConnectionController extends BaseController<
         if (this._initializedConnection) {
             if (this._initializedConnection.type === 'graphql') {
                 this._initializedConnection.data.connection.free()
+            } else if (this._initializedConnection.type == 'jrpc') {
+                this._initializedConnection.data.connection.free()
             }
         }
 
@@ -170,10 +186,27 @@ export class ConnectionController extends BaseController<
                     `Failed to create GraphQL connection: ${e.toString()}`
                 )
             }
+        } else if (params.type === 'jrpc') {
+            try {
+                const socket = new JrpcSocket()
+
+                this._initializedConnection = {
+                    type: 'jrpc',
+                    data: {
+                        socket,
+                        connection: await socket.connect(params.data),
+                    },
+                }
+            } catch (e) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.INTERNAL,
+                    `Failed to create JRPC connection ${e.toString()}`
+                )
+            }
         } else {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `Unsupported connection type ${params.type}`
+                'Unsupported connection type'
             )
         }
 
@@ -258,7 +291,7 @@ export class GqlSocket {
 }
 
 export class JrpcSocket {
-    public async connect(params: JrpcSocketParams): Promise<nt.GqlConnection> {
+    public async connect(params: JrpcSocketParams): Promise<nt.JrpcConnection> {
         class JrpcSender {
             private readonly params: JrpcSocketParams
 
@@ -284,6 +317,6 @@ export class JrpcSocket {
             }
         }
 
-        return new nt.GqlConnection(new JrpcSender(params))
+        return new nt.JrpcConnection(new JrpcSender(params))
     }
 }
