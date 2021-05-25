@@ -1,40 +1,107 @@
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+
 import Button from '@popup/components/Button'
-import ConnectLedgerIcon from '@popup/img/connect-ledger.svg'
+import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
+import Loader from '@popup/components/Loader'
 
-import './style.scss'
+const LEDGER_BRIDGE_URL = 'https://broxus.github.io/ton-ledger-bridge'
 
-interface IConnectLedger {
-    onBack?: () => void
+interface ISelectWallet {
     onNext: () => void
+    onBack?: () => void
+    // onSkip?: () => void
 }
 
-const ConnectLedger: React.FC<IConnectLedger> = ({ onBack, onNext }) => {
+const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
+    const ref = useRef<HTMLIFrameElement>(null)
+    const [loading, setLoading] = useState(true)
+
+    // const getFirstPage = async () => {
+    //     try {
+    //         let ledgerFirstPage = await getLedgerFirstPage()
+    //         console.log(ledgerFirstPage)
+    //     } catch (e) {
+    //
+    //     }
+    // }
+    //
+    // const createLedgerAccount = async () => {
+    //     const accountId = 0
+    //     const contractType = "SafeMultisigWallet"
+    //
+    //     let key: nt.KeyStoreEntry | undefined
+    //     try {
+    //         key = await createLedgerKey({
+    //             accountId,
+    //         })
+    //
+    //         await createAccount({ name: "Ledger " + accountId, publicKey: key.publicKey, contractType })
+    //     } catch (e) {
+    //         key && removeKey({ publicKey: key.publicKey }).catch(console.error)
+    //     }
+    // }
+    //
+    // const selectAnyAccount = async () => {
+    //     try {
+    //         const mockAddr = '0:aafa193fdf6c11cd20a0831ae2a33f7ff4a5add95db7b7b30e7ceef6538e2621'
+    //         await selectAccount(mockAddr)
+    //     } catch (e) {
+    //
+    //     }
+    // }
+
+    const handleMessage = (reply: any) => {
+        console.log('handleMessage')
+        if (reply.data?.success === true) {
+            console.log('Ledger Bridge Data: ', reply.data?.payload)
+            onNext && onNext()
+        } else {
+            console.log('Ledger Bridge Error: ', reply.data?.error)
+            // onBack && onBack()
+        }
+        //window.removeEventListener('message', handleMessage)
+    }
+
+    useEffect(() => {
+        return () => {
+            window.removeEventListener('message', handleMessage)
+        }
+    }, [])
+
     return (
-        <>
-            <div className="connect-ledger__icon">
-                <ConnectLedgerIcon />
+        <div className="select-wallet">
+            <div className="select-wallet__content" style={{ padding: '0' }}>
+                <div className="select-wallet__content-options" style={{ height: '100%' }}>
+                    {/*<SelectLedgerAccount onBack={onBack} onNext={onSubmit} />*/}
+                    {loading && (
+                        <div className="select-wallet__loader">
+                            <Loader />
+                        </div>
+                    )}
+                    <iframe
+                        allow="hid"
+                        height="280px"
+                        src={LEDGER_BRIDGE_URL}
+                        ref={ref}
+                        onLoad={() => {
+                            setLoading(false)
+                            const message = {
+                                target: 'LEDGER-IFRAME',
+                                action: 'ledger-get-configuration',
+                            }
+                            window.addEventListener('message', handleMessage)
+
+                            ref.current?.contentWindow?.postMessage(message, '*')
+                        }}
+                    />
+                </div>
+                {/*<div className="select-wallet__content-buttons">*/}
+                {/*    <Button text={'Next'} disabled={false} onClick={() => onSubmit()} />*/}
+                {/*    {onBack && <Button text={'Back'} white onClick={onBack} />}*/}
+                {/*    {onSkip && <Button text={'Skip'} white onClick={onSkip} />}*/}
+                {/*</div>*/}
             </div>
-            <h2 className="connect-ledger__title">Connect Ledger</h2>
-            <span className="connect-ledger__comment">
-                Be sure that your Ledger is connected to computer and unlocked.
-            </span>
-            <div className="connect-ledger__buttons">
-                <Button
-                    className="connect-ledger__buttons-back"
-                    text={'Back'}
-                    disabled={false}
-                    onClick={() => (onBack ? onBack() : {})}
-                    white
-                />
-                <Button
-                    className="connect-ledger__buttons-next"
-                    text={'Set pairing'}
-                    disabled={false}
-                    onClick={() => onNext()}
-                />
-            </div>
-        </>
+        </div>
     )
 }
 

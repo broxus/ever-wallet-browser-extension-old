@@ -5,7 +5,7 @@ import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'
 import SelectContractType from '@popup/components/SelectContractType'
-import SelectLedgerKey from '@popup/components/SelectLedgerKey'
+import ConnectLedger from '@popup/components/ConnectLedger'
 import Modal from '@popup/components/Modal'
 
 enum LocalStep {
@@ -81,7 +81,7 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
                 />
             )}
             {localStep == LocalStep.CONNECT_LEDGER && (
-                <SelectLedgerKey
+                <ConnectLedger
                     onSubmit={onSubmit}
                     onBack={() => {
                         setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)

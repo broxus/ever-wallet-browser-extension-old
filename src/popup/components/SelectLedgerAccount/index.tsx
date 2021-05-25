@@ -9,8 +9,11 @@ import UserAvatar from '@popup/components/UserAvatar'
 import { convertAddress, convertTons } from '@shared/utils'
 
 import './style.scss'
+import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { getFirstPage } from '@popup/utils/ledger'
 
 interface ISelectLedgerAccount {
+    controllerRpc: IControllerRpcClient
     onBack?: () => void
     onNext?: () => void
 }
@@ -70,7 +73,7 @@ const mockAccounts = [
     },
 ]
 
-const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ onBack, onNext }) => {
+const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, onBack, onNext }) => {
     const [currentPage, setCurrentPage] = useState(0)
     // TODO update to list account number
     const [selected, setSelected] = useState<string[]>([])
@@ -82,6 +85,10 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ onBack, onNext })
     const incrementIndex = () => {
         setCurrentPage((currentPage + 1) % mockAccounts.length)
     }
+
+    useEffect(() => {
+        console.log(getFirstPage(controllerRpc))
+    }, [])
 
     return (
         <>

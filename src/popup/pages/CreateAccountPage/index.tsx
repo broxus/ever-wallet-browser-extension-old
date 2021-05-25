@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React, { Dispatch, SetStateAction, useMemo, useState } from 'react'
 import { selectStyles } from '@popup/constants/selectStyle'
 import walletOptions from '@popup/constants/walletTypes'
 
@@ -11,6 +11,9 @@ import PlusSign from '@popup/img/plus-sign-grey.svg'
 import LedgerIcon from '@popup/img/ledger.svg'
 
 import './style.scss'
+import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
+import ConnectLedger from '@popup/components/ConnectLedger'
+import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 const options = [
     { value: '1', label: 'Key 1' },
@@ -88,8 +91,8 @@ const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
 
 interface ISelectAccountType {
     setStep: Dispatch<SetStateAction<number>>
-    selected: string
-    setSelected: Dispatch<SetStateAction<string>>
+    selected: string | undefined
+    setSelected: Dispatch<SetStateAction<string | undefined>>
 }
 
 interface IAccountName {
@@ -141,18 +144,54 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setStep, selected, se
     )
 }
 
-const CreateAccountPage = () => {
-    const [step, setStep] = useState<number>(0)
-    const [accountType, setAccountType] = useState('new')
+interface ICreateAccountPage {
+    controllerRpc: IControllerRpcClient
+    onClose: () => void
+}
 
-    const createAccountContent = [
-        <SelectAccountType setStep={setStep} selected={accountType} setSelected={setAccountType} />,
-        <AccountName setStep={setStep} />,
-        <AccountSelectKey setStep={setStep} />,
-        <EnterPassword handleBack={() => setStep(1)} handleNext={() => setStep(3)} />,
-        // @ts-ignore
-        <CheckSeed setStep={setStep} />,
+const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClose }) => {
+    const [step, setStep] = useState<number>(0)
+    const [accountType, setAccountType] = useState<string | undefined>(undefined)
+
+    const createAccountContent = useMemo(
+        () => [
+            // <SelectAccountType
+            //     setStep={setStep}
+            //     selected={accountType}
+            //     setSelected={setAccountType}
+            // />,
+            <AccountName setStep={setStep} />,
+            <AccountSelectKey setStep={setStep} />,
+            <EnterPassword handleBack={() => setStep(1)} handleNext={() => setStep(3)} />,
+            // @ts-ignore
+            <CheckSeed setStep={setStep} />,
+        ],
+        []
+    )
+
+    const connectLedger = [
+        <ConnectLedger
+            onNext={() => setStep(1)}
+            onBack={() => {
+                onClose()
+            }}
+            // createLedgerKey={createLedgerKey}
+            // removeKey={removeKey}
+            // createAccount={createAccount}
+            // selectAccount={selectAccount}
+            // getLedgerFirstPage={getLedgerFirstPage}
+        />,
+        <SelectLedgerAccount controllerRpc={controllerRpc} />,
     ]
-    return createAccountContent[step]
+
+    if (accountType === 'new') {
+        return createAccountContent[step]
+    } else if (accountType === 'ledger') {
+        return connectLedger[step]
+    }
+
+    return (
+        <SelectAccountType setStep={setStep} selected={accountType} setSelected={setAccountType} />
+    )
 }
 export default CreateAccountPage
