@@ -18,6 +18,7 @@ import ApprovalPage from '@popup/pages/ApprovalPage'
 import Oval from '@popup/img/oval.svg'
 
 import './styles/main.scss'
+import ConnectLedger from '@popup/components/ConnectLedger'
 
 const Loader: React.FC = () => {
     return (
@@ -58,6 +59,14 @@ interface IApp {
 const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
     const [controllerState, setControllerState] = useState<ControllerState>()
 
+    const [showLedgerPage, setShowLedgerPage] = useState(false)
+
+    useEffect(() => {
+        if (showLedgerPage === true) {
+            window.location.href = '/home.html'
+        }
+    }, [showLedgerPage])
+
     useEffect(() => {
         ;(async () => {
             const [, state] = await Promise.all([
@@ -97,9 +106,22 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         })()
     }, [])
 
+    // if (controllerState?.selectedAccount != null && activeTab.type === 'fullscreen') {
+    //     window.close()
+    //     return null
+    // }
+
     if (controllerState?.selectedAccount != null && activeTab.type === 'fullscreen') {
-        window.close()
-        return null
+        if (!showLedgerPage) {
+            console.log('!showLedgerPage')
+            window.close()
+            return null
+        } else {
+            window.close()
+            console.log('showLedgerPage')
+            controllerRpc.openExtensionInBrowser()
+            return <ConnectLedger onNext={() => {}} />
+        }
     }
 
     if (controllerState == null) {
@@ -129,7 +151,13 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         )
     }
 
-    return <MainPage controllerState={controllerState} controllerRpc={controllerRpc} />
+    return (
+        <MainPage
+            controllerState={controllerState}
+            controllerRpc={controllerRpc}
+            setShowLedgerPage={setShowLedgerPage}
+        />
+    )
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({

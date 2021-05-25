@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useMemo, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react'
 import { selectStyles } from '@popup/constants/selectStyle'
 import walletOptions from '@popup/constants/walletTypes'
 
@@ -14,6 +14,11 @@ import './style.scss'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
 import ConnectLedger from '@popup/components/ConnectLedger'
 import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import {
+    ENVIRONMENT_TYPE_FULLSCREEN,
+    ENVIRONMENT_TYPE_NOTIFICATION,
+    ENVIRONMENT_TYPE_POPUP,
+} from '@shared/constants'
 
 const options = [
     { value: '1', label: 'Key 1' },
@@ -90,8 +95,6 @@ const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
 }
 
 interface ISelectAccountType {
-    setStep: Dispatch<SetStateAction<number>>
-    selected: string | undefined
     setSelected: Dispatch<SetStateAction<string | undefined>>
 }
 
@@ -112,16 +115,17 @@ const AccountName: React.FC<IAccountName> = ({ setStep }) => {
     )
 }
 
-const SelectAccountType: React.FC<ISelectAccountType> = ({ setStep, selected, setSelected }) => {
+const SelectAccountType: React.FC<ISelectAccountType> = ({ setSelected }) => {
+    const [walletType, setWalletType] = useState<string | undefined>(undefined)
     return (
         <div className="create-account-page__content">
             <h2 style={{ marginBottom: '28px' }}>Add account</h2>
             <div className="create-account-page__options">
                 <div
                     className={`create-account-page__options-option ${
-                        selected === 'new' ? 'create-account-page__options-option-selected' : ''
+                        walletType === 'new' ? 'create-account-page__options-option-selected' : ''
                     }`}
-                    onClick={() => setSelected('new')}
+                    onClick={() => setWalletType('new')}
                 >
                     {/*@ts-ignore*/}
                     <PlusSign className="create-account-page__options-icon" />
@@ -129,9 +133,11 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setStep, selected, se
                 </div>
                 <div
                     className={`create-account-page__options-option ${
-                        selected === 'ledger' ? 'create-account-page__options-option-selected' : ''
+                        walletType === 'ledger'
+                            ? 'create-account-page__options-option-selected'
+                            : ''
                     }`}
-                    onClick={() => setSelected('ledger')}
+                    onClick={() => setWalletType('ledger')}
                 >
                     {/*@ts-ignore*/}
                     <LedgerIcon className="create-account-page__options-icon" />
@@ -139,7 +145,13 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setStep, selected, se
                 </div>
             </div>
 
-            <Button text={'Next'} onClick={() => setStep(1)} />
+            <Button
+                text={'Next'}
+                disabled={!walletType}
+                onClick={() => {
+                    setSelected(walletType)
+                }}
+            />
         </div>
     )
 }
@@ -147,19 +159,27 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setStep, selected, se
 interface ICreateAccountPage {
     controllerRpc: IControllerRpcClient
     onClose: () => void
+    setShowLedgerPage: Dispatch<SetStateAction<boolean>>
 }
 
-const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClose }) => {
+const CreateAccountPage: React.FC<ICreateAccountPage> = ({
+    controllerRpc,
+    onClose,
+    setShowLedgerPage,
+}) => {
     const [step, setStep] = useState<number>(0)
     const [accountType, setAccountType] = useState<string | undefined>(undefined)
 
+    useEffect(() => {
+        if (accountType === 'ledger') {
+            // history.push('/home.html')
+            // window.location.href = '/home.html'
+            setShowLedgerPage(true)
+        }
+    }, [accountType])
+
     const createAccountContent = useMemo(
         () => [
-            // <SelectAccountType
-            //     setStep={setStep}
-            //     selected={accountType}
-            //     setSelected={setAccountType}
-            // />,
             <AccountName setStep={setStep} />,
             <AccountSelectKey setStep={setStep} />,
             <EnterPassword handleBack={() => setStep(1)} handleNext={() => setStep(3)} />,
@@ -168,6 +188,14 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClos
         ],
         []
     )
+    //
+    // if (parseUrl.pathname === '/popup.html') {
+    //     return ENVIRONMENT_TYPE_POPUP
+    // } else if (parseUrl.pathname === '/notification.html') {
+    //     return ENVIRONMENT_TYPE_NOTIFICATION
+    // } else if (parseUrl.pathname === '/home.html') {
+    //     return ENVIRONMENT_TYPE_FULLSCREEN
+    // }
 
     const connectLedger = [
         <ConnectLedger
@@ -190,8 +218,6 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClos
         return connectLedger[step]
     }
 
-    return (
-        <SelectAccountType setStep={setStep} selected={accountType} setSelected={setAccountType} />
-    )
+    return <SelectAccountType setSelected={setAccountType} />
 }
 export default CreateAccountPage

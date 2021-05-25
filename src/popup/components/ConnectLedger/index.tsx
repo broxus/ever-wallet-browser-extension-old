@@ -16,6 +16,8 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
     const ref = useRef<HTMLIFrameElement>(null)
     const [loading, setLoading] = useState(true)
 
+    // window.location.href = '/home.html'
+
     // const getFirstPage = async () => {
     //     try {
     //         let ledgerFirstPage = await getLedgerFirstPage()
@@ -62,11 +64,26 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
         //window.removeEventListener('message', handleMessage)
     }
 
+    // useEffect(() => {
+    //     console.log(window, 'window')
+    // }, [])
+
     useEffect(() => {
         return () => {
-            window.removeEventListener('message', handleMessage)
+            document.removeEventListener('message', handleMessage)
         }
     }, [])
+
+    const addListener = () => {
+        setLoading(false)
+
+        const message = {
+            target: 'LEDGER-IFRAME',
+            action: 'ledger-get-configuration',
+        }
+        document.addEventListener('message', handleMessage)
+        ref.current?.contentWindow?.postMessage(message, '*')
+    }
 
     return (
         <div className="select-wallet">
@@ -83,16 +100,7 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
                         height="290px"
                         src={LEDGER_BRIDGE_URL}
                         ref={ref}
-                        onLoad={() => {
-                            setLoading(false)
-                            const message = {
-                                target: 'LEDGER-IFRAME',
-                                action: 'ledger-get-configuration',
-                            }
-                            window.addEventListener('message', handleMessage)
-
-                            ref.current?.contentWindow?.postMessage(message, '*')
-                        }}
+                        onLoad={() => addListener()}
                     />
                 </div>
                 {/*<div className="select-wallet__content-buttons">*/}

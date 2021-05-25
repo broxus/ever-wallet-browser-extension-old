@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { Dispatch, SetStateAction, useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import { SelectedAsset } from '@shared/utils'
 import * as nt from '@nekoton'
@@ -23,6 +23,7 @@ import { NamedConnectionData } from '@shared/approvalApi'
 interface IMainPage {
     controllerState: ControllerState
     controllerRpc: IControllerRpcClient
+    setShowLedgerPage: Dispatch<SetStateAction<boolean>>
 }
 
 enum Panel {
@@ -36,7 +37,7 @@ enum Panel {
     TRANSACTION,
 }
 
-const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
+const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState,setShowLedgerPage }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
@@ -193,6 +194,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                         <CreateAccountPage
                             controllerRpc={controllerRpc}
                             onClose={() => setOpenedPanel(undefined)}
+                            setShowLedgerPage={setShowLedgerPage}
                         />
                     )}
                     {openedPanel == Panel.ASSET && selectedAsset && (
