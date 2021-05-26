@@ -87,7 +87,13 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
     }
 
     useEffect(() => {
-        getFirstPage(controllerRpc).then(((r) => { console.log(r)} )).catch((err) => { console.log(err) })
+        getFirstPage(controllerRpc)
+            .then((r) => {
+                console.log(r)
+            })
+            .catch((err) => {
+                console.log(err)
+            })
     }, [])
 
     return (
@@ -95,10 +101,10 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
             <h2 className="select-ledger-account__title">Select accounts</h2>
             <div className="select-ledger-account__nav">
                 <div className="select-ledger-account__nav-button" onClick={decrementIndex}>
-                    <Left />
+                    <img src={Left} alt="" />
                 </div>
                 <div className="select-ledger-account__nav-button" onClick={incrementIndex}>
-                    <Right />
+                    <img src={Right} alt="" />
                 </div>
             </div>
             <div>
