@@ -11,14 +11,12 @@ import {
 } from '@shared/constants'
 import init, * as nt from '@nekoton'
 
-import ConnectLedger from '@popup/components/ConnectLedger'
-
 import WelcomePage from '@popup/pages/WelcomePage'
 import MainPage from '@popup/pages/MainPage'
 import ApprovalPage from '@popup/pages/ApprovalPage'
+import ConnectLedgerPage from '@popup/pages/ConnectLedgerPage'
 
 import Oval from '@popup/img/oval.svg'
-
 import './styles/main.scss'
 
 const Loader: React.FC = () => {
@@ -122,13 +120,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
 
     if (activeTab.type === 'fullscreen') {
         if (controllerState.selectedAccount != null && activeTab.data.route == 'connect-ledger') {
-            return (
-                <ConnectLedger
-                    onNext={() => {
-                        console.log('asd')
-                    }}
-                />
-            )
+            return <ConnectLedgerPage />
         } else if (controllerState.selectedAccount == null && activeTab.data.route == null) {
             return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
         } else {

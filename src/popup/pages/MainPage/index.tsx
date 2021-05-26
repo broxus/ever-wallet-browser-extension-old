@@ -198,10 +198,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     )}
                     {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
                     {openedPanel == Panel.CREATE_ACCOUNT && (
-                        <CreateAccountPage
-                            controllerRpc={controllerRpc}
-                            onClose={() => setOpenedPanel(undefined)}
-                        />
+                        <CreateAccountPage controllerRpc={controllerRpc} />
                     )}
                     {openedPanel == Panel.ASSET && selectedAsset && (
                         <AssetFull

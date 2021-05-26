@@ -29,8 +29,6 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
     createLedgerKey,
     removeKey,
     createAccount,
-    selectAccount,
-    getLedgerFirstPage,
     onBack,
 }) => {
     const [inProcess, setInProcess] = useState<boolean>(false)
@@ -82,22 +80,17 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
             )}
             {localStep == LocalStep.CONNECT_LEDGER && (
                 <ConnectLedger
-                    onSubmit={() => {
-                        // TODO
-                        //onSubmit
-                        return []
-                    }}
                     onNext={() => {
                         // todo
                     }}
-                    onBack={() => {
-                        setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
-                    }}
-                    createLedgerKey={createLedgerKey}
-                    removeKey={removeKey}
-                    createAccount={createAccount}
-                    selectAccount={selectAccount}
-                    getLedgerFirstPage={getLedgerFirstPage}
+                    // onBack={() => {
+                    //     setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
+                    // }}
+                    // createLedgerKey={createLedgerKey}
+                    // removeKey={removeKey}
+                    // createAccount={createAccount}
+                    // selectAccount={selectAccount}
+                    // getLedgerFirstPage={getLedgerFirstPage}
                 />
             )}
             {error && (

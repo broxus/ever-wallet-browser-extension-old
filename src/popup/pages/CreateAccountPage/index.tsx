@@ -2,19 +2,13 @@ import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'r
 import { selectStyles } from '@popup/constants/selectStyle'
 import walletOptions from '@popup/constants/walletTypes'
 import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import {
-    ENVIRONMENT_TYPE_FULLSCREEN,
-    ENVIRONMENT_TYPE_NOTIFICATION,
-    ENVIRONMENT_TYPE_POPUP,
-} from '@shared/constants'
-
 import Select from 'react-select'
 import Input from '@popup/components/Input'
 import EnterPassword from '@popup/components/EnterPassword'
 import CheckSeed from '@popup/components/CheckSeed'
 import Button from '@popup/components/Button'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
-import ConnectLedger from '@popup/components/ConnectLedger'
+import CheckLedgerConnection from '@popup/components/CheckLedgerConnection'
 
 import './style.scss'
 
@@ -221,14 +215,13 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setSelected }) => {
 
 interface ICreateAccountPage {
     controllerRpc: IControllerRpcClient
-    onClose: () => void
 }
 
-const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClose }) => {
+const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc }) => {
     const [step, setStep] = useState<number>(0)
     const [accountType, setAccountType] = useState<string>()
 
-    useEffect(() => {
+    const openLedgerConnectPage = () => {
         if (accountType === 'ledger') {
             controllerRpc
                 .openExtensionInBrowser({
@@ -236,7 +229,7 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClos
                 })
                 .catch(console.error)
         }
-    }, [accountType])
+    }
 
     const createAccountContent = useMemo(
         () => [
@@ -248,26 +241,11 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClos
         ],
         []
     )
-    //
-    // if (parseUrl.pathname === '/popup.html') {
-    //     return ENVIRONMENT_TYPE_POPUP
-    // } else if (parseUrl.pathname === '/notification.html') {
-    //     return ENVIRONMENT_TYPE_NOTIFICATION
-    // } else if (parseUrl.pathname === '/home.html') {
-    //     return ENVIRONMENT_TYPE_FULLSCREEN
-    // }
 
     const connectLedger = [
-        <ConnectLedger
-            onNext={() => setStep(1)}
-            onBack={() => {
-                onClose()
-            }}
-            // createLedgerKey={createLedgerKey}
-            // removeKey={removeKey}
-            // createAccount={createAccount}
-            // selectAccount={selectAccount}
-            // getLedgerFirstPage={getLedgerFirstPage}
+        <CheckLedgerConnection
+            onSuccess={() => setStep(1)}
+            onFailed={() => openLedgerConnectPage()}
         />,
         <SelectLedgerAccount controllerRpc={controllerRpc} />,
     ]
