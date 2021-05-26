@@ -192,10 +192,13 @@ export class NekotonController extends EventEmitter {
                 cb(null, this.getState()),
             getAvailableNetworks: (cb: ApiCallback<NamedConnectionData[]>) =>
                 cb(null, connectionController.getAvailableNetworks()),
-            openExtensionInBrowser: (cb: ApiCallback<undefined>) => {
+            openExtensionInBrowser: (
+                params: { route?: string; query?: string },
+                cb: ApiCallback<undefined>
+            ) => {
                 const existingTabs = window.ObjectExt.keys(this._options.getOpenNekotonTabIds())
                 if (existingTabs.length == 0) {
-                    openExtensionInBrowser().then(() => cb(null))
+                    openExtensionInBrowser(params.route, params.query).then(() => cb(null))
                 } else {
                     focusTab(existingTabs[0]).then(async (tab) => {
                         tab && (await focusWindow(tab.windowId))

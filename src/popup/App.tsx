@@ -11,6 +11,8 @@ import {
 } from '@shared/constants'
 import init, * as nt from '@nekoton'
 
+import ConnectLedger from '@popup/components/ConnectLedger'
+
 import WelcomePage from '@popup/pages/WelcomePage'
 import MainPage from '@popup/pages/MainPage'
 import ApprovalPage from '@popup/pages/ApprovalPage'
@@ -18,7 +20,6 @@ import ApprovalPage from '@popup/pages/ApprovalPage'
 import Oval from '@popup/img/oval.svg'
 
 import './styles/main.scss'
-import ConnectLedger from '@popup/components/ConnectLedger'
 
 const Loader: React.FC = () => {
     return (
@@ -46,7 +47,12 @@ export type ActiveTab =
           }
       >
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
-    | nt.EnumItem<typeof ENVIRONMENT_TYPE_FULLSCREEN, undefined>
+    | nt.EnumItem<
+          typeof ENVIRONMENT_TYPE_FULLSCREEN,
+          {
+              route?: string
+          }
+      >
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
 interface IApp {
@@ -57,14 +63,6 @@ interface IApp {
 
 const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
     const [controllerState, setControllerState] = useState<ControllerState>()
-
-    const [showLedgerPage, setShowLedgerPage] = useState(false)
-
-    useEffect(() => {
-        if (showLedgerPage === true) {
-            window.location.href = '/home.html'
-        }
-    }, [showLedgerPage])
 
     useEffect(() => {
         ;(async () => {
@@ -93,9 +91,13 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
                 state.selectedAccount == null &&
                 (activeTab.type === 'popup' || activeTab.type === 'notification')
             ) {
-                await controllerRpc.openExtensionInBrowser()
+                await controllerRpc.openExtensionInBrowser({})
                 window.close()
-            } else if (state.selectedAccount != null && activeTab.type === 'fullscreen') {
+            } else if (
+                state.selectedAccount != null &&
+                activeTab.type === 'fullscreen' &&
+                activeTab.data.route == null
+            ) {
                 window.close()
             } else {
                 setControllerState(state)
@@ -105,26 +107,33 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         })()
     }, [])
 
-    // if (controllerState?.selectedAccount != null && activeTab.type === 'fullscreen') {
-    //     window.close()
-    //     return null
-    // }
-
-    if (controllerState?.selectedAccount != null && activeTab.type === 'fullscreen') {
-        if (!showLedgerPage) {
-            console.log('!showLedgerPage')
-            window.close()
-            return null
-        } else {
-            window.close()
-            console.log('showLedgerPage')
-            controllerRpc.openExtensionInBrowser()
-            return <ConnectLedger onNext={() => {}} />
-        }
+    if (
+        controllerState?.selectedAccount != null &&
+        activeTab.type === 'fullscreen' &&
+        activeTab.data == null
+    ) {
+        window.close()
+        return null
     }
 
     if (controllerState == null) {
         return <Loader />
+    }
+
+    if (activeTab.type === 'fullscreen') {
+        switch (activeTab.data.route) {
+            case 'connect-ledger': {
+                return (
+                    <ConnectLedger
+                        onNext={() => {
+                            console.log('asd')
+                        }}
+                    />
+                )
+            }
+            default:
+                window.close()
+        }
     }
 
     if (controllerState.selectedAccount == null) {
@@ -150,13 +159,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         )
     }
 
-    return (
-        <MainPage
-            controllerState={controllerState}
-            controllerRpc={controllerRpc}
-            setShowLedgerPage={setShowLedgerPage}
-        />
-    )
+    return <MainPage controllerState={controllerState} controllerRpc={controllerRpc} />
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({

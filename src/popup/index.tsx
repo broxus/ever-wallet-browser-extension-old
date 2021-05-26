@@ -9,7 +9,12 @@ import pump from 'pump'
 
 import { getEnvironmentType } from '@popup/utils/platform'
 import { PortDuplexStream } from '@shared/utils'
-import { Environment, ENVIRONMENT_TYPE_BACKGROUND, ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
+import {
+    Environment,
+    ENVIRONMENT_TYPE_BACKGROUND,
+    ENVIRONMENT_TYPE_FULLSCREEN,
+    ENVIRONMENT_TYPE_POPUP,
+} from '@shared/constants'
 import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import { StreamProvider } from '@popup/utils/StreamProvider'
 import store from '@popup/store'
@@ -40,6 +45,16 @@ const start = async () => {
 
 const queryCurrentActiveTab = async (windowType: Environment) => {
     return new Promise<ActiveTab>((resolve) => {
+        if (windowType === ENVIRONMENT_TYPE_FULLSCREEN) {
+            const route = window.location.hash.replace('#', '')
+            return resolve({
+                type: windowType,
+                data: {
+                    route: route != '' ? route : undefined,
+                },
+            })
+        }
+
         if (windowType !== ENVIRONMENT_TYPE_POPUP) {
             return resolve({ type: windowType } as any)
         }

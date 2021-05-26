@@ -222,22 +222,19 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setSelected }) => {
 interface ICreateAccountPage {
     controllerRpc: IControllerRpcClient
     onClose: () => void
-    setShowLedgerPage: Dispatch<SetStateAction<boolean>>
 }
 
-const CreateAccountPage: React.FC<ICreateAccountPage> = ({
-    controllerRpc,
-    onClose,
-    setShowLedgerPage,
-}) => {
+const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc, onClose }) => {
     const [step, setStep] = useState<number>(0)
-    const [accountType, setAccountType] = useState<string | undefined>(undefined)
+    const [accountType, setAccountType] = useState<string>()
 
     useEffect(() => {
         if (accountType === 'ledger') {
-            // history.push('/home.html')
-            // window.location.href = '/home.html'
-            setShowLedgerPage(true)
+            controllerRpc
+                .openExtensionInBrowser({
+                    route: 'connect-ledger',
+                })
+                .catch(console.error)
         }
     }, [accountType])
 
@@ -283,4 +280,5 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
 
     return <SelectAccountType setSelected={setAccountType} />
 }
+
 export default CreateAccountPage

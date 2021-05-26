@@ -23,7 +23,6 @@ import { NamedConnectionData } from '@shared/approvalApi'
 interface IMainPage {
     controllerState: ControllerState
     controllerRpc: IControllerRpcClient
-    setShowLedgerPage: Dispatch<SetStateAction<boolean>>
 }
 
 enum Panel {
@@ -37,7 +36,7 @@ enum Panel {
     TRANSACTION,
 }
 
-const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState, setShowLedgerPage }) => {
+const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
@@ -202,7 +201,6 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState, setShow
                         <CreateAccountPage
                             controllerRpc={controllerRpc}
                             onClose={() => setOpenedPanel(undefined)}
-                            setShowLedgerPage={setShowLedgerPage}
                         />
                     )}
                     {openedPanel == Panel.ASSET && selectedAsset && (
