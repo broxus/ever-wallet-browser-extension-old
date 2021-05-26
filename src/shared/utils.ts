@@ -377,7 +377,7 @@ export const createErrorMiddleware = (log: ConsoleLike): JsonRpcMiddleware<unkno
             if (!error) {
                 return done()
             }
-            log.error(`Nekoton: RPC Error: ${error.message}`, error)
+            log.debug(`Nekoton: RPC Error: ${error.message}`, error)
             return done()
         })
     }

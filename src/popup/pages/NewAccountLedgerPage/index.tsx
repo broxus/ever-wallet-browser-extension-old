@@ -20,7 +20,7 @@ interface INewAccountLedgerPage {
     removeKey: (params: KeyToRemove) => Promise<nt.KeyStoreEntry | undefined>
     createAccount: (params: AccountToCreate) => Promise<nt.AssetsList>
     selectAccount: (params: string) => Promise<void>
-    getLedgerFirstPage: () => Promise<{publicKey: string, index: number}[]>
+    getLedgerFirstPage: () => Promise<{ publicKey: string; index: number }[]>
     onBack: () => void
 }
 
@@ -82,7 +82,14 @@ const NewAccountLedgerPage: React.FC<INewAccountLedgerPage> = ({
             )}
             {localStep == LocalStep.CONNECT_LEDGER && (
                 <ConnectLedger
-                    onSubmit={onSubmit}
+                    onSubmit={() => {
+                        // TODO
+                        //onSubmit
+                        return []
+                    }}
+                    onNext={() => {
+                        // todo
+                    }}
                     onBack={() => {
                         setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
                     }}

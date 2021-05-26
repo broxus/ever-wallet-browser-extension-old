@@ -65,7 +65,7 @@ const KeyStorage: React.FC<IKeyStorage> = ({ createdKey, publicKey }) => {
                                 className="key-storage__key-ellipsis"
                                 onClick={() => setModalOpen(true)}
                             >
-                                <ThreeDots />
+                                <img src={ThreeDots} alt="" />
                                 {modalOpen && (
                                     <Modal onClose={() => setModalOpen(false)}>
                                         <div

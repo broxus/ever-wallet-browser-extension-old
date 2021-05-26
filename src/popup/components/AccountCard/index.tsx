@@ -75,7 +75,7 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
                 </div>
             </div>
             <div className="account-card__pattern">
-                <Pattern />
+                <img src={Pattern} alt="" />
                 {/*<div className="account-card__pattern-ellipsis">*/}
                 {/*    <Ellipsis />*/}
                 {/*</div>*/}

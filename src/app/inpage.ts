@@ -22,11 +22,16 @@ const restoreContextAfterImports = () => {
 cleanContextForImports()
 
 import '../polyfills'
+import log from 'loglevel'
 import LocalMessageDuplexStream from 'post-message-stream'
 import { CONTENT_SCRIPT, INPAGE_SCRIPT } from '@shared/constants'
 import { initializeProvider } from './provider'
 
 restoreContextAfterImports()
+
+log.setDefaultLevel(process.env.NEKOTON_DEBUG ? 'debug' : 'warn')
+
+console.log(process.env.NEKOTON_DEBUG)
 
 const nekotonStream = new LocalMessageDuplexStream({
     name: INPAGE_SCRIPT,
@@ -35,4 +40,5 @@ const nekotonStream = new LocalMessageDuplexStream({
 
 initializeProvider({
     connectionStream: nekotonStream,
+    logger: log,
 })

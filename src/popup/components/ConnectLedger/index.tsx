@@ -12,7 +12,7 @@ interface ISelectWallet {
     // onSkip?: () => void
 }
 
-const ConnectLedger: React.FC<ISelectWallet> = ({ onNext, onBack }) => {
+const ConnectLedger: React.FC<ISelectWallet> = ({ onNext }) => {
     const ref = useRef<HTMLIFrameElement>(null)
     const [loading, setLoading] = useState(true)
 

@@ -16,7 +16,7 @@ export interface ITokenWalletHandler {
 }
 
 export class TokenWalletSubscription {
-    private readonly _connection: nt.GqlConnection
+    private readonly _connection: nt.GqlConnection | nt.JrpcConnection
     private readonly _address: string
     private readonly _owner: string
     private readonly _symbol: nt.Symbol
@@ -56,7 +56,7 @@ export class TokenWalletSubscription {
     }
 
     private constructor(
-        connection: nt.GqlConnection,
+        connection: nt.GqlConnection | nt.JrpcConnection,
         release: () => void,
         tokenWallet: nt.TokenWallet
     ) {

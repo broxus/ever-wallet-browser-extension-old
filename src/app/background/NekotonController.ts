@@ -4,7 +4,7 @@ import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
 import { debounce } from 'lodash'
-import { ProviderEvent, ProviderEventCall } from 'ton-inpage-provider'
+import { ProviderEvent, RawProviderEventData } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
 import {
@@ -448,7 +448,10 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    private _notifyConnection<T extends ProviderEvent>(id: string, payload: ProviderEventCall<T>) {
+    private _notifyConnection<T extends ProviderEvent>(
+        id: string,
+        payload: RawProviderEventData<T>
+    ) {
         this._connections[id]?.engine.emit('notification', payload)
     }
 
@@ -457,7 +460,7 @@ export class NekotonController extends EventEmitter {
         return tabIds ? Array.from(tabIds.values()) : []
     }
 
-    private _notifyTab<T extends ProviderEvent>(tabId: number, payload: ProviderEventCall<T>) {
+    private _notifyTab<T extends ProviderEvent>(tabId: number, payload: RawProviderEventData<T>) {
         const tabIds = this._tabToConnectionIds[tabId]
         if (tabIds) {
             tabIds.forEach((id) => {
@@ -468,7 +471,7 @@ export class NekotonController extends EventEmitter {
 
     private _notifyConnections<T extends ProviderEvent>(
         origin: string,
-        payload: ProviderEventCall<T>
+        payload: RawProviderEventData<T>
     ) {
         const originIds = this._originToConnectionIds[origin]
         if (originIds) {
@@ -478,7 +481,7 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    private _notifyAllConnections<T extends ProviderEvent>(payload: ProviderEventCall<T>) {
+    private _notifyAllConnections<T extends ProviderEvent>(payload: RawProviderEventData<T>) {
         Object.values(this._connections).forEach(({ engine }) => {
             engine.emit('notification', payload)
         })

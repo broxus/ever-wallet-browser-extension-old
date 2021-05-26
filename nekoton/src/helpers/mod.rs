@@ -1,13 +1,13 @@
-pub mod abi;
-
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use ton_block::MsgAddressInt;
+use ton_block::{MsgAddressInt, Serializable};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use crate::utils::*;
+
+pub mod abi;
 
 #[wasm_bindgen(js_name = "computeTonWalletAddress")]
 pub fn compute_ton_wallet_address(
@@ -90,8 +90,37 @@ pub fn validate_mnemonic(
 
 #[wasm_bindgen(js_name = "encodeComment")]
 pub fn encode_comment(comment: &str) -> Result<String, JsValue> {
-    let body = nt::helpers::abi::create_comment_payload(comment).handle_error()?;
+    let body = base64::decode(comment.trim())
+        .ok()
+        .and_then(|bytes| {
+            ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&bytes)).ok()
+        })
+        .map(Result::<_, JsValue>::Ok)
+        .unwrap_or_else(|| {
+            nt::helpers::abi::create_comment_payload(comment)
+                .handle_error()
+                .map(|slice| slice.into_cell())
+        })?;
+
     Ok(base64::encode(
-        ton_types::serialize_toc(&body.into_cell()).handle_error()?,
+        ton_types::serialize_toc(&body).handle_error()?,
     ))
+}
+
+#[wasm_bindgen(js_name = "extractPublicKey")]
+pub fn extract_public_key(boc: &str) -> Result<String, JsValue> {
+    crate::utils::parse_account_stuff(boc)
+        .and_then(|x| nt::helpers::abi::extract_public_key(&x).handle_error())
+        .map(|x| hex::encode(x))
+}
+
+#[wasm_bindgen(js_name = "codeToTvc")]
+pub fn code_to_tvc(code: &str) -> Result<String, JsValue> {
+    let cell = base64::decode(code).handle_error()?;
+    ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(cell))
+        .handle_error()
+        .and_then(|x| nt::helpers::abi::code_to_tvc(x).handle_error())
+        .and_then(|x| x.serialize().handle_error())
+        .and_then(|x| ton_types::serialize_toc(&x).handle_error())
+        .map(|x| base64::encode(x))
 }

@@ -57,7 +57,7 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
                             <h3 className="welcome-page__content-header-s">
                                 Create a new wallet or sign in
                             </h3>
-                            <SittingMan />
+                            <img src={SittingMan} alt="" />
                         </div>
                         <div>
                             <div className="welcome-page__content-button">

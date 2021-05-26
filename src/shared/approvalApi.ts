@@ -1,4 +1,9 @@
-import { WalletContractType, Permissions, Permission, FunctionCall } from 'ton-inpage-provider'
+import {
+    WalletContractType,
+    RawPermissions,
+    Permission,
+    RawFunctionCall,
+} from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
 export type MasterKeyToCreate = {
@@ -56,13 +61,21 @@ export interface Approval<T extends string, D> {
 }
 
 export type GqlSocketParams = {
-    // Path to graphql qpi endpoint, e.g. `https://main.ton.dev`
+    // Path to graphql api endpoint, e.g. `https://main.ton.dev`
     endpoint: string
     // Request timeout in milliseconds
     timeout: number
 }
 
-export type ConnectionData = nt.EnumItem<'graphql', GqlSocketParams>
+export type JrpcSocketParams = {
+    // Path to jrpc api endpoint
+    endpoint: string
+}
+
+export type ConnectionData =
+    | nt.EnumItem<'graphql', GqlSocketParams>
+    | nt.EnumItem<'jrpc', JrpcSocketParams>
+
 export type NamedConnectionData = { name: string } & ConnectionData
 
 export type ApprovalApi = {
@@ -70,13 +83,13 @@ export type ApprovalApi = {
         input: {
             permissions: Permission[]
         }
-        output: Partial<Permissions>
+        output: Partial<RawPermissions>
     }
     callContractMethod: {
         input: {
             publicKey: string
             recipient: string
-            payload: FunctionCall
+            payload: RawFunctionCall
         }
         output: nt.KeyPassword
     }
@@ -86,7 +99,7 @@ export type ApprovalApi = {
             recipient: string
             amount: string
             bounce: boolean
-            payload?: FunctionCall
+            payload?: RawFunctionCall
             fees: string
         }
         output: nt.KeyPassword

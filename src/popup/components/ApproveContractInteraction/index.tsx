@@ -45,18 +45,18 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
             const keyPassword: nt.KeyPassword =
                 keyEntry.signerName != 'ledger_key'
                     ? {
-                        type: keyEntry.signerName,
-                        data: {
-                            publicKey: keyEntry.publicKey,
-                            password,
-                        },
-                    }
+                          type: keyEntry.signerName,
+                          data: {
+                              publicKey: keyEntry.publicKey,
+                              password,
+                          },
+                      }
                     : {
-                        type:  keyEntry.signerName,
-                        data: {
-                            publicKey: keyEntry.publicKey,
-                        },
-                    }
+                          type: keyEntry.signerName,
+                          data: {
+                              publicKey: keyEntry.publicKey,
+                          },
+                      }
 
             const isValid = await checkPassword(keyPassword)
             if (isValid) {
@@ -80,7 +80,7 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
                         <UserAvatar address={account.tonWallet.address} small />
                         <div className="connect-wallet__address-entry">{account.name}</div>
                     </div>
-                    <Arrow />
+                    <img src={Arrow} alt="" />
                     <div className="connect-wallet__address-entry">
                         <UserAvatar address={account.tonWallet.address} small />
                         <div className="connect-wallet__address-entry">

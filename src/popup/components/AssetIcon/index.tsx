@@ -16,8 +16,7 @@ type IAssetIcon = {
 
 const AssetIcon: React.FC<IAssetIcon> = ({ type, address, tokensMeta, className }) => {
     if (type == 'ton_wallet') {
-        //@ts-ignore
-        return <TonLogo viewBox="0 0 40 40" className={className} />
+        return <img src={TonLogo} alt="" className={className} />
     }
 
     const logoURI = tokensMeta?.[address]?.logoURI
