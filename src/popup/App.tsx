@@ -121,23 +121,20 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
     }
 
     if (activeTab.type === 'fullscreen') {
-        switch (activeTab.data.route) {
-            case 'connect-ledger': {
-                return (
-                    <ConnectLedger
-                        onNext={() => {
-                            console.log('asd')
-                        }}
-                    />
-                )
-            }
-            default:
-                window.close()
+        if (controllerState.selectedAccount != null && activeTab.data.route == 'connect-ledger') {
+            return (
+                <ConnectLedger
+                    onNext={() => {
+                        console.log('asd')
+                    }}
+                />
+            )
+        } else if (controllerState.selectedAccount == null && activeTab.data.route == null) {
+            return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
+        } else {
+            window.close()
+            return
         }
-    }
-
-    if (controllerState.selectedAccount == null) {
-        return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
     }
 
     const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
