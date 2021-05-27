@@ -22,16 +22,17 @@ interface ILedgerAccount {
     checked: boolean
     setChecked: (arg0: boolean) => void
     address: string
+    index: number
     // balance: string
 }
 
-const LedgerAccount: React.FC<ILedgerAccount> = ({ address, checked, setChecked }) => {
-
+const LedgerAccount: React.FC<ILedgerAccount> = ({ address, checked, setChecked, index }) => {
     console.log('publicKey', address)
     return (
         <div className="select-ledger-account__account">
             <Checkbox checked={checked} setChecked={setChecked} />
             {/*<UserAvatar address={address} className="select-ledger-account__account-avatar" />*/}
+            <div>{index + 1}</div>
             <div>
                 <div className="select-ledger-account__account-title">
                     {convertAddress(address)}
@@ -102,6 +103,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                         <LedgerAccount
                             key={publicKey}
                             address={publicKey}
+                            index={index}
                             checked={checked}
                             setChecked={() => {
                                 checked
