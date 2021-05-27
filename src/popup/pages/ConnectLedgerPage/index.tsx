@@ -48,7 +48,7 @@ const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc }) => {
                 <SelectLedgerAccount
                     controllerRpc={controllerRpc}
                     onBack={() => setStep(ConnectLedgerSteps.CONNECT)}
-                    onNext={addSelectedAccounts}
+                    onNext={(selected) => addSelectedAccounts(selected)}
                 />
             )}
         </>
