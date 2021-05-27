@@ -42,7 +42,7 @@ const LedgerAccount: React.FC<ILedgerAccount> = ({
 }) => {
     return (
         <div
-            className={`select-ledger-account__account${
+            className={`select-ledger-account__account ${
                 preselected ? 'select-ledger-account__account-selected' : ''
             }`}
         >
@@ -57,7 +57,7 @@ const LedgerAccount: React.FC<ILedgerAccount> = ({
             <span className="select-ledger-account__account-index">{index + 1}</span>
             {/*<div>*/}
             <span
-                className={`select-ledger-account__account-public-key${
+                className={`select-ledger-account__account-public-key ${
                     preselected ? 'select-ledger-account__account-grey' : ''
                 }`}
             >
@@ -81,37 +81,6 @@ enum ledgerPages {
     'NEXT',
     'PREVIOUS',
 }
-
-const mockAccounts = [
-    {
-        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
-        balance: '20000',
-    },
-    {
-        address: '0:2b68044eb2c8a3cd4d146ef7664ef6a49c099fc5c27c362cf5bd625f507e0410',
-        balance: '1000000',
-    },
-    {
-        address: '0:9f69bbae2f592031fee6b3811439259c0a85424d7c0f887958042aa2723daeb1',
-        balance: '2001200',
-    },
-    {
-        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1tt09f8f9c80bc21b',
-        balance: '18000',
-    },
-    {
-        address: '0:18b8fdf6bd451196ed70d649786tteb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
-        balance: '20000',
-    },
-    {
-        address: '0:18b8fdf6bd451196ed70d64978teb83cfd4a3f7bte22f9f1cd09f8f9c80bc21b',
-        balance: '18567',
-    },
-    {
-        address: '0:18b8fdf6bd451196ett0d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
-        balance: '20000',
-    },
-]
 
 const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
     controllerRpc,
@@ -169,7 +138,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                 })
 
                 await controllerRpc.createAccount({
-                    name: 'Ledger ' + accountId + 1,
+                    name: 'Ledger ' + (accountId + 1),
                     publicKey: key.publicKey,
                     contractType,
                 })
@@ -228,7 +197,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                             onClose={() => {
                                 const windowType = getEnvironmentType()
                                 if (windowType === 'fullscreen') {
-                                    window.close()
+                                    // window.close()
                                 } else if (windowType === 'popup') {
                                     onSuccess && onSuccess()
                                 }
