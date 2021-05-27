@@ -100,77 +100,79 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
     return (
         <>
             <h2 className="select-ledger-account__title">Select accounts</h2>
-            <div className="select-ledger-account__nav">
-                <span className="select-ledger-account__nav-page">{`Page ${currentPage}`}</span>
-                <div>
-                    {currentPage > 1 && (
-                        <div
-                            className="select-ledger-account__nav-button"
-                            onClick={() => getNewPage(ledgerPages.PREVIOUS)}
-                        >
-                            <img src={Left} alt="" />
-                        </div>
-                    )}
-                    <div
-                        className="select-ledger-account__nav-button"
-                        onClick={() => getNewPage(ledgerPages.NEXT)}
-                    >
-                        <img src={Right} alt="" />
-                    </div>
-                </div>
-            </div>
-            {error && (
-                <Modal
-                    onClose={() => {
-                        setError(undefined)
-                    }}
-                    className="enter-password-screen__modal"
-                >
-                    <h3 style={{ color: 'black', marginBottom: '18px' }}>
-                        Could not connect your Ledger
-                    </h3>
-                    <div className="check-seed__content-error">{error}</div>
-                </Modal>
-            )}
             {loading ? (
                 <div className="select-wallet__loader" style={{ marginBottom: '48px' }}>
                     <Loader />
                 </div>
             ) : (
-                <div>
-                    {accounts.map(({ publicKey, index }) => {
-                        const checked = selected.includes(index)
-                        return (
-                            <LedgerAccount
-                                key={publicKey}
-                                publicKey={publicKey}
-                                index={index}
-                                checked={checked}
-                                setChecked={() => {
-                                    checked
-                                        ? setSelected(selected.filter((el) => el !== index))
-                                        : setSelected([...selected, index])
-                                }}
-                            />
-                        )
-                    })}
-                </div>
-            )}
+                <>
+                    <div className="select-ledger-account__nav">
+                        <span className="select-ledger-account__nav-page">{`Page ${currentPage}`}</span>
+                        <div style={{ display: 'flex' }}>
+                            {currentPage > 1 && (
+                                <div
+                                    className="select-ledger-account__nav-button"
+                                    onClick={() => getNewPage(ledgerPages.PREVIOUS)}
+                                >
+                                    <img src={Left} alt="" />
+                                </div>
+                            )}
+                            <div
+                                className="select-ledger-account__nav-button"
+                                onClick={() => getNewPage(ledgerPages.NEXT)}
+                            >
+                                <img src={Right} alt="" />
+                            </div>
+                        </div>
+                    </div>
+                    {error && (
+                        <Modal
+                            onClose={() => {
+                                setError(undefined)
+                            }}
+                            className="enter-password-screen__modal"
+                        >
+                            <h3 style={{ color: 'black', marginBottom: '18px' }}>
+                                Could not connect your Ledger
+                            </h3>
+                            <div className="check-seed__content-error">{error}</div>
+                        </Modal>
+                    )}
+                    <div>
+                        {accounts.map(({ publicKey, index }) => {
+                            const checked = selected.includes(index)
+                            return (
+                                <LedgerAccount
+                                    key={publicKey}
+                                    publicKey={publicKey}
+                                    index={index}
+                                    checked={checked}
+                                    setChecked={() => {
+                                        checked
+                                            ? setSelected(selected.filter((el) => el !== index))
+                                            : setSelected([...selected, index])
+                                    }}
+                                />
+                            )
+                        })}
+                    </div>
 
-            <div className="select-ledger-account__buttons">
-                <Button
-                    className="select-ledger-account__buttons-back"
-                    text={'Back'}
-                    onClick={() => (onBack ? onBack() : {})}
-                    white
-                />
-                <Button
-                    className="select-ledger-account__buttons-next"
-                    text={'Select'}
-                    disabled={selected.length === 0}
-                    onClick={() => (onNext ? onNext() : {})}
-                />
-            </div>
+                    <div className="select-ledger-account__buttons">
+                        <Button
+                            className="select-ledger-account__buttons-back"
+                            text={'Back'}
+                            onClick={() => (onBack ? onBack() : {})}
+                            white
+                        />
+                        <Button
+                            className="select-ledger-account__buttons-next"
+                            text={'Select'}
+                            disabled={selected.length === 0}
+                            onClick={() => (onNext ? onNext() : {})}
+                        />
+                    </div>
+                </>
+            )}
         </>
     )
 }
