@@ -88,7 +88,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
             setAccounts(accountSlice)
             setCurrentPage(accountSlice?.[0]?.index / 5 + 1)
         } catch (e) {
-            setError(e)
+            setError(e.toString())
         }
         setLoading(false)
     }
@@ -101,20 +101,22 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
         <>
             <h2 className="select-ledger-account__title">Select accounts</h2>
             <div className="select-ledger-account__nav">
-                Page <span className="select-ledger-account__nav-page">{currentPage}</span>
-                {currentPage > 1 && (
+                <span className="select-ledger-account__nav-page">{`Page ${currentPage}`}</span>
+                <div>
+                    {currentPage > 1 && (
+                        <div
+                            className="select-ledger-account__nav-button"
+                            onClick={() => getNewPage(ledgerPages.PREVIOUS)}
+                        >
+                            <img src={Left} alt="" />
+                        </div>
+                    )}
                     <div
                         className="select-ledger-account__nav-button"
-                        onClick={() => getNewPage(ledgerPages.PREVIOUS)}
+                        onClick={() => getNewPage(ledgerPages.NEXT)}
                     >
-                        <img src={Left} alt="" />
+                        <img src={Right} alt="" />
                     </div>
-                )}
-                <div
-                    className="select-ledger-account__nav-button"
-                    onClick={() => getNewPage(ledgerPages.NEXT)}
-                >
-                    <img src={Right} alt="" />
                 </div>
             </div>
             {error && (
@@ -131,7 +133,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                 </Modal>
             )}
             {loading ? (
-                <div className="select-wallet__loader">
+                <div className="select-wallet__loader" style={{ marginBottom: '48px' }}>
                     <Loader />
                 </div>
             ) : (
