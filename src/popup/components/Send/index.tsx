@@ -118,7 +118,9 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                 <Button
                     text={'Confirm transaction'}
                     onClick={trySubmit}
-                    disabled={disabled || password.length === 0}
+                    disabled={
+                        disabled || (keyEntry.signerName != 'ledger_key' && password.length === 0)
+                    }
                 />
             </div>
         </>
