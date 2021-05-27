@@ -6,9 +6,19 @@
     &__nav {
         border-bottom: 1px solid #ebedee;
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
         padding-bottom: 6px;
         width: 100%;
+
+        &-page {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #96a1a7;
+            padding: 0 12px;
+        }
 
         &-button {
             cursor: pointer;
@@ -43,9 +53,23 @@
             margin-right: 12px;
         }
 
-        &-address {
+        &-index {
+            font-style: normal;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: #96a1a7;
+            margin-right: 16px;
+        }
+
+        &-public-key {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
             color: #000000;
-            margin-bottom: 4px;
         }
 
         &-balance {

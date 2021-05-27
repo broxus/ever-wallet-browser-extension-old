@@ -8,9 +8,12 @@ import Checkbox from '@popup/components/Checkbox'
 import UserAvatar from '@popup/components/UserAvatar'
 import { convertAddress, convertTons } from '@shared/utils'
 
-import './style.scss'
 import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import { getFirstPage } from '@popup/utils/ledger'
+import Loader from '@popup/components/Loader'
+import Modal from '@popup/components/Modal'
+
+import * as nt from '@nekoton'
+import './style.scss'
 
 interface ISelectLedgerAccount {
     controllerRpc: IControllerRpcClient
@@ -21,26 +24,29 @@ interface ISelectLedgerAccount {
 interface ILedgerAccount {
     checked: boolean
     setChecked: (arg0: boolean) => void
-    address: string
+    publicKey: string
     index: number
     // balance: string
 }
 
-const LedgerAccount: React.FC<ILedgerAccount> = ({ address, checked, setChecked, index }) => {
-    console.log('publicKey', address)
+const LedgerAccount: React.FC<ILedgerAccount> = ({ publicKey, checked, setChecked, index }) => {
+    console.log('publicKey', publicKey)
     return (
         <div className="select-ledger-account__account">
             <Checkbox checked={checked} setChecked={setChecked} />
-            {/*<UserAvatar address={address} className="select-ledger-account__account-avatar" />*/}
-            <div>{index + 1}</div>
-            <div>
-                <div className="select-ledger-account__account-title">
-                    {convertAddress(address)}
-                </div>
-                {/*<div className="select-ledger-account__account-balance">*/}
-                {/*    {convertTons(balance)} TON*/}
-                {/*</div>*/}
-            </div>
+            <UserAvatar
+                address={nt.computeTonWalletAddress(publicKey, 'SafeMultisigWallet', 0)}
+                className="select-ledger-account__account-avatar"
+            />
+            <span className="select-ledger-account__account-index">{index + 1}</span>
+            {/*<div>*/}
+            <span className="select-ledger-account__account-public-key">
+                {convertAddress(publicKey)}
+            </span>
+            {/*<div className="select-ledger-account__account-balance">*/}
+            {/*    {convertTons(balance)} TON*/}
+            {/*</div>*/}
+            {/*</div>*/}
         </div>
     )
 }
@@ -50,83 +56,116 @@ type LedgerAccountDetails = {
     index: number
 }
 
+enum ledgerPages {
+    'FIRST',
+    'NEXT',
+    'PREVIOUS',
+}
+
 const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, onBack, onNext }) => {
     const [selected, setSelected] = useState<number[]>([])
     const [accounts, setAccounts] = useState<LedgerAccountDetails[]>([])
+    const [currentPage, setCurrentPage] = useState(1)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string>()
 
-    const decrementIndex = async () => {
+    const getNewPage = async (page: ledgerPages) => {
+        setLoading(true)
+        setError('')
+        let accountSlice
         try {
-            const acc = await controllerRpc.getLedgerPreviousPage()
-            setAccounts(acc)
+            switch (page) {
+                case ledgerPages.FIRST:
+                    accountSlice = await controllerRpc.getLedgerFirstPage()
+                    break
+                case ledgerPages.NEXT:
+                    accountSlice = await controllerRpc.getLedgerNextPage()
+                    break
+                case ledgerPages.PREVIOUS:
+                    accountSlice = await controllerRpc.getLedgerPreviousPage()
+                    break
+            }
+            setAccounts(accountSlice)
+            setCurrentPage(accountSlice?.[0]?.index / 5 + 1)
         } catch (e) {
-            throw e
+            setError(e)
         }
-    }
-
-    const incrementIndex = async () => {
-        try {
-            const acc = await controllerRpc.getLedgerNextPage()
-            setAccounts(acc)
-        } catch (e) {
-            throw e
-        }
-    }
-
-    const getFirstPage = async () => {
-        try {
-            const acc = await controllerRpc.getLedgerFirstPage()
-            setAccounts(acc)
-        } catch (e) {
-            throw e
-        }
+        setLoading(false)
     }
 
     useEffect(() => {
-        getFirstPage()
+        getNewPage(ledgerPages.FIRST)
     }, [])
 
     return (
         <>
             <h2 className="select-ledger-account__title">Select accounts</h2>
             <div className="select-ledger-account__nav">
-                <div className="select-ledger-account__nav-button" onClick={decrementIndex}>
-                    <img src={Left} alt="" />
-                </div>
-                <div className="select-ledger-account__nav-button" onClick={incrementIndex}>
+                Page <span className="select-ledger-account__nav-page">{currentPage}</span>
+                {currentPage > 1 && (
+                    <div
+                        className="select-ledger-account__nav-button"
+                        onClick={() => getNewPage(ledgerPages.PREVIOUS)}
+                    >
+                        <img src={Left} alt="" />
+                    </div>
+                )}
+                <div
+                    className="select-ledger-account__nav-button"
+                    onClick={() => getNewPage(ledgerPages.NEXT)}
+                >
                     <img src={Right} alt="" />
                 </div>
             </div>
-            <div>
-                {accounts.map(({ publicKey, index }) => {
-                    const checked = selected.includes(index)
-                    return (
-                        <LedgerAccount
-                            key={publicKey}
-                            address={publicKey}
-                            index={index}
-                            checked={checked}
-                            setChecked={() => {
-                                checked
-                                    ? setSelected(selected.filter((el) => el !== index))
-                                    : setSelected([...selected, index])
-                            }}
-                        />
-                    )
-                })}
-            </div>
+            {error && (
+                <Modal
+                    onClose={() => {
+                        setError(undefined)
+                    }}
+                    className="enter-password-screen__modal"
+                >
+                    <h3 style={{ color: 'black', marginBottom: '18px' }}>
+                        Could not connect your Ledger
+                    </h3>
+                    <div className="check-seed__content-error">{error}</div>
+                </Modal>
+            )}
+            {loading ? (
+                <div className="select-wallet__loader">
+                    <Loader />
+                </div>
+            ) : (
+                <div>
+                    {accounts.map(({ publicKey, index }) => {
+                        const checked = selected.includes(index)
+                        return (
+                            <LedgerAccount
+                                key={publicKey}
+                                publicKey={publicKey}
+                                index={index}
+                                checked={checked}
+                                setChecked={() => {
+                                    checked
+                                        ? setSelected(selected.filter((el) => el !== index))
+                                        : setSelected([...selected, index])
+                                }}
+                            />
+                        )
+                    })}
+                </div>
+            )}
 
             <div className="select-ledger-account__buttons">
                 <Button
                     className="select-ledger-account__buttons-back"
                     text={'Back'}
-                    disabled={false}
                     onClick={() => (onBack ? onBack() : {})}
                     white
                 />
                 <Button
                     className="select-ledger-account__buttons-next"
                     text={'Select'}
-                    disabled={false}
+                    disabled={selected.length === 0}
                     onClick={() => (onNext ? onNext() : {})}
                 />
             </div>
