@@ -46,7 +46,10 @@ const LedgerAccount: React.FC<ILedgerAccount> = ({
                 preselected ? 'select-ledger-account__account-selected' : ''
             }`}
         >
-            <Checkbox checked={checked || preselected} setChecked={setChecked} />
+            <Checkbox
+                checked={checked || preselected}
+                setChecked={!preselected ? setChecked : () => {}}
+            />
             <UserAvatar
                 address={nt.computeTonWalletAddress(publicKey, 'SafeMultisigWallet', 0)}
                 className="select-ledger-account__account-avatar"
