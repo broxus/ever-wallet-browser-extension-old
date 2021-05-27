@@ -45,6 +45,10 @@
         line-height: 20px;
         letter-spacing: 0.25px;
 
+        &-selected {
+            background: rgba(0, 136, 204, 0.2);
+        }
+
         &:last-child {
             margin-bottom: 48px;
         }
@@ -72,7 +76,7 @@
             color: #000000;
         }
 
-        &-balance {
+        &-grey {
             color: #96a1a7;
         }
     }

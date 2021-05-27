@@ -8,16 +8,19 @@ import Checkbox from '@popup/components/Checkbox'
 import UserAvatar from '@popup/components/UserAvatar'
 import { convertAddress, convertTons } from '@shared/utils'
 
-import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import Loader from '@popup/components/Loader'
 import Modal from '@popup/components/Modal'
 
 import * as nt from '@nekoton'
 import './style.scss'
+import { getEnvironmentType } from '@popup/utils/platform'
 
 interface ISelectLedgerAccount {
     controllerRpc: IControllerRpcClient
+    controllerState: ControllerState
     onBack?: () => void
+    onSuccess?: () => void
     onNext?: (selected: number[]) => void
 }
 
@@ -26,23 +29,38 @@ interface ILedgerAccount {
     setChecked: (arg0: boolean) => void
     publicKey: string
     index: number
+    preselected: boolean
     // balance: string
 }
 
-const LedgerAccount: React.FC<ILedgerAccount> = ({ publicKey, checked, setChecked, index }) => {
+const LedgerAccount: React.FC<ILedgerAccount> = ({
+    publicKey,
+    checked,
+    setChecked,
+    index,
+    preselected,
+}) => {
     return (
-        <div className="select-ledger-account__account">
-            <Checkbox checked={checked} setChecked={setChecked} />
+        <div
+            className={`select-ledger-account__account${
+                preselected ? 'select-ledger-account__account-selected' : ''
+            }`}
+        >
+            <Checkbox checked={checked || preselected} setChecked={setChecked} />
             <UserAvatar
                 address={nt.computeTonWalletAddress(publicKey, 'SafeMultisigWallet', 0)}
                 className="select-ledger-account__account-avatar"
             />
             <span className="select-ledger-account__account-index">{index + 1}</span>
             {/*<div>*/}
-            <span className="select-ledger-account__account-public-key">
+            <span
+                className={`select-ledger-account__account-public-key${
+                    preselected ? 'select-ledger-account__account-grey' : ''
+                }`}
+            >
                 {convertAddress(publicKey)}
             </span>
-            {/*<div className="select-ledger-account__account-balance">*/}
+            {/*<div className="select-ledger-account__account-grey">*/}
             {/*    {convertTons(balance)} TON*/}
             {/*</div>*/}
             {/*</div>*/}
@@ -61,12 +79,49 @@ enum ledgerPages {
     'PREVIOUS',
 }
 
-const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, onBack }) => {
+const mockAccounts = [
+    {
+        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
+        balance: '20000',
+    },
+    {
+        address: '0:2b68044eb2c8a3cd4d146ef7664ef6a49c099fc5c27c362cf5bd625f507e0410',
+        balance: '1000000',
+    },
+    {
+        address: '0:9f69bbae2f592031fee6b3811439259c0a85424d7c0f887958042aa2723daeb1',
+        balance: '2001200',
+    },
+    {
+        address: '0:18b8fdf6bd451196ed70d649786ceb83cfd4a3f7be22f9f1tt09f8f9c80bc21b',
+        balance: '18000',
+    },
+    {
+        address: '0:18b8fdf6bd451196ed70d649786tteb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
+        balance: '20000',
+    },
+    {
+        address: '0:18b8fdf6bd451196ed70d64978teb83cfd4a3f7bte22f9f1cd09f8f9c80bc21b',
+        balance: '18567',
+    },
+    {
+        address: '0:18b8fdf6bd451196ett0d649786ceb83cfd4a3f7be22f9f1cd09f8f9c80bc21b',
+        balance: '20000',
+    },
+]
+
+const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
+    controllerRpc,
+    controllerState,
+    onBack,
+    onSuccess,
+}) => {
     const [selected, setSelected] = useState<number[]>([])
     const [accounts, setAccounts] = useState<LedgerAccountDetails[]>([])
     const [currentPage, setCurrentPage] = useState(1)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string>()
+    const [success, setSuccess] = useState<boolean>()
 
     const getNewPage = async (page: ledgerPages) => {
         setLoading(true)
@@ -96,12 +151,9 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
         getNewPage(ledgerPages.FIRST)
     }, [])
 
-    const logIndices = (indices: any) => {
-        console.log(indices, 'indices')
-    }
-
     const addSelectedAccounts = async (indices: number[]) => {
         console.log('creating accounts')
+        setError('')
 
         for (let i = 0; i < indices.length; i++) {
             const accountId = indices[i]
@@ -121,8 +173,10 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                 console.log('account created')
             } catch (e) {
                 key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
+                setError(e.toString())
             }
         }
+        setSuccess(true)
     }
 
     return (
@@ -166,14 +220,35 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                             <div className="check-seed__content-error">{error}</div>
                         </Modal>
                     )}
+                    {success && (
+                        <Modal
+                            onClose={() => {
+                                const windowType = getEnvironmentType()
+                                if (windowType === 'fullscreen') {
+                                    window.close()
+                                } else if (windowType === 'popup') {
+                                    onSuccess && onSuccess()
+                                }
+                            }}
+                            className="enter-password-screen__modal"
+                        >
+                            <h3 style={{ color: 'black', marginBottom: '18px' }}>
+                                {`Your account${
+                                    selected.length > 1 ? 's' : ''
+                                } have been successfully added`}
+                            </h3>
+                        </Modal>
+                    )}
                     <div>
                         {accounts.map(({ publicKey, index }) => {
                             const checked = selected.includes(index)
+                            const preselected = controllerState.storedKeys.hasOwnProperty(publicKey)
                             return (
                                 <LedgerAccount
                                     key={publicKey}
                                     publicKey={publicKey}
                                     index={index}
+                                    preselected={preselected}
                                     checked={checked}
                                     setChecked={() => {
                                         checked

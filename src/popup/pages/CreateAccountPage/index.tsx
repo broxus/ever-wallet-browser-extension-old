@@ -1,7 +1,7 @@
 import React, { Dispatch, SetStateAction, useEffect, useMemo, useState } from 'react'
 import { selectStyles } from '@popup/constants/selectStyle'
 import walletOptions from '@popup/constants/walletTypes'
-import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import Select from 'react-select'
 import Input from '@popup/components/Input'
 import EnterPassword from '@popup/components/EnterPassword'
@@ -215,9 +215,15 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setSelected }) => {
 
 interface ICreateAccountPage {
     controllerRpc: IControllerRpcClient
+    controllerState: ControllerState
+    onClose: () => void
 }
 
-const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc }) => {
+const CreateAccountPage: React.FC<ICreateAccountPage> = ({
+    controllerRpc,
+    controllerState,
+    onClose,
+}) => {
     const [step, setStep] = useState<number>(0)
     const [accountType, setAccountType] = useState<string>()
 
@@ -247,7 +253,11 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({ controllerRpc }) => {
             onSuccess={() => setStep(1)}
             onFailed={() => openLedgerConnectPage()}
         />,
-        <SelectLedgerAccount controllerRpc={controllerRpc} />,
+        <SelectLedgerAccount
+            controllerRpc={controllerRpc}
+            onSuccess={onClose}
+            controllerState={controllerState}
+        />,
     ]
 
     if (accountType === 'new') {
