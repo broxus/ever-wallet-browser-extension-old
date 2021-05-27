@@ -114,7 +114,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                 })
 
                 await controllerRpc.createAccount({
-                    name: 'Ledger ' + accountId,
+                    name: 'Ledger ' + accountId + 1,
                     publicKey: key.publicKey,
                     contractType,
                 })
