@@ -14,7 +14,7 @@ interface IConnectLedgerPage {
 }
 
 const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc }) => {
-    const [step, setStep] = useState<ConnectLedgerSteps>(ConnectLedgerSteps.SELECT)
+    const [step, setStep] = useState<ConnectLedgerSteps>(ConnectLedgerSteps.CONNECT)
 
     return (
         <>
