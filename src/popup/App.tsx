@@ -63,6 +63,10 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
     const [controllerState, setControllerState] = useState<ControllerState>()
 
     useEffect(() => {
+        console.log(controllerState, 'controllerState')
+    })
+
+    useEffect(() => {
         ;(async () => {
             const [, state] = await Promise.all([
                 init('index_bg.wasm'),
@@ -120,7 +124,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
 
     if (activeTab.type === 'fullscreen') {
         if (controllerState.selectedAccount != null && activeTab.data.route == 'connect-ledger') {
-            return <ConnectLedgerPage  controllerRpc={controllerRpc}/>
+            return <ConnectLedgerPage controllerRpc={controllerRpc} />
         } else if (controllerState.selectedAccount == null && activeTab.data.route == null) {
             return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
         } else {

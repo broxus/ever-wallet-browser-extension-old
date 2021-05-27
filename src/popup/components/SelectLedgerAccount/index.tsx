@@ -18,7 +18,7 @@ import './style.scss'
 interface ISelectLedgerAccount {
     controllerRpc: IControllerRpcClient
     onBack?: () => void
-    onNext?: () => void
+    onNext?: (selected: number[]) => void
 }
 
 interface ILedgerAccount {
@@ -30,7 +30,6 @@ interface ILedgerAccount {
 }
 
 const LedgerAccount: React.FC<ILedgerAccount> = ({ publicKey, checked, setChecked, index }) => {
-    console.log('publicKey', publicKey)
     return (
         <div className="select-ledger-account__account">
             <Checkbox checked={checked} setChecked={setChecked} />
@@ -168,7 +167,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                             className="select-ledger-account__buttons-next"
                             text={'Select'}
                             disabled={selected.length === 0}
-                            onClick={() => (onNext ? onNext() : {})}
+                            onClick={() => (onNext ? onNext(selected) : {})}
                         />
                     </div>
                 </>
