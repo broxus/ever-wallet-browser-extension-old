@@ -124,7 +124,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
 
     if (activeTab.type === 'fullscreen') {
         if (controllerState.selectedAccount != null && activeTab.data.route == 'connect-ledger') {
-            return <ConnectLedgerPage controllerRpc={controllerRpc} />
+            return <ConnectLedgerPage controllerRpc={controllerRpc} controllerState={controllerState} />
         } else if (controllerState.selectedAccount == null && activeTab.data.route == null) {
             return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
         } else {

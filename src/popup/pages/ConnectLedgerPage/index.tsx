@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import ConnectLedger from '@popup/components/ConnectLedger'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
-import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import * as nt from '@nekoton'
 
 enum ConnectLedgerSteps {
@@ -10,10 +10,11 @@ enum ConnectLedgerSteps {
 }
 
 interface IConnectLedgerPage {
-    controllerRpc: IControllerRpcClient
+    controllerRpc: IControllerRpcClient,
+    controllerState: ControllerState
 }
 
-const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc }) => {
+const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc, controllerState }) => {
     const [step, setStep] = useState<ConnectLedgerSteps>(ConnectLedgerSteps.CONNECT)
 
     return (
@@ -25,6 +26,7 @@ const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc }) => {
                 <SelectLedgerAccount
                     controllerRpc={controllerRpc}
                     onBack={() => setStep(ConnectLedgerSteps.CONNECT)}
+                    controllerState={controllerState}
                 />
             )}
         </>
