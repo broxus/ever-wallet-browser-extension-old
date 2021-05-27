@@ -61,7 +61,7 @@ enum ledgerPages {
     'PREVIOUS',
 }
 
-const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, onBack, onNext }) => {
+const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, onBack }) => {
     const [selected, setSelected] = useState<number[]>([])
     const [accounts, setAccounts] = useState<LedgerAccountDetails[]>([])
     const [currentPage, setCurrentPage] = useState(1)
@@ -95,6 +95,35 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
     useEffect(() => {
         getNewPage(ledgerPages.FIRST)
     }, [])
+
+    const logIndices = (indices: any) => {
+        console.log(indices, 'indices')
+    }
+
+    const addSelectedAccounts = async (indices: number[]) => {
+        console.log('creating accounts')
+
+        for (let i = 0; i < indices.length; i++) {
+            const accountId = indices[i]
+            const contractType = 'SafeMultisigWallet'
+
+            let key: nt.KeyStoreEntry | undefined
+            try {
+                key = await controllerRpc.createLedgerKey({
+                    accountId,
+                })
+
+                await controllerRpc.createAccount({
+                    name: 'Ledger ' + accountId,
+                    publicKey: key.publicKey,
+                    contractType,
+                })
+                console.log('account created')
+            } catch (e) {
+                key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
+            }
+        }
+    }
 
     return (
         <>
@@ -166,8 +195,8 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({ controllerRpc, on
                         <Button
                             className="select-ledger-account__buttons-next"
                             text={'Select'}
-                            disabled={selected.length === 0}
-                            onClick={() => (onNext ? onNext(selected) : {})}
+                            // disabled={selected.length === 0}
+                            onClick={() => addSelectedAccounts(selected)}
                         />
                     </div>
                 </>
