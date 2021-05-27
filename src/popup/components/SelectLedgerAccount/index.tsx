@@ -26,10 +26,12 @@ interface ILedgerAccount {
 }
 
 const LedgerAccount: React.FC<ILedgerAccount> = ({ address, checked, setChecked }) => {
+
+    console.log('publicKey', address)
     return (
         <div className="select-ledger-account__account">
             <Checkbox checked={checked} setChecked={setChecked} />
-            <UserAvatar address={address} className="select-ledger-account__account-avatar" />
+            {/*<UserAvatar address={address} className="select-ledger-account__account-avatar" />*/}
             <div>
                 <div className="select-ledger-account__account-title">
                     {convertAddress(address)}
