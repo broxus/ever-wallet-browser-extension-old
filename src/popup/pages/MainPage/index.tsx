@@ -112,6 +112,8 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                 <AccountDetails
                     account={selectedAccount}
                     tonWalletState={tonWalletState}
+                    controllerState={controllerState}
+                    controllerRpc={controllerRpc}
                     network={network}
                     onToggleNetwork={toggleNetwork}
                     onLogOut={async () => {

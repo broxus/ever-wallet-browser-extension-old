@@ -16,10 +16,13 @@ import Profile from '@popup/img/profile.svg'
 import AddAccount from '@popup/img/add-account.svg'
 
 import './style.scss'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 type AccountDetailsParams = {
     account: nt.AssetsList | undefined
     tonWalletState: nt.ContractState | undefined
+    controllerState: ControllerState
+    controllerRpc: IControllerRpcClient
     network: string
     onToggleNetwork: () => void
     onSend: () => void
@@ -52,6 +55,8 @@ const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc })
 const AccountDetails: React.FC<AccountDetailsParams> = ({
     account,
     tonWalletState,
+    controllerState,
+    controllerRpc,
     network,
     onToggleNetwork,
     onLogOut,
@@ -67,6 +72,10 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     if (account == null) {
         return null
     }
+
+    const accounts = Object.keys(controllerState.accountEntries)
+
+    console.log('accounts', accounts)
 
     const accountModalAction = (action: () => void) => () => {
         setModalVisible(false)
@@ -109,19 +118,20 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                     )}
                 </div>
                 <Carousel
+                    controllerRpc={controllerRpc}
+                    accountEntries={accountEntries}
                     content={[
-                        <AccountCard
-                            accountName={account.name}
-                            address={account.tonWallet.address}
-                            publicKey={account?.tonWallet.publicKey}
-                            balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
-                        />,
-                        // <AccountCard
-                        //     accountName={account.name}
-                        //     address={account.tonWallet.address}
-                        //     publicKey={account?.tonWallet.publicKey}
-                        //     balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
-                        // />,
+                        ...accounts.map((el) => (
+                            <AccountCard
+                                accountName={account.name}
+                                address={account.tonWallet.address}
+                                publicKey={account?.tonWallet.publicKey}
+                                balance={convertTons(
+                                    tonWalletState?.balance || '0'
+                                ).toLocaleString()}
+                            />
+                        )),
+
                         // <AccountCard
                         //     accountName={account.name}
                         //     address={account.tonWallet.address}

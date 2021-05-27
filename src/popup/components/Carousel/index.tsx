@@ -5,20 +5,33 @@ import RightArrow from '@popup/img/right-arrow.svg'
 import LeftArrow from '@popup/img/left-arrow.svg'
 
 import './style.scss'
+import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 interface ICarousel {
     content: JSX.Element[]
+    controllerRpc: IControllerRpcClient
+    accountEntries: string[]
 }
 
-const Carousel: React.FC<ICarousel> = ({ content }) => {
+const Carousel: React.FC<ICarousel> = ({ content, controllerRpc, accountEntries }) => {
     const [active, setActive] = useState(0)
 
-    const decrementIndex = () => {
+    const decrementIndex = async () => {
         setActive((active + content.length - 1) % content.length)
+        try {
+            await controllerRpc.selectAccount(accountEntries[active])
+        } catch (e) {
+            console.log(e)
+        }
     }
 
-    const incrementIndex = () => {
+    const incrementIndex = async () => {
         setActive((active + 1) % content.length)
+        try {
+            await controllerRpc.selectAccount(accountEntries[active])
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     return (
