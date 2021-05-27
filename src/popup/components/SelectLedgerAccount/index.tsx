@@ -205,7 +205,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                             className="enter-password-screen__modal"
                         >
                             <h3 style={{ color: 'black', marginBottom: '18px' }}>
-                                {`Your account${
+                                {`Account${
                                     selected.length > 1 ? 's' : ''
                                 } have been successfully added`}
                             </h3>
