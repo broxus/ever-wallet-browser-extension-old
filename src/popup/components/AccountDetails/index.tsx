@@ -75,8 +75,6 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
 
     const accounts = Object.keys(controllerState.accountEntries)
 
-    console.log('accounts', accounts)
-
     const accountModalAction = (action: () => void) => () => {
         setModalVisible(false)
         action()
@@ -119,9 +117,10 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                 </div>
                 <Carousel
                     controllerRpc={controllerRpc}
-                    accountEntries={accountEntries}
+                    accountEntries={controllerState.accountEntries}
+                    accounts={accounts}
                     content={[
-                        ...accounts.map((el) => (
+                        ...accounts.map((_el) => (
                             <AccountCard
                                 accountName={account.name}
                                 address={account.tonWallet.address}

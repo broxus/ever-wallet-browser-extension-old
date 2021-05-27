@@ -5,20 +5,23 @@ import RightArrow from '@popup/img/right-arrow.svg'
 import LeftArrow from '@popup/img/left-arrow.svg'
 
 import './style.scss'
-import { IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 interface ICarousel {
     content: JSX.Element[]
     controllerRpc: IControllerRpcClient
-    accountEntries: string[]
+    accountEntries: any
+    accounts: string[]
 }
 
-const Carousel: React.FC<ICarousel> = ({ content, controllerRpc, accountEntries }) => {
+const Carousel: React.FC<ICarousel> = ({ content, controllerRpc, accountEntries, accounts }) => {
     const [active, setActive] = useState(0)
 
     const decrementIndex = async () => {
         try {
-            await controllerRpc.selectAccount(accountEntries[active])
+            const curr = accounts[active]
+            await controllerRpc.selectAccount(accountEntries[curr]?.[0]?.tonWallet?.address)
+            console.log('switched successfully')
         } catch (e) {
             console.log(e)
         }
@@ -27,7 +30,9 @@ const Carousel: React.FC<ICarousel> = ({ content, controllerRpc, accountEntries 
 
     const incrementIndex = async () => {
         try {
-            await controllerRpc.selectAccount(accountEntries[active])
+            const curr = accounts[active]
+            await controllerRpc.selectAccount(accountEntries[curr]?.[0]?.tonWallet?.address)
+            console.log('switched successfully')
         } catch (e) {
             console.log(e)
         }
