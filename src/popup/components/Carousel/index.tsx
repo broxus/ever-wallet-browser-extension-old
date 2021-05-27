@@ -17,21 +17,21 @@ const Carousel: React.FC<ICarousel> = ({ content, controllerRpc, accountEntries 
     const [active, setActive] = useState(0)
 
     const decrementIndex = async () => {
-        setActive((active + content.length - 1) % content.length)
         try {
             await controllerRpc.selectAccount(accountEntries[active])
         } catch (e) {
             console.log(e)
         }
+        setActive((active + content.length - 1) % content.length)
     }
 
     const incrementIndex = async () => {
-        setActive((active + 1) % content.length)
         try {
             await controllerRpc.selectAccount(accountEntries[active])
         } catch (e) {
             console.log(e)
         }
+        setActive((active + 1) % content.length)
     }
 
     return (
