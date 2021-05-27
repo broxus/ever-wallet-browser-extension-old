@@ -14,9 +14,12 @@ interface IConnectLedgerPage {
 }
 
 const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc }) => {
-    const [step, setStep] = useState<ConnectLedgerSteps>(ConnectLedgerSteps.CONNECT)
+    const [step, setStep] = useState<ConnectLedgerSteps>(ConnectLedgerSteps.SELECT)
 
     const addSelectedAccounts = async (indices: number[]) => {
+
+        console.log('creating accounts')
+
         for (let i = 0; i < indices.length; i++) {
             const accountId = indices[i]
             const contractType = 'SafeMultisigWallet'
@@ -48,7 +51,7 @@ const ConnectLedgerPage: React.FC<IConnectLedgerPage> = ({ controllerRpc }) => {
                 <SelectLedgerAccount
                     controllerRpc={controllerRpc}
                     onBack={() => setStep(ConnectLedgerSteps.CONNECT)}
-                    onNext={(selected) => addSelectedAccounts(selected)}
+                    onNext={addSelectedAccounts}
                 />
             )}
         </>
