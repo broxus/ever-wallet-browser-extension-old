@@ -93,14 +93,23 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                     </span>
                 </div>
             </div>
-            <Input
-                className="send-screen__form-comment"
-                label={'Password...'}
-                type="password"
-                disabled={disabled}
-                value={password}
-                onChange={setPassword}
-            />
+            {keyEntry.signerName != 'ledger_key' ? (
+                <Input
+                    className="send-screen__form-comment"
+                    label={'Password...'}
+                    type="password"
+                    disabled={disabled}
+                    value={password}
+                    onChange={setPassword}
+                />
+            ) : (
+                <div
+                    className="send-screen__form-tx-details-param-desc"
+                    style={{ marginBottom: '24px' }}
+                >
+                    Please confirm the transaction with your Ledger
+                </div>
+            )}
             {error && <div className="send-screen__form-error">{error}</div>}
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
