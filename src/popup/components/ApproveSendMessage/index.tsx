@@ -73,7 +73,11 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                         },
                     }
 
-            const isValid = await checkPassword(keyPassword)
+            let isValid: boolean = true;
+            if (keyEntry.signerName != 'ledger_key') {
+                isValid = await checkPassword(keyPassword)
+            }
+
             if (isValid) {
                 onSubmit(keyPassword)
             } else {
