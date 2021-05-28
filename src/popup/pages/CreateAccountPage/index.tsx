@@ -13,6 +13,7 @@ import * as nt from '@nekoton'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import SelectContractType from '@popup/components/SelectContractType'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
+import EnterPassword from '@popup/components/EnterPassword'
 
 const options = [
     { value: '1', label: 'Key 1' },
@@ -147,9 +148,16 @@ const AccountSelectKey: React.FC<IAccountSelectKey> = ({ setStep }) => {
             </div>
             <div className="create-account-page__content-buttons">
                 <div className="create-account-page__content-buttons-back-btn">
-                    <Button text={'Back'} onClick={() => setStep(NewAccountLocalStep.SELECT_ACCOUNT_NAME)} white />
+                    <Button
+                        text={'Back'}
+                        onClick={() => setStep(NewAccountLocalStep.SELECT_ACCOUNT_NAME)}
+                        white
+                    />
                 </div>
-                <Button text={'Next'} onClick={() => setStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)} />
+                <Button
+                    text={'Next'}
+                    onClick={() => setStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)}
+                />
             </div>
         </div>
     )
@@ -171,9 +179,12 @@ const AccountName: React.FC<IAccountName> = ({ onSubmit }) => {
                 <h3 className="create-account-page__content-pwd-title">Choose wisely</h3>
                 <Input label={'Enter new account name...'} autoFocus type={'text'} />
             </div>
-            <Button text={'Next'} onClick={() => {
-                onSubmit("NewAccount")
-            }} />
+            <Button
+                text={'Next'}
+                onClick={() => {
+                    onSubmit('NewAccount')
+                }}
+            />
         </div>
     )
 }
@@ -241,17 +252,21 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
 }) => {
     const [inProcess, setInProcess] = useState<boolean>(false)
     const [accountType, setAccountType] = useState<string>()
-    const [newAccountStep, setNewAccountStep] = useState<number>(NewAccountLocalStep.SELECT_ACCOUNT_NAME)
-    const [ledgerAccountStep, setLedgerNewAccountStep] = useState<number>(LedgerAccountLocalStep.CHECK_LEDGER_CONNECTION)
+    const [newAccountStep, setNewAccountStep] = useState<number>(
+        NewAccountLocalStep.SELECT_ACCOUNT_NAME
+    )
+    const [ledgerAccountStep, setLedgerNewAccountStep] = useState<number>(
+        LedgerAccountLocalStep.CHECK_LEDGER_CONNECTION
+    )
     const [error, setError] = useState<string>()
 
-    const [accountName, setAccountName] = useState<string>("")
+    const [accountName, setAccountName] = useState<string>('')
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
-    const accountId = 2;
+    const accountId = 2
 
     const onSubmit = async (password: string) => {
-        console.log("onSubmit")
+        console.log('onSubmit')
 
         let key: nt.KeyStoreEntry | undefined
         try {
@@ -261,11 +276,15 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
                 password,
             })
 
-            console.log("Key: ", key)
+            console.log('Key: ', key)
 
-            await controllerRpc.createAccount({ name: "Account 3", publicKey: key.publicKey, contractType })
+            await controllerRpc.createAccount({
+                name: 'Account 3',
+                publicKey: key.publicKey,
+                contractType,
+            })
         } catch (e) {
-            console.log("Exception: ", e)
+            console.log('Exception: ', e)
             key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
             setError(e.toString())
@@ -286,14 +305,14 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
         () => [
             <AccountName
                 onSubmit={(accountName) => {
-                    console.log("AccountName")
+                    console.log('AccountName')
                     setAccountName(accountName)
                     setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
                 }}
             />,
             <SelectContractType
                 onSubmit={(contractType) => {
-                    console.log("SelectContractType")
+                    console.log('SelectContractType')
                     setContractType(contractType)
                     setNewAccountStep(NewAccountLocalStep.ENTER_PASSWORD)
                 }}
@@ -302,16 +321,26 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
                 }}
                 excludedContracts={['WalletV3']}
             />,
-            <EnterNewPassword
+            <EnterPassword
                 disabled={inProcess}
-                onSubmit={async (password) => {
-                    console.log("EnterNewPassword")
+                handleNext={async (password) => {
+                    console.log('EnterNewPassword')
                     await onSubmit(password)
                 }}
-                onBack={() => {
+                handleBack={() => {
                     setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
                 }}
             />,
+            // <EnterNewPassword
+            //     disabled={inProcess}
+            //     onSubmit={async (password) => {
+            //         console.log("EnterNewPassword")
+            //         await onSubmit(password)
+            //     }}
+            //     onBack={() => {
+            //         setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
+            //     }}
+            // />,
         ],
         []
     )
