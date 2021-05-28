@@ -4,17 +4,14 @@ import walletOptions from '@popup/constants/walletTypes'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import Select from 'react-select'
 import Input from '@popup/components/Input'
-import { CheckSeedOnCreation } from '@popup/components/CheckSeed'
 import Button from '@popup/components/Button'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
 import CheckLedgerConnection from '@popup/components/CheckLedgerConnection'
 
 import './style.scss'
 import * as nt from '@nekoton'
-import { generateSeed } from '@popup/store/app/actions'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import SelectContractType from '@popup/components/SelectContractType'
-import ExportedSeed from '@popup/components/ExportedSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 
 const options = [
@@ -223,8 +220,6 @@ const SelectAccountType: React.FC<ISelectAccountType> = ({ setSelected }) => {
 enum NewAccountLocalStep {
     SELECT_ACCOUNT_NAME,
     SELECT_CONTRACT_TYPE,
-    SHOW_PHRASE,
-    CHECK_PHRASE,
     ENTER_PASSWORD,
 }
 
@@ -250,30 +245,32 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
     const [ledgerAccountStep, setLedgerNewAccountStep] = useState<number>(LedgerAccountLocalStep.CHECK_LEDGER_CONNECTION)
     const [error, setError] = useState<string>()
 
-    const seed = useState<nt.GeneratedMnemonic>(generateSeed())[0]
-
     const [accountName, setAccountName] = useState<string>("")
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
+    const accountId = 2;
+
     const onSubmit = async (password: string) => {
+        console.log("onSubmit")
+
         let key: nt.KeyStoreEntry | undefined
         try {
             setInProcess(true)
-
-            key = await controllerRpc.createMasterKey({
-                seed,
+            key = await controllerRpc.createDerivedKey({
+                accountId,
                 password,
             })
 
+            console.log("Key: ", key)
+
             await controllerRpc.createAccount({ name: "Account 3", publicKey: key.publicKey, contractType })
         } catch (e) {
+            console.log("Exception: ", e)
             key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
             setError(e.toString())
         }
     }
-
-    const splitSeed = seed.phrase.split(' ')
 
     const openLedgerConnectPage = () => {
         if (accountType === 'ledger') {
@@ -289,45 +286,30 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
         () => [
             <AccountName
                 onSubmit={(accountName) => {
+                    console.log("AccountName")
                     setAccountName(accountName)
                     setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
                 }}
             />,
             <SelectContractType
                 onSubmit={(contractType) => {
+                    console.log("SelectContractType")
                     setContractType(contractType)
-                    setNewAccountStep(NewAccountLocalStep.SHOW_PHRASE)
+                    setNewAccountStep(NewAccountLocalStep.ENTER_PASSWORD)
                 }}
                 onBack={() => {
                     setNewAccountStep(NewAccountLocalStep.SELECT_ACCOUNT_NAME)
                 }}
                 excludedContracts={['WalletV3']}
             />,
-            <ExportedSeed
-                onNext={() => {
-                    setNewAccountStep(NewAccountLocalStep.CHECK_PHRASE)
-                }}
-                onBack={() => {
-                    setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
-                }}
-                seed={splitSeed}
-            />,
-            <CheckSeedOnCreation
-                onSubmit={() => {
-                    setNewAccountStep(NewAccountLocalStep.ENTER_PASSWORD)
-                }}
-                onBack={() => {
-                    setNewAccountStep(NewAccountLocalStep.SHOW_PHRASE)
-                }}
-                seed={splitSeed}
-            />,
             <EnterNewPassword
                 disabled={inProcess}
                 onSubmit={async (password) => {
+                    console.log("EnterNewPassword")
                     await onSubmit(password)
                 }}
                 onBack={() => {
-                    setNewAccountStep(NewAccountLocalStep.SHOW_PHRASE)
+                    setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
                 }}
             />,
         ],
