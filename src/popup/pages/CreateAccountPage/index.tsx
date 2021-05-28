@@ -172,17 +172,24 @@ interface IAccountName {
 }
 
 const AccountName: React.FC<IAccountName> = ({ onSubmit }) => {
+    const [accountName, setAccountName] = useState('')
     return (
         <div className="create-account-page__content">
             <div className="create-account-page__content-pwd-form">
                 <h2>Name your new account</h2>
                 <h3 className="create-account-page__content-pwd-title">Choose wisely</h3>
-                <Input label={'Enter new account name...'} autoFocus type={'text'} />
+                <Input
+                    label={'Enter new account name...'}
+                    autoFocus
+                    type={'text'}
+                    onChange={setAccountName}
+                />
             </div>
             <Button
                 text={'Next'}
+                disabled={!accountName.length}
                 onClick={() => {
-                    onSubmit('NewAccount')
+                    onSubmit(accountName)
                 }}
             />
         </div>
@@ -279,7 +286,7 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
             console.log('Key: ', key)
 
             await controllerRpc.createAccount({
-                name: 'Account 3',
+                name: accountName,
                 publicKey: key.publicKey,
                 contractType,
             })
@@ -305,7 +312,7 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
         () => [
             <AccountName
                 onSubmit={(accountName) => {
-                    console.log('AccountName')
+                    console.log(accountName)
                     setAccountName(accountName)
                     setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
                 }}
