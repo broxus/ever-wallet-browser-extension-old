@@ -15,10 +15,8 @@ const CheckLedgerConnection:React.FC<ICheckLedgerConnection> = ({ onSuccess, onF
 
     const handleMessage = (reply: any) => {
         if (reply.data?.success === true) {
-            console.log('Ledger Bridge Data: ', reply.data?.payload)
             onSuccess && onSuccess()
         } else {
-            console.log('Ledger Bridge Error: ', reply.data?.error.message)
             onFailed && onFailed()
         }
     }

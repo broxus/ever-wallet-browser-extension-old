@@ -124,7 +124,6 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
     }, [])
 
     const addSelectedAccounts = async (indices: number[]) => {
-        console.log('creating accounts')
         setError('')
 
         for (let i = 0; i < indices.length; i++) {
@@ -142,7 +141,6 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                     publicKey: key.publicKey,
                     contractType,
                 })
-                console.log('account created')
             } catch (e) {
                 key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
                 setError(e.toString())
