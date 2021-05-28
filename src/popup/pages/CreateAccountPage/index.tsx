@@ -329,13 +329,13 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
                 }}
                 excludedContracts={['WalletV3']}
             />,
-            <EnterPassword
+            <EnterNewPassword
                 disabled={inProcess}
-                handleNext={async (password) => {
+                onSubmit={async (password) => {
                     console.log('EnterNewPassword')
                     await onSubmit(password)
                 }}
-                handleBack={() => {
+                onBack={() => {
                     setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
                 }}
             />,
