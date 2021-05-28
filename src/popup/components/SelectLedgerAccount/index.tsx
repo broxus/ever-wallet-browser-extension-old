@@ -93,7 +93,6 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
     const [currentPage, setCurrentPage] = useState(1)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string>()
-    const [success, setSuccess] = useState<boolean>()
 
     const getNewPage = async (page: ledgerPages) => {
         setLoading(true)
@@ -146,7 +145,12 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                 setError(e.toString())
             }
         }
-        setSuccess(true)
+        const windowType = getEnvironmentType()
+        if (windowType === 'fullscreen') {
+            // window.close()
+        } else if (windowType === 'popup') {
+            onSuccess && onSuccess()
+        }
     }
 
     return (
@@ -190,25 +194,25 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                             <div className="check-seed__content-error">{error}</div>
                         </Modal>
                     )}
-                    {success && (
-                        <Modal
-                            onClose={() => {
-                                const windowType = getEnvironmentType()
-                                if (windowType === 'fullscreen') {
-                                    // window.close()
-                                } else if (windowType === 'popup') {
-                                    onSuccess && onSuccess()
-                                }
-                            }}
-                            className="enter-password-screen__modal"
-                        >
-                            <h3 style={{ color: 'black', marginBottom: '18px' }}>
-                                {`Account${
-                                    selected.length > 1 ? 's' : ''
-                                } have been successfully added`}
-                            </h3>
-                        </Modal>
-                    )}
+                    {/*{success && (*/}
+                    {/*    <Modal*/}
+                    {/*        onClose={() => {*/}
+                    {/*            const windowType = getEnvironmentType()*/}
+                    {/*            if (windowType === 'fullscreen') {*/}
+                    {/*                // window.close()*/}
+                    {/*            } else if (windowType === 'popup') {*/}
+                    {/*                onSuccess && onSuccess()*/}
+                    {/*            }*/}
+                    {/*        }}*/}
+                    {/*        className="enter-password-screen__modal"*/}
+                    {/*    >*/}
+                    {/*        <h3 style={{ color: 'black', marginBottom: '18px' }}>*/}
+                    {/*            {`Account${*/}
+                    {/*                selected.length > 1 ? 's' : ''*/}
+                    {/*            } have been successfully added`}*/}
+                    {/*        </h3>*/}
+                    {/*    </Modal>*/}
+                    {/*)}*/}
                     <div>
                         {accounts.map(({ publicKey, index }) => {
                             const checked = selected.includes(index)
