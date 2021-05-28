@@ -828,7 +828,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.2.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#8e0f384ee3c05ff5be0d9e46ab7b301fc33634d8"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#b4d3c78a4572af8d34a9a7214c2f44709be6f782"
 dependencies = [
  "anyhow",
  "async-trait",
