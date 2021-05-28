@@ -297,6 +297,7 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
             setInProcess(false)
             setError(e.toString())
         }
+        onClose()
     }
 
     const openLedgerConnectPage = () => {
@@ -309,49 +310,36 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
         }
     }
 
-    const createAccountContent = useMemo(
-        () => [
-            <AccountName
-                onSubmit={(accountName) => {
-                    console.log(accountName)
-                    setAccountName(accountName)
-                    setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
-                }}
-            />,
-            <SelectContractType
-                onSubmit={(contractType) => {
-                    console.log('SelectContractType')
-                    setContractType(contractType)
-                    setNewAccountStep(NewAccountLocalStep.ENTER_PASSWORD)
-                }}
-                onBack={() => {
-                    setNewAccountStep(NewAccountLocalStep.SELECT_ACCOUNT_NAME)
-                }}
-                excludedContracts={['WalletV3']}
-            />,
-            <EnterNewPassword
-                disabled={inProcess}
-                onSubmit={async (password) => {
-                    console.log('EnterNewPassword')
-                    await onSubmit(password)
-                }}
-                onBack={() => {
-                    setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
-                }}
-            />,
-            // <EnterNewPassword
-            //     disabled={inProcess}
-            //     onSubmit={async (password) => {
-            //         console.log("EnterNewPassword")
-            //         await onSubmit(password)
-            //     }}
-            //     onBack={() => {
-            //         setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
-            //     }}
-            // />,
-        ],
-        []
-    )
+    const createAccountContent = [
+        <AccountName
+            onSubmit={(accountName) => {
+                console.log(accountName)
+                setAccountName(accountName)
+                setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
+            }}
+        />,
+        <SelectContractType
+            onSubmit={(contractType) => {
+                console.log('SelectContractType')
+                setContractType(contractType)
+                setNewAccountStep(NewAccountLocalStep.ENTER_PASSWORD)
+            }}
+            onBack={() => {
+                setNewAccountStep(NewAccountLocalStep.SELECT_ACCOUNT_NAME)
+            }}
+            excludedContracts={['WalletV3']}
+        />,
+        <EnterNewPassword
+            disabled={inProcess}
+            onSubmit={async (password) => {
+                console.log('EnterNewPassword')
+                await onSubmit(password)
+            }}
+            onBack={() => {
+                setNewAccountStep(NewAccountLocalStep.SELECT_CONTRACT_TYPE)
+            }}
+        />,
+    ]
 
     const connectLedger = [
         <CheckLedgerConnection
