@@ -187,6 +187,7 @@ const AccountName: React.FC<IAccountName> = ({ onSubmit }) => {
             </div>
             <Button
                 text={'Next'}
+                type="submit"
                 disabled={!accountName.length}
                 onClick={() => {
                     onSubmit(accountName)
