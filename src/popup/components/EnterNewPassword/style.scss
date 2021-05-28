@@ -22,13 +22,14 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 40px 28px 28px;
+        //padding: 40px 28px 28px;
 
         &-pwd-form {
             display: flex;
             flex-direction: column;
-            height: 172px;
-            justify-content: space-between;
+            //height: 172px;
+            min-height: 300px;
+            //justify-content: space-between;
 
             &-header {
                 margin-bottom: 12px;

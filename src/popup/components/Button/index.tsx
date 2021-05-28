@@ -21,7 +21,7 @@ const Button: React.FC<IButton> = ({
     disabled,
     noBorder,
     onClick,
-    type,
+    type = 'button',
     form,
     className = '',
 }) => {
