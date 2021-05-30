@@ -4,7 +4,6 @@ use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
 use futures::channel::oneshot;
-use nt::external::JrpcRequest;
 use wasm_bindgen::prelude::*;
 
 use crate::utils::*;
@@ -401,17 +400,10 @@ impl JrpcQuery {
 
 #[async_trait]
 impl nt::external::JrpcConnection for JrpcConnector {
-    async fn post<'a>(&self, req: JrpcRequest<'a>) -> Result<String> {
-        let data = serde_json::json!({
-            "jsonrpc": "2.0",
-            "method": req.method,
-            "params": req.params,
-            "id": 1
-        })
-        .to_string();
+    async fn post(&self, data: &str) -> Result<String> {
         let (tx, rx) = oneshot::channel();
         let query = JrpcQuery { tx };
-        self.sender.send(&data, query);
+        self.sender.send(data, query);
         Ok(rx.await.unwrap_or(Err(JrpcError::RequestFailed))?)
     }
 }
