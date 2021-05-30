@@ -22,7 +22,7 @@ const NETWORK_PRESETS = {
     ['Mainnet (ADNL)']: ({
         type: 'jrpc',
         data: {
-            endpoint: 'http://127.0.0.1:10000/rpc',
+            endpoint: 'https://jrpc.broxus.com/rpc',
         },
     } as unknown) as ConnectionData,
     ['Testnet']: {
