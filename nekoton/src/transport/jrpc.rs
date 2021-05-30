@@ -154,22 +154,18 @@ impl JrpcConnection {
         use crate::core::models::*;
 
         let address = parse_address(address)?;
-        let before_lt = continuation
-            .map(parse_transaction_id)
-            .transpose()?
-            .map(|id| id.lt);
         let transport = self.make_transport();
+        let from = match continuation {
+            Some(continuation) => parse_transaction_id(continuation)?,
+            None => nt::core::models::TransactionId {
+                lt: u64::MAX,
+                hash: Default::default(),
+            },
+        };
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             Ok(transport
-                .get_transactions(
-                    address,
-                    nt::core::models::TransactionId {
-                        lt: before_lt.unwrap_or(u64::MAX),
-                        hash: Default::default(),
-                    },
-                    limit,
-                )
+                .get_transactions(address, from, limit)
                 .await
                 .handle_error()?
                 .into_iter()
