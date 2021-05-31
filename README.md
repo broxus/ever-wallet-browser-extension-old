@@ -32,9 +32,18 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
-### 0.1.7
+### 0.1.7 (2021-06-01)
 
-* Added suppport for both base64 and base64 url-safe addresses.
+Features
+
+* Added support for both base64 and base64 url-safe addresses.
+* Added support for ADNL RPC API, it can now be used in some cases when https://main.ton.dev/graphql is down.
+* Added old transactions preloading.
+
+Bugfixes:
+
+* Performance issues in transactions list.
+* Fixed network switch.
 
 ### 0.1.6 (2021-05-22)
 
