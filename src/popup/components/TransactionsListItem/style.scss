@@ -7,6 +7,7 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 20px 0;
+    //position: relative;
 
     &__amount {
         display: flex;
@@ -49,6 +50,39 @@
     &__address {
         color: #000000;
         padding-left: 52px;
+
+        position: relative;
+
+        &::after {
+            content: attr(data-tooltip);
+
+            opacity: 0;
+            visibility: hidden;
+
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+
+            position: absolute;
+            height: 44px;
+
+            top: 20px;
+            left: 0;
+
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(20px);
+
+            border-radius: 2px;
+            white-space: pre-line;
+        }
+
+        &:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
     }
 
     &__income {

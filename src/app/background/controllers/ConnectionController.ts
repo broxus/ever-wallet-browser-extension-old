@@ -1,7 +1,12 @@
 import { Mutex } from '@broxus/await-semaphore'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
-import { ConnectionData, GqlSocketParams, NamedConnectionData } from '@shared/approvalApi'
+import {
+    ConnectionData,
+    GqlSocketParams,
+    JrpcSocketParams,
+    NamedConnectionData,
+} from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import { BaseController, BaseConfig, BaseState } from './BaseController'
@@ -14,6 +19,12 @@ const NETWORK_PRESETS = {
             timeout: 60000,
         },
     } as ConnectionData,
+    ['Mainnet (ADNL)']: ({
+        type: 'jrpc',
+        data: {
+            endpoint: 'https://jrpc.broxus.com/rpc',
+        },
+    } as unknown) as ConnectionData,
     ['Testnet']: {
         type: 'graphql',
         data: {
@@ -24,17 +35,25 @@ const NETWORK_PRESETS = {
 }
 
 const getPreset = <T extends keyof typeof NETWORK_PRESETS>(name: T): NamedConnectionData => ({
-    ...NETWORK_PRESETS[name],
     name,
+    ...(NETWORK_PRESETS[name] as ConnectionData),
 })
 
-export type InitializedConnection = nt.EnumItem<
-    'graphql',
-    {
-        socket: GqlSocket
-        connection: nt.GqlConnection
-    }
->
+export type InitializedConnection =
+    | nt.EnumItem<
+          'graphql',
+          {
+              socket: GqlSocket
+              connection: nt.GqlConnection
+          }
+      >
+    | nt.EnumItem<
+          'jrpc',
+          {
+              socket: JrpcSocket
+              connection: nt.JrpcConnection
+          }
+      >
 
 export interface ConnectionConfig extends BaseConfig {}
 
@@ -143,6 +162,8 @@ export class ConnectionController extends BaseController<
         if (this._initializedConnection) {
             if (this._initializedConnection.type === 'graphql') {
                 this._initializedConnection.data.connection.free()
+            } else if (this._initializedConnection.type == 'jrpc') {
+                this._initializedConnection.data.connection.free()
             }
         }
 
@@ -165,10 +186,27 @@ export class ConnectionController extends BaseController<
                     `Failed to create GraphQL connection: ${e.toString()}`
                 )
             }
+        } else if (params.type === 'jrpc') {
+            try {
+                const socket = new JrpcSocket()
+
+                this._initializedConnection = {
+                    type: 'jrpc',
+                    data: {
+                        socket,
+                        connection: await socket.connect(params.data),
+                    },
+                }
+            } catch (e) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.INTERNAL,
+                    `Failed to create JRPC connection ${e.toString()}`
+                )
+            }
         } else {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `Unsupported connection type ${params.type}`
+                'Unsupported connection type'
             )
         }
 
@@ -249,5 +287,36 @@ export class GqlSocket {
         }
 
         return new nt.GqlConnection(new GqlSender(params))
+    }
+}
+
+export class JrpcSocket {
+    public async connect(params: JrpcSocketParams): Promise<nt.JrpcConnection> {
+        class JrpcSender {
+            private readonly params: JrpcSocketParams
+
+            constructor(params: JrpcSocketParams) {
+                this.params = params
+            }
+
+            send(data: string, handler: nt.JrpcQuery) {
+                ;(async () => {
+                    try {
+                        const response = await fetch(this.params.endpoint, {
+                            method: 'post',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: data,
+                        }).then((response) => response.text())
+                        handler.onReceive(response)
+                    } catch (e) {
+                        handler.onError(e)
+                    }
+                })()
+            }
+        }
+
+        return new nt.JrpcConnection(new JrpcSender(params))
     }
 }

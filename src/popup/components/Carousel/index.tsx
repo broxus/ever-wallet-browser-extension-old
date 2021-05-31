@@ -52,13 +52,13 @@ const Carousel: React.FC<ICarousel> = ({ content }) => {
                 {/*        className="carousel__navigation-arrows-elem"*/}
                 {/*        onClick={() => decrementIndex()}*/}
                 {/*    >*/}
-                {/*        <LeftArrow />*/}
+                {/*        <img src={LeftArrow} alt="" />*/}
                 {/*    </div>*/}
                 {/*    <div*/}
                 {/*        className="carousel__navigation-arrows-elem"*/}
                 {/*        onClick={() => incrementIndex()}*/}
                 {/*    >*/}
-                {/*        <RightArrow />*/}
+                {/*        <img src={RightArrow} alt="" />*/}
                 {/*    </div>*/}
                 {/*</div>*/}
             </div>

@@ -13,6 +13,7 @@ import {
 } from '@shared/utils'
 import { MessageToPrepare, TokenMessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
+import { repackAddress } from '@nekoton'
 
 import Select from 'react-select'
 import Checkbox from '@popup/components/Checkbox'
@@ -175,7 +176,10 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
 
     const { register, setValue, handleSubmit, errors } = useForm<MessageParams>()
 
-    let defaultValue: { value: string; label: string } = { value: '', label: 'TON' }
+    let defaultValue: { value: string; label: string } = {
+        value: '',
+        label: 'TON',
+    }
     const options: { value: string; label: string }[] = [defaultValue]
     for (const { rootTokenContract } of account.tokenWallets) {
         const symbol = knownTokens[rootTokenContract]
@@ -222,7 +226,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         let messageToPrepare: MessageToPrepare
         if (selectedAsset.length == 0) {
             messageToPrepare = {
-                recipient: data.recipient,
+                recipient: repackAddress(data.recipient), //shouldn't throw exceptions due to higher level validation
                 amount: parseTons(data.amount),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
             }
@@ -369,7 +373,6 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                             onChange={(value) => setValue('recipient', value)}
                             register={register({
                                 required: true,
-                                pattern: /^(?:-1|0):[0-9a-fA-F]{64}$/,
                                 validate: (value: string) =>
                                     value != null && nt.checkAddress(value),
                             })}

@@ -9,6 +9,7 @@
         position: sticky;
         border-bottom: 1px solid #ebedee;
         background: white;
+        z-index: 1;
 
         &__tab {
             font-style: normal;
@@ -58,6 +59,7 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
+        //position: relative;
 
         z-index: -1; // to allow sticky tabs work
     }

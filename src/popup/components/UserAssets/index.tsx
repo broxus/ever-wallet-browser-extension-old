@@ -102,9 +102,11 @@ type IUserAssets = {
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
     transactions: nt.Transaction[]
+    scrollArea: React.RefObject<HTMLDivElement>
     onViewTransaction: (transaction: nt.Transaction) => void
     updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
     onViewAsset: (asset: SelectedAsset) => void
+    preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 }
 
 enum AssetsTab {
@@ -118,9 +120,11 @@ const UserAssets: React.FC<IUserAssets> = ({
     tokenWalletStates,
     knownTokens,
     transactions,
+    scrollArea,
     updateTokenWallets,
     onViewTransaction,
     onViewAsset,
+    preloadTransactions,
 }) => {
     const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
 
@@ -157,8 +161,12 @@ const UserAssets: React.FC<IUserAssets> = ({
                 )}
                 {activeTab == AssetsTab.TRANSACTIONS && (
                     <TransactionsList
+                        topOffset={365 + 54}
+                        fullHeight={600}
+                        scrollArea={scrollArea}
                         transactions={transactions}
                         onViewTransaction={onViewTransaction}
+                        preloadTransactions={preloadTransactions}
                     />
                 )}
             </div>

@@ -1038,7 +1038,9 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
             let subtype = parse_param_type(&kind[..count - 2])?;
             Ok(ton_abi::ParamType::Array(Box::new(subtype)))
         } else {
-            let len = usize::from_str_radix(&num, 10).map_err(|_| AbiError::ExpectedParamType)?;
+            let len = num
+                .parse::<usize>()
+                .map_err(|_| AbiError::ExpectedParamType)?;
 
             let subtype = parse_param_type(&kind[..count - num.len() - 2])?;
             Ok(ton_abi::ParamType::FixedArray(Box::new(subtype), len))
@@ -1049,17 +1051,19 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         "bool" => ton_abi::ParamType::Bool,
         "tuple" => ton_abi::ParamType::Tuple(Vec::new()),
         s if s.starts_with("int") => {
-            let len =
-                usize::from_str_radix(&s[3..], 10).map_err(|_| AbiError::ExpectedParamType)?;
+            let len = (&s[3..])
+                .parse::<usize>()
+                .map_err(|_| AbiError::ExpectedParamType)?;
             ton_abi::ParamType::Int(len)
         }
         s if s.starts_with("uint") => {
-            let len =
-                usize::from_str_radix(&s[4..], 10).map_err(|_| AbiError::ExpectedParamType)?;
+            let len = (&s[4..])
+                .parse::<usize>()
+                .map_err(|_| AbiError::ExpectedParamType)?;
             ton_abi::ParamType::Uint(len)
         }
-        s if s.starts_with("map(") && s.ends_with(")") => {
-            let types: Vec<&str> = kind[4..kind.len() - 1].splitn(2, ",").collect();
+        s if s.starts_with("map(") && s.ends_with(')') => {
+            let types: Vec<&str> = kind[4..kind.len() - 1].splitn(2, ',').collect();
             if types.len() != 2 {
                 return Err(AbiError::ExpectedParamType);
             }
@@ -1081,8 +1085,9 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         "gram" => ton_abi::ParamType::Gram,
         "bytes" => ton_abi::ParamType::Bytes,
         s if s.starts_with("fixedbytes") => {
-            let len =
-                usize::from_str_radix(&s[10..], 10).map_err(|_| AbiError::ExpectedParamType)?;
+            let len = (&s[10..])
+                .parse::<usize>()
+                .map_err(|_| AbiError::ExpectedParamType)?;
             ton_abi::ParamType::FixedBytes(len)
         }
         "time" => ton_abi::ParamType::Time,

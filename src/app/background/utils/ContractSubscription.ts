@@ -7,6 +7,8 @@ import { BACKGROUND_POLLING_INTERVAL } from '../controllers/AccountController/co
 
 const NEXT_BLOCK_TIMEOUT = 60 // 60s
 
+const INTENSIVE_POLLING_INTERVAL = 2000 // 2s
+
 export interface IContractHandler<T extends nt.Transaction> {
     onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction): void
 
@@ -28,7 +30,7 @@ export interface IContract {
 }
 
 export class ContractSubscription<C extends IContract> {
-    private readonly _connection: nt.GqlConnection
+    private readonly _connection: nt.GqlConnection | nt.JrpcConnection
     private readonly _address: string
     private readonly _contract: C
     private readonly _contractMutex: Mutex = new Mutex()
@@ -42,7 +44,7 @@ export class ContractSubscription<C extends IContract> {
     private _suggestedBlockId?: string
 
     protected constructor(
-        connection: nt.GqlConnection,
+        connection: nt.GqlConnection | nt.JrpcConnection,
         release: () => void,
         address: string,
         contract: C
@@ -74,93 +76,94 @@ export class ContractSubscription<C extends IContract> {
         console.debug('ContractSubscription -> loop started')
 
         this._loopPromise = new Promise<void>(async (resolve) => {
+            const isSimpleTransport = !(this._connection instanceof nt.GqlConnection)
+
             this._isRunning = true
             let previousPollingMethod = this._currentPollingMethod
-            outer: while (this._isRunning) {
+            while (this._isRunning) {
                 const pollingMethodChanged = previousPollingMethod != this._currentPollingMethod
                 previousPollingMethod = this._currentPollingMethod
 
-                switch (this._currentPollingMethod) {
-                    case 'manual': {
-                        this._currentBlockId = undefined
+                if (isSimpleTransport || this._currentPollingMethod == 'manual') {
+                    this._currentBlockId = undefined
 
-                        console.debug('ContractSubscription -> manual -> waiting begins')
+                    console.debug('ContractSubscription -> manual -> waiting begins')
 
-                        await new Promise<void>((resolve) => {
-                            const timerHandle = window.setTimeout(() => {
-                                this._refreshTimer = undefined
-                                resolve()
-                            }, this._pollingInterval)
-                            this._refreshTimer = [timerHandle, resolve]
-                        })
+                    const pollingInterval =
+                        this._currentPollingMethod == 'manual'
+                            ? this._pollingInterval
+                            : INTENSIVE_POLLING_INTERVAL
 
-                        console.debug('ContractSubscription -> manual -> waiting ends')
+                    await new Promise<void>((resolve) => {
+                        const timerHandle = window.setTimeout(() => {
+                            this._refreshTimer = undefined
+                            resolve()
+                        }, pollingInterval)
+                        this._refreshTimer = [timerHandle, resolve]
+                    })
 
-                        if (!this._isRunning) {
-                            break outer
-                        }
+                    console.debug('ContractSubscription -> manual -> waiting ends')
 
-                        console.debug('ContractSubscription -> manual -> refreshing begins')
-
-                        try {
-                            this._currentPollingMethod = await this._contractMutex.use(async () => {
-                                await this._contract.refresh()
-                                return this._contract.pollingMethod
-                            })
-                        } catch (e) {
-                            console.error(`Error during account refresh (${this._address})`, e)
-                        }
-
-                        console.debug('ContractSubscription -> manual -> refreshing ends')
-
+                    if (!this._isRunning) {
                         break
                     }
-                    case 'reliable': {
-                        console.debug('ContractSubscription -> reliable start')
 
-                        if (pollingMethodChanged && this._suggestedBlockId != null) {
-                            this._currentBlockId = this._suggestedBlockId
-                        }
-                        this._suggestedBlockId = undefined
+                    console.debug('ContractSubscription -> manual -> refreshing begins')
 
-                        let nextBlockId: string
-                        if (this._currentBlockId == null) {
-                            console.warn('Starting reliable connection with unknown block')
+                    try {
+                        this._currentPollingMethod = await this._contractMutex.use(async () => {
+                            await this._contract.refresh()
+                            return this._contract.pollingMethod
+                        })
+                    } catch (e) {
+                        console.error(`Error during account refresh (${this._address})`, e)
+                    }
 
-                            try {
-                                const latestBlock = await this._connection.getLatestBlock(
-                                    this._address
-                                )
-                                this._currentBlockId = latestBlock.id
-                                nextBlockId = this._currentBlockId
-                            } catch (e) {
-                                console.error(`Failed to get latest block for ${this._address}`, e)
-                                continue
-                            }
-                        } else {
-                            try {
-                                nextBlockId = await this._connection.waitForNextBlock(
-                                    this._currentBlockId,
-                                    this._address,
-                                    NEXT_BLOCK_TIMEOUT
-                                )
-                            } catch (e) {
-                                console.error(`Failed to wait for next block for ${this._address}`)
-                                continue // retry
-                            }
-                        }
+                    console.debug('ContractSubscription -> manual -> refreshing ends')
+                } else {
+                    // SAFETY: connection is always GqlConnection here due to `isSimpleTransport`
+                    const connection = this._connection as nt.GqlConnection
+
+                    console.debug('ContractSubscription -> reliable start')
+
+                    if (pollingMethodChanged && this._suggestedBlockId != null) {
+                        this._currentBlockId = this._suggestedBlockId
+                    }
+                    this._suggestedBlockId = undefined
+
+                    let nextBlockId: string
+                    if (this._currentBlockId == null) {
+                        console.warn('Starting reliable connection with unknown block')
 
                         try {
-                            this._currentPollingMethod = await this._contractMutex.use(async () => {
-                                await this._contract.handleBlock(nextBlockId)
-                                return this._contract.pollingMethod
-                            })
-                            this._currentBlockId = nextBlockId
+                            const latestBlock = await connection.getLatestBlock(this._address)
+                            this._currentBlockId = latestBlock.id
+                            nextBlockId = this._currentBlockId
                         } catch (e) {
-                            console.error(`Failed to handle block for ${this._address}`, e)
+                            console.error(`Failed to get latest block for ${this._address}`, e)
+                            continue
                         }
+                    } else {
+                        try {
+                            nextBlockId = await connection.waitForNextBlock(
+                                this._currentBlockId,
+                                this._address,
+                                NEXT_BLOCK_TIMEOUT
+                            )
+                        } catch (e) {
+                            console.error(`Failed to wait for next block for ${this._address}`)
+                            continue // retry
+                        }
+                    }
 
-                        break
+                    try {
+                        this._currentPollingMethod = await this._contractMutex.use(async () => {
+                            await this._contract.handleBlock(nextBlockId)
+                            return this._contract.pollingMethod
+                        })
+                        this._currentBlockId = nextBlockId
+                    } catch (e) {
+                        console.error(`Failed to handle block for ${this._address}`, e)
                     }
                 }
             }
@@ -206,7 +209,9 @@ export class ContractSubscription<C extends IContract> {
 
     public async prepareReliablePolling() {
         try {
-            this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
+            if (this._connection instanceof nt.GqlConnection) {
+                this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
+            }
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
         }

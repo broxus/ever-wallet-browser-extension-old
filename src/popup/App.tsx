@@ -22,8 +22,7 @@ import './styles/main.scss'
 const Loader: React.FC = () => {
     return (
         <div className="loader-page">
-            {/*@ts-ignore*/}
-            <Oval className="loader-page__spinner" />
+            <img src={Oval} className="loader-page__spinner" alt="" />
         </div>
     )
 }

@@ -6,9 +6,9 @@ import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Checkbox from '@popup/components/Checkbox'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
+import UserAvatar from '@popup/components/UserAvatar'
 
 import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
-import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>
@@ -193,7 +193,7 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             <span>.</span>
                         </p>
 
-                        <TonWalletLogo />
+                        <img src={TonWalletLogo} alt="" />
                     </div>
                 </div>
             )}

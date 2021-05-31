@@ -7,28 +7,29 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use nt::transport::{gql, Transport};
+use nt::transport::jrpc;
+use nt::transport::Transport;
 
 use super::{
     PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
 };
-use crate::external::{GqlConnectionImpl, GqlSender};
+use crate::external::{JrpcConnector, JrpcSender};
 use crate::transport::{IntoHandle, TransportHandle};
 use crate::utils::*;
 
 #[wasm_bindgen]
 #[derive(Clone)]
-pub struct GqlConnection {
+pub struct JrpcConnection {
     #[wasm_bindgen(skip)]
-    pub inner: Arc<GqlConnectionImpl>,
+    pub inner: Arc<JrpcConnector>,
 }
 
 #[wasm_bindgen]
-impl GqlConnection {
+impl JrpcConnection {
     #[wasm_bindgen(constructor)]
-    pub fn new(sender: GqlSender) -> GqlConnection {
+    pub fn new(sender: JrpcSender) -> Self {
         Self {
-            inner: Arc::new(GqlConnectionImpl::new(sender)),
+            inner: Arc::new(JrpcConnector::new(sender)),
         }
     }
 
@@ -125,40 +126,6 @@ impl GqlConnection {
         })))
     }
 
-    #[wasm_bindgen(js_name = "getLatestBlock")]
-    pub fn get_latest_block(&self, address: &str) -> Result<PromiseLatestBlock, JsValue> {
-        let address = parse_address(address)?;
-        let transport = self.make_transport();
-
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let latest_block = transport.get_latest_block(&address).await.handle_error()?;
-            Ok(make_latest_block(latest_block))
-        })))
-    }
-
-    #[wasm_bindgen(js_name = "waitForNextBlock")]
-    pub fn wait_for_next_block(
-        &self,
-        current_block_id: String,
-        address: &str,
-        timeout: u32,
-    ) -> Result<PromiseString, JsValue> {
-        let address = parse_address(address)?;
-        let transport = self.make_transport();
-
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let next_block = transport
-                .wait_for_next_block(
-                    &current_block_id,
-                    &address,
-                    std::time::Duration::from_secs(timeout as u64),
-                )
-                .await
-                .handle_error()?;
-            Ok(JsValue::from(next_block))
-        })))
-    }
-
     #[wasm_bindgen(js_name = "getFullContractState")]
     pub fn get_full_account_state(
         &self,
@@ -187,22 +154,18 @@ impl GqlConnection {
         use crate::core::models::*;
 
         let address = parse_address(address)?;
-        let before_lt = continuation
-            .map(parse_transaction_id)
-            .transpose()?
-            .map(|id| id.lt);
         let transport = self.make_transport();
+        let from = match continuation {
+            Some(continuation) => parse_transaction_id(continuation)?,
+            None => nt::core::models::TransactionId {
+                lt: u64::MAX,
+                hash: Default::default(),
+            },
+        };
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             Ok(transport
-                .get_transactions(
-                    address,
-                    nt::core::models::TransactionId {
-                        lt: before_lt.unwrap_or(u64::MAX),
-                        hash: Default::default(),
-                    },
-                    limit,
-                )
+                .get_transactions(address, from, limit)
                 .await
                 .handle_error()?
                 .into_iter()
@@ -217,37 +180,14 @@ impl GqlConnection {
     }
 }
 
-impl GqlConnection {
-    pub fn make_transport(&self) -> gql::GqlTransport {
-        gql::GqlTransport::new(self.inner.clone())
+impl JrpcConnection {
+    pub fn make_transport(&self) -> jrpc::JrpcTransport {
+        jrpc::JrpcTransport::new(self.inner.clone())
     }
 }
 
-impl IntoHandle for Arc<gql::GqlTransport> {
+impl IntoHandle for Arc<jrpc::JrpcTransport> {
     fn into_handle(self) -> TransportHandle {
-        TransportHandle::GraphQl(self)
+        TransportHandle::Adnl(self as Arc<dyn Transport>)
     }
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const LATEST_BLOCK: &'static str = r#"
-export type LatestBlock = {
-    id: string,
-    endLt: string,
-    genUtime: number,
-};
-"#;
-
-fn make_latest_block(latest_block: nt::transport::gql::LatestBlock) -> JsValue {
-    ObjectBuilder::new()
-        .set("id", latest_block.id)
-        .set("endLt", latest_block.end_lt.to_string())
-        .set("genUtime", latest_block.gen_utime)
-        .build()
-}
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "Promise<LatestBlock>")]
-    pub type PromiseLatestBlock;
 }

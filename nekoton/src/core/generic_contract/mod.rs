@@ -8,6 +8,7 @@ use wasm_bindgen_futures::*;
 use nt::core::generic_contract;
 use nt::utils::*;
 
+use crate::transport::TransportHandle;
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -19,10 +20,7 @@ pub struct GenericContract {
 }
 
 impl GenericContract {
-    pub fn new(
-        transport: Arc<nt::transport::gql::GqlTransport>,
-        contract: generic_contract::GenericContract,
-    ) -> Self {
+    pub fn new(transport: TransportHandle, contract: generic_contract::GenericContract) -> Self {
         Self {
             address: contract.address().to_string(),
             inner: Arc::new(GenericContractImpl {
@@ -101,7 +99,7 @@ impl GenericContract {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let block = inner.transport.get_block(&block_id).await.handle_error()?;
+            let block = inner.transport.get_block(&block_id).await?;
 
             let mut contract = inner.contract.lock().trust_me();
             contract.handle_block(&block).await.handle_error()?;
@@ -136,7 +134,7 @@ impl GenericContract {
 }
 
 pub struct GenericContractImpl {
-    transport: Arc<nt::transport::gql::GqlTransport>,
+    transport: TransportHandle,
     contract: Mutex<generic_contract::GenericContract>,
 }
 
