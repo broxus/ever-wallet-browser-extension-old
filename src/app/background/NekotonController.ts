@@ -232,25 +232,35 @@ export class NekotonController extends EventEmitter {
     }
 
     public async changeNetwork(params: ConnectionDataItem) {
+        const currentNetwork = this._components.connectionController.state.selectedConnection
+
         await this._components.accountController.stopSubscriptions()
         console.debug('Stopped account subscriptions')
 
         await this._components.subscriptionsController.stopSubscriptions()
         console.debug('Stopped contract subscriptions')
 
-        await this._components.connectionController
-            .startSwitchingNetwork(params)
-            .then((handle) => handle.switch())
-        await this._components.accountController.startSubscriptions()
+        try {
+            await this._components.connectionController
+                .startSwitchingNetwork(params)
+                .then((handle) => handle.switch())
+        } catch (e) {
+            await this._components.connectionController
+                .startSwitchingNetwork(currentNetwork)
+                .then((handle) => handle.switch())
+        } finally {
+            await this._components.accountController.startSubscriptions()
 
-        this._notifyAllConnections({
-            method: 'networkChanged',
-            params: {
-                selectedConnection: params.name,
-            },
-        })
+            this._notifyAllConnections({
+                method: 'networkChanged',
+                params: {
+                    selectedConnection: this._components.connectionController.state
+                        .selectedConnection.group,
+                },
+            })
 
-        this._sendUpdate()
+            this._sendUpdate()
+        }
     }
 
     public async logOut() {
@@ -353,7 +363,6 @@ export class NekotonController extends EventEmitter {
         if (tabId) {
             engine.push(createTabIdMiddleware({ tabId }))
         }
-        //engine.push(createLoggerMiddleware({ origin }))
 
         engine.push(
             createProviderMiddleware({
@@ -581,23 +590,6 @@ const createTabIdMiddleware = ({
 
 interface CreateLoggerMiddlewareOptions {
     origin: string
-}
-
-const createLoggerMiddleware = ({
-    origin,
-}: CreateLoggerMiddlewareOptions): JsonRpcMiddleware<unknown, unknown> => {
-    return (req, res, next, _end) => {
-        next((cb) => {
-            if (res.error) {
-                console.error('Error in RPC response:\n', res)
-            }
-            if ((req as any).isNekotonInternal) {
-                return
-            }
-            console.info(`RPC (${origin}):`, req, '->', res)
-            cb()
-        })
-    }
 }
 
 const setupMultiplex = <T extends Duplex>(connectionStream: T) => {
