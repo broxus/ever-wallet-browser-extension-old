@@ -270,7 +270,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     }
 
     const submitPassword = async (password: nt.KeyPassword) => {
-        if (messageToPrepare == null) {
+        if (messageToPrepare == null || inProcess) {
             return
         }
 
@@ -278,11 +278,13 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         setInProcess(true)
         try {
             const signedMessage = await prepareMessage(messageToPrepare, password)
-            onSubmit(signedMessage)
+            await onSubmit(signedMessage)
         } catch (e) {
             setError(e.toString())
-        } finally {
             setInProcess(false)
+        } finally {
+            setMessageParams(undefined)
+            setMessageToPrepare(undefined)
         }
     }
 
@@ -478,8 +480,12 @@ const Send: React.FC<ISend> = ({
 }) => {
     const [pendingResponse, setPendingResponse] = useState<Promise<nt.Transaction>>()
 
-    const trySendMessage = async (message: nt.SignedMessage) => {
-        setPendingResponse(sendMessage(message))
+    const trySendMessage = (message: nt.SignedMessage) => {
+        if (pendingResponse == null) {
+            setPendingResponse(sendMessage(message))
+        } else {
+            throw new Error('Pending response is already set')
+        }
     }
 
     if (pendingResponse == null) {
@@ -504,9 +510,7 @@ const Send: React.FC<ISend> = ({
                 prepareTokenMessage={prepareTokenMessage}
                 estimateFees={estimateFees}
                 onBack={onBack}
-                onSubmit={(message) => {
-                    trySendMessage(message).then(() => {})
-                }}
+                onSubmit={(message) => trySendMessage(message)}
             />
         )
     } else {
