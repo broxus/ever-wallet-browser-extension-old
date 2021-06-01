@@ -50,9 +50,13 @@ const AssetFull: React.FC<IAssetFull> = ({
 
     const accountName = account.name
     const accountAddress = account.tonWallet.address
+    const tonWalletAsset = account.tonWallet
     let tonWalletState = controllerState.accountContractStates[accountAddress] as
         | nt.ContractState
         | undefined
+
+    const tokenWalletAssets =
+        account.additionalAssets[controllerState.selectedConnection.group]?.tokenWallets || []
 
     let shouldDeploy: boolean
     let balance: string | undefined
@@ -211,7 +215,9 @@ const AssetFull: React.FC<IAssetFull> = ({
                     )}
                     {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
-                            account={account}
+                            accountName={accountName}
+                            tonWalletAsset={tonWalletAsset}
+                            tokenWalletAssets={tokenWalletAssets}
                             defaultAsset={selectedAsset}
                             keyEntry={selectedKey}
                             tonWalletState={tonWalletState}

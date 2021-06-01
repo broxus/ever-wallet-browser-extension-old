@@ -18,7 +18,7 @@ import CollectTokens from '@popup/components/CollectTokens'
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
-import { NamedConnectionData } from '@shared/approvalApi'
+import { ConnectionDataItem } from '@shared/approvalApi'
 
 interface IMainPage {
     controllerState: ControllerState
@@ -64,21 +64,25 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const accountName = selectedAccount.name
     const accountAddress = selectedAccount.tonWallet.address
 
+    const tonWalletAsset = selectedAccount.tonWallet
+    const tokenWalletAssets =
+        selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
+
     const tonWalletState = controllerState.accountContractStates[accountAddress] as
         | nt.ContractState
         | undefined
     const tokenWalletStates = controllerState.accountTokenStates[accountAddress] || {}
 
     const transactions = controllerState.accountTransactions[accountAddress] || []
-    const network = selectedConnection.name
+    const networkId = selectedConnection.id
 
     const toggleNetwork = async () => {
         const networks = await controllerRpc.getAvailableNetworks()
 
-        let nextNetwork: NamedConnectionData | undefined
+        let nextNetwork: ConnectionDataItem | undefined
         for (let i = 0; i < networks.length; ++i) {
             const item = networks[i]
-            if (item.name == network) {
+            if (item.id == networkId) {
                 nextNetwork = networks[(i + 1) % networks.length]
             }
         }
@@ -112,7 +116,7 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                 <AccountDetails
                     account={selectedAccount}
                     tonWalletState={tonWalletState}
-                    network={network}
+                    network={selectedConnection.name}
                     onToggleNetwork={toggleNetwork}
                     onLogOut={async () => {
                         await logOut()
@@ -124,7 +128,8 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
                 />
                 <UserAssets
-                    account={selectedAccount}
+                    tonWalletAsset={tonWalletAsset}
+                    tokenWalletAssets={tokenWalletAssets}
                     tonWalletState={tonWalletState}
                     tokenWalletStates={tokenWalletStates}
                     knownTokens={knownTokens}
@@ -147,7 +152,9 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     )}
                     {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
-                            account={selectedAccount}
+                            accountName={accountName}
+                            tonWalletAsset={tonWalletAsset}
+                            tokenWalletAssets={tokenWalletAssets}
                             keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
                             tokenWalletStates={tokenWalletStates}

@@ -16,7 +16,6 @@ import {
     JsonRpcSuccess,
 } from '@shared/jrpc'
 import {
-    checkForError,
     createEngineStream,
     NekotonRpcError,
     nodeify,
@@ -25,7 +24,7 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { NEKOTON_PROVIDER } from '@shared/constants'
-import { NamedConnectionData } from '@shared/approvalApi'
+import { ConnectionDataItem } from '@shared/approvalApi'
 
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
@@ -188,7 +187,7 @@ export class NekotonController extends EventEmitter {
         return {
             getState: (cb: ApiCallback<ReturnType<typeof NekotonController.prototype.getState>>) =>
                 cb(null, this.getState()),
-            getAvailableNetworks: (cb: ApiCallback<NamedConnectionData[]>) =>
+            getAvailableNetworks: (cb: ApiCallback<ConnectionDataItem[]>) =>
                 cb(null, connectionController.getAvailableNetworks()),
             openExtensionInBrowser: (cb: ApiCallback<undefined>) => {
                 const existingTabs = window.ObjectExt.keys(this._options.getOpenNekotonTabIds())
@@ -232,7 +231,7 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    public async changeNetwork(params: NamedConnectionData) {
+    public async changeNetwork(params: ConnectionDataItem) {
         await this._components.accountController.stopSubscriptions()
         console.debug('Stopped account subscriptions')
 
