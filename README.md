@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.8 (2021-06-02)
+
+Features
+
+* Added waiting for background script in the popup.
+* Iterate over all possible transports in selected network group until a working one is found. 
+
+Bugfixes
+
+* Fixed selected network persistence.
+
 ### 0.1.7 (2021-06-01)
 
 Features

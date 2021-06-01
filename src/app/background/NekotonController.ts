@@ -185,6 +185,7 @@ export class NekotonController extends EventEmitter {
         const { approvalController, accountController, connectionController } = this._components
 
         return {
+            ping: (cb: ApiCallback<void>) => cb(null),
             getState: (cb: ApiCallback<ReturnType<typeof NekotonController.prototype.getState>>) =>
                 cb(null, this.getState()),
             getAvailableNetworks: (cb: ApiCallback<ConnectionDataItem[]>) =>

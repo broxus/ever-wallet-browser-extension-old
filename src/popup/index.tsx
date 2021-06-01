@@ -8,25 +8,72 @@ import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 
 import { getEnvironmentType } from '@popup/utils/platform'
-import { PortDuplexStream } from '@shared/utils'
+import { getUniqueId, PortDuplexStream } from '@shared/utils'
 import { Environment, ENVIRONMENT_TYPE_BACKGROUND, ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
 import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import { StreamProvider } from '@popup/utils/StreamProvider'
 import store from '@popup/store'
 
 import App, { ActiveTab } from './App'
+import Oval from '@popup/img/oval.svg'
 
 const start = async () => {
     const windowType = getEnvironmentType()
     console.log('Window type', windowType)
 
-    const extensionPort = chrome.runtime.connect({ name: windowType })
-    const connectionStream = new PortDuplexStream(extensionPort)
+    const container = document.getElementById('root')
+
+    const makeConnection = () => {
+        return new Promise<PortDuplexStream>((resolve, reject) => {
+            console.log('Connecting')
+
+            const extensionPort = chrome.runtime.connect({ name: windowType })
+            const connectionStream = new PortDuplexStream(extensionPort)
+
+            const onConnect = () => {
+                extensionPort.onMessage.removeListener(onConnect)
+                resolve(connectionStream)
+            }
+            const onDisconnect = () => reject(new Error('Port closed'))
+
+            extensionPort.onMessage.addListener(onConnect)
+            extensionPort.onDisconnect.addListener(onDisconnect)
+
+            extensionPort.postMessage({
+                name: 'controller',
+                data: {
+                    id: getUniqueId(),
+                    jsonrpc: '2.0',
+                    method: 'ping',
+                },
+            })
+        })
+    }
+
+    const tryConnect = async () => {
+        while (true) {
+            try {
+                return await makeConnection()
+            } catch (e) {
+                console.error(e)
+                await new Promise<void>((resolve) => {
+                    setTimeout(() => resolve(), 1000)
+                })
+            }
+        }
+    }
+
+    if (container != null) {
+        const iconSrc = Oval
+        container.innerHTML = `<div class="loader-page"><img src="${iconSrc}" class="loader-page__spinner" alt="" /></div>`
+    }
+
+    const connectionStream = await tryConnect()
+
+    console.log('Connected')
 
     const activeTab = await queryCurrentActiveTab(windowType)
     initializeUi(activeTab, connectionStream, (error?: Error) => {
         if (error) {
-            const container = document.getElementById('root')
             if (container) {
                 container.innerHTML =
                     '<div class="critical-error">The Nekoton app failed to load: please open and close Nekoton again to restart.</div>'
@@ -93,16 +140,6 @@ const connectToBackground = (
     })
 
     setupControllerConnection((mux.createStream('controller') as unknown) as Duplex, callback)
-    setupWeb3Connection(mux.createStream('provider'))
-}
-
-const setupWeb3Connection = <T extends Duplex>(connectionStream: T) => {
-    const providerStream = new StreamProvider()
-    pump(providerStream, connectionStream, providerStream, (error) => {
-        if (error) {
-            console.error(error)
-        }
-    })
 }
 
 const setupControllerConnection = (
