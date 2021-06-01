@@ -713,6 +713,29 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async preloadTokenTransactions(
+        owner: string,
+        rootTokenContract: string,
+        lt: string,
+        hash: string
+    ) {
+        const subscription = this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
+        if (!subscription) {
+            throw new NekotonRpcError(
+                RpcErrorCode.RESOURCE_UNAVAILABLE,
+                `There is no token wallet subscription for address ${owner} for root ${rootTokenContract}`
+            )
+        }
+
+        await subscription.use(async (wallet) => {
+            try {
+                await wallet.preloadTransactions(lt, hash)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+            }
+        })
+    }
+
     public enableIntensivePolling() {
         console.debug('Enable intensive polling')
         this._tonWalletSubscriptions.forEach((subscription) => {

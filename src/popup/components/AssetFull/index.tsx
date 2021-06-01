@@ -64,6 +64,7 @@ const AssetFull: React.FC<IAssetFull> = ({
     let symbol: nt.Symbol | undefined
     let currencyName: string | undefined
     let decimals: number | undefined
+    let preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 
     if (selectedAsset.type == 'ton_wallet') {
         shouldDeploy =
@@ -74,6 +75,8 @@ const AssetFull: React.FC<IAssetFull> = ({
         transactions = controllerState.accountTransactions[accountAddress]
         currencyName = 'TON'
         decimals = 9
+        preloadTransactions = ({ lt, hash }) =>
+            controllerRpc.preloadTransactions(accountAddress, lt, hash)
     } else {
         const rootTokenContract = selectedAsset.data.rootTokenContract
 
@@ -91,6 +94,8 @@ const AssetFull: React.FC<IAssetFull> = ({
         symbol = controllerState.knownTokens[rootTokenContract]
         currencyName = symbol.name
         decimals = symbol.decimals
+        preloadTransactions = ({ lt, hash }) =>
+            controllerRpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
     }
 
     const closePanel = () => {
@@ -198,9 +203,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                         symbol={symbol}
                         transactions={transactions || []}
                         onViewTransaction={showTransaction}
-                        preloadTransactions={({ lt, hash }) =>
-                            controllerRpc.preloadTransactions(account.tonWallet.address, lt, hash)
-                        }
+                        preloadTransactions={preloadTransactions}
                     />
                 </div>
             </div>

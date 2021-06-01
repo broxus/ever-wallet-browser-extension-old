@@ -219,6 +219,7 @@ export class NekotonController extends EventEmitter {
             prepareSwapBackMessage: nodeifyAsync(accountController, 'prepareSwapBackMessage'),
             sendMessage: nodeifyAsync(accountController, 'sendMessage'),
             preloadTransactions: nodeifyAsync(accountController, 'preloadTransactions'),
+            preloadTokenTransactions: nodeifyAsync(accountController, 'preloadTokenTransactions'),
             resolvePendingApproval: nodeify(approvalController, 'resolve'),
             rejectPendingApproval: nodeify(approvalController, 'reject'),
         }
