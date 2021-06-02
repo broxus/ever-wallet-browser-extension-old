@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
 import Decimal from 'decimal.js'
+import { prepareKey } from '@popup/utils'
 import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
@@ -57,21 +58,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
 
         setInProcess(true)
         try {
-            const keyPassword: nt.KeyPassword =
-                keyEntry.signerName != 'ledger_key'
-                    ? {
-                        type: keyEntry.signerName,
-                        data: {
-                            publicKey: keyEntry.publicKey,
-                            password,
-                        },
-                    }
-                    : {
-                        type:  keyEntry.signerName,
-                        data: {
-                            publicKey: keyEntry.publicKey,
-                        },
-                    }
+            const keyPassword = prepareKey(keyEntry, password)
 
             const isValid = await checkPassword(keyPassword)
             if (isValid) {

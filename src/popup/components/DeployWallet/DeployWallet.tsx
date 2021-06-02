@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { convertTons } from '@shared/utils'
 import Decimal from 'decimal.js'
+import { prepareKey } from '@popup/utils'
 import * as nt from '@nekoton'
 
 import QRCode from 'react-qr-code'
@@ -50,21 +51,7 @@ const DeployWallet: React.FC<IDeployWallet> = ({
     const [pendingResponse, setPendingResponse] = useState<Promise<nt.Transaction>>()
 
     const submitPassword = async (password: string) => {
-        const keyPassword: nt.KeyPassword =
-            keyEntry.signerName != 'ledger_key'
-                ? {
-                    type: keyEntry.signerName,
-                    data: {
-                        publicKey: keyEntry.publicKey,
-                        password,
-                    },
-                }
-                : {
-                    type:  keyEntry.signerName,
-                    data: {
-                        publicKey: keyEntry.publicKey,
-                    },
-                }
+        const keyPassword = prepareKey(keyEntry, password)
 
         setError(undefined)
         setInProcess(true)
