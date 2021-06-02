@@ -124,7 +124,9 @@ type MessageParams = {
 }
 
 type IPrepareMessage = {
-    account: nt.AssetsList
+    accountName: string
+    tonWalletAsset: nt.TonWalletAsset
+    tokenWalletAssets: nt.TokenWalletAsset[]
     defaultAsset: SelectedAsset
     keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState
@@ -151,7 +153,9 @@ type IMessage = {
 }
 
 const PrepareMessage: React.FC<IPrepareMessage> = ({
-    account,
+    accountName,
+    tonWalletAsset,
+    tokenWalletAssets,
     defaultAsset,
     keyEntry,
     tonWalletState,
@@ -181,7 +185,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         label: 'TON',
     }
     const options: { value: string; label: string }[] = [defaultValue]
-    for (const { rootTokenContract } of account.tokenWallets) {
+    for (const { rootTokenContract } of tokenWalletAssets) {
         const symbol = knownTokens[rootTokenContract]
 
         options.push({
@@ -212,7 +216,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         currencyName = symbol?.name
     }
 
-    const walletInfo = nt.getContractTypeDetails(account.tonWallet.contractType)
+    const walletInfo = nt.getContractTypeDetails(tonWalletAsset.contractType)
 
     useEffect(() => {
         if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
@@ -237,7 +241,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             }
 
             const internalMessage = await prepareTokenMessage(
-                account.tonWallet.address,
+                tonWalletAsset.address,
                 selectedAsset,
                 {
                     amount: parseCurrency(data.amount, decimals),
@@ -266,7 +270,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     }
 
     const submitPassword = async (password: nt.KeyPassword) => {
-        if (messageToPrepare == null) {
+        if (messageToPrepare == null || inProcess) {
             return
         }
 
@@ -274,19 +278,21 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         setInProcess(true)
         try {
             const signedMessage = await prepareMessage(messageToPrepare, password)
-            onSubmit(signedMessage)
+            await onSubmit(signedMessage)
         } catch (e) {
             setError(e.toString())
-        } finally {
             setInProcess(false)
+        } finally {
+            setMessageParams(undefined)
+            setMessageToPrepare(undefined)
         }
     }
 
     return (
         <>
             <div className="send-screen__account_details">
-                <UserAvatar address={account.tonWallet.address} small />{' '}
-                <span className="send-screen__account_details-title">{account.name}</span>
+                <UserAvatar address={tonWalletAsset.address} small />{' '}
+                <span className="send-screen__account_details-title">{accountName}</span>
             </div>
             {localStep === PrepareStep.ENTER_ADDRESS && (
                 <div>
@@ -435,7 +441,9 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
 }
 
 interface ISend {
-    account: nt.AssetsList
+    accountName: string
+    tonWalletAsset: nt.TonWalletAsset
+    tokenWalletAssets: nt.TokenWalletAsset[]
     defaultAsset?: SelectedAsset
     keyEntry: nt.KeyStoreEntry
     tonWalletState: nt.ContractState
@@ -456,7 +464,9 @@ interface ISend {
 }
 
 const Send: React.FC<ISend> = ({
-    account,
+    accountName,
+    tonWalletAsset,
+    tokenWalletAssets,
     defaultAsset,
     keyEntry,
     tonWalletState,
@@ -470,19 +480,25 @@ const Send: React.FC<ISend> = ({
 }) => {
     const [pendingResponse, setPendingResponse] = useState<Promise<nt.Transaction>>()
 
-    const trySendMessage = async (message: nt.SignedMessage) => {
-        setPendingResponse(sendMessage(message))
+    const trySendMessage = (message: nt.SignedMessage) => {
+        if (pendingResponse == null) {
+            setPendingResponse(sendMessage(message))
+        } else {
+            throw new Error('Pending response is already set')
+        }
     }
 
     if (pendingResponse == null) {
         return (
             <PrepareMessage
-                account={account}
+                accountName={accountName}
+                tonWalletAsset={tonWalletAsset}
+                tokenWalletAssets={tokenWalletAssets}
                 defaultAsset={
                     defaultAsset || {
                         type: 'ton_wallet',
                         data: {
-                            address: account.tonWallet.address,
+                            address: tonWalletAsset.address,
                         },
                     }
                 }
@@ -494,9 +510,7 @@ const Send: React.FC<ISend> = ({
                 prepareTokenMessage={prepareTokenMessage}
                 estimateFees={estimateFees}
                 onBack={onBack}
-                onSubmit={(message) => {
-                    trySendMessage(message).then(() => {})
-                }}
+                onSubmit={(message) => trySendMessage(message)}
             />
         )
     } else {

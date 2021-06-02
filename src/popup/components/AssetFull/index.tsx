@@ -50,9 +50,13 @@ const AssetFull: React.FC<IAssetFull> = ({
 
     const accountName = account.name
     const accountAddress = account.tonWallet.address
+    const tonWalletAsset = account.tonWallet
     let tonWalletState = controllerState.accountContractStates[accountAddress] as
         | nt.ContractState
         | undefined
+
+    const tokenWalletAssets =
+        account.additionalAssets[controllerState.selectedConnection.group]?.tokenWallets || []
 
     let shouldDeploy: boolean
     let balance: string | undefined
@@ -60,6 +64,7 @@ const AssetFull: React.FC<IAssetFull> = ({
     let symbol: nt.Symbol | undefined
     let currencyName: string | undefined
     let decimals: number | undefined
+    let preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 
     if (selectedAsset.type == 'ton_wallet') {
         shouldDeploy =
@@ -70,6 +75,8 @@ const AssetFull: React.FC<IAssetFull> = ({
         transactions = controllerState.accountTransactions[accountAddress]
         currencyName = 'TON'
         decimals = 9
+        preloadTransactions = ({ lt, hash }) =>
+            controllerRpc.preloadTransactions(accountAddress, lt, hash)
     } else {
         const rootTokenContract = selectedAsset.data.rootTokenContract
 
@@ -87,6 +94,8 @@ const AssetFull: React.FC<IAssetFull> = ({
         symbol = controllerState.knownTokens[rootTokenContract]
         currencyName = symbol.name
         decimals = symbol.decimals
+        preloadTransactions = ({ lt, hash }) =>
+            controllerRpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
     }
 
     const closePanel = () => {
@@ -194,9 +203,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                         symbol={symbol}
                         transactions={transactions || []}
                         onViewTransaction={showTransaction}
-                        preloadTransactions={({ lt, hash }) =>
-                            controllerRpc.preloadTransactions(account.tonWallet.address, lt, hash)
-                        }
+                        preloadTransactions={preloadTransactions}
                     />
                 </div>
             </div>
@@ -211,7 +218,9 @@ const AssetFull: React.FC<IAssetFull> = ({
                     )}
                     {openedPanel == Panel.SEND && tonWalletState && (
                         <Send
-                            account={account}
+                            accountName={accountName}
+                            tonWalletAsset={tonWalletAsset}
+                            tokenWalletAssets={tokenWalletAssets}
                             defaultAsset={selectedAsset}
                             keyEntry={selectedKey}
                             tonWalletState={tonWalletState}

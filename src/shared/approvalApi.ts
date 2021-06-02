@@ -68,11 +68,12 @@ export type JrpcSocketParams = {
     endpoint: string
 }
 
-export type ConnectionData =
+export type ConnectionData = { name: string; group: string } & (
     | nt.EnumItem<'graphql', GqlSocketParams>
     | nt.EnumItem<'jrpc', JrpcSocketParams>
+)
 
-export type NamedConnectionData = { name: string } & ConnectionData
+export type ConnectionDataItem = { id: number } & ConnectionData
 
 export type ApprovalApi = {
     requestPermissions: {
