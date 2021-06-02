@@ -62,13 +62,14 @@ impl KeyStore {
                                     password: password.into(),
                                 }
                             }
-                            ParsedNewMasterKeyParams::DerivedKeyParams { master_key, account_id } => {
-                                DerivedKeyCreateInput::Derive {
-                                    master_key: parse_public_key(&master_key)?,
-                                    account_id,
-                                    password: password.into(),
-                                }
-                            }
+                            ParsedNewMasterKeyParams::DerivedKeyParams {
+                                master_key,
+                                account_id,
+                            } => DerivedKeyCreateInput::Derive {
+                                master_key: parse_public_key(&master_key)?,
+                                account_id,
+                                password: password.into(),
+                            },
                         })
                         .await
                 }
@@ -115,12 +116,12 @@ impl KeyStore {
                     old_password,
                     new_password,
                 } => {
-                    let master_key = parse_public_key(&master_key)?;
                     let input = DerivedKeyUpdateParams {
-                        master_key,
+                        master_key: parse_public_key(&master_key)?,
                         old_password: old_password.into(),
                         new_password: new_password.into(),
                     };
+
                     inner.update_key::<DerivedKeySigner>(input).await
                 }
                 ParsedChangeKeyPassword::EncryptedKey {
@@ -152,7 +153,10 @@ impl KeyStore {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let output = match export_key {
-                ParsedExportKey::MasterKey { master_key, password } => {
+                ParsedExportKey::MasterKey {
+                    master_key,
+                    password,
+                } => {
                     let input = DerivedKeyExportParams {
                         master_key: parse_public_key(&master_key)?,
                         password: password.into(),
@@ -275,11 +279,9 @@ async fn sign_data(
             public_key,
             password,
         } => {
-            let master_key = parse_public_key(&master_key)?;
-            let public_key = parse_public_key(&public_key)?;
             let input = DerivedKeySignParams::ByPublicKey {
-                master_key,
-                public_key,
+                public_key: parse_public_key(&public_key)?,
+                master_key: parse_public_key(&master_key)?,
                 password: password.into(),
             };
             key_store.sign::<DerivedKeySigner>(data, input).await
@@ -377,8 +379,8 @@ enum ParsedNewMasterKeyParams {
 #[wasm_bindgen(typescript_custom_section)]
 const CHANGE_KEY_PASSWORD: &str = r#"
 export type ChangeKeyPassword =
-    | EnumItem<'master_key', { oldPassword: string, newPassword: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, oldPassword: string, newPassword: string }>;
+    | EnumItem<'master_key', { masterKey: string, oldPassword: string, newPassword: string }>
+    | EnumItem<'encrypted_key', { masterKey: string, publicKey: string, oldPassword: string, newPassword: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -407,8 +409,8 @@ enum ParsedChangeKeyPassword {
 #[wasm_bindgen(typescript_custom_section)]
 const EXPORT_KEY: &str = r#"
 export type ExportKey =
-    | EnumItem<'master_key', { password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
+    | EnumItem<'master_key', { masterKey: string, password: string }>
+    | EnumItem<'encrypted_key', { masterKey: string, publicKey: string, password: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -423,7 +425,7 @@ enum ParsedExportKey {
     #[serde(rename_all = "camelCase")]
     MasterKey {
         master_key: String,
-        password: String
+        password: String,
     },
     #[serde(rename_all = "camelCase")]
     EncryptedKey {
@@ -471,7 +473,7 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 #[wasm_bindgen(typescript_custom_section)]
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
-    | EnumItem<'master_key', { publicKey: string, password: string }>
+    | EnumItem<'master_key', { masterKey: string, publicKey: string, password: string }>
     | EnumItem<'encrypted_key', { publicKey: string, password: string }>
     | EnumItem<'ledger_key', { publicKey: string }>;
 "#;

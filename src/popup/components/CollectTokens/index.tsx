@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Decimal from 'decimal.js'
 import { convertTons } from '@shared/utils'
 import { MessageToPrepare } from '@shared/approvalApi'
+import { prepareKey } from '@popup/utils'
 import * as nt from '@nekoton'
 
 import QRCode from 'react-qr-code'
@@ -73,21 +74,7 @@ const CollectTokens: React.FC<ICollectTokens> = ({
             return
         }
 
-        const keyPassword: nt.KeyPassword =
-            keyEntry.signerName != 'ledger_key'
-                ? {
-                    type: keyEntry.signerName,
-                    data: {
-                        publicKey: keyEntry.publicKey,
-                        password,
-                    },
-                }
-                : {
-                    type:  keyEntry.signerName,
-                    data: {
-                        publicKey: keyEntry.publicKey,
-                    },
-                }
+        const keyPassword = prepareKey(keyEntry, password)
 
         setError(undefined)
         setInProcess(true)

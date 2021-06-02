@@ -50,6 +50,7 @@ export class TokenWalletSubscription {
 
             return new TokenWalletSubscription(connection, release, tokenWallet)
         } catch (e) {
+            console.log(owner, rootTokenContract)
             release()
             throw e
         }

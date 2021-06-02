@@ -526,6 +526,10 @@ export class AccountController extends BaseController<
     }
 
     public async checkPassword(password: nt.KeyPassword) {
+        if (password.type != 'ledger_key') {
+            return Promise.resolve(true)
+        }
+
         return this.config.keyStore.check_password(password)
     }
 
