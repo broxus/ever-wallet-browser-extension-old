@@ -57,6 +57,13 @@ pub fn check_address(address: &str) -> bool {
     nt::helpers::address::validate_address(address)
 }
 
+#[wasm_bindgen(js_name = "repackAddress")]
+pub fn repack_address(address: &str) -> Result<String, JsValue> {
+    nt::helpers::address::repack_address(address)
+        .map(|x| x.to_string())
+        .handle_error()
+}
+
 #[wasm_bindgen(js_name = "checkEthAddress")]
 pub fn check_eth_address(address: &str) -> bool {
     match address.strip_prefix("0x") {

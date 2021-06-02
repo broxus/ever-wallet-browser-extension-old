@@ -3,29 +3,35 @@ import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
     ConnectionData,
+    ConnectionDataItem,
     GqlSocketParams,
     JrpcSocketParams,
-    NamedConnectionData,
 } from '@shared/approvalApi'
 import * as nt from '@nekoton'
 
 import { BaseController, BaseConfig, BaseState } from './BaseController'
 
 const NETWORK_PRESETS = {
-    ['Mainnet']: {
+    [0]: {
+        name: 'Mainnet (GQL)',
+        group: 'mainnet',
         type: 'graphql',
         data: {
             endpoint: 'https://main.ton.dev/graphql',
             timeout: 60000,
         },
     } as ConnectionData,
-    ['Mainnet (ADNL)']: ({
+    [1]: ({
+        name: 'Mainnet (ADNL)',
+        group: 'mainnet',
         type: 'jrpc',
         data: {
-            endpoint: 'http://127.0.0.1:10000/rpc',
+            endpoint: 'https://jrpc.broxus.com/rpc',
         },
     } as unknown) as ConnectionData,
-    ['Testnet']: {
+    [2]: {
+        name: 'Testnet (GQL)',
+        group: 'testnet',
         type: 'graphql',
         data: {
             endpoint: 'https://net.ton.dev/graphql',
@@ -34,12 +40,14 @@ const NETWORK_PRESETS = {
     } as ConnectionData,
 }
 
-const getPreset = <T extends keyof typeof NETWORK_PRESETS>(name: T): NamedConnectionData => ({
-    name,
-    ...(NETWORK_PRESETS[name] as ConnectionData),
-})
+const getPreset = (id: number): ConnectionDataItem | undefined => {
+    const preset = (NETWORK_PRESETS as { [id: number]: ConnectionData })[id] as
+        | ConnectionData
+        | undefined
+    return preset != null ? { id, ...preset } : undefined
+}
 
-export type InitializedConnection =
+export type InitializedConnection = { group: string } & (
     | nt.EnumItem<
           'graphql',
           {
@@ -54,16 +62,17 @@ export type InitializedConnection =
               connection: nt.JrpcConnection
           }
       >
+)
 
 export interface ConnectionConfig extends BaseConfig {}
 
 export interface ConnectionControllerState extends BaseState {
-    selectedConnection: NamedConnectionData
+    selectedConnection: ConnectionDataItem
 }
 
 function makeDefaultState(): ConnectionControllerState {
     return {
-        selectedConnection: getPreset('Mainnet'),
+        selectedConnection: getPreset(0)!,
     }
 }
 
@@ -95,21 +104,61 @@ export class ConnectionController extends BaseController<
             throw new Error('Must not sync twice')
         }
 
-        await this.startSwitchingNetwork(this.state.selectedConnection).then((handle) =>
-            handle.switch()
-        )
+        while (true) {
+            const loadedConnectionId = await this._loadSelectedConnectionId()
+            if (loadedConnectionId != null) {
+                const selectedConnection = getPreset(loadedConnectionId)
+                if (selectedConnection != null) {
+                    this.update({ selectedConnection }, true)
+                }
+            }
+
+            const selectedConnection = this.state.selectedConnection
+
+            const availableConnections = [selectedConnection]
+            availableConnections.push(
+                ...Object.entries(NETWORK_PRESETS)
+                    .filter(
+                        ([id, item]) =>
+                            ~~id != selectedConnection.id && item.group == selectedConnection.group
+                    )
+                    .map(([id, item]) => ({ id: ~~id, ...item }))
+            )
+
+            console.log(availableConnections)
+
+            for (const connection of availableConnections) {
+                console.log(`Connecting to ${connection.name} ...`)
+
+                try {
+                    await this.startSwitchingNetwork(connection).then((handle) => handle.switch())
+                    console.log(`Successfully connected to ${this.state.selectedConnection.name}`)
+                    return
+                } catch (e) {
+                    console.error('Initial connection failed:', e)
+                }
+            }
+
+            console.error('Failed to select initial connection. Retrying in 5s')
+
+            await new Promise<void>((resolve) => {
+                setTimeout(() => resolve(), 5000)
+            })
+
+            console.log('Restarting connection process')
+        }
     }
 
-    public async startSwitchingNetwork(params: NamedConnectionData): Promise<INetworkSwitchHandle> {
+    public async startSwitchingNetwork(params: ConnectionDataItem): Promise<INetworkSwitchHandle> {
         class NetworkSwitchHandle implements INetworkSwitchHandle {
             private readonly _controller: ConnectionController
             private readonly _release: () => void
-            private readonly _params: NamedConnectionData
+            private readonly _params: ConnectionDataItem
 
             constructor(
                 controller: ConnectionController,
                 release: () => void,
-                params: NamedConnectionData
+                params: ConnectionDataItem
             ) {
                 this._controller = controller
                 this._release = release
@@ -117,8 +166,13 @@ export class ConnectionController extends BaseController<
             }
 
             public async switch() {
-                await this._controller._connect(this._params)
-                this._release()
+                await this._controller
+                    ._connect(this._params)
+                    .then(() => this._release())
+                    .catch((e) => {
+                        this._release()
+                        throw e
+                    })
             }
         }
 
@@ -151,14 +205,14 @@ export class ConnectionController extends BaseController<
             })
     }
 
-    public getAvailableNetworks(): NamedConnectionData[] {
-        return window.ObjectExt.entries(NETWORK_PRESETS).map(([name, value]) => ({
+    public getAvailableNetworks(): ConnectionDataItem[] {
+        return window.ObjectExt.entries(NETWORK_PRESETS).map(([id, value]) => ({
             ...(value as ConnectionData),
-            name,
+            id: ~~id,
         }))
     }
 
-    private async _connect(params: NamedConnectionData) {
+    private async _connect(params: ConnectionDataItem) {
         if (this._initializedConnection) {
             if (this._initializedConnection.type === 'graphql') {
                 this._initializedConnection.data.connection.free()
@@ -169,17 +223,36 @@ export class ConnectionController extends BaseController<
 
         this._initializedConnection = undefined
 
+        const testConnection = async ({ data: { connection } }: InitializedConnection) => {
+            await new Promise<void>((resolve, reject) => {
+                // Try to get any account state
+                connection
+                    .getFullContractState(
+                        '-1:0000000000000000000000000000000000000000000000000000000000000000'
+                    )
+                    .then(() => resolve())
+                    .catch((e) => reject(e))
+
+                setTimeout(() => reject(new Error('Connection timeout')), 60000)
+            })
+        }
+
         if (params.type === 'graphql') {
             try {
                 const socket = new GqlSocket()
 
-                this._initializedConnection = {
+                const connection = {
+                    group: params.group,
                     type: 'graphql',
                     data: {
                         socket,
                         connection: await socket.connect(params.data),
                     },
-                }
+                } as InitializedConnection
+
+                await testConnection(connection)
+
+                this._initializedConnection = connection
             } catch (e) {
                 throw new NekotonRpcError(
                     RpcErrorCode.INTERNAL,
@@ -190,13 +263,18 @@ export class ConnectionController extends BaseController<
             try {
                 const socket = new JrpcSocket()
 
-                this._initializedConnection = {
+                const connection = {
+                    group: params.group,
                     type: 'jrpc',
                     data: {
                         socket,
                         connection: await socket.connect(params.data),
                     },
-                }
+                } as InitializedConnection
+
+                await testConnection(connection)
+
+                this._initializedConnection = connection
             } catch (e) {
                 throw new NekotonRpcError(
                     RpcErrorCode.INTERNAL,
@@ -216,6 +294,7 @@ export class ConnectionController extends BaseController<
             },
             true
         )
+        await this._saveSelectedConnectionId()
     }
 
     private async _acquireConnection() {
@@ -245,6 +324,28 @@ export class ConnectionController extends BaseController<
             this._release?.()
             this._release = undefined
         }
+    }
+
+    private async _loadSelectedConnectionId(): Promise<number | undefined> {
+        return new Promise<number | undefined>((resolve) => {
+            chrome.storage.local.get(['selectedConnectionId'], ({ selectedConnectionId }) => {
+                if (typeof selectedConnectionId !== 'number') {
+                    return resolve(undefined)
+                }
+                resolve(selectedConnectionId)
+            })
+        })
+    }
+
+    private async _saveSelectedConnectionId(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set(
+                { selectedConnectionId: this.state.selectedConnection.id },
+                () => {
+                    resolve()
+                }
+            )
+        })
     }
 }
 

@@ -99,12 +99,6 @@ export class AccountController extends BaseController<
             storedKeys[entry.publicKey] = entry
         }
 
-        const address = await this.config.accountsStorage.getCurrentAccount()
-        let selectedAccount: AccountControllerState['selectedAccount'] = undefined
-        if (address != null) {
-            selectedAccount = await this.config.accountsStorage.getAccount(address)
-        }
-
         const accountEntries: AccountControllerState['accountEntries'] = {}
         const entries = await this.config.accountsStorage.getStoredAccounts()
         for (const entry of entries) {
@@ -114,6 +108,14 @@ export class AccountController extends BaseController<
                 accountEntries[entry.tonWallet.publicKey] = item
             }
             item.push(entry)
+        }
+
+        const selectedAccountAddress = await this._loadSelectedAccountAddress()
+        let selectedAccount: AccountControllerState['selectedAccount'] | undefined
+        if (selectedAccountAddress != null) {
+            selectedAccount = await this.config.accountsStorage.getAccount(selectedAccountAddress)
+        } else {
+            selectedAccount = entries[0]
         }
 
         this.update({
@@ -126,6 +128,8 @@ export class AccountController extends BaseController<
     public async startSubscriptions() {
         console.debug('startSubscriptions')
 
+        const selectedConnection = this.config.connectionController.state.selectedConnection
+
         await this._accountsMutex.use(async () => {
             console.debug('startSubscriptions -> mutex gained')
 
@@ -137,21 +141,27 @@ export class AccountController extends BaseController<
                     )
                 )
 
-            await iterateEntries(async ({ tonWallet, tokenWallets }) => {
+            await iterateEntries(async ({ tonWallet, additionalAssets }) => {
                 await this._createTonWalletSubscription(
                     tonWallet.address,
                     tonWallet.publicKey,
                     tonWallet.contractType
                 )
 
-                await Promise.all(
-                    tokenWallets.map(async ({ rootTokenContract }) => {
-                        await this._createTokenWalletSubscription(
-                            tonWallet.address,
-                            rootTokenContract
-                        )
-                    })
-                )
+                const assets = additionalAssets[selectedConnection.group] as
+                    | nt.AdditionalAssets
+                    | undefined
+
+                if (assets != null) {
+                    await Promise.all(
+                        assets.tokenWallets.map(async ({ rootTokenContract }) => {
+                            await this._createTokenWalletSubscription(
+                                tonWallet.address,
+                                rootTokenContract
+                            )
+                        })
+                    )
+                }
             })
 
             console.debug('startSubscriptions -> mutex released')
@@ -343,12 +353,7 @@ export class AccountController extends BaseController<
                 throw new Error('Requested key not found')
             }
 
-            const selectedAccount = await accountsStorage.addAccount(
-                name,
-                publicKey,
-                contractType,
-                true
-            )
+            const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
 
             const accountEntries = this.state.accountEntries
             let entries = accountEntries[publicKey]
@@ -363,6 +368,8 @@ export class AccountController extends BaseController<
                 accountEntries,
             })
 
+            await this._saveSelectedAccountAddress()
+
             await this.startSubscriptions()
             return selectedAccount
         } catch (e) {
@@ -376,10 +383,21 @@ export class AccountController extends BaseController<
         await this._accountsMutex.use(async () => {
             console.debug('selectAccount -> mutex gained')
 
-            const selectedAccount = await this.config.accountsStorage.setCurrentAccount(address)
-            this.update({
-                selectedAccount,
-            })
+            let selectedAccount: nt.AssetsList | undefined = undefined
+            for (const entries of Object.values(this.state.accountEntries)) {
+                selectedAccount = entries.find((item) => item.tonWallet.address == address)
+                if (selectedAccount != null) {
+                    break
+                }
+            }
+
+            if (selectedAccount != null) {
+                this.update({
+                    selectedAccount,
+                })
+
+                await this._saveSelectedAccountAddress()
+            }
 
             console.debug('selectAccount -> mutex released')
         })
@@ -437,7 +455,9 @@ export class AccountController extends BaseController<
     }
 
     public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
-        const { accountsStorage } = this.config
+        const { accountsStorage, connectionController } = this.config
+
+        const networkGroup = connectionController.state.selectedConnection.group
 
         try {
             await this._accountsMutex.use(async () => {
@@ -449,7 +469,11 @@ export class AccountController extends BaseController<
                                     address,
                                     rootTokenContract
                                 )
-                                await accountsStorage.addTokenWallet(address, rootTokenContract)
+                                await accountsStorage.addTokenWallet(
+                                    address,
+                                    networkGroup,
+                                    rootTokenContract
+                                )
                             } else {
                                 const tokenSubscriptions = this._tokenWalletSubscriptions.get(
                                     address
@@ -459,7 +483,11 @@ export class AccountController extends BaseController<
                                     tokenSubscriptions?.delete(rootTokenContract)
                                     await subscription.stop()
                                 }
-                                await accountsStorage.removeTokenWallet(address, rootTokenContract)
+                                await accountsStorage.removeTokenWallet(
+                                    address,
+                                    networkGroup,
+                                    rootTokenContract
+                                )
                             }
                         }
                     )
@@ -718,6 +746,29 @@ export class AccountController extends BaseController<
     public async preloadTransactions(address: string, lt: string, hash: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
+
+        await subscription.use(async (wallet) => {
+            try {
+                await wallet.preloadTransactions(lt, hash)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+            }
+        })
+    }
+
+    public async preloadTokenTransactions(
+        owner: string,
+        rootTokenContract: string,
+        lt: string,
+        hash: string
+    ) {
+        const subscription = this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
+        if (!subscription) {
+            throw new NekotonRpcError(
+                RpcErrorCode.RESOURCE_UNAVAILABLE,
+                `There is no token wallet subscription for address ${owner} for root ${rootTokenContract}`
+            )
+        }
 
         await subscription.use(async (wallet) => {
             try {
@@ -1113,6 +1164,28 @@ export class AccountController extends BaseController<
 
         this.update({
             accountTokenTransactions: newTransactions,
+        })
+    }
+
+    private async _loadSelectedAccountAddress(): Promise<string | undefined> {
+        return new Promise<string | undefined>((resolve) => {
+            chrome.storage.local.get(['selectedAccountAddress'], ({ selectedAccountAddress }) => {
+                if (typeof selectedAccountAddress !== 'string') {
+                    return resolve(undefined)
+                }
+                resolve(selectedAccountAddress)
+            })
+        })
+    }
+
+    private async _saveSelectedAccountAddress(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set(
+                { selectedAccountAddress: this.state.selectedAccount?.tonWallet.address },
+                () => {
+                    resolve()
+                }
+            )
         })
     }
 }

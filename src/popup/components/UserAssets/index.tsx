@@ -13,7 +13,8 @@ import TransactionsList from '@popup/components/TransactionsList'
 import './style.scss'
 
 type AssetsListProps = {
-    account: nt.AssetsList
+    tonWalletAsset: nt.TonWalletAsset
+    tokenWalletAssets: nt.TokenWalletAsset[]
     tonWalletState: nt.ContractState | undefined
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -26,7 +27,8 @@ enum Panel {
 }
 
 const AssetsList: React.FC<AssetsListProps> = ({
-    account,
+    tonWalletAsset,
+    tokenWalletAssets,
     tonWalletState,
     tokenWalletStates,
     knownTokens,
@@ -41,7 +43,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
         <div className="user-assets__assets-list">
             <AssetsListItem
                 type={'ton_wallet'}
-                address={account.tonWallet.address}
+                address={tonWalletAsset.address}
                 balance={tonWalletState?.balance}
                 name={'TON'}
                 decimals={9}
@@ -49,12 +51,12 @@ const AssetsList: React.FC<AssetsListProps> = ({
                     onViewAsset({
                         type: 'ton_wallet',
                         data: {
-                            address: account.tonWallet.address,
+                            address: tonWalletAsset.address,
                         },
                     })
                 }
             />
-            {account.tokenWallets.map(({ rootTokenContract }) => {
+            {tokenWalletAssets.map(({ rootTokenContract }) => {
                 const symbol = knownTokens[rootTokenContract]
                 const balance = tokenWalletStates[rootTokenContract]?.balance
                 return (
@@ -69,7 +71,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
                             onViewAsset({
                                 type: 'token_wallet',
                                 data: {
-                                    owner: account.tonWallet.address,
+                                    owner: tonWalletAsset.address,
                                     rootTokenContract,
                                 },
                             })
@@ -86,7 +88,7 @@ const AssetsList: React.FC<AssetsListProps> = ({
             </div>
             <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
                 <AddNewToken
-                    tokenWallets={account.tokenWallets}
+                    tokenWallets={tokenWalletAssets}
                     knownTokens={knownTokens}
                     onSubmit={updateTokenWallets}
                     onBack={closePanel}
@@ -97,7 +99,8 @@ const AssetsList: React.FC<AssetsListProps> = ({
 }
 
 type IUserAssets = {
-    account: nt.AssetsList
+    tonWalletAsset: nt.TonWalletAsset
+    tokenWalletAssets: nt.TokenWalletAsset[]
     tonWalletState: nt.ContractState | undefined
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -115,7 +118,8 @@ enum AssetsTab {
 }
 
 const UserAssets: React.FC<IUserAssets> = ({
-    account,
+    tonWalletAsset,
+    tokenWalletAssets,
     tonWalletState,
     tokenWalletStates,
     knownTokens,
@@ -151,7 +155,8 @@ const UserAssets: React.FC<IUserAssets> = ({
                 </div>
                 {activeTab == AssetsTab.ASSETS && (
                     <AssetsList
-                        account={account}
+                        tonWalletAsset={tonWalletAsset}
+                        tokenWalletAssets={tokenWalletAssets}
                         tonWalletState={tonWalletState}
                         onViewAsset={onViewAsset}
                         knownTokens={knownTokens}
