@@ -271,7 +271,8 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
     const [accountName, setAccountName] = useState<string>('')
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
-    const accountId = 2
+    const masterKey = "54ceda1f7c147fc8f016c43244650b95871ac6b8c297178f52fb82c864b4ebed"
+    const accountId = 1
 
     const onSubmit = async (password: string) => {
         console.log('onSubmit')
@@ -280,6 +281,7 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
         try {
             setInProcess(true)
             key = await controllerRpc.createDerivedKey({
+                masterKey,
                 accountId,
                 password,
             })

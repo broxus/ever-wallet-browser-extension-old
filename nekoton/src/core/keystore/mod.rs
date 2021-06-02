@@ -62,8 +62,9 @@ impl KeyStore {
                                     password: password.into(),
                                 }
                             }
-                            ParsedNewMasterKeyParams::DerivedKeyParams { account_id } => {
+                            ParsedNewMasterKeyParams::DerivedKeyParams { master_key, account_id } => {
                                 DerivedKeyCreateInput::Derive {
+                                    master_key: parse_public_key(&master_key)?,
                                     account_id,
                                     password: password.into(),
                                 }
@@ -110,10 +111,13 @@ impl KeyStore {
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let entry = match change_password {
                 ParsedChangeKeyPassword::MasterKey {
+                    master_key,
                     old_password,
                     new_password,
                 } => {
-                    let input = DerivedKeyUpdateParams::ChangePassword {
+                    let master_key = parse_public_key(&master_key)?;
+                    let input = DerivedKeyUpdateParams {
+                        master_key,
                         old_password: old_password.into(),
                         new_password: new_password.into(),
                     };
@@ -148,8 +152,9 @@ impl KeyStore {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let output = match export_key {
-                ParsedExportKey::MasterKey { password } => {
+                ParsedExportKey::MasterKey { master_key, password } => {
                     let input = DerivedKeyExportParams {
+                        master_key: parse_public_key(&master_key)?,
                         password: password.into(),
                     };
                     inner
@@ -266,11 +271,14 @@ async fn sign_data(
 
     match key_password {
         ParsedKeyPassword::MasterKey {
+            master_key,
             public_key,
             password,
         } => {
+            let master_key = parse_public_key(&master_key)?;
             let public_key = parse_public_key(&public_key)?;
             let input = DerivedKeySignParams::ByPublicKey {
+                master_key,
                 public_key,
                 password: password.into(),
             };
@@ -354,7 +362,7 @@ enum ParsedNewKey {
 #[wasm_bindgen(typescript_custom_section)]
 const NEW_MASTER_KEY_PARAMS: &str = r#"
 export type MasterKeyParams = { phrase: string };
-export type DerivedKeyParams = { accountId: number };
+export type DerivedKeyParams = { masterKey: string, accountId: number };
 "#;
 
 #[derive(Deserialize)]
@@ -363,7 +371,7 @@ enum ParsedNewMasterKeyParams {
     #[serde(rename_all = "camelCase")]
     MasterKeyParams { phrase: String },
     #[serde(rename_all = "camelCase")]
-    DerivedKeyParams { account_id: u16 },
+    DerivedKeyParams { master_key: String, account_id: u16 },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -384,6 +392,7 @@ extern "C" {
 enum ParsedChangeKeyPassword {
     #[serde(rename_all = "camelCase")]
     MasterKey {
+        master_key: String,
         old_password: String,
         new_password: String,
     },
@@ -412,7 +421,10 @@ extern "C" {
 #[serde(tag = "type", content = "data", rename_all = "snake_case")]
 enum ParsedExportKey {
     #[serde(rename_all = "camelCase")]
-    MasterKey { password: String },
+    MasterKey {
+        master_key: String,
+        password: String
+    },
     #[serde(rename_all = "camelCase")]
     EncryptedKey {
         public_key: String,
@@ -476,6 +488,7 @@ extern "C" {
 enum ParsedKeyPassword {
     #[serde(rename_all = "camelCase")]
     MasterKey {
+        master_key: String,
         public_key: String,
         password: String,
     },
@@ -493,6 +506,7 @@ const MESSAGE: &str = r#"
 export type KeyStoreEntry = {
     signerName: 'master_key' | 'encrypted_key' | 'ledger_key',
     publicKey: string,
+    masterKey: string,
     accountId: number,
 };
 "#;
@@ -507,6 +521,7 @@ fn make_key_store_entry(data: nt::core::keystore::KeyStoreEntry) -> KeyStoreEntr
     ObjectBuilder::new()
         .set("signerName", data.signer_name)
         .set("publicKey", hex::encode(data.public_key.as_bytes()))
+        .set("masterKey", hex::encode(data.master_key.as_bytes()))
         .set("accountId", data.account_id)
         .build()
         .unchecked_into()

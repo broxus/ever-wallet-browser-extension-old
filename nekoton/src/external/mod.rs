@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Result, Error};
+use anyhow::{Result, Error};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use wasm_bindgen::prelude::*;

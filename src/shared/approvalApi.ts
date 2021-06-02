@@ -12,6 +12,7 @@ export type MasterKeyToCreate = {
 }
 
 export type KeyToDerive = {
+    masterKey: string
     accountId: number
     password: string
 }
