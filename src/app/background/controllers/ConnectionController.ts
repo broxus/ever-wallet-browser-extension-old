@@ -113,33 +113,12 @@ export class ConnectionController extends BaseController<
                 }
             }
 
-            const selectedConnection = this.state.selectedConnection
-
-            const availableConnections = [selectedConnection]
-            availableConnections.push(
-                ...Object.entries(NETWORK_PRESETS)
-                    .filter(
-                        ([id, item]) =>
-                            ~~id != selectedConnection.id && item.group == selectedConnection.group
-                    )
-                    .map(([id, item]) => ({ id: ~~id, ...item }))
-            )
-
-            console.log(availableConnections)
-
-            for (const connection of availableConnections) {
-                console.log(`Connecting to ${connection.name} ...`)
-
-                try {
-                    await this.startSwitchingNetwork(connection).then((handle) => handle.switch())
-                    console.log(`Successfully connected to ${this.state.selectedConnection.name}`)
-                    return
-                } catch (e) {
-                    console.error('Initial connection failed:', e)
-                }
+            try {
+                await this.trySwitchingNetwork(this.state.selectedConnection, true)
+                return
+            } catch (_e) {
+                console.error('Failed to select initial connection. Retrying in 5s')
             }
-
-            console.error('Failed to select initial connection. Retrying in 5s')
 
             await new Promise<void>((resolve) => {
                 setTimeout(() => resolve(), 5000)
@@ -210,6 +189,38 @@ export class ConnectionController extends BaseController<
             ...(value as ConnectionData),
             id: ~~id,
         }))
+    }
+
+    public makeAvailableNetworksGroup(first: ConnectionDataItem): ConnectionDataItem[] {
+        const availableConnections = [first]
+        availableConnections.push(
+            ...Object.entries(NETWORK_PRESETS)
+                .filter(([id, item]) => ~~id != first.id && item.group == first.group)
+                .map(([id, item]) => ({ id: ~~id, ...item }))
+        )
+        return availableConnections
+    }
+
+    public async trySwitchingNetwork(first: ConnectionDataItem, allowOtherConnections: boolean) {
+        const availableConnections = allowOtherConnections
+            ? this.makeAvailableNetworksGroup(first)
+            : [first]
+
+        console.log(availableConnections)
+
+        for (const connection of availableConnections) {
+            console.log(`Connecting to ${connection.name} ...`)
+
+            try {
+                await this.startSwitchingNetwork(connection).then((handle) => handle.switch())
+                console.log(`Successfully connected to ${this.state.selectedConnection.name}`)
+                return
+            } catch (e) {
+                console.error('Connection failed:', e)
+            }
+        }
+
+        throw new Error('Failed to find suitable connection')
     }
 
     private async _connect(params: ConnectionDataItem) {

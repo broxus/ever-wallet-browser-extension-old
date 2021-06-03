@@ -243,13 +243,9 @@ export class NekotonController extends EventEmitter {
         console.debug('Stopped contract subscriptions')
 
         try {
-            await this._components.connectionController
-                .startSwitchingNetwork(params)
-                .then((handle) => handle.switch())
+            await this._components.connectionController.trySwitchingNetwork(params, true)
         } catch (e) {
-            await this._components.connectionController
-                .startSwitchingNetwork(currentNetwork)
-                .then((handle) => handle.switch())
+            await this._components.connectionController.trySwitchingNetwork(currentNetwork, true)
         } finally {
             await this._components.accountController.startSubscriptions()
 

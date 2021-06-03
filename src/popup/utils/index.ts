@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js'
+import * as nt from '@nekoton'
 
 Decimal.set({ maxE: 500, minE: -500 })
 
@@ -17,3 +18,35 @@ export const getIconUrl = (url: string) => {
 
 export const TOKENS_MANIFEST_URL =
     'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
+
+export const prepareKey = (entry: nt.KeyStoreEntry, password: string): nt.KeyPassword => {
+    switch (entry.signerName) {
+        case 'encrypted_key': {
+            return {
+                type: entry.signerName,
+                data: {
+                    publicKey: entry.publicKey,
+                    password,
+                },
+            } as nt.KeyPassword
+        }
+        case 'master_key': {
+            return {
+                type: entry.signerName,
+                data: {
+                    masterKey: entry.masterKey,
+                    publicKey: entry.publicKey,
+                    password,
+                },
+            }
+        }
+        case 'ledger_key': {
+            return {
+                type: entry.signerName,
+                data: {
+                    publicKey: entry.publicKey,
+                },
+            }
+        }
+    }
+}

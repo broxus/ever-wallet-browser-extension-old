@@ -11,9 +11,9 @@ import {
     SelectedAsset,
     TokenWalletState,
 } from '@shared/utils'
+import { prepareKey } from '@popup/utils'
 import { MessageToPrepare, TokenMessageToPrepare } from '@shared/approvalApi'
 import * as nt from '@nekoton'
-import { repackAddress } from '@nekoton'
 
 import Select from 'react-select'
 import Checkbox from '@popup/components/Checkbox'
@@ -53,22 +53,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
     const [password, setPassword] = useState<string>('')
 
     const trySubmit = async () => {
-        const keyPassword: nt.KeyPassword =
-            keyEntry.signerName != 'ledger_key'
-                ? {
-                      type: keyEntry.signerName,
-                      data: {
-                          publicKey: keyEntry.publicKey,
-                          password,
-                      },
-                  }
-                : {
-                      type: keyEntry.signerName,
-                      data: {
-                          publicKey: keyEntry.publicKey,
-                      },
-                  }
-        onSubmit(keyPassword)
+        onSubmit(prepareKey(keyEntry, password))
     }
 
     return (
@@ -230,7 +215,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         let messageToPrepare: MessageToPrepare
         if (selectedAsset.length == 0) {
             messageToPrepare = {
-                recipient: repackAddress(data.recipient), //shouldn't throw exceptions due to higher level validation
+                recipient: nt.repackAddress(data.recipient), //shouldn't throw exceptions due to higher level validation
                 amount: parseTons(data.amount),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
             }
