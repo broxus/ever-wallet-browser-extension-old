@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.10 (2021-06-07)
+
+Bugfixes
+
+* Fixed initial migration.
+* Fixed initial account selection. 
+
 ### 0.1.9 (2021-06-04)
 
 Bugfixes
