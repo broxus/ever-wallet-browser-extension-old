@@ -22,6 +22,8 @@ pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub contract_type: ton_wallet::ContractType,
     #[wasm_bindgen(skip)]
+    pub owners: Vec<String>,
+    #[wasm_bindgen(skip)]
     pub details: ton_wallet::TonWalletDetails,
     #[wasm_bindgen(skip)]
     pub inner: Arc<TonWalletImpl>,
@@ -33,6 +35,10 @@ impl TonWallet {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
             contract_type: wallet.contract_type(),
+            owners: wallet.owners()
+                .iter()
+                .map(|pubkey| hex::encode(pubkey.as_bytes()))
+                .collect(),
             details: wallet.details(),
             inner: Arc::new(TonWalletImpl {
                 transport,
@@ -58,6 +64,11 @@ impl TonWallet {
     pub fn contract_type(&self) -> ContractType {
         self.contract_type.into()
     }
+
+    /*#[wasm_bindgen(getter, js_name = "owners")]
+    pub fn owners(&self) -> Vec<String> {
+        self.owners.clone()
+    }*/
 
     #[wasm_bindgen(getter, js_name = "details")]
     pub fn details(&self) -> TonWalletDetails {

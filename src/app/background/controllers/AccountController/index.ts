@@ -142,7 +142,8 @@ export class AccountController extends BaseController<
                 await this._createTonWalletSubscription(
                     tonWallet.address,
                     tonWallet.publicKey,
-                    tonWallet.contractType
+                    tonWallet.contractType,
+                    tonWallet.owners
                 )
 
                 const assets = additionalAssets[selectedConnection.group] as
@@ -303,6 +304,7 @@ export class AccountController extends BaseController<
         name,
         publicKey,
         contractType,
+        owners,
     }: AccountToCreate): Promise<nt.AssetsList> {
         const { accountsStorage } = this.config
 
@@ -312,7 +314,7 @@ export class AccountController extends BaseController<
                 throw new Error('Requested key not found')
             }
 
-            const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
+            const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType, owners)
 
             const accountEntries = this.state.accountEntries
             let entries = accountEntries[publicKey]
@@ -411,6 +413,47 @@ export class AccountController extends BaseController<
                 accountTokenTransactions,
             })
         })
+    }
+
+    public async getCustodians(address: string): Promise<nt.ExecutionOutput | undefined> {
+        const { connectionController } = this.config
+
+        const {
+            connection: {
+                data: { connection },
+            },
+        } = await connectionController.acquire()
+
+        const fullContractState = await connection.getFullContractState(address)
+        if (fullContractState == null) {
+            return
+        }
+
+        const contract = `{
+            "ABI version": 2,
+            "header": ["pubkey", "time", "expire"],
+            "functions": [
+            {
+                "name": "getCustodians",
+                "inputs": [
+                ],
+                "outputs": [
+                    {"components":[{"name":"index","type":"uint8"},{"name":"pubkey","type":"uint256"}],"name":"custodians","type":"tuple[]"}
+                ]
+            }
+        ]
+        }`
+        const method = 'getCustodians'
+        let input: nt.TokensObject = {}
+
+        return nt.runLocal(
+            fullContractState.genTimings,
+            fullContractState.lastTransactionId,
+            fullContractState.boc,
+            contract,
+            method,
+            input
+        );
     }
 
     public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
@@ -767,7 +810,8 @@ export class AccountController extends BaseController<
     private async _createTonWalletSubscription(
         address: string,
         publicKey: string,
-        contractType: nt.ContractType
+        contractType: nt.ContractType,
+        owners: string[]
     ) {
         if (this._tonWalletSubscriptions.get(address) != null) {
             return
@@ -815,7 +859,8 @@ export class AccountController extends BaseController<
             this.config.connectionController,
             publicKey,
             contractType,
-            new TonWalletHandler(address, this)
+            new TonWalletHandler(address, this),
+            owners
         )
         console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
 

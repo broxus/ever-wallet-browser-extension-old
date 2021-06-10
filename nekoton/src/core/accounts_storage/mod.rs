@@ -39,15 +39,22 @@ impl AccountsStorage {
         name: String,
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
+        owners: &JsValue
     ) -> Result<PromiseAssetsList, JsValue> {
         let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
 
         let inner = self.inner.clone();
 
+        let owners: Vec<ed25519_dalek::PublicKey> = owners.into_serde::<Vec<String>>().unwrap()
+            .into_iter()
+            .map(|owner| {
+                parse_public_key(&owner).unwrap()})
+            .collect();
+
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let assets_list = inner
-                .add_account(&name, public_key, contract_type)
+                .add_account(&name, public_key, contract_type, owners)
                 .await
                 .handle_error()?;
             Ok(make_assets_list(assets_list).unchecked_into())
@@ -219,6 +226,7 @@ export type TonWalletAsset = {
     address: string,
     publicKey: string,
     contractType: ContractType,
+    owners: string[],
 };
 "#;
 
@@ -236,6 +244,13 @@ fn make_ton_wallet_asset(data: nt::core::accounts_storage::TonWalletAsset) -> To
             "contractType",
             crate::core::ton_wallet::ContractType::from(data.contract),
         )
+        .set(
+            "owners",
+            data.owners
+                .into_iter()
+                .map(|pubkey| hex::encode(pubkey.as_bytes()))
+                .map(JsValue::from)
+                .collect::<js_sys::Array>())
         .build()
         .unchecked_into()
 }

@@ -28,6 +28,7 @@ export type AccountToCreate = {
     name: string
     publicKey: string
     contractType: WalletContractType
+    owners: string[]
 }
 
 export type MessageToPrepare = {
