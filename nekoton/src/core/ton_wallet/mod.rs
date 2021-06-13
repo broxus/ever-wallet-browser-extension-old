@@ -22,8 +22,6 @@ pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub contract_type: ton_wallet::ContractType,
     #[wasm_bindgen(skip)]
-    pub owners: Vec<String>,
-    #[wasm_bindgen(skip)]
     pub details: ton_wallet::TonWalletDetails,
     #[wasm_bindgen(skip)]
     pub inner: Arc<TonWalletImpl>,
@@ -35,10 +33,6 @@ impl TonWallet {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
             contract_type: wallet.contract_type(),
-            owners: wallet.owners()
-                .iter()
-                .map(|pubkey| hex::encode(pubkey.as_bytes()))
-                .collect(),
             details: wallet.details(),
             inner: Arc::new(TonWalletImpl {
                 transport,
@@ -65,11 +59,6 @@ impl TonWallet {
         self.contract_type.into()
     }
 
-    /*#[wasm_bindgen(getter, js_name = "owners")]
-    pub fn owners(&self) -> Vec<String> {
-        self.owners.clone()
-    }*/
-
     #[wasm_bindgen(getter, js_name = "details")]
     pub fn details(&self) -> TonWalletDetails {
         make_ton_wallet_details(self.details)
@@ -87,6 +76,31 @@ impl TonWallet {
 
         let inner = wallet
             .prepare_deploy(core_models::Expiration::Timeout(timeout))
+            .handle_error()?;
+        Ok(crate::crypto::UnsignedMessage { inner })
+    }
+
+    #[wasm_bindgen(js_name = "prepareDeployMultipleOwners")]
+    pub fn prepare_deploy_multiple_owners(
+        &self,
+        timeout: u32,
+        custodians: &JsValue,
+    ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
+        let wallet = self.inner.wallet.lock().trust_me();
+
+        let custodians = custodians
+            .into_serde::<Vec<String>>()
+            .map_err(|_| JsValue::from_str("Failed to parse a list of custodians"))?
+            .into_iter()
+            .map(|custodian| {
+                let custodian = parse_public_key(&custodian)
+                    .map_err(|_| JsValue::from_str("Failed to parse a public key"))?;
+                Ok(custodian)
+            })
+            .collect::<Result<Vec<ed25519_dalek::PublicKey>, JsValue>>();
+
+        let inner = wallet
+            .prepare_deploy_multiple_owners(core_models::Expiration::Timeout(timeout), &custodians?)
             .handle_error()?;
         Ok(crate::crypto::UnsignedMessage { inner })
     }
@@ -129,6 +143,21 @@ impl TonWallet {
                 ton_wallet::TransferAction::DeployFirst => None,
             },
         )
+    }
+
+    #[wasm_bindgen(js_name = "getCustodians")]
+    pub fn get_custodians(&self) -> Result<PromiseCustodiansList, JsValue> {
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = inner.wallet.lock().trust_me();
+            let custodians = wallet.get_custodians().await.handle_error()?;
+            Ok(custodians
+                .into_iter()
+                .map(|item| JsValue::from_str(&item.to_hex_string()))
+                .collect::<js_sys::Array>()
+                .unchecked_into())
+        })))
     }
 
     #[wasm_bindgen(js_name = "getContractState")]
@@ -342,6 +371,7 @@ export type TonWalletDetails = {
     requiresSeparateDeploy: boolean,
     minAmount: string,
     supportsPayload: boolean,
+    supportsMultipleOwners: boolean,
 };
 "#;
 
@@ -356,6 +386,7 @@ fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonW
         .set("requiresSeparateDeploy", data.requires_separate_deploy)
         .set("minAmount", data.min_amount.to_string())
         .set("supportsPayload", data.supports_payload)
+        .set("supportsMultipleOwners", data.supports_multiple_owners)
         .build()
         .unchecked_into()
 }

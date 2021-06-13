@@ -122,4 +122,7 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Array<string>")]
     pub type StringArray;
+
+    #[wasm_bindgen(typescript_type = "Promise<Array<string>>")]
+    pub type PromiseCustodiansList;
 }

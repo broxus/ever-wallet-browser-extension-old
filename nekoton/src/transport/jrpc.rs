@@ -68,7 +68,6 @@ impl JrpcConnection {
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
         handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
-        owners: &JsValue,
     ) -> Result<PromiseTonWallet, JsValue> {
         use crate::core::ton_wallet::*;
 
@@ -78,19 +77,12 @@ impl JrpcConnection {
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
 
-        let owners = owners.into_serde::<Vec<String>>().unwrap()
-            .into_iter()
-            .map(|owner| {
-                parse_public_key(&owner).unwrap()})
-            .collect();
-
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::ton_wallet::TonWallet::subscribe(
                 transport.clone() as Arc<dyn nt::transport::Transport>,
                 public_key,
                 contract_type,
                 handler,
-                owners,
             )
             .await
             .handle_error()?;
