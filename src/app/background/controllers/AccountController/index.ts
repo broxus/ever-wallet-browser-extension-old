@@ -566,6 +566,19 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async getMultisigPendingTransactions(address: string) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            try {
+                return await wallet.getMultisigPendingTransactions()
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            }
+        })
+    }
+
     public async prepareMessage(
         address: string,
         params: MessageToPrepare,

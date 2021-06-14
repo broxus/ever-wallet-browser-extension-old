@@ -10,6 +10,7 @@ use nt::core::models as core_models;
 use nt::core::ton_wallet;
 use nt::utils::*;
 
+use crate::core::models::make_multisig_pending_transaction;
 use crate::transport::TransportHandle;
 use crate::utils::*;
 
@@ -85,6 +86,7 @@ impl TonWallet {
         &self,
         timeout: u32,
         custodians: &JsValue,
+        req_confirms: u8,
     ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
 
@@ -100,7 +102,11 @@ impl TonWallet {
             .collect::<Result<Vec<ed25519_dalek::PublicKey>, JsValue>>();
 
         let inner = wallet
-            .prepare_deploy_multiple_owners(core_models::Expiration::Timeout(timeout), &custodians?)
+            .prepare_deploy_multiple_owners(
+                core_models::Expiration::Timeout(timeout),
+                &custodians?,
+                req_confirms,
+            )
             .handle_error()?;
         Ok(crate::crypto::UnsignedMessage { inner })
     }
@@ -155,6 +161,23 @@ impl TonWallet {
             Ok(custodians
                 .into_iter()
                 .map(|item| JsValue::from_str(&item.to_hex_string()))
+                .collect::<js_sys::Array>()
+                .unchecked_into())
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getMultisigPendingTransactions")]
+    pub fn get_pending_transactions(
+        &self,
+    ) -> Result<PromiseMultisigPendingTransactionList, JsValue> {
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = inner.wallet.lock().trust_me();
+            let custodians = wallet.get_pending_transactions().await.handle_error()?;
+            Ok(custodians
+                .into_iter()
+                .map(make_multisig_pending_transaction)
                 .collect::<js_sys::Array>()
                 .unchecked_into())
         })))

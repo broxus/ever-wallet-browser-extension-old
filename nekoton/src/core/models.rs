@@ -330,6 +330,46 @@ pub fn make_transaction(data: models::Transaction) -> Transaction {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_PENDING_TRANSACTION: &str = r#"
+export type MultisigPendingTransaction = {
+    id: string,
+    confirmationsMask: number,
+    signsRequired: number,
+    signsReceived: number,
+    creator: string,
+    index: number,
+    dest: string,
+    value: string,
+    sendFlags: number,
+    bounce: boolean,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigPendingTransaction")]
+    pub type MultisigPendingTransaction;
+}
+
+pub fn make_multisig_pending_transaction(
+    data: models::MultisigPendingTransaction,
+) -> MultisigPendingTransaction {
+    ObjectBuilder::new()
+        .set("id", data.id.to_string())
+        .set("confirmationsMask", data.confirmations_mask)
+        .set("signsRequired", data.signs_required)
+        .set("signsReceived", data.signs_received)
+        .set("creator", hex::encode(data.creator.as_slice()))
+        .set("index", data.index)
+        .set("dest", data.dest.to_string())
+        .set("value", data.value.to_string())
+        .set("sendFlags", data.send_flags)
+        .set("bounce", data.bounce)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type Message = {
     src?: string,
