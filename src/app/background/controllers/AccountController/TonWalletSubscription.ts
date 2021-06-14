@@ -8,7 +8,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
         connectionController: ConnectionController,
         publicKey: string,
         contractType: nt.ContractType,
-        handler: IContractHandler<nt.Transaction>,
+        handler: IContractHandler<nt.Transaction>
     ) {
         const {
             connection: {
@@ -21,7 +21,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
             const tonWallet = await connection.subscribeToTonWallet(
                 publicKey,
                 contractType,
-                handler,
+                handler
             )
 
             return new TonWalletSubscription(connection, release, tonWallet.address, tonWallet)

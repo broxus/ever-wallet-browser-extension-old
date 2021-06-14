@@ -793,7 +793,7 @@ export class AccountController extends BaseController<
     private async _createTonWalletSubscription(
         address: string,
         publicKey: string,
-        contractType: nt.ContractType,
+        contractType: nt.ContractType
     ) {
         if (this._tonWalletSubscriptions.get(address) != null) {
             return
@@ -841,7 +841,7 @@ export class AccountController extends BaseController<
             this.config.connectionController,
             publicKey,
             contractType,
-            new TonWalletHandler(address, this),
+            new TonWalletHandler(address, this)
         )
         console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
 
