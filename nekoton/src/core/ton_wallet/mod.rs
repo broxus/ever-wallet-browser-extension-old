@@ -81,8 +81,8 @@ impl TonWallet {
         Ok(crate::crypto::UnsignedMessage { inner })
     }
 
-    #[wasm_bindgen(js_name = "prepareDeployMultipleOwners")]
-    pub fn prepare_deploy_multiple_owners(
+    #[wasm_bindgen(js_name = "prepareDeployWithMultipleOwners")]
+    pub fn prepare_deploy_with_multiple_owners(
         &self,
         timeout: u32,
         custodians: &JsValue,
@@ -102,7 +102,7 @@ impl TonWallet {
             .collect::<Result<Vec<ed25519_dalek::PublicKey>, JsValue>>();
 
         let inner = wallet
-            .prepare_deploy_multiple_owners(
+            .prepare_deploy_with_multiple_owners(
                 core_models::Expiration::Timeout(timeout),
                 &custodians?,
                 req_confirms,
@@ -115,12 +115,14 @@ impl TonWallet {
     pub fn prepare_transfer(
         &self,
         raw_current_state: &RawContractState,
+        public_key: &str,
         dest: &str,
         amount: &str,
         bounce: bool,
         body: &str,
         timeout: u32,
     ) -> Result<Option<crate::crypto::UnsignedMessage>, JsValue> {
+        let public_key = parse_public_key(public_key)?;
         let dest = parse_address(dest)?;
         let amount = u64::from_str(amount).handle_error()?;
         let body = if !body.is_empty() {
@@ -135,6 +137,7 @@ impl TonWallet {
             match wallet
                 .prepare_transfer(
                     &raw_current_state.inner,
+                    &public_key,
                     dest,
                     amount,
                     bounce,

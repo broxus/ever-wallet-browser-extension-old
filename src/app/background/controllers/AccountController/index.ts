@@ -503,6 +503,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
+                wallet.publicKey,
                 params.recipient,
                 params.amount,
                 false,
@@ -541,7 +542,6 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareDeploy(60)
-
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
@@ -598,6 +598,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
+                wallet.publicKey,
                 params.recipient,
                 params.amount,
                 false,

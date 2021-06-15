@@ -333,7 +333,7 @@ pub fn make_transaction(data: models::Transaction) -> Transaction {
 const MULTISIG_PENDING_TRANSACTION: &str = r#"
 export type MultisigPendingTransaction = {
     id: string,
-    confirmationsMask: number,
+    confirmations: Vec<string>,
     signsRequired: number,
     signsReceived: number,
     creator: string,
@@ -356,7 +356,14 @@ pub fn make_multisig_pending_transaction(
 ) -> MultisigPendingTransaction {
     ObjectBuilder::new()
         .set("id", data.id.to_string())
-        .set("confirmationsMask", data.confirmations_mask)
+        .set(
+            "confirmations",
+            data.confirmations
+                .into_iter()
+                .map(|item| hex::encode(item.as_slice()))
+                .map(JsValue::from)
+                .collect::<js_sys::Array>(),
+        )
         .set("signsRequired", data.signs_required)
         .set("signsReceived", data.signs_received)
         .set("creator", hex::encode(data.creator.as_slice()))
