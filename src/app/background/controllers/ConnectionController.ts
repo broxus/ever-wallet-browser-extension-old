@@ -38,6 +38,15 @@ const NETWORK_PRESETS = {
             timeout: 60000,
         },
     } as ConnectionData,
+    [3]: {
+        name: 'Testnet(FLD)',
+        group: 'testnet',
+        type: 'graphql',
+        data: {
+            endpoint: 'https://gql.custler.net/graphql',
+            timeout: 60000,
+        },
+    } as ConnectionData,
 }
 
 const getPreset = (id: number): ConnectionDataItem | undefined => {
