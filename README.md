@@ -32,6 +32,14 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.11 (2021-06-21)
+
+Bugfixes
+
+* Fixed external function call.
+* Fixed contract interaction popup.
+* Fixed fetching history with non-ordinary transactions.
+
 ### 0.1.10 (2021-06-07)
 
 Bugfixes
