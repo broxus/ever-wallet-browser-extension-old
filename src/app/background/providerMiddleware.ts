@@ -797,12 +797,14 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requireFunctionCall(req, req.params, 'payload')
 
     const {
+        tabId,
         origin,
         permissionsController,
         approvalController,
         accountController,
         subscriptionsController,
     } = ctx
+    requireTabid(req, tabId)
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.publicKey != publicKey) {
@@ -846,7 +848,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         unsignedMessage.free()
     }
 
-    const transaction = await subscriptionsController.sendMessage(recipient, signedMessage)
+    const transaction = await subscriptionsController.sendMessage(tabId, recipient, signedMessage)
     let output: RawTokensObject | undefined
     try {
         const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)

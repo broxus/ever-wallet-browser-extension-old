@@ -19,6 +19,7 @@ const rejectedByUser = serializeError(
 
 interface IApprovalPage {
     pendingApprovals: PendingApproval<keyof ApprovalApi>[]
+    networkName: string
     accountEntries: { [publicKey: string]: nt.AssetsList[] }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     accountContractStates: { [address: string]: nt.ContractState }
@@ -29,6 +30,7 @@ interface IApprovalPage {
 
 const ApprovalPage: React.FC<IApprovalPage> = ({
     pendingApprovals,
+    networkName,
     accountEntries,
     storedKeys,
     accountContractStates,
@@ -100,6 +102,7 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             {approval.type === 'sendMessage' && (
                 <ApproveSendMessage
                     approval={approval}
+                    networkName={networkName}
                     accountEntries={accountEntries}
                     accountContractStates={accountContractStates}
                     storedKeys={storedKeys}
@@ -115,6 +118,8 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
             {approval.type === 'callContractMethod' && (
                 <ApproveContractInteraction
                     approval={approval}
+                    networkName={networkName}
+                    accountEntries={accountEntries}
                     storedKeys={storedKeys}
                     checkPassword={checkPassword}
                     onSubmit={(password) => {

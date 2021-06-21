@@ -121,7 +121,6 @@
     &__network {
         background: rgba(255, 255, 255, 0.16);
         border-radius: 91px;
-        color: $windowBg;
         cursor: pointer;
         display: flex;
         justify-content: center;
@@ -133,7 +132,6 @@
         line-height: 20px;
         padding: 5px 10px;
         margin-bottom: 20px;
-        width: 78px;
     }
 
     &__address {
