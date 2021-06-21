@@ -117,9 +117,6 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "Array<Transaction>")]
     pub type TransactionsList;
 
-    #[wasm_bindgen(typescript_type = "Promise<Array<Transaction>>")]
-    pub type PromiseTransactionsList;
-
     #[wasm_bindgen(typescript_type = "Array<string>")]
     pub type StringArray;
 }

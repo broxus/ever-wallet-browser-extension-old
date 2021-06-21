@@ -366,18 +366,11 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
     const { connectionController } = ctx
 
     try {
-        const transactions = await connectionController.use(
+        res.result = await connectionController.use(
             async ({ data: { connection } }) =>
                 await connection.getTransactions(address, continuation, limit || 50)
         )
 
-        res.result = {
-            transactions,
-            continuation:
-                transactions.length > 0
-                    ? transactions[transactions.length - 1].prevTransactionId
-                    : undefined,
-        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())

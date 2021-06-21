@@ -166,6 +166,7 @@ export class SubscriptionController extends BaseController<
                 let subscription = this._subscriptions.get(address)
                 if (subscription == null) {
                     subscription = await this._createSubscription(address, new Set())
+                    subscription.start()
                 }
                 return subscription
             })

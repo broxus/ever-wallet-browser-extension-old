@@ -1,6 +1,7 @@
 pub mod gql;
 pub mod jrpc;
 
+use std::convert::TryFrom;
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -40,6 +41,52 @@ impl TransportHandle {
             _ => Err(TransportError::MethodNotSupported).handle_error(),
         }
     }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TRANSACTIONS_LIST: &'static str = r#"
+export type TransactionsList = {
+    transactions: Transaction[];
+    continuation: TransactionId | undefined;
+};
+"#;
+
+pub fn make_transactions_list(
+    raw_transactions: Vec<nt::transport::models::RawTransaction>,
+) -> TransactionsList {
+    let continuation = raw_transactions.last().and_then(|transaction| {
+        (transaction.data.prev_trans_lt != 0).then(|| nt::core::models::TransactionId {
+            lt: transaction.data.prev_trans_lt,
+            hash: transaction.data.prev_trans_hash,
+        })
+    });
+    ObjectBuilder::new()
+        .set(
+            "transactions",
+            raw_transactions
+                .into_iter()
+                .filter_map(|transaction| {
+                    nt::core::models::Transaction::try_from((transaction.hash, transaction.data))
+                        .ok()
+                })
+                .map(crate::core::models::make_transaction)
+                .collect::<js_sys::Array>(),
+        )
+        .set(
+            "continuation",
+            continuation.map(crate::core::models::make_transaction_id),
+        )
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TransactionsList")]
+    pub type TransactionsList;
+
+    #[wasm_bindgen(typescript_type = "Promise<TransactionsList>")]
+    pub type PromiseTransactionsList;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

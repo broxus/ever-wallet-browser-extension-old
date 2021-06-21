@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::sync::Arc;
 
@@ -10,10 +9,10 @@ use wasm_bindgen_futures::*;
 use nt::transport::{gql, Transport};
 
 use super::{
-    PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
+    make_transactions_list, IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
+    PromiseTokenWallet, PromiseTonWallet, PromiseTransactionsList, TransportHandle,
 };
 use crate::external::{GqlConnectionImpl, GqlSender};
-use crate::transport::{IntoHandle, TransportHandle};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -194,7 +193,7 @@ impl GqlConnection {
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            Ok(transport
+            let raw_transactions = transport
                 .get_transactions(
                     address,
                     nt::core::models::TransactionId {
@@ -204,15 +203,8 @@ impl GqlConnection {
                     limit,
                 )
                 .await
-                .handle_error()?
-                .into_iter()
-                .map(|transaction| {
-                    nt::core::models::Transaction::try_from((transaction.hash, transaction.data))
-                        .map(make_transaction)
-                })
-                .collect::<Result<js_sys::Array, _>>()
-                .handle_error()?
-                .unchecked_into())
+                .handle_error()?;
+            Ok(make_transactions_list(raw_transactions).unchecked_into())
         })))
     }
 }
