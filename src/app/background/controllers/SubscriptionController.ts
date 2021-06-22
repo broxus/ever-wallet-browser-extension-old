@@ -151,7 +151,7 @@ export class SubscriptionController extends BaseController<
         await this._clearSendMessageRequests()
     }
 
-    public async sendMessage(address: string, signedMessage: nt.SignedMessage) {
+    public async sendMessage(tabId: number, address: string, signedMessage: nt.SignedMessage) {
         let messageRequests = await this._sendMessageRequests.get(address)
         if (messageRequests == null) {
             messageRequests = new Map()
@@ -162,13 +162,14 @@ export class SubscriptionController extends BaseController<
             const id = signedMessage.bodyHash
             messageRequests!.set(id, { resolve, reject })
 
-            const subscription = await this._subscriptionsMutex.use(async () => {
-                let subscription = this._subscriptions.get(address)
-                if (subscription == null) {
-                    subscription = await this._createSubscription(address, new Set())
-                }
-                return subscription
-            })
+            await this.subscribeToContract(tabId, address, { state: true })
+            const subscription = this._subscriptions.get(address)
+            if (subscription == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    'Failed to subscribe to contract'
+                )
+            }
 
             await subscription.prepareReliablePolling()
             await subscription

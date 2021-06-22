@@ -114,6 +114,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         return (
             <ApprovalPage
                 storedKeys={controllerState.storedKeys}
+                networkName={controllerState.selectedConnection.name}
                 accountContractStates={controllerState.accountContractStates}
                 accountEntries={controllerState.accountEntries}
                 pendingApprovals={pendingApprovals}

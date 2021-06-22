@@ -366,18 +366,11 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
     const { connectionController } = ctx
 
     try {
-        const transactions = await connectionController.use(
+        res.result = await connectionController.use(
             async ({ data: { connection } }) =>
                 await connection.getTransactions(address, continuation, limit || 50)
         )
 
-        res.result = {
-            transactions,
-            continuation:
-                transactions.length > 0
-                    ? transactions[transactions.length - 1].prevTransactionId
-                    : undefined,
-        }
         end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
@@ -804,12 +797,14 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requireFunctionCall(req, req.params, 'payload')
 
     const {
+        tabId,
         origin,
         permissionsController,
         approvalController,
         accountController,
         subscriptionsController,
     } = ctx
+    requireTabid(req, tabId)
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.publicKey != publicKey) {
@@ -853,7 +848,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         unsignedMessage.free()
     }
 
-    const transaction = await subscriptionsController.sendMessage(recipient, signedMessage)
+    const transaction = await subscriptionsController.sendMessage(tabId, recipient, signedMessage)
     let output: RawTokensObject | undefined
     try {
         const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)
