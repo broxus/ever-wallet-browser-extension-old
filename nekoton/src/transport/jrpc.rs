@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::convert::TryInto;
 use std::sync::Arc;
 
@@ -11,10 +10,10 @@ use nt::transport::jrpc;
 use nt::transport::Transport;
 
 use super::{
-    PromiseGenericContract, PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet,
+    make_transactions_list, IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
+    PromiseTokenWallet, PromiseTonWallet, PromiseTransactionsList, TransportHandle,
 };
 use crate::external::{JrpcConnector, JrpcSender};
-use crate::transport::{IntoHandle, TransportHandle};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -164,18 +163,12 @@ impl JrpcConnection {
         };
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            Ok(transport
+            let transactions = transport
                 .get_transactions(address, from, limit)
                 .await
-                .handle_error()?
-                .into_iter()
-                .map(|transaction| {
-                    nt::core::models::Transaction::try_from((transaction.hash, transaction.data))
-                        .map(make_transaction)
-                })
-                .collect::<Result<js_sys::Array, _>>()
-                .handle_error()?
-                .unchecked_into())
+                .handle_error()?;
+
+            Ok(make_transactions_list(transactions).unchecked_into())
         })))
     }
 }

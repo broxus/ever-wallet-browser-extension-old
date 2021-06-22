@@ -60,6 +60,7 @@ interface IApp {
 }
 
 const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
+    const [loaded, setLoaded] = useState(false)
     const [controllerState, setControllerState] = useState<ControllerState>()
 
     useEffect(() => {
@@ -74,15 +75,8 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
                     controllerRpc.onNotification((data) => {
                         const state = data.params
 
-                        if (
-                            activeTab.type === 'notification' &&
-                            Object.keys((state as any).pendingApprovals).length === 0
-                        ) {
-                            closeCurrentWindow()
-                        } else {
-                            console.log('Got state', state)
-                            setControllerState(state as any)
-                        }
+                        console.log('Got state', state)
+                        setControllerState(state as any)
                     })
 
                     return await controllerRpc.getState()
@@ -105,6 +99,8 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
                 setControllerState(state)
             }
 
+            setLoaded(true)
+
             fetchManifest().catch(console.error)
         })()
     }, [])
@@ -118,7 +114,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         return null
     }
 
-    if (controllerState == null) {
+    if (controllerState == null || !loaded) {
         return <Loader />
     }
 
@@ -138,6 +134,7 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         return (
             <ApprovalPage
                 storedKeys={controllerState.storedKeys}
+                networkName={controllerState.selectedConnection.name}
                 accountContractStates={controllerState.accountContractStates}
                 accountEntries={controllerState.accountEntries}
                 pendingApprovals={pendingApprovals}
@@ -152,7 +149,15 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         )
     }
 
-    return <MainPage controllerState={controllerState} controllerRpc={controllerRpc} />
+    console.log('Test')
+
+    return (
+        <MainPage
+            environment={activeTab.type}
+            controllerState={controllerState}
+            controllerRpc={controllerRpc}
+        />
+    )
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({

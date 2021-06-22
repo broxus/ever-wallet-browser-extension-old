@@ -13,6 +13,7 @@ import UserAvatar from '@popup/components/UserAvatar'
 
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
+    networkName: string
     accountEntries: { [publicKey: string]: nt.AssetsList[] }
     accountContractStates: { [address: string]: nt.ContractState }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
@@ -23,6 +24,7 @@ interface IApproveSendMessage {
 
 const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     approval,
+    networkName,
     accountEntries,
     accountContractStates,
     storedKeys,
@@ -83,7 +85,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                         </div>
                     </div>
                     <div className="connect-wallet__network" style={{ marginBottom: '0' }}>
-                        Mainnet
+                        {networkName}
                     </div>
                 </div>
                 <div className="connect-wallet__spend-top-panel__site">

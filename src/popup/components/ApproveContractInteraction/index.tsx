@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import cn from 'classnames'
-import { convertAddress, convertTons } from '@shared/utils'
+import { convertAddress, convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/approvalApi'
 import { prepareKey } from '@popup/utils'
 import * as nt from '@nekoton'
@@ -11,9 +11,12 @@ import Arrow from '@popup/img/arrow.svg'
 import EnterPassword from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import UserAvatar from '@popup/components/UserAvatar'
+import WebsiteIcon from '@popup/components/WebsiteIcon'
 
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
+    networkName: string
+    accountEntries: { [publicKey: string]: nt.AssetsList[] }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
@@ -22,6 +25,8 @@ interface IApproveContractInteraction {
 
 const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     approval,
+    networkName,
+    accountEntries,
     storedKeys,
     checkPassword,
     onSubmit,
@@ -33,6 +38,13 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
+
+    const account = accountEntries[publicKey]?.[0] as nt.AssetsList | undefined
+    if (account == null) {
+        !inProcess && onReject()
+        setInProcess(true)
+        return null
+    }
 
     const trySubmit = async (password: string) => {
         const keyEntry = storedKeys[publicKey]
@@ -59,51 +71,68 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
 
     return (
         <div className="connect-wallet">
-            <div className="connect-wallet__top-panel">
-                {/*<div className="connect-wallet__network">Mainnet</div>
-                <div className="connect-wallet__address">
+            <div className="connect-wallet__spend-top-panel">
+                <div className="connect-wallet__spend-top-panel__network">
                     <div className="connect-wallet__address-entry">
                         <UserAvatar address={account.tonWallet.address} small />
-                        <div className="connect-wallet__address-entry">{account.name}</div>
-                    </div>
-                    <img src={Arrow} alt="" />
-                    <div className="connect-wallet__address-entry">
-                        <UserAvatar address={account.tonWallet.address} small />
-                        <div className="connect-wallet__address-entry">
-                            {convertAddress(account?.tonWallet.address)}
+                        <div className="connect-wallet__spend-top-panel__account">
+                            {account?.name}
                         </div>
                     </div>
-                </div>*/}
-                <p className="connect-wallet__top-panel__title">Contract interaction</p>
-                <p className="connect-wallet__top-panel__source">{origin}</p>
+                    <div className="connect-wallet__network" style={{ marginBottom: '0' }}>
+                        {networkName}
+                    </div>
+                </div>
+                <div className="connect-wallet__spend-top-panel__site">
+                    <WebsiteIcon origin={origin} />
+                    <div className="connect-wallet__address-entry">{origin}</div>
+                </div>
+                <h3 className="connect-wallet__spend-top-panel__header noselect">
+                    Contract interaction
+                </h3>
             </div>
-
-            <div className="connect-wallet__details">
-                <div className="connect-wallet__details__data">
+            <div className="connect-wallet__spend-details">
+                <div className="connect-wallet__details__description">
                     <div className="connect-wallet__details__description-param">
                         <span className="connect-wallet__details__description-param-desc">
-                            Recipient
+                            Contract
                         </span>
                         <span className="connect-wallet__details__description-param-value">
-                            {convertAddress(recipient)}
+                            {recipient}
                         </span>
                     </div>
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Method
-                        </span>
-                        <span className="connect-wallet__details__description-param-value">
-                            {payload.method}
-                        </span>
-                    </div>
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Params
-                        </span>
-                        <span className="connect-wallet__details__description-param-value">
-                            {JSON.stringify(payload.params, undefined, 4)}
-                        </span>
-                    </div>
+                    {payload && (
+                        <div className="connect-wallet__details__description-param">
+                            <span className="connect-wallet__details__description-param-desc">
+                                Data
+                            </span>
+                            <div className="connect-wallet__details__description-param-data">
+                                <div className="connect-wallet__details__description-param-data__method">
+                                    <span>Method:</span>
+                                    <span>{payload.method}</span>
+                                </div>
+                                {Object.entries(payload.params).map(([key, value], i) => (
+                                    <div
+                                        className="connect-wallet__details__description-param-data__block"
+                                        key={i}
+                                    >
+                                        <div className="connect-wallet__details__description-param-data__block--param-name">
+                                            {key}
+                                        </div>
+                                        {value instanceof Array ? (
+                                            <div className="connect-wallet__details__description-param-data__block--value">
+                                                {JSON.stringify(value, undefined, 4)}
+                                            </div>
+                                        ) : (
+                                            <div className="connect-wallet__details__description-param-data__block--value">
+                                                {value.toString()}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
             <div className="connect-wallet__buttons">

@@ -32,6 +32,27 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.11 (2021-06-21)
+
+Bugfixes
+
+* Fixed external function call.
+* Fixed contract interaction popup.
+* Fixed fetching history with non-ordinary transactions.
+
+### 0.1.10 (2021-06-07)
+
+Bugfixes
+
+* Fixed initial migration.
+* Fixed initial account selection. 
+
+### 0.1.9 (2021-06-04)
+
+Bugfixes
+
+* Fixed automatic network selection logic.
+
 ### 0.1.8 (2021-06-02)
 
 Features

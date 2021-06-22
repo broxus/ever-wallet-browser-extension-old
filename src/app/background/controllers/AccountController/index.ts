@@ -114,7 +114,8 @@ export class AccountController extends BaseController<
         let selectedAccount: AccountControllerState['selectedAccount'] | undefined
         if (selectedAccountAddress != null) {
             selectedAccount = await this.config.accountsStorage.getAccount(selectedAccountAddress)
-        } else {
+        }
+        if (selectedAccount == null) {
             selectedAccount = entries[0]
         }
 
@@ -212,6 +213,7 @@ export class AccountController extends BaseController<
             await this._stopSubscriptions()
             await this.config.accountsStorage.clear()
             await this.config.keyStore.clear()
+            await this._removeSelectedAccountAddress()
             this.update(_.cloneDeep(defaultState), true)
 
             console.debug('logOut -> mutex released')
@@ -1186,10 +1188,14 @@ export class AccountController extends BaseController<
         return new Promise<void>((resolve) => {
             chrome.storage.local.set(
                 { selectedAccountAddress: this.state.selectedAccount?.tonWallet.address },
-                () => {
-                    resolve()
-                }
+                () => resolve()
             )
+        })
+    }
+
+    private async _removeSelectedAccountAddress(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('selectedAccountAddress', () => resolve())
         })
     }
 }

@@ -1,6 +1,8 @@
-import React, { Dispatch, SetStateAction, useState, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import { SelectedAsset } from '@shared/utils'
+import { ConnectionDataItem } from '@shared/approvalApi'
+import { Environment, ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import * as nt from '@nekoton'
 
 import AccountDetails from '@popup/components/AccountDetails'
@@ -18,9 +20,11 @@ import CollectTokens from '@popup/components/CollectTokens'
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
-import { ConnectionDataItem } from '@shared/approvalApi'
+
+const INITIAL_DATA_KEY = 'initial_data'
 
 interface IMainPage {
+    environment: Environment
     controllerState: ControllerState
     controllerRpc: IControllerRpcClient
 }
@@ -36,12 +40,21 @@ enum Panel {
     TRANSACTION,
 }
 
-const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
+const MainPage: React.FC<IMainPage> = ({ environment, controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
     const [ethEventContract, setEthEventContract] = useState<string>()
     const scrollArea = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        ;(async () => {
+            const initialData = await controllerRpc.tempStorageRemove(INITIAL_DATA_KEY)
+            if (typeof initialData === 'number') {
+                setOpenedPanel(initialData)
+            }
+        })()
+    }, [])
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -124,7 +137,15 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                         await logOut()
                     }}
                     onReceive={() => setOpenedPanel(Panel.RECEIVE)}
-                    onSend={() => setOpenedPanel(Panel.SEND)}
+                    onSend={async () => {
+                        if (environment == ENVIRONMENT_TYPE_NOTIFICATION) {
+                            setOpenedPanel(Panel.SEND)
+                        } else {
+                            await controllerRpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
+                            await controllerRpc.openExtensionInExternalWindow()
+                            window.close()
+                        }
+                    }}
                     onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
                     onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
                     onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
