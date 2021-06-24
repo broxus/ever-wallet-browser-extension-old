@@ -125,8 +125,6 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
         )
     }
 
-    console.log('Test')
-
     return (
         <MainPage
             environment={activeTab.type}

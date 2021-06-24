@@ -485,6 +485,55 @@ const unpackFromCell: ProviderMethod<'unpackFromCell'> = async (req, res, _next,
     }
 }
 
+const extractPublicKey: ProviderMethod<'extractPublicKey'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { boc } = req.params
+    requireString(req, req.params, 'boc')
+
+    try {
+        res.result = {
+            publicKey: nt.extractPublicKey(boc),
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const codeToTvc: ProviderMethod<'codeToTvc'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { code } = req.params
+    requireString(req, req.params, 'code')
+
+    try {
+        res.result = {
+            tvc: nt.codeToTvc(code),
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const splitTvc: ProviderMethod<'splitTvc'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { tvc } = req.params
+    requireString(req, req.params, 'tvc')
+
+    try {
+        res.result = nt.splitTvc(tvc)
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
     req,
     res,
@@ -875,6 +924,9 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     getExpectedAddress,
     packIntoCell,
     unpackFromCell,
+    extractPublicKey,
+    codeToTvc,
+    splitTvc,
     encodeInternalInput,
     decodeInput,
     decodeEvent,
