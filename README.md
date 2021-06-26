@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.1.12 (2021-06-28)
+
+Features
+
+* Added `extractPublicKey`, `codeToTvc` and `splitTvc` methods to the provider api.
+* Optimized transactions for multisig wallets with one custodian.
+
 ### 0.1.11 (2021-06-21)
 
 Bugfixes
