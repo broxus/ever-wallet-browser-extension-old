@@ -3,12 +3,11 @@
 import '../../polyfills'
 
 import endOfStream from 'end-of-stream'
-import init, * as nt from '@nekoton'
+import init from '@nekoton'
 import { PortDuplexStream, checkForError } from '@shared/utils'
 import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
-    ENVIRONMENT_TYPE_BACKGROUND,
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
 
@@ -31,8 +30,7 @@ const setupController = async () => {
     console.log('Setup controller')
 
     const controller = await NekotonController.load({
-        showUserConfirmation: triggerUi,
-        openPopup,
+        openExternalWindow: triggerUi,
         getOpenNekotonTabIds: () => {
             return openNekotonTabsIDs
         },
@@ -86,7 +84,7 @@ const setupController = async () => {
     }
 }
 
-const triggerUi = async () => {
+const triggerUi = async (force: boolean) => {
     const tabs = await new Promise<chrome.tabs.Tab[]>((resolve, reject) =>
         chrome.tabs.query({ active: true }, (tabs) => {
             const error = checkForError()
@@ -102,7 +100,7 @@ const triggerUi = async () => {
         tabs.find((tab) => tab.id != null && openNekotonTabsIDs[tab.id])
     )
 
-    if (!uiIsTriggering && !popupIsOpen && !currentlyActiveNekotonTab) {
+    if (!uiIsTriggering && (force || !popupIsOpen) && !currentlyActiveNekotonTab) {
         uiIsTriggering = true
         try {
             await notificationManager.showPopup()
@@ -112,8 +110,8 @@ const triggerUi = async () => {
     }
 }
 
-const openPopup = async () => {
-    await triggerUi()
+const openPopup = async (force: boolean) => {
+    await triggerUi(force)
     await new Promise<void>((resolve) => {
         const interval = setInterval(() => {
             if (!notificationIsOpen) {

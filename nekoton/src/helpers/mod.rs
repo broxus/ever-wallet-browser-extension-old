@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use ton_block::{MsgAddressInt, Serializable};
+use ton_block::{Deserializable, MsgAddressInt, Serializable};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -130,4 +130,45 @@ pub fn code_to_tvc(code: &str) -> Result<String, JsValue> {
         .and_then(|x| x.serialize().handle_error())
         .and_then(|x| ton_types::serialize_toc(&x).handle_error())
         .map(|x| base64::encode(x))
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const STATE_INIT: &str = r#"
+export type StateInit = {
+    data: string | undefined;
+    code: string | undefined;
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "StateInit")]
+    pub type StateInit;
+}
+
+#[wasm_bindgen(js_name = "splitTvc")]
+pub fn split_tvc(tvc: &str) -> Result<StateInit, JsValue> {
+    let state_init = ton_block::StateInit::construct_from_base64(tvc).handle_error()?;
+
+    let data = match state_init.data {
+        Some(data) => {
+            let data = ton_types::serialize_toc(&data).handle_error()?;
+            Some(base64::encode(data))
+        }
+        None => None,
+    };
+
+    let code = match state_init.code {
+        Some(code) => {
+            let code = ton_types::serialize_toc(&code).handle_error()?;
+            Some(base64::encode(code))
+        }
+        None => None,
+    };
+
+    Ok(ObjectBuilder::new()
+        .set("data", data)
+        .set("code", code)
+        .build()
+        .unchecked_into())
 }

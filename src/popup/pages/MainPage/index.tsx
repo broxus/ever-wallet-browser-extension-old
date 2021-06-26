@@ -1,6 +1,8 @@
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import { SelectedAsset } from '@shared/utils'
+import { ConnectionDataItem } from '@shared/approvalApi'
+import { Environment, ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import * as nt from '@nekoton'
 
 import AccountDetails from '@popup/components/AccountDetails'
@@ -18,9 +20,11 @@ import CollectTokens from '@popup/components/CollectTokens'
 import CreateAccountPage from '@popup/pages/CreateAccountPage'
 
 import './style.scss'
-import { ConnectionDataItem } from '@shared/approvalApi'
+
+const INITIAL_DATA_KEY = 'initial_data'
 
 interface IMainPage {
+    environment: Environment
     controllerState: ControllerState
     controllerRpc: IControllerRpcClient
 }

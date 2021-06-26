@@ -10,6 +10,7 @@ use nt::core::models as core_models;
 use nt::core::ton_wallet;
 use nt::utils::*;
 
+use crate::core::models::make_multisig_pending_transaction;
 use crate::transport::TransportHandle;
 use crate::utils::*;
 
@@ -80,16 +81,48 @@ impl TonWallet {
         Ok(crate::crypto::UnsignedMessage { inner })
     }
 
+    #[wasm_bindgen(js_name = "prepareDeployWithMultipleOwners")]
+    pub fn prepare_deploy_with_multiple_owners(
+        &self,
+        timeout: u32,
+        custodians: &JsValue,
+        req_confirms: u8,
+    ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
+        let wallet = self.inner.wallet.lock().trust_me();
+
+        let custodians = custodians
+            .into_serde::<Vec<String>>()
+            .map_err(|_| JsValue::from_str("Failed to parse a list of custodians"))?
+            .into_iter()
+            .map(|custodian| {
+                let custodian = parse_public_key(&custodian)
+                    .map_err(|_| JsValue::from_str("Failed to parse a public key"))?;
+                Ok(custodian)
+            })
+            .collect::<Result<Vec<ed25519_dalek::PublicKey>, JsValue>>();
+
+        let inner = wallet
+            .prepare_deploy_with_multiple_owners(
+                core_models::Expiration::Timeout(timeout),
+                &custodians?,
+                req_confirms,
+            )
+            .handle_error()?;
+        Ok(crate::crypto::UnsignedMessage { inner })
+    }
+
     #[wasm_bindgen(js_name = "prepareTransfer")]
     pub fn prepare_transfer(
         &self,
         raw_current_state: &RawContractState,
+        public_key: &str,
         dest: &str,
         amount: &str,
         bounce: bool,
         body: &str,
         timeout: u32,
     ) -> Result<Option<crate::crypto::UnsignedMessage>, JsValue> {
+        let public_key = parse_public_key(public_key)?;
         let dest = parse_address(dest)?;
         let amount = u64::from_str(amount).handle_error()?;
         let body = if !body.is_empty() {
@@ -98,12 +131,13 @@ impl TonWallet {
             None
         };
 
-        let wallet = self.inner.wallet.lock().unwrap();
+        let mut wallet = self.inner.wallet.lock().unwrap();
 
         Ok(
             match wallet
                 .prepare_transfer(
                     &raw_current_state.inner,
+                    &public_key,
                     dest,
                     amount,
                     bounce,
@@ -118,6 +152,38 @@ impl TonWallet {
                 ton_wallet::TransferAction::DeployFirst => None,
             },
         )
+    }
+
+    #[wasm_bindgen(js_name = "getCustodians")]
+    pub fn get_custodians(&self) -> Result<PromiseCustodiansList, JsValue> {
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let mut wallet = inner.wallet.lock().trust_me();
+            let custodians = wallet.get_custodians().await.handle_error()?;
+            Ok(custodians
+                .into_iter()
+                .map(|item| JsValue::from_str(&item.to_hex_string()))
+                .collect::<js_sys::Array>()
+                .unchecked_into())
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getMultisigPendingTransactions")]
+    pub fn get_pending_transactions(
+        &self,
+    ) -> Result<PromiseMultisigPendingTransactionList, JsValue> {
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let mut wallet = inner.wallet.lock().trust_me();
+            let custodians = wallet.get_pending_transactions().await.handle_error()?;
+            Ok(custodians
+                .into_iter()
+                .map(make_multisig_pending_transaction)
+                .collect::<js_sys::Array>()
+                .unchecked_into())
+        })))
     }
 
     #[wasm_bindgen(js_name = "getContractState")]
@@ -331,6 +397,7 @@ export type TonWalletDetails = {
     requiresSeparateDeploy: boolean,
     minAmount: string,
     supportsPayload: boolean,
+    supportsMultipleOwners: boolean,
 };
 "#;
 
@@ -345,6 +412,7 @@ fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonW
         .set("requiresSeparateDeploy", data.requires_separate_deploy)
         .set("minAmount", data.min_amount.to_string())
         .set("supportsPayload", data.supports_payload)
+        .set("supportsMultipleOwners", data.supports_multiple_owners)
         .build()
         .unchecked_into()
 }

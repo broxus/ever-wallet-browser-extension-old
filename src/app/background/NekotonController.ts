@@ -40,8 +40,7 @@ import Transport from '@ledgerhq/hw-transport'
 import LedgerApp from './ledger/LedgerApp'
 
 interface NekotonControllerOptions {
-    showUserConfirmation: () => void
-    openPopup: () => void
+    openExternalWindow: (force: boolean) => void
     getOpenNekotonTabIds: () => { [id: number]: true }
 }
 
@@ -66,12 +65,12 @@ interface SetupProviderEngineOptions {
 }
 
 export class NekotonController extends EventEmitter {
-    private _defaultMaxListeners: number = 20
     private _activeControllerConnections: number = 0
     private readonly _connections: { [id: string]: { engine: JsonRpcEngine } } = {}
     private readonly _originToConnectionIds: { [origin: string]: Set<string> } = {}
     private readonly _originToTabIds: { [origin: string]: Set<number> } = {}
     private readonly _tabToConnectionIds: { [tabId: number]: Set<string> } = {}
+    private readonly _tempStorage: { [key: string]: any } = {}
 
     private readonly _options: NekotonControllerOptions
     private readonly _components: NekotonControllerComponents
@@ -96,7 +95,7 @@ export class NekotonController extends EventEmitter {
             notificationController,
         })
         const approvalController = new ApprovalController({
-            showApprovalRequest: options.showUserConfirmation,
+            showApprovalRequest: () => options.openExternalWindow(false),
         })
         const permissionsController = new PermissionsController({
             approvalController,
@@ -201,6 +200,23 @@ export class NekotonController extends EventEmitter {
                     })
                 }
             },
+            tempStorageGet: (key: string, cb: ApiCallback<any | undefined>) => {
+                cb(null, this._tempStorage[key])
+            },
+            tempStorageInsert: (key: string, value: any, cb: ApiCallback<any | undefined>) => {
+                let oldValue = this._tempStorage[key]
+                this._tempStorage[key] = value
+                cb(null, oldValue)
+            },
+            tempStorageRemove: (key: string, cb: ApiCallback<any | undefined>) => {
+                let oldValue = this._tempStorage[key]
+                delete this._tempStorage[key]
+                cb(null, oldValue)
+            },
+            openExtensionInExternalWindow: (cb: ApiCallback<undefined>) => {
+                this._options.openExternalWindow(true)
+                cb(null)
+            },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
@@ -209,6 +225,8 @@ export class NekotonController extends EventEmitter {
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
+            getCustodians: nodeifyAsync(accountController, 'getCustodians'),
+            getMultisigPendingTransactions: nodeifyAsync(accountController, 'getMultisigPendingTransactions'),
             updateTokenWallets: nodeifyAsync(accountController, 'updateTokenWallets'),
             logOut: nodeifyAsync(this, 'logOut'),
             estimateFees: nodeifyAsync(accountController, 'estimateFees'),
