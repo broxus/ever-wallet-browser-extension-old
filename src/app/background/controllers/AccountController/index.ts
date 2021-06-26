@@ -142,7 +142,7 @@ export class AccountController extends BaseController<
                 await this._createTonWalletSubscription(
                     tonWallet.address,
                     tonWallet.publicKey,
-                    tonWallet.contractType,
+                    tonWallet.contractType
                 )
 
                 const assets = additionalAssets[selectedConnection.group] as

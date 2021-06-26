@@ -131,7 +131,7 @@ impl TonWallet {
             None
         };
 
-        let wallet = self.inner.wallet.lock().unwrap();
+        let mut wallet = self.inner.wallet.lock().unwrap();
 
         Ok(
             match wallet
@@ -159,7 +159,7 @@ impl TonWallet {
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let wallet = inner.wallet.lock().trust_me();
+            let mut wallet = inner.wallet.lock().trust_me();
             let custodians = wallet.get_custodians().await.handle_error()?;
             Ok(custodians
                 .into_iter()
@@ -176,7 +176,7 @@ impl TonWallet {
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let wallet = inner.wallet.lock().trust_me();
+            let mut wallet = inner.wallet.lock().trust_me();
             let custodians = wallet.get_pending_transactions().await.handle_error()?;
             Ok(custodians
                 .into_iter()

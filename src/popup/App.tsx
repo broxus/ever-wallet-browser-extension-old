@@ -66,8 +66,15 @@ const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
                     controllerRpc.onNotification((data) => {
                         const state = data.params
 
-                        console.log('Got state', state)
-                        setControllerState(state as any)
+                        if (
+                            activeTab.type === 'notification' &&
+                            Object.keys((state as any).pendingApprovals).length === 0
+                        ) {
+                            closeCurrentWindow()
+                        } else {
+                            console.log('Got state', state)
+                            setControllerState(state as any)
+                        }
                     })
 
                     return await controllerRpc.getState()
