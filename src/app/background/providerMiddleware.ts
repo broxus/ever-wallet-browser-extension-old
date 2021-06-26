@@ -692,6 +692,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         try {
             unsignedMessage = wallet.prepareTransfer(
                 contractState,
+                wallet.publicKey,
                 recipient,
                 amount,
                 false,
@@ -763,6 +764,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             try {
                 unsignedMessage = wallet.prepareTransfer(
                     contractState,
+                    wallet.publicKey,
                     recipient,
                     amount,
                     false,
