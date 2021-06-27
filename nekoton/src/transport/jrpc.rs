@@ -61,6 +61,35 @@ impl JrpcConnection {
         })))
     }
 
+    #[wasm_bindgen(js_name = "subscribeToTonWalletByAddress")]
+    pub fn subscribe_to_main_wallet_by_address(
+        &self,
+        address: &str,
+        handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
+    ) -> Result<PromiseTonWallet, JsValue> {
+        use crate::core::ton_wallet::*;
+
+        let address = parse_address(&address)?;
+
+        let transport = Arc::new(self.make_transport());
+        let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::ton_wallet::TonWallet::subscribe_by_address(
+                transport.clone() as Arc<dyn nt::transport::Transport>,
+                address,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(TonWallet::new(
+                transport.into_handle(),
+                wallet,
+            )))
+        })))
+    }
+
     #[wasm_bindgen(js_name = "subscribeToTonWallet")]
     pub fn subscribe_to_main_wallet(
         &self,

@@ -550,6 +550,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
+                wallet.publicKey,
                 params.recipient,
                 params.amount,
                 false,
@@ -588,7 +589,6 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareDeploy(60)
-
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
@@ -596,6 +596,32 @@ export class AccountController extends BaseController<
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
+            }
+        })
+    }
+
+    public async getCustodians(address: string) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            try {
+                return await wallet.getCustodians()
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            }
+        })
+    }
+
+    public async getMultisigPendingTransactions(address: string) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            try {
+                return await wallet.getMultisigPendingTransactions()
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
     }
@@ -619,6 +645,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
+                wallet.publicKey,
                 params.recipient,
                 params.amount,
                 false,

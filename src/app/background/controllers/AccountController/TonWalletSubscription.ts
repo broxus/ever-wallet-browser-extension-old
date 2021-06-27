@@ -30,4 +30,29 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
             throw e
         }
     }
+
+    public static async subscribe_by_address(
+        connectionController: ConnectionController,
+        address: string,
+        handler: IContractHandler<nt.Transaction>
+    ) {
+        const {
+            connection: {
+                data: { connection },
+            },
+            release,
+        } = await connectionController.acquire()
+
+        try {
+            const tonWallet = await connection.subscribeToTonWalletByAddress(
+                address,
+                handler
+            )
+
+            return new TonWalletSubscription(connection, release, tonWallet.address, tonWallet)
+        } catch (e) {
+            release()
+            throw e
+        }
+    }
 }

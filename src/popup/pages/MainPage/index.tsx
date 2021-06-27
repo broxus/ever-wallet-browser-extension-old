@@ -40,21 +40,12 @@ enum Panel {
     TRANSACTION,
 }
 
-const MainPage: React.FC<IMainPage> = ({ environment, controllerRpc, controllerState }) => {
+const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
     const [ethEventContract, setEthEventContract] = useState<string>()
     const scrollArea = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        ;(async () => {
-            const initialData = await controllerRpc.tempStorageRemove(INITIAL_DATA_KEY)
-            if (typeof initialData === 'number') {
-                setOpenedPanel(initialData)
-            }
-        })()
-    }, [])
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -137,15 +128,7 @@ const MainPage: React.FC<IMainPage> = ({ environment, controllerRpc, controllerS
                         await logOut()
                     }}
                     onReceive={() => setOpenedPanel(Panel.RECEIVE)}
-                    onSend={async () => {
-                        if (environment == ENVIRONMENT_TYPE_NOTIFICATION) {
-                            setOpenedPanel(Panel.SEND)
-                        } else {
-                            await controllerRpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
-                            await controllerRpc.openExtensionInExternalWindow()
-                            window.close()
-                        }
-                    }}
+                    onSend={() => setOpenedPanel(Panel.SEND)}
                     onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
                     onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
                     onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}

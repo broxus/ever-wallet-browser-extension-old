@@ -31,8 +31,6 @@ restoreContextAfterImports()
 
 log.setDefaultLevel(process.env.NEKOTON_DEBUG ? 'debug' : 'warn')
 
-console.log(process.env.NEKOTON_DEBUG)
-
 const nekotonStream = new LocalMessageDuplexStream({
     name: INPAGE_SCRIPT,
     target: CONTENT_SCRIPT,
