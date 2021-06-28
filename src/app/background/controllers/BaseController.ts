@@ -81,10 +81,13 @@ export class BaseController<C extends BaseConfig, S extends BaseState> {
         return index > -1
     }
 
-    update(state: Partial<S>, overwrite = false) {
+    update(state: Partial<S>, overwrite = false, notify = true) {
         this.internalState = overwrite
             ? Object.assign({}, state as S)
             : Object.assign({}, this.internalState, state)
-        this.notify()
+
+        if (notify) {
+            this.notify()
+        }
     }
 }

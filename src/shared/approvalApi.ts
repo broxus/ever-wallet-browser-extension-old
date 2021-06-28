@@ -9,12 +9,14 @@ import * as nt from '@nekoton'
 export type MasterKeyToCreate = {
     seed: nt.GeneratedMnemonic
     password: string
+    name?: string
 }
 
 export type KeyToDerive = {
     masterKey: string
     accountId: number
     password: string
+    name?: string
 }
 
 export type KeyToRemove = {

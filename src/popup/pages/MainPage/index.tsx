@@ -11,6 +11,7 @@ import UserAssets from '@popup/components/UserAssets'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import Receive from '@popup/components/Receive'
 import Send from '@popup/components/Send'
+import ManageSeeds from '@popup/components/ManageSeeds'
 import KeyStorage from '@popup/components/KeyStorage'
 import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import TransactionInfo from '@popup/components/TransactionInfo'
@@ -36,16 +37,26 @@ enum Panel {
     COLLECT_TOKENS,
     KEY_STORAGE,
     CREATE_ACCOUNT,
+    MANAGE_SEEDS,
     ASSET,
     TRANSACTION,
 }
 
-const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
+const MainPage: React.FC<IMainPage> = ({ environment, controllerRpc, controllerState }) => {
     const [openedPanel, setOpenedPanel] = useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
     const [ethEventContract, setEthEventContract] = useState<string>()
     const scrollArea = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        ;(async () => {
+            const initialData = await controllerRpc.tempStorageRemove(INITIAL_DATA_KEY)
+            if (typeof initialData === 'number') {
+                setOpenedPanel(initialData)
+            }
+        })()
+    }, [])
 
     if (controllerState.selectedAccount == null) {
         return null
@@ -128,9 +139,26 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                         await logOut()
                     }}
                     onReceive={() => setOpenedPanel(Panel.RECEIVE)}
-                    onSend={() => setOpenedPanel(Panel.SEND)}
+                    onSend={async () => {
+                        if (environment == ENVIRONMENT_TYPE_NOTIFICATION) {
+                            setOpenedPanel(Panel.SEND)
+                        } else {
+                            await controllerRpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
+                            await controllerRpc.openExtensionInExternalWindow()
+                            window.close()
+                        }
+                    }}
                     onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
                     onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
+                    onManageSeed={async () => {
+                        if (environment == ENVIRONMENT_TYPE_NOTIFICATION) {
+                            setOpenedPanel(Panel.MANAGE_SEEDS)
+                        } else {
+                            await controllerRpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.MANAGE_SEEDS)
+                            await controllerRpc.openExtensionInExternalWindow()
+                            window.close()
+                        }
+                    }}
                     onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
                 />
                 <UserAssets
@@ -176,6 +204,12 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                                 controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
                             }
                             sendMessage={sendMessage}
+                        />
+                    )}
+                    {openedPanel == Panel.MANAGE_SEEDS && (
+                        <ManageSeeds
+                            controllerRpc={controllerRpc}
+                            controllerState={controllerState}
                         />
                     )}
                     {openedPanel == Panel.DEPLOY && (

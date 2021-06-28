@@ -50,6 +50,7 @@ export interface AccountControllerConfig extends BaseConfig {
 
 export interface AccountControllerState extends BaseState {
     selectedAccount: nt.AssetsList | undefined
+    selectedSeed: string | undefined
     accountEntries: { [publicKey: string]: nt.AssetsList[] }
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
@@ -59,11 +60,13 @@ export interface AccountControllerState extends BaseState {
     }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
+    seedsNames: { [masterKey: string]: string }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
 }
 
 const defaultState: AccountControllerState = {
     selectedAccount: undefined,
+    selectedSeed: undefined,
     accountEntries: {},
     accountContractStates: {},
     accountTokenStates: {},
@@ -71,6 +74,7 @@ const defaultState: AccountControllerState = {
     accountTokenTransactions: {},
     accountPendingMessages: {},
     knownTokens: {},
+    seedsNames: {},
     storedKeys: {},
 }
 
@@ -119,9 +123,15 @@ export class AccountController extends BaseController<
             selectedAccount = entries[0]
         }
 
+        let seedsNames = await this._loadSeedsNames()
+        if (seedsNames == null) {
+            seedsNames = {}
+        }
+
         this.update({
             selectedAccount,
             accountEntries,
+            seedsNames,
             storedKeys,
         })
     }
@@ -220,7 +230,7 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createMasterKey({ seed, password }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
+    public async createMasterKey({ name, seed, password }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
@@ -246,7 +256,15 @@ export class AccountController extends BaseController<
 
             const entry = await keyStore.addKey(newKey)
 
+            if (name !== undefined) {
+                await this._saveSeedName(entry.masterKey, name)
+            }
+
             this.update({
+                seedsNames: typeof name === 'string' ? {
+                    ...this.state.seedsNames,
+                    [entry.masterKey]: name,
+                } : { ...this.state.seedsNames },
                 storedKeys: {
                     ...this.state.storedKeys,
                     [entry.publicKey]: entry,
@@ -263,6 +281,7 @@ export class AccountController extends BaseController<
         masterKey,
         accountId,
         password,
+        name,
     }: KeyToDerive): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
@@ -274,6 +293,8 @@ export class AccountController extends BaseController<
                     params: { masterKey, accountId },
                 },
             })
+
+            console.log(entry)
 
             this.update({
                 storedKeys: {
@@ -741,6 +762,17 @@ export class AccountController extends BaseController<
                 )
             } catch (e) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            }
+        })
+    }
+
+    public async updateSeedName(masterKey: string, name: string): Promise<void> {
+        await this._saveSeedName(masterKey, name)
+
+        this.update({
+            seedsNames: {
+                ...this.state.seedsNames,
+                [masterKey]: name,
             }
         })
     }
@@ -1227,6 +1259,32 @@ export class AccountController extends BaseController<
     private async _removeSelectedAccountAddress(): Promise<void> {
         return new Promise<void>((resolve) => {
             chrome.storage.local.remove('selectedAccountAddress', () => resolve())
+        })
+    }
+
+    private async _loadSeedsNames(): Promise<{ [masterKey: string]: string } | void> {
+        return new Promise<{ [masterKey: string]: string } | undefined>((resolve) => {
+            chrome.storage.local.get(['seedsNames'], ({ seedsNames }) => {
+                if (typeof seedsNames !== 'object') {
+                    return resolve(undefined)
+                }
+                resolve(seedsNames)
+            })
+        })
+    }
+
+    private async _saveSeedName(masterKey: string, name: string): Promise<void> {
+        let seedsNames = await this._loadSeedsNames();
+        if (!seedsNames || typeof seedsNames !== 'object') {
+            seedsNames = {}
+        }
+        seedsNames[masterKey] = name
+
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set(
+                { seedsNames },
+                () => resolve()
+            )
         })
     }
 }

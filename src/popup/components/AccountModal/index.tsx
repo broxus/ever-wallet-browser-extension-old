@@ -14,6 +14,7 @@ type IAccountModal = {
     tonWalletState: nt.ContractState | undefined
     onOpenConnectedSites?: () => void
     onCreateAccount?: () => void
+    onManageSeed?: () => void
     onOpenKeyStore?: () => void
     onOpenWalletSettings?: () => void
     onOpenInformation?: () => void
@@ -23,7 +24,8 @@ type IAccountModal = {
 
 const AccountModal: React.FC<IAccountModal> = ({
     account,
-    tonWalletState,
+    // tonWalletState,
+    onManageSeed,
     //onOpenConnectedSites,
     //onOpenKeyStore,
     //onOpenWalletSettings,
@@ -44,18 +46,34 @@ const AccountModal: React.FC<IAccountModal> = ({
     return (
         <Wrapper>
             <div className="account-settings-section">
-                <div className="account-settings-section-item" style={{ display: 'flex' }}>
-                    <UserAvatar address={account.tonWallet.address} small />
-                    <div style={{ padding: '0 12px' }}>
-                        <div className="account-settings-section-account">{account.name}</div>
-                        <div className="account-settings-section-item-value">
-                            {`${convertTons(tonWalletState?.balance || '0')} TON`}
-                        </div>
-                        {/*<div onClick={() => onOpenConnectedSites?.()}>Connected sites</div>*/}
-                    </div>
+                <div className="account-settings-section-header">
+                    Current seed ({account.name})
                 </div>
+                {/*<div className="account-settings-section-item">*/}
+                {/*    <div style={{ padding: '0 12px' }}>*/}
+                {/*        <div className="account-settings-section-account">{account.name}</div>*/}
+                {/*        <div className="account-settings-section-item-value">*/}
+                {/*            {`${convertTons(tonWalletState?.balance || '0')} TON`}*/}
+                {/*        </div>*/}
+                {/*        <div onClick={() => onOpenConnectedSites?.()}>Connected sites</div>*/}
+                {/*    </div>*/}
+                {/*</div>*/}
                 {/*<div className="account-settings-section-item">Other seeds</div>*/}
-                {/*<div className="account-settings-section-item">Add seed</div>*/}
+            </div>
+
+            <div className="account-settings-separator" />
+
+            <div className="account-settings-section">
+                <div className="account-settings-section-header">
+                    All seeds
+                </div>
+
+                <div
+                    className="account-settings-section-item"
+                    onClick={() => onManageSeed?.()}
+                >
+                    Manage seeds & accounts
+                </div>
             </div>
             {/*<div className="account-settings-separator" />*/}
             {/*<div className="account-settings-section">*/}

@@ -30,6 +30,7 @@ type AccountDetailsParams = {
     onDeploy: () => void
     onLogOut: () => void
     onCreateAccount: () => void
+    onManageSeed: () => void
     onOpenKeyStore: () => void
 }
 
@@ -64,6 +65,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
     onSend,
     onDeploy,
     onCreateAccount,
+    onManageSeed,
     onOpenKeyStore,
 }) => {
     const [modalVisible, setModalVisible] = useState(false)
@@ -106,6 +108,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                             account={account}
                             tonWalletState={tonWalletState}
                             onCreateAccount={accountModalAction(onCreateAccount)}
+                            onManageSeed={accountModalAction(onManageSeed)}
                             onOpenKeyStore={accountModalAction(onOpenKeyStore)}
                             onLogOut={accountModalAction(onLogOut)}
                             onClose={accountModalAction(() => {})}
