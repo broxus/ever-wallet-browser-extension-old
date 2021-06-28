@@ -364,7 +364,7 @@ enum ParsedNewKey {
 #[wasm_bindgen(typescript_custom_section)]
 const NEW_MASTER_KEY_PARAMS: &str = r#"
 export type MasterKeyParams = { phrase: string };
-export type DerivedKeyParams = { accountId: number };
+export type DerivedKeyParams = { masterKey: string, accountId: number };
 "#;
 
 #[derive(Deserialize)]
@@ -380,7 +380,7 @@ enum ParsedNewMasterKeyParams {
 const CHANGE_KEY_PASSWORD: &str = r#"
 export type ChangeKeyPassword =
     | EnumItem<'master_key', { masterKey: string, oldPassword: string, newPassword: string }>
-    | EnumItem<'encrypted_key', { masterKey: string, publicKey: string, oldPassword: string, newPassword: string }>;
+    | EnumItem<'encrypted_key', { publicKey: string, oldPassword: string, newPassword: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -410,7 +410,7 @@ enum ParsedChangeKeyPassword {
 const EXPORT_KEY: &str = r#"
 export type ExportKey =
     | EnumItem<'master_key', { masterKey: string, password: string }>
-    | EnumItem<'encrypted_key', { masterKey: string, publicKey: string, password: string }>;
+    | EnumItem<'encrypted_key', { publicKey: string, password: string }>;
 "#;
 
 #[wasm_bindgen]

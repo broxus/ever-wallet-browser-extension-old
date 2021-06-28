@@ -255,7 +255,11 @@ export class AccountController extends BaseController<
         }
     }
 
-    public async createDerivedKey({ accountId, password }: KeyToDerive): Promise<nt.KeyStoreEntry> {
+    public async createDerivedKey({
+        masterKey,
+        accountId,
+        password,
+    }: KeyToDerive): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
@@ -263,7 +267,7 @@ export class AccountController extends BaseController<
                 type: 'master_key',
                 data: {
                     password,
-                    params: { accountId },
+                    params: { masterKey, accountId },
                 },
             })
 
