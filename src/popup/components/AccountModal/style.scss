@@ -99,4 +99,21 @@
             }
         }
     }
+
+    &__seeds-list {
+        padding-bottom: 8px;
+
+        &-item {
+            cursor: pointer;
+            color: $windowFg;
+            display: block;
+            font-size: 16px;
+            line-height: 20px;
+            padding: 8px 0;
+
+            &:hover {
+                color: $activeButtonBg;
+            }
+        }
+    }
 }

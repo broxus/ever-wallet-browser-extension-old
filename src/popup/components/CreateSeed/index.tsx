@@ -155,6 +155,7 @@ const EnterPassword: React.FC<IEnterPassword> = ({
 interface ICreateSeed {
     controllerRpc: IControllerRpcClient
     onSeedCreated?: (createdSeed: nt.KeyStoreEntry) => void
+    onBack?: () => void
 }
 
 enum CreateSeedWay {
@@ -178,7 +179,11 @@ const waysOptions: OptionType[] = [
     { value: CreateSeedWay.IMPORT, label: 'Import seed' }
 ]
 
-const CreateSeed: React.FC<ICreateSeed> = ({ controllerRpc, onSeedCreated }) => {
+const CreateSeed: React.FC<ICreateSeed> = ({
+    controllerRpc,
+    onSeedCreated,
+    onBack,
+}) => {
     const [inProcess, setInProcess] = useState(false)
     const [name, setName] = useState('')
     const [step, setStep] = useState<CreateSeedWayStep | null>(null)
@@ -223,6 +228,11 @@ const CreateSeed: React.FC<ICreateSeed> = ({ controllerRpc, onSeedCreated }) => 
                     </div>
 
                     <div className="create-seed__content-buttons">
+                        {onBack !== undefined && (
+                            <div className="create-seed__content-buttons-back-btn">
+                                <Button text={'Back'} disabled={inProcess} onClick={onBack} white />
+                            </div>
+                        )}
                         <Button
                             text={'Next'}
                             type="submit"

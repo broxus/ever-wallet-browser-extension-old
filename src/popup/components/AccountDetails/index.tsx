@@ -105,8 +105,8 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                     </div>
                     {modalVisible && (
                         <AccountModal
-                            account={account}
                             tonWalletState={tonWalletState}
+                            controllerState={controllerState}
                             onCreateAccount={accountModalAction(onCreateAccount)}
                             onManageSeed={accountModalAction(onManageSeed)}
                             onOpenKeyStore={accountModalAction(onOpenKeyStore)}

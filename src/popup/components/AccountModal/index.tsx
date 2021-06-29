@@ -1,17 +1,16 @@
-import React, { useRef } from 'react'
-import { convertTons } from '@shared/utils'
+import { ControllerState } from '@popup/utils/ControllerRpcClient'
+import React, { useMemo, useRef } from 'react'
+import { convertAddress, convertTons } from '@shared/utils'
 import { hideModalOnClick } from '@popup/common'
 import * as nt from '@nekoton'
-
-import UserAvatar from '@popup/components/UserAvatar'
 
 import './style.scss'
 
 import manifest from '../../../manifest.json'
 
 type IAccountModal = {
-    account: nt.AssetsList
     tonWalletState: nt.ContractState | undefined
+    controllerState: ControllerState
     onOpenConnectedSites?: () => void
     onCreateAccount?: () => void
     onManageSeed?: () => void
@@ -23,8 +22,8 @@ type IAccountModal = {
 }
 
 const AccountModal: React.FC<IAccountModal> = ({
-    account,
     // tonWalletState,
+    controllerState,
     onManageSeed,
     //onOpenConnectedSites,
     //onOpenKeyStore,
@@ -43,11 +42,23 @@ const AccountModal: React.FC<IAccountModal> = ({
         )
     }
 
+    const selectedSeedName = useMemo(() => {
+        if (controllerState.selectedAccount?.tonWallet.publicKey !== undefined) {
+            const seedMasterKey = controllerState.storedKeys[controllerState.selectedAccount?.tonWallet.publicKey].masterKey
+            return controllerState.seedsNames[seedMasterKey]
+        }
+        return undefined
+    }, [controllerState.selectedAccount, controllerState.seedsNames])
+
+    const seeds = useMemo(() => Object.values(controllerState.storedKeys).filter(
+        key => key.accountId === 0
+    ), [controllerState.storedKeys])
+
     return (
         <Wrapper>
             <div className="account-settings-section">
                 <div className="account-settings-section-header">
-                    Current seed ({account.name})
+                    Current seed ({selectedSeedName})
                 </div>
                 {/*<div className="account-settings-section-item">*/}
                 {/*    <div style={{ padding: '0 12px' }}>*/}
@@ -67,6 +78,24 @@ const AccountModal: React.FC<IAccountModal> = ({
                 <div className="account-settings-section-header">
                     All seeds
                 </div>
+
+                <ul className="account-settings__seeds-list">
+                    {seeds.map(seed => (
+                        <li key={seed.masterKey}>
+                            <a
+                                role="button"
+                                className="account-settings__seeds-list-item"
+                                onClick={() => {
+
+                                }}
+                            >
+                                <div className="account-settings__seeds-list-item-title">
+                                    {controllerState.seedsNames?.[seed.masterKey] || convertAddress(seed.masterKey)}
+                                </div>
+                            </a>
+                        </li>
+                    ))}
+                </ul>
 
                 <div
                     className="account-settings-section-item"

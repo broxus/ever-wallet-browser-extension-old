@@ -1,5 +1,5 @@
-import classNames from 'classnames'
 import React, { useEffect, useMemo, useState } from 'react'
+import classNames from 'classnames'
 
 import * as nt from '@nekoton'
 import Input from '@popup/components/Input'
@@ -15,6 +15,7 @@ interface IManageSeed {
 	controllerState: ControllerState
 	currentSeed?: nt.KeyStoreEntry
 	onCreateKey?: () => void
+	onSelectKey?: (key: nt.KeyStoreEntry) => void
 }
 
 const ManageSeed: React.FC<IManageSeed> = ({
@@ -22,12 +23,20 @@ const ManageSeed: React.FC<IManageSeed> = ({
 	controllerRpc,
 	currentSeed,
 	onCreateKey,
+	onSelectKey,
 }) => {
 	const [name, setName] = useState(
 		currentSeed
 			? controllerState.seedsNames[currentSeed.masterKey]
 			: ''
 	)
+
+	const currentDerivedKeyPublicKey = useMemo(() => {
+		if (controllerState.selectedAccount?.tonWallet.publicKey !== undefined) {
+			return controllerState.storedKeys[controllerState.selectedAccount?.tonWallet.publicKey].publicKey
+		}
+		return undefined
+	}, [controllerState.selectedAccount])
 
 	const keys = useMemo(() => Object.values(controllerState.storedKeys).filter(
 		key => key.masterKey === currentSeed?.masterKey
@@ -78,7 +87,7 @@ const ManageSeed: React.FC<IManageSeed> = ({
 			<div className="manage-seeds__divider" />
 			<ul className="manage-seeds__list">
 				{keys.map(key => {
-					const isActive = true
+					const isActive = currentDerivedKeyPublicKey === key.publicKey
 					return (
 						<li key={key.publicKey}>
 							<div
@@ -86,10 +95,13 @@ const ManageSeed: React.FC<IManageSeed> = ({
 								className={classNames('manage-seeds__list-item', {
 									'manage-seeds__list-item--active': isActive
 								})}
+								onClick={() => {
+									onSelectKey?.(key)
+								}}
 							>
 								<img src={TonKey} alt="" className="manage-seeds__list-item-logo" />
 								<div className="manage-seeds__list-item-title">
-									{convertAddress(key.publicKey)}
+									{controllerState.derivedKeysNames?.[key.publicKey] || convertAddress(key.publicKey)}
 									{isActive && ' (current)'}
 								</div>
 								<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />

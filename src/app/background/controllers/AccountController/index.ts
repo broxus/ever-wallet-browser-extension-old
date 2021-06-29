@@ -50,7 +50,6 @@ export interface AccountControllerConfig extends BaseConfig {
 
 export interface AccountControllerState extends BaseState {
     selectedAccount: nt.AssetsList | undefined
-    selectedSeed: string | undefined
     accountEntries: { [publicKey: string]: nt.AssetsList[] }
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
@@ -60,13 +59,13 @@ export interface AccountControllerState extends BaseState {
     }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
+    derivedKeysNames: { [publicKey: string]: string }
     seedsNames: { [masterKey: string]: string }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
 }
 
 const defaultState: AccountControllerState = {
     selectedAccount: undefined,
-    selectedSeed: undefined,
     accountEntries: {},
     accountContractStates: {},
     accountTokenStates: {},
@@ -74,6 +73,7 @@ const defaultState: AccountControllerState = {
     accountTokenTransactions: {},
     accountPendingMessages: {},
     knownTokens: {},
+    derivedKeysNames: {},
     seedsNames: {},
     storedKeys: {},
 }
@@ -128,9 +128,15 @@ export class AccountController extends BaseController<
             seedsNames = {}
         }
 
+        let derivedKeysNames = await this._loadDerivedKeysNames()
+        if (derivedKeysNames == null) {
+            derivedKeysNames = {}
+        }
+
         this.update({
             selectedAccount,
             accountEntries,
+            derivedKeysNames,
             seedsNames,
             storedKeys,
         })
@@ -294,9 +300,15 @@ export class AccountController extends BaseController<
                 },
             })
 
-            console.log(entry)
+            if (name !== undefined) {
+                await this._saveDerivedKeyName(entry.publicKey, name)
+            }
 
             this.update({
+                derivedKeysNames: typeof name === 'string' ? {
+                    ...this.state.derivedKeysNames,
+                    [entry.publicKey]: name,
+                } : { ...this.state.derivedKeysNames },
                 storedKeys: {
                     ...this.state.storedKeys,
                     [entry.publicKey]: entry,
@@ -773,6 +785,17 @@ export class AccountController extends BaseController<
             seedsNames: {
                 ...this.state.seedsNames,
                 [masterKey]: name,
+            }
+        })
+    }
+
+    public async updateDerivedKeyName(publicKey: string, name: string): Promise<void> {
+        await this._saveDerivedKeyName(publicKey, name)
+
+        this.update({
+            derivedKeysNames: {
+                ...this.state.derivedKeysNames,
+                [publicKey]: name,
             }
         })
     }
@@ -1283,6 +1306,32 @@ export class AccountController extends BaseController<
         return new Promise<void>((resolve) => {
             chrome.storage.local.set(
                 { seedsNames },
+                () => resolve()
+            )
+        })
+    }
+
+    private async _loadDerivedKeysNames(): Promise<{ [publicKey: string]: string } | undefined> {
+        return new Promise<{ [publicKey: string]: string } | undefined>((resolve) => {
+            chrome.storage.local.get(['derivedKeysNames'], ({ derivedKeysNames }) => {
+                if (typeof derivedKeysNames !== 'object') {
+                    return resolve(undefined)
+                }
+                resolve(derivedKeysNames)
+            })
+        })
+    }
+
+    private async _saveDerivedKeyName(publicKey: string, name: string): Promise<void> {
+        let derivedKeysNames = await this._loadDerivedKeysNames()
+        if (!derivedKeysNames || typeof derivedKeysNames !== 'object') {
+            derivedKeysNames = {}
+        }
+        derivedKeysNames[publicKey] = name
+
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set(
+                { derivedKeysNames },
                 () => resolve()
             )
         })

@@ -13,6 +13,7 @@ interface ICreateDerivedKey {
 	controllerRpc: IControllerRpcClient
 	controllerState: ControllerState
 	seed?: nt.KeyStoreEntry
+	nextAccountId: number
 	onBack?: () => void,
 	onKeyCreated: (createdKey: nt.KeyStoreEntry) => void
 }
@@ -20,6 +21,7 @@ interface ICreateDerivedKey {
 const CreateDerivedKey: React.FC<ICreateDerivedKey> = ({
 	controllerRpc,
 	seed,
+	nextAccountId,
 	onBack,
 	onKeyCreated,
 }) => {
@@ -32,14 +34,14 @@ const CreateDerivedKey: React.FC<ICreateDerivedKey> = ({
 		setInProcess(true)
 		if (seed !== undefined) {
 			await controllerRpc.createDerivedKey({
-				accountId: seed.accountId,
+				accountId: nextAccountId,
 				masterKey: seed.masterKey,
 				name,
 				password,
 			}).then((key) => {
 				onKeyCreated?.(key)
 			}).catch((err: string) => {
-				setError(err)
+				setError(err.toString?.())
 			}).finally(() => {
 				setInProcess(false)
 			})
@@ -47,11 +49,11 @@ const CreateDerivedKey: React.FC<ICreateDerivedKey> = ({
 	}
 
 	return (
-		<div className="create-key__content">
-			<h2 className="create-key__content-title">Create Key</h2>
+		<div className="create-derived-key__content">
+			<h2 className="create-derived-key__content-title">Create Key</h2>
 
 			<form onSubmit={handleSubmit(onSubmit)}>
-				<div className="create-key__content-form-rows">
+				<div className="create-derived-key__content-form-rows">
 					<Input
 						name="name"
 						register={register({
@@ -73,15 +75,15 @@ const CreateDerivedKey: React.FC<ICreateDerivedKey> = ({
 						type={'password'}
 					/>
 					{(errors.password || error) && (
-						<div className="check-seed__content-error">
+						<div className="create-derived-key__content-error">
 							{errors.password && 'The password is required'}
 							{error}
 						</div>
 					)}
 				</div>
-				<div className="create-key__content-buttons">
+				<div className="create-derived-key__content-buttons">
 					{onBack !== undefined && (
-						<div className="create-key__content-buttons-back-btn">
+						<div className="create-derived-key__content-buttons-back-btn">
 							<Button text={'Back'} disabled={inProcess} onClick={onBack} white />
 						</div>
 					)}

@@ -235,6 +235,7 @@ export class NekotonController extends EventEmitter {
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
             updateSeedName: nodeifyAsync(accountController, 'updateSeedName'),
+            updateDerivedKeyName: nodeifyAsync(accountController, 'updateDerivedKeyName'),
             getCustodians: nodeifyAsync(accountController, 'getCustodians'),
             getMultisigPendingTransactions: nodeifyAsync(accountController, 'getMultisigPendingTransactions'),
             updateTokenWallets: nodeifyAsync(accountController, 'updateTokenWallets'),

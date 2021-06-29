@@ -1,10 +1,12 @@
-import CreateDerivedKey from '@popup/components/CreateDerivedKey'
 import React, { useMemo, useState } from 'react'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
+import CreateAccount from '@popup/components/CreateAccount'
 import CreateSeed from '@popup/components/CreateSeed'
 import ManageSeed from '@popup/components/ManageSeed'
+import CreateDerivedKey from '@popup/components/CreateDerivedKey'
+import ManageDerivedKey from '@popup/components/ManageDerivedKey'
 import Arrow from '@popup/img/arrow.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
@@ -31,10 +33,21 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 	const [step, setStep] = useState<ManageSeedsStep | null>(null)
 	const [currentSeed, setCurrentSeed] = useState<nt.KeyStoreEntry>()
 	const [currentKey, setCurrentKey] = useState<nt.KeyStoreEntry>()
+	const [currentAccount, setCurrentAccount] = useState<nt.AssetsList>()
 
+	const selectedSeedMasterKey = useMemo(() => {
+		if (controllerState.selectedAccount?.tonWallet.publicKey !== undefined) {
+			return controllerState.storedKeys[controllerState.selectedAccount?.tonWallet.publicKey].masterKey
+		}
+		return undefined
+	}, [controllerState.selectedAccount])
 	const seeds = useMemo(() => Object.values(controllerState.storedKeys).filter(
 		key => key.accountId === 0
 	), [controllerState.storedKeys])
+	const nextAccountId = useMemo(() => {
+		const ids = Object.values(controllerState.storedKeys).map(({ accountId }) => accountId)
+		return Math.max(...ids) + 1
+	}, [controllerState.storedKeys])
 
 	const onSeedCreated = (createdSeed: nt.KeyStoreEntry) => {
 		setCurrentSeed(createdSeed)
@@ -62,7 +75,7 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 
 					<ul className="manage-seeds__list">
 						{seeds.map(seed => {
-							const isActive = controllerState.selectedSeed === seed.masterKey
+							const isActive = selectedSeedMasterKey === seed.masterKey
 							return (
 								<li key={seed.masterKey}>
 									<div
@@ -71,8 +84,8 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 											'manage-seeds__list-item--active': isActive
 										})}
 										onClick={() => {
-											setStep(ManageSeedsStep.MANAGE_SEED)
 											setCurrentSeed(seed)
+											setStep(ManageSeedsStep.MANAGE_SEED)
 										}}
 									>
 										<img src={TonLogo} alt="" className="manage-seeds__list-item-logo" />
@@ -104,6 +117,9 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 				<CreateSeed
 					controllerRpc={controllerRpc}
 					onSeedCreated={onSeedCreated}
+					onBack={() => {
+						setStep(null)
+					}}
 				/>
 			)}
 			{step === ManageSeedsStep.MANAGE_SEED && (
@@ -112,6 +128,10 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 					controllerState={controllerState}
 					currentSeed={currentSeed}
 					onCreateKey={onCreateDerivedKey}
+					onSelectKey={(key) => {
+						setCurrentKey(key)
+						setStep(ManageSeedsStep.MANAGE_DERIVED_KEY)
+					}}
 				/>
 			)}
 			{step === ManageSeedsStep.CREATE_DERIVED_KEY && (
@@ -119,7 +139,34 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 					controllerRpc={controllerRpc}
 					controllerState={controllerState}
 					seed={currentSeed}
+					nextAccountId={nextAccountId}
 					onKeyCreated={onDerivedKeyCreated}
+					onBack={() => {
+						setStep(ManageSeedsStep.MANAGE_SEED)
+					}}
+				/>
+			)}
+			{step === ManageSeedsStep.MANAGE_DERIVED_KEY && (
+				<ManageDerivedKey
+					controllerRpc={controllerRpc}
+					controllerState={controllerState}
+					currentKey={currentKey}
+					onCreateAccount={() => {
+						setStep(ManageSeedsStep.CREATE_ACCOUNT)
+					}}
+					onSelectAccount={(account) => {
+						setCurrentAccount(account)
+						setStep(ManageSeedsStep.MANAGE_ACCOUNT)
+					}}
+				/>
+			)}
+			{step === ManageSeedsStep.CREATE_ACCOUNT && (
+				<CreateAccount
+					controllerRpc={controllerRpc}
+					currentKey={currentKey}
+					onBack={() => {
+						setStep(ManageSeedsStep.MANAGE_DERIVED_KEY)
+					}}
 				/>
 			)}
 		</>
