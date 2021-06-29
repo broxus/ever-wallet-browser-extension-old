@@ -566,7 +566,7 @@ export class LedgerConnection {
 
     async sign(account: number, message: Buffer, handler: nt.LedgerQueryResultHandler) {
         await this.bridge
-            .signHash(account, new Uint8Array(message))
+            .signMessage(account, new Uint8Array(message))
             .then((signature) => {
                 handler.onResult(signature)
             })

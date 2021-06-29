@@ -12,7 +12,17 @@ type IBridgeApi = {
             error: Error
         }
     }
-    'ledger-sign-hash': {
+    'ledger-get-address': {
+        input: {
+            account: number
+            contract: number
+        }
+        output: {
+            address: Uint8Array
+            error: Error
+        }
+    }
+    'ledger-sign-message': {
         input: {
             account: number
             message: Uint8Array
@@ -24,6 +34,12 @@ type IBridgeApi = {
     }
     'ledger-close-bridge': {
         input: {}
+        output: {}
+    }
+    'ledger-update-transport': {
+        input: {
+            useLedgerLive: boolean | undefined
+        }
         output: {}
     }
 }
@@ -42,6 +58,7 @@ export default class LedgerBridge extends EventEmitter {
     private page: number = 0
     private iframe?: HTMLIFrameElement
     private iframeLoaded: boolean = false
+    private useLedgerLive: boolean = false
 
     constructor() {
         super()
@@ -73,8 +90,21 @@ export default class LedgerBridge extends EventEmitter {
         }
     }
 
-    public async signHash(account: number, message: Uint8Array) {
-        const { success, payload, error } = await this._sendMessage('ledger-sign-hash', {
+    public async getAddress(account: number, contract: number) {
+        const { success, payload, error } = await this._sendMessage('ledger-get-address', {
+            account,
+            contract,
+        })
+
+        if (success && payload) {
+            return payload.address
+        } else {
+            throw error || new Error('Unknown error')
+        }
+    }
+
+    public async signMessage(account: number, message: Uint8Array) {
+        const { success, payload, error } = await this._sendMessage('ledger-sign-message', {
             account,
             message,
         })
@@ -96,12 +126,38 @@ export default class LedgerBridge extends EventEmitter {
         }
     }
 
+    public async updateTransport(useLedgerLive = false) {
+        if (!this.iframeLoaded) {
+            this.useLedgerLive = useLedgerLive
+            return
+        }
+
+        const { success, error } = await this._sendMessage('ledger-update-transport', {
+            useLedgerLive,
+        })
+
+        if (success) {
+            return
+        } else {
+            throw error || new Error('Unknown error')
+        }
+    }
+
     private _setupIframe() {
         this.iframe = document.createElement('iframe')
         this.iframe.src = this.bridgeUrl
         this.iframe.allow = 'hid'
         this.iframe.onload = async () => {
             this.iframeLoaded = true
+            if (this.useLedgerLive) {
+                const { success, error } = await this._sendMessage('ledger-update-transport', {
+                    useLedgerLive: this.useLedgerLive,
+                })
+
+                if (!success) {
+                    throw error || new Error('Unknown error')
+                }
+            }
         }
         document.body.appendChild(this.iframe)
     }
