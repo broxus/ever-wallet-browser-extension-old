@@ -228,6 +228,7 @@ export class NekotonController extends EventEmitter {
             createDerivedKey: nodeifyAsync(accountController, 'createDerivedKey'),
             createLedgerKey: nodeifyAsync(accountController, 'createLedgerKey'),
             removeKey: nodeifyAsync(accountController, 'removeKey'),
+            exportMasterKey: nodeifyAsync(accountController, 'exportMasterKey'),
             getLedgerFirstPage: nodeifyAsync(accountController, 'getLedgerFirstPage'),
             getLedgerNextPage: nodeifyAsync(accountController, 'getLedgerNextPage'),
             getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
@@ -239,7 +240,10 @@ export class NekotonController extends EventEmitter {
             updateSeedName: nodeifyAsync(accountController, 'updateSeedName'),
             updateDerivedKeyName: nodeifyAsync(accountController, 'updateDerivedKeyName'),
             getCustodians: nodeifyAsync(accountController, 'getCustodians'),
-            getMultisigPendingTransactions: nodeifyAsync(accountController, 'getMultisigPendingTransactions'),
+            getMultisigPendingTransactions: nodeifyAsync(
+                accountController,
+                'getMultisigPendingTransactions'
+            ),
             updateTokenWallets: nodeifyAsync(accountController, 'updateTokenWallets'),
             logOut: nodeifyAsync(this, 'logOut'),
             estimateFees: nodeifyAsync(accountController, 'estimateFees'),

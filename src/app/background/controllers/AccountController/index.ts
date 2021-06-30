@@ -244,7 +244,11 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createMasterKey({ name, seed, password }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
+    public async createMasterKey({
+        name,
+        seed,
+        password,
+    }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
@@ -275,10 +279,13 @@ export class AccountController extends BaseController<
             }
 
             this.update({
-                seedsNames: typeof name === 'string' ? {
-                    ...this.state.seedsNames,
-                    [entry.masterKey]: name,
-                } : { ...this.state.seedsNames },
+                seedsNames:
+                    typeof name === 'string'
+                        ? {
+                              ...this.state.seedsNames,
+                              [entry.masterKey]: name,
+                          }
+                        : { ...this.state.seedsNames },
                 storedKeys: {
                     ...this.state.storedKeys,
                     [entry.publicKey]: entry,
@@ -313,10 +320,13 @@ export class AccountController extends BaseController<
             }
 
             this.update({
-                derivedKeysNames: typeof name === 'string' ? {
-                    ...this.state.derivedKeysNames,
-                    [entry.publicKey]: name,
-                } : { ...this.state.derivedKeysNames },
+                derivedKeysNames:
+                    typeof name === 'string'
+                        ? {
+                              ...this.state.derivedKeysNames,
+                              [entry.publicKey]: name,
+                          }
+                        : { ...this.state.derivedKeysNames },
                 storedKeys: {
                     ...this.state.storedKeys,
                     [entry.publicKey]: entry,
@@ -353,21 +363,6 @@ export class AccountController extends BaseController<
         }
     }
 
-    public async getLedgerFirstPage() {
-        const { ledgerBridge } = this.config
-        return await ledgerBridge.getFirstPage()
-    }
-
-    public async getLedgerNextPage() {
-        const { ledgerBridge } = this.config
-        return await ledgerBridge.getNextPage()
-    }
-
-    public async getLedgerPreviousPage() {
-        const { ledgerBridge } = this.config
-        return await ledgerBridge.getPreviousPage()
-    }
-
     public async removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
         const { keyStore } = this.config
 
@@ -385,6 +380,25 @@ export class AccountController extends BaseController<
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public async exportMasterKey(exportKey: nt.ExportKey): Promise<nt.ExportedKey> {
+        return this.config.keyStore.exportKey(exportKey)
+    }
+
+    public async getLedgerFirstPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getFirstPage()
+    }
+
+    public async getLedgerNextPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getNextPage()
+    }
+
+    public async getLedgerPreviousPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getPreviousPage()
     }
 
     public async createAccount({
@@ -514,7 +528,7 @@ export class AccountController extends BaseController<
             accountsVisibility: {
                 ...this.state.accountsVisibility,
                 [address]: visible,
-            }
+            },
         })
     }
 
@@ -810,7 +824,7 @@ export class AccountController extends BaseController<
             seedsNames: {
                 ...this.state.seedsNames,
                 [masterKey]: name,
-            }
+            },
         })
     }
 
@@ -821,7 +835,7 @@ export class AccountController extends BaseController<
             derivedKeysNames: {
                 ...this.state.derivedKeysNames,
                 [publicKey]: name,
-            }
+            },
         })
     }
 
@@ -1322,17 +1336,14 @@ export class AccountController extends BaseController<
     }
 
     private async _saveSeedName(masterKey: string, name: string): Promise<void> {
-        let seedsNames = await this._loadSeedsNames();
+        let seedsNames = await this._loadSeedsNames()
         if (!seedsNames || typeof seedsNames !== 'object') {
             seedsNames = {}
         }
         seedsNames[masterKey] = name
 
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { seedsNames },
-                () => resolve()
-            )
+            chrome.storage.local.set({ seedsNames }, () => resolve())
         })
     }
 
@@ -1355,10 +1366,7 @@ export class AccountController extends BaseController<
         derivedKeysNames[publicKey] = name
 
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { derivedKeysNames },
-                () => resolve()
-            )
+            chrome.storage.local.set({ derivedKeysNames }, () => resolve())
         })
     }
 
@@ -1381,10 +1389,7 @@ export class AccountController extends BaseController<
         accountsVisibility[address] = visible
 
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { accountsVisibility },
-                () => resolve()
-            )
+            chrome.storage.local.set({ accountsVisibility }, () => resolve())
         })
     }
 }
