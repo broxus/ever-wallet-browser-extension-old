@@ -125,9 +125,9 @@ export class AccountController extends BaseController<
             selectedAccount = entries[0]
         }
 
-        let seedsNames = await this._loadSeedsNames()
-        if (seedsNames == null) {
-            seedsNames = {}
+        let accountsVisibility = await this._loadAccountsVisibility()
+        if (accountsVisibility == null) {
+            accountsVisibility = {}
         }
 
         let derivedKeysNames = await this._loadDerivedKeysNames()
@@ -135,7 +135,13 @@ export class AccountController extends BaseController<
             derivedKeysNames = {}
         }
 
+        let seedsNames = await this._loadSeedsNames()
+        if (seedsNames == null) {
+            seedsNames = {}
+        }
+
         this.update({
+            accountsVisibility,
             selectedAccount,
             accountEntries,
             derivedKeysNames,
@@ -407,11 +413,9 @@ export class AccountController extends BaseController<
             this.update({
                 selectedAccount,
                 accountEntries,
-                accountsVisibility: {
-                    ...this.state.accountsVisibility,
-                    [selectedAccount.tonWallet.address]: true,
-                }
             })
+
+            await this._saveAccountVisibility(selectedAccount.tonWallet.address, true)
 
             await this._saveSelectedAccountAddress()
 
@@ -503,7 +507,9 @@ export class AccountController extends BaseController<
         this._updateAssetsList({ ...account, name })
     }
 
-    public updateAccountVisibility(address: string, visible: boolean) {
+    public async updateAccountVisibility(address: string, visible: boolean): Promise<void> {
+        await this._saveAccountVisibility(address, visible)
+
         this.update({
             accountsVisibility: {
                 ...this.state.accountsVisibility,
@@ -1351,6 +1357,32 @@ export class AccountController extends BaseController<
         return new Promise<void>((resolve) => {
             chrome.storage.local.set(
                 { derivedKeysNames },
+                () => resolve()
+            )
+        })
+    }
+
+    private async _loadAccountsVisibility(): Promise<{ [address: string]: boolean } | undefined> {
+        return new Promise<{ [address: string]: boolean } | undefined>((resolve) => {
+            chrome.storage.local.get(['accountsVisibility'], ({ accountsVisibility }) => {
+                if (typeof accountsVisibility !== 'object') {
+                    return resolve(undefined)
+                }
+                resolve(accountsVisibility)
+            })
+        })
+    }
+
+    private async _saveAccountVisibility(address: string, visible: boolean): Promise<void> {
+        let accountsVisibility = await this._loadAccountsVisibility()
+        if (!accountsVisibility || typeof accountsVisibility !== 'object') {
+            accountsVisibility = {}
+        }
+        accountsVisibility[address] = visible
+
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set(
+                { accountsVisibility },
                 () => resolve()
             )
         })

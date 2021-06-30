@@ -2,9 +2,12 @@ import React, { useMemo, useState } from 'react'
 import QRCode from 'react-qr-code'
 
 import * as nt from '@nekoton'
+import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import Switcher from '@popup/components/Switcher'
-
+import TonKey from '@popup/img/ton-key.svg'
+import Arrow from '@popup/img/arrow.svg'
+import { convertAddress } from '@shared/utils'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 import './style.scss'
@@ -13,18 +16,18 @@ interface IManageAccount {
 	account?: nt.AssetsList
 	controllerRpc: IControllerRpcClient
 	controllerState: ControllerState
+	onSelectKey?: (key: nt.KeyStoreEntry) => void
+	onBack?: () => void
 }
 
 const ManageAccount: React.FC<IManageAccount> = ({
 	account,
 	controllerRpc,
 	controllerState,
+	onSelectKey,
+	onBack,
 }) => {
-	const [name, setName] = useState(
-		account
-			? account.name
-			: ''
-	)
+	const [name, setName] = useState(account ? account.name : '')
 
 	const isVisible = useMemo(() => {
 		if (account) {
@@ -32,6 +35,10 @@ const ManageAccount: React.FC<IManageAccount> = ({
 		}
 		return false
 	}, [controllerState.accountsVisibility])
+
+	const keys = useMemo(() => Object.values(controllerState.storedKeys).filter(
+		key => key.publicKey === account?.tonWallet.publicKey
+	), [controllerState.storedKeys])
 
 	const onInputName = (value: string) => {
 		setName(value)
@@ -45,7 +52,7 @@ const ManageAccount: React.FC<IManageAccount> = ({
 
 	const onToggleVisibility = () => {
 		if (account) {
-			controllerRpc.updateAccountName(account.tonWallet.address, !isVisible)
+			controllerRpc.updateAccountVisibility(account.tonWallet.address, !isVisible)
 		}
 	}
 
@@ -89,6 +96,39 @@ const ManageAccount: React.FC<IManageAccount> = ({
 					</div>
 				</div>
 			)}
+
+			{keys.length > 0 && (
+				<>
+					<div className="manage-account__content-header">Linked keys</div>
+					<div className="manage-account__divider" />
+					<ul className="manage-account__list">
+						{keys.map(key => (
+							<li key={key.publicKey}>
+								<div
+									role="button"
+									className="manage-account__list-item"
+									onClick={() => {
+										onSelectKey?.(key)
+									}}
+								>
+									<img src={TonKey} alt="" className="manage-account__list-item-logo" />
+									<div className="manage-account__list-item-title">
+										{convertAddress(key.publicKey)}
+									</div>
+									<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
+								</div>
+							</li>
+						))}
+					</ul>
+				</>
+			)}
+
+			<div className="manage-account__content-buttons">
+				<div className="manage-account__content-buttons-back-btn">
+					<Button text={'Back'} white onClick={onBack} />
+				</div>
+				<Button text={'Go to account'} />
+			</div>
 		</div>
 	)
 }

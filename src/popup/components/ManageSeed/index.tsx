@@ -9,6 +9,7 @@ import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRp
 import { convertAddress } from '@shared/utils'
 
 import './style.scss'
+import Button from '@popup/components/Button'
 
 interface IManageSeed {
 	controllerRpc: IControllerRpcClient
@@ -16,6 +17,7 @@ interface IManageSeed {
 	currentSeed?: nt.KeyStoreEntry
 	onCreateKey?: () => void
 	onSelectKey?: (key: nt.KeyStoreEntry) => void
+	onBack?: () => void
 }
 
 const ManageSeed: React.FC<IManageSeed> = ({
@@ -24,6 +26,7 @@ const ManageSeed: React.FC<IManageSeed> = ({
 	currentSeed,
 	onCreateKey,
 	onSelectKey,
+	onBack,
 }) => {
 	const [name, setName] = useState(
 		currentSeed
@@ -50,6 +53,10 @@ const ManageSeed: React.FC<IManageSeed> = ({
 		if (currentSeed) {
 			controllerRpc.updateSeedName(currentSeed.masterKey, name)
 		}
+	}
+
+	const exportSeed = () => {
+
 	}
 
 	useEffect(() => {
@@ -101,7 +108,7 @@ const ManageSeed: React.FC<IManageSeed> = ({
 							>
 								<img src={TonKey} alt="" className="manage-seed__list-item-logo" />
 								<div className="manage-seed__list-item-title">
-									{controllerState.derivedKeysNames?.[key.publicKey] || convertAddress(key.publicKey)}
+									{convertAddress(key.publicKey)}
 								</div>
 								<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
 							</div>
@@ -116,6 +123,13 @@ const ManageSeed: React.FC<IManageSeed> = ({
 					</div>
 				</li>
 			</ul>
+
+			<div className="manage-seed__content-buttons">
+				<div className="manage-seed__content-buttons-back-btn">
+					<Button text={'Back'} white onClick={onBack} />
+				</div>
+				<Button text={'Export seed'} onClick={exportSeed} />
+			</div>
 		</div>
 	)
 }

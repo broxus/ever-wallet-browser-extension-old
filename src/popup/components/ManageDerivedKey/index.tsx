@@ -1,5 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
 import classNames from 'classnames'
+import React, { useEffect, useMemo, useState } from 'react'
+import CopyToClipboard from 'react-copy-to-clipboard'
+import ReactTooltip from 'react-tooltip'
 
 import * as nt from '@nekoton'
 import Input from '@popup/components/Input'
@@ -10,6 +12,7 @@ import { convertAddress } from '@shared/utils'
 
 
 import './style.scss'
+import Button from '@popup/components/Button'
 
 interface IManageDerivedKey {
 	controllerRpc: IControllerRpcClient
@@ -17,6 +20,7 @@ interface IManageDerivedKey {
 	currentKey?: nt.KeyStoreEntry
 	onCreateAccount?: () => void
 	onSelectAccount?: (account: nt.AssetsList) => void
+	onBack?: () => void
 }
 
 const ManageDerivedKey: React.FC<IManageDerivedKey> = ({
@@ -25,6 +29,7 @@ const ManageDerivedKey: React.FC<IManageDerivedKey> = ({
 	currentKey,
 	onCreateAccount,
 	onSelectAccount,
+	onBack,
 }) => {
 	const [name, setName] = useState(
 		currentKey
@@ -67,9 +72,20 @@ const ManageDerivedKey: React.FC<IManageDerivedKey> = ({
 			{currentKey !== undefined && (
 				<>
 					<div className="manage-derived-key__content-header">Public key</div>
-					<div className="manage-derived-key__public-key-placeholder">
-						{currentKey.publicKey}
-					</div>
+					<CopyToClipboard
+						text={currentKey.publicKey}
+						onCopy={() => {
+							ReactTooltip.hide()
+						}}
+					>
+						<div
+							className="manage-derived-key__public-key-placeholder"
+							data-tip="Click to copy"
+						>
+							{currentKey.publicKey}
+						</div>
+					</CopyToClipboard>
+					<ReactTooltip type="dark" effect="solid" place="top" />
 				</>
 			)}
 
@@ -106,6 +122,7 @@ const ManageDerivedKey: React.FC<IManageDerivedKey> = ({
 			</div>
 
 			<div className="manage-derived-key__content-header">My accounts</div>
+			<div className="manage-derived-key__divider" />
 			<ul className="manage-derived-key__list">
 				{accounts.map(account => (
 					<li key={account.tonWallet.address}>
@@ -129,6 +146,28 @@ const ManageDerivedKey: React.FC<IManageDerivedKey> = ({
 					</li>
 				))}
 			</ul>
+
+			<div className="manage-derived-key__content-buttons">
+				<div className="manage-derived-key__content-buttons-back-btn">
+					<Button text={'Back'} white onClick={onBack} />
+				</div>
+
+				{currentKey !== undefined && (
+					<>
+						<CopyToClipboard
+							text={currentKey.publicKey}
+							onCopy={() => {}}
+						>
+							<div
+								data-tip="Copied!"
+								data-event="click focus"
+							>
+								<Button text={'Copy public key'} />
+							</div>
+						</CopyToClipboard>
+					</>
+				)}
+			</div>
 		</div>
 	)
 }

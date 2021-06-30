@@ -22,6 +22,17 @@
 			margin-bottom: 8px;
 		}
 
+		&-buttons {
+			margin-top: 40px;
+			display: flex;
+
+			> * { width: 100%; }
+
+			&-back-btn {
+				width: 50%;
+				margin-right: 12px;
+			}
+		}
 	}
 
 	&__account-visibility {
@@ -54,8 +65,10 @@
 	}
 
 	&__qr-address-code {
-		height: 80px;
-		width: 80px;
+		background: #fff;
+		padding: 10px;
+		height: 100px;
+		width: 100px;
 	}
 
 	&__qr-address-address {

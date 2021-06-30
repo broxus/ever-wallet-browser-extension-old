@@ -133,6 +133,9 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 						setCurrentKey(key)
 						setStep(ManageSeedsStep.MANAGE_DERIVED_KEY)
 					}}
+					onBack={() => {
+						setStep(null)
+					}}
 				/>
 			)}
 			{step === ManageSeedsStep.CREATE_DERIVED_KEY && (
@@ -159,6 +162,9 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 						setCurrentAccount(account)
 						setStep(ManageSeedsStep.MANAGE_ACCOUNT)
 					}}
+					onBack={() => {
+						setStep(ManageSeedsStep.MANAGE_SEED)
+					}}
 				/>
 			)}
 			{step === ManageSeedsStep.CREATE_ACCOUNT && (
@@ -179,6 +185,13 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 					account={currentAccount}
 					controllerRpc={controllerRpc}
 					controllerState={controllerState}
+					onSelectKey={(key) => {
+						setCurrentKey(key)
+						setStep(ManageSeedsStep.MANAGE_DERIVED_KEY)
+					}}
+					onBack={() => {
+						setStep(ManageSeedsStep.MANAGE_DERIVED_KEY)
+					}}
 				/>
 			)}
 		</>

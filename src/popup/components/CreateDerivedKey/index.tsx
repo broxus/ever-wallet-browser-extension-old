@@ -56,9 +56,6 @@ const CreateDerivedKey: React.FC<ICreateDerivedKey> = ({
 				<div className="create-derived-key__content-form-rows">
 					<Input
 						name="name"
-						register={register({
-							required: true,
-						})}
 						disabled={inProcess}
 						label={'Enter key name...'}
 						autoFocus

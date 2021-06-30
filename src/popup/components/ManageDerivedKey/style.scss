@@ -27,7 +27,19 @@
 				font-weight: bold;
 				letter-spacing: 0.75px;
 				color: #000;
-				margin-top: 36px;
+				margin-top: 28px;
+			}
+		}
+
+		&-buttons {
+			margin-top: 40px;
+			display: flex;
+
+			> * { width: 100%;  }
+
+			&-back-btn {
+				width: 50%;
+				margin-right: 12px;
 			}
 		}
 
@@ -41,6 +53,7 @@
 	}
 
 	&__public-key-placeholder {
+		cursor: copy;
 		background: #f8f9f9;
 		border: 1px solid #dde1e2;
 		box-sizing: border-box;

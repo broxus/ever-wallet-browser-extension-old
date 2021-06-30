@@ -7,12 +7,16 @@ interface ISwitcher {
 	onChange?: () => void
 }
 
-const Switcher: React.FC<ISwitcher> = ({ checked, onChange }) => {
+const Switcher: React.FC<ISwitcher> = ({
+   	checked,
+   	onChange,
+}) => {
 	return (
 		<label className="switcher">
 			<input
 				type="checkbox"
 				checked={checked}
+				value="true"
 				onChange={onChange}
 			/>
 			<span className="switcher__handle" />
