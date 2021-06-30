@@ -84,7 +84,7 @@ const ManageDerivedKey: React.FC<IManageDerivedKey> = ({
 				/>
 				<a
 					role="button"
-					className="manage-seeds__seed-name-button"
+					className="manage-derived-key__key-name-button"
 					onClick={saveName}
 				>
 					Save

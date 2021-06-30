@@ -62,6 +62,7 @@ export interface AccountControllerState extends BaseState {
     derivedKeysNames: { [publicKey: string]: string }
     seedsNames: { [masterKey: string]: string }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
+    accountsVisibility: { [address: string]: boolean }
 }
 
 const defaultState: AccountControllerState = {
@@ -72,6 +73,7 @@ const defaultState: AccountControllerState = {
     accountTransactions: {},
     accountTokenTransactions: {},
     accountPendingMessages: {},
+    accountsVisibility: {},
     knownTokens: {},
     derivedKeysNames: {},
     seedsNames: {},
@@ -405,6 +407,10 @@ export class AccountController extends BaseController<
             this.update({
                 selectedAccount,
                 accountEntries,
+                accountsVisibility: {
+                    ...this.state.accountsVisibility,
+                    [selectedAccount.tonWallet.address]: true,
+                }
             })
 
             await this._saveSelectedAccountAddress()
@@ -490,6 +496,19 @@ export class AccountController extends BaseController<
                 accountTransactions,
                 accountTokenTransactions,
             })
+        })
+    }
+
+    public updateAccountName(account: nt.AssetsList, name: string) {
+        this._updateAssetsList({ ...account, name })
+    }
+
+    public updateAccountVisibility(address: string, visible: boolean) {
+        this.update({
+            accountsVisibility: {
+                ...this.state.accountsVisibility,
+                [address]: visible,
+            }
         })
     }
 

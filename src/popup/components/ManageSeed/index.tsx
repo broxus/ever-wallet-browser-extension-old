@@ -62,11 +62,11 @@ const ManageSeed: React.FC<IManageSeed> = ({
 	}, [controllerState.seedsNames])
 
 	return (
-		<div className="manage-seeds__content">
-			<h2 className="manage-seeds__content-title">Manage seed phrase</h2>
+		<div className="manage-seed__content">
+			<h2 className="manage-seed__content-title">Manage seed phrase</h2>
 
-			<div className="manage-seeds__content-header">Seed name</div>
-			<div className="manage-seeds__seed-name-field">
+			<div className="manage-seed__content-header">Seed name</div>
+			<div className="manage-seed__seed-name-field">
 				<Input
 					name="seed_name"
 					label="Enter seed name"
@@ -76,33 +76,32 @@ const ManageSeed: React.FC<IManageSeed> = ({
 				/>
 				<a
 					role="button"
-					className="manage-seeds__seed-name-button"
+					className="manage-seed__seed-name-button"
 					onClick={saveName}
 				>
 					Save
 				</a>
 			</div>
 
-			<div className="manage-seeds__content-header" style={{ marginTop: 16 }}>Keys</div>
-			<div className="manage-seeds__divider" />
-			<ul className="manage-seeds__list">
+			<div className="manage-seed__content-header" style={{ marginTop: 16 }}>Keys</div>
+			<div className="manage-seed__divider" />
+			<ul className="manage-seed__list">
 				{keys.map(key => {
 					const isActive = currentDerivedKeyPublicKey === key.publicKey
 					return (
 						<li key={key.publicKey}>
 							<div
 								role="button"
-								className={classNames('manage-seeds__list-item', {
-									'manage-seeds__list-item--active': isActive
+								className={classNames('manage-seed__list-item', {
+									'manage-seed__list-item--active': isActive
 								})}
 								onClick={() => {
 									onSelectKey?.(key)
 								}}
 							>
-								<img src={TonKey} alt="" className="manage-seeds__list-item-logo" />
-								<div className="manage-seeds__list-item-title">
+								<img src={TonKey} alt="" className="manage-seed__list-item-logo" />
+								<div className="manage-seed__list-item-title">
 									{controllerState.derivedKeysNames?.[key.publicKey] || convertAddress(key.publicKey)}
-									{isActive && ' (current)'}
 								</div>
 								<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
 							</div>
@@ -110,7 +109,7 @@ const ManageSeed: React.FC<IManageSeed> = ({
 					)
 				})}
 				<li>
-					<div className="manage-seeds__list-item">
+					<div className="manage-seed__list-item">
 						<a role="button" onClick={onCreateKey}>
 							+ Add new
 						</a>

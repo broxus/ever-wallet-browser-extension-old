@@ -3,6 +3,7 @@ import classNames from 'classnames'
 
 import * as nt from '@nekoton'
 import CreateAccount from '@popup/components/CreateAccount'
+import ManageAccount from '@popup/components/ManageAccount'
 import CreateSeed from '@popup/components/CreateSeed'
 import ManageSeed from '@popup/components/ManageSeed'
 import CreateDerivedKey from '@popup/components/CreateDerivedKey'
@@ -164,9 +165,20 @@ const ManageSeeds: React.FC<IManageSeeds> = ({ controllerRpc, controllerState  }
 				<CreateAccount
 					controllerRpc={controllerRpc}
 					currentKey={currentKey}
+					onAccountCreated={(account) => {
+						setCurrentAccount(account)
+						setStep(ManageSeedsStep.MANAGE_ACCOUNT)
+					}}
 					onBack={() => {
 						setStep(ManageSeedsStep.MANAGE_DERIVED_KEY)
 					}}
+				/>
+			)}
+			{step === ManageSeedsStep.MANAGE_ACCOUNT && (
+				<ManageAccount
+					account={currentAccount}
+					controllerRpc={controllerRpc}
+					controllerState={controllerState}
 				/>
 			)}
 		</>

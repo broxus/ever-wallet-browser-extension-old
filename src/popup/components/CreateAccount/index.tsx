@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { useForm } from 'react-hook-form'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
@@ -22,6 +21,8 @@ const CONTRACT_TYPES: { [K in nt.ContractType]: string } = {
 interface ISelectContractType {
 	currentType: nt.ContractType
 	excludedContracts?: nt.ContractType[]
+	error?: string
+	disabled?: boolean
 	onSelectContractType: (type: nt.ContractType) => void
 	onSubmit: () => void
 	onBack?: () => void
@@ -30,6 +31,8 @@ interface ISelectContractType {
 const SelectContractType: React.FC<ISelectContractType> = ({
 	currentType,
 	excludedContracts,
+	error,
+	disabled,
 	onSelectContractType,
 	onSubmit,
 	onBack,
@@ -55,14 +58,26 @@ const SelectContractType: React.FC<ISelectContractType> = ({
 				)
 			})}
 
+			{error !== undefined && (
+				<div className="create-key__content-form-rows">
+					{error}
+				</div>
+			)}
+
 			<div className="create-account__content-buttons">
 				{onBack !== undefined && (
 					<div className="create-account__content-buttons-back-btn">
-						<Button text={'Back'} onClick={onBack} white />
+						<Button
+							text={'Back'}
+							disabled={disabled}
+							onClick={onBack}
+							white
+						/>
 					</div>
 				)}
 				<Button
 					text={'Confirm'}
+					disabled={disabled}
 					onClick={onSubmit}
 				/>
 			</div>
@@ -73,13 +88,12 @@ const SelectContractType: React.FC<ISelectContractType> = ({
 interface ICreateAccount {
 	controllerRpc: IControllerRpcClient
 	currentKey?: nt.KeyStoreEntry
-	onAccountCreated?: (account: nt.AssetsList) => {}
+	onAccountCreated?: (account: nt.AssetsList) => void
 	onBack?: () => void
 }
 
 enum CreateAccountStep {
 	SELECT_CONTRACT_TYPE,
-	ENTER_PASSWORD,
 }
 
 const CreateAccount: React.FC<ICreateAccount> = ({
@@ -110,7 +124,6 @@ const CreateAccount: React.FC<ICreateAccount> = ({
 		}).then((account) => {
 			onAccountCreated?.(account)
 		}).catch((err) => {
-			controllerRpc.removeKey({ publicKey: currentKey.publicKey }).catch(console.error)
 			setError(err.toString())
 		}).finally(() => {
 			setInProcess(false)
@@ -154,6 +167,8 @@ const CreateAccount: React.FC<ICreateAccount> = ({
 			{step === CreateAccountStep.SELECT_CONTRACT_TYPE && (
 				<SelectContractType
 					currentType={contractType}
+					error={error}
+					disabled={inProcess}
 					onSelectContractType={setContractType}
 					onSubmit={onSubmit}
 					onBack={() => {
