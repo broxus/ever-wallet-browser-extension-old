@@ -80,4 +80,5 @@ const Input: React.FC<ISimpleInput> = ({
         />
     )
 }
+
 export default Input

@@ -2,6 +2,7 @@
 
 .account-details {
     background-color: $mainDarkBg;
+    box-sizing: border-box;
     //padding: 16px 20px 28px; // TODO: use with navigation
     padding: 16px 20px 24px;
     height: 397px;
@@ -12,7 +13,11 @@
         margin-bottom: 30px;
     }
 
-    &__network {
+    &__notification-bell {
+        cursor: pointer;
+    }
+
+    &__network-switcher {
         background: rgba(255, 255, 255, 0.16);
         border-radius: 91px;
         color: $windowBg;
@@ -26,6 +31,11 @@
         letter-spacing: 0.75px;
         line-height: 20px;
         padding: 5px 10px;
+    }
+
+    &__profile-icon {
+        cursor: pointer;
+        position: relative;
     }
 
     &__controls {
@@ -83,7 +93,7 @@
     backdrop-filter: blur(80px);
     background: linear-gradient(239.75deg, rgba(197, 228, 243, 1) 26.52%, rgba(197, 228, 243, 1)) 100%;
     border-radius: 6px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.24);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
     flex-direction: column;
     justify-content: space-between;
     padding: 24px;

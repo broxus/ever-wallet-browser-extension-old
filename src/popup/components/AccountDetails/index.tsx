@@ -1,38 +1,26 @@
-import React, { useState } from 'react'
-import { convertTons } from '@shared/utils'
+import * as React from 'react'
+
 import { createRipple, removeRipple } from '@popup/common'
-import * as nt from '@nekoton'
-
-import AccountModal from '@popup/components/AccountModal'
-import AccountCard from '@popup/components/AccountCard'
-import Carousel from '@popup/components/Carousel'
+import { AccountCard } from '@popup/components/AccountCard'
+import { AccountModal } from '@popup/components/AccountModal'
+import { Carousel } from '@popup/components/Carousel'
 import Notifications from '@popup/components/Notifications'
+import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
-import ReceiveIcon from '@popup/img/receive.svg'
-import SendIcon from '@popup/img/send.svg'
+import AddAccount from '@popup/img/add-account.svg'
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
-import Profile from '@popup/img/profile.svg'
-import AddAccount from '@popup/img/add-account.svg'
+import ReceiveIcon from '@popup/img/receive.svg'
+import SendIcon from '@popup/img/send.svg'
+
+import { ConnectionDataItem } from '@shared/approvalApi'
+import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
+import { convertTons } from '@shared/utils'
 
 import './style.scss'
-import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-
-type AccountDetailsParams = {
-    account: nt.AssetsList | undefined
-    tonWalletState: nt.ContractState | undefined
-    controllerState: ControllerState
-    controllerRpc: IControllerRpcClient
-    network: string
-    onToggleNetwork: () => void
-    onSend: () => void
-    onReceive: () => void
-    onDeploy: () => void
-    onLogOut: () => void
-    onCreateAccount: () => void
-    onManageSeed: () => void
-    onOpenKeyStore: () => void
-}
 
 interface IAddNewAccountCard {
     handleCreateNewAcc: (arg0: number) => void
@@ -53,33 +41,66 @@ const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc })
     )
 }
 
-const AccountDetails: React.FC<AccountDetailsParams> = ({
-    account,
-    tonWalletState,
-    controllerState,
-    controllerRpc,
-    network,
-    onToggleNetwork,
-    onLogOut,
-    onReceive,
-    onSend,
-    onDeploy,
-    onCreateAccount,
-    onManageSeed,
-    onOpenKeyStore,
-}) => {
-    const [modalVisible, setModalVisible] = useState(false)
-    const [notificationsVisible, setNotificationsVisible] = useState(false)
+const INITIAL_DATA_KEY = 'initial_data'
 
-    if (account == null) {
-        return null
+export function AccountDetails(): JSX.Element {
+    const manager = useAccountsManagement()
+    const drawer = useDrawerPanel()
+    const rpc = useRpc()
+    const rpcState = useRpcState()
+
+    const [notificationsVisible, setNotificationsVisible] = React.useState(false)
+
+    const initialSlide = React.useMemo(
+        () => manager.accounts.findIndex((account) => account.tonWallet.address === manager.accountAddress),
+        [manager.currentAccount]
+    )
+
+    const onReceive = () => {
+        drawer.setPanel(Panel.RECEIVE)
     }
 
-    const accounts = Object.keys(controllerState.accountEntries)
+    const onDeploy = () => {
+        drawer.setPanel(Panel.DEPLOY)
+    }
 
-    const accountModalAction = (action: () => void) => () => {
-        setModalVisible(false)
-        action()
+    const onSend = async () => {
+        if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
+            drawer.setPanel(Panel.SEND)
+        }
+        else {
+            await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
+            await rpc.openExtensionInExternalWindow()
+            window.close()
+        }
+    }
+
+    const onCreateAccount = () => {
+        drawer.setPanel(Panel.CREATE_ACCOUNT)
+    }
+
+    const onToggleNetwork = async () => {
+        const networks = await rpc.getAvailableNetworks()
+        const networkId = rpcState.state?.selectedConnection.id
+
+        let nextNetwork: ConnectionDataItem | undefined
+        for (let i = 0; i < networks.length; ++i) {
+            const item = networks[i]
+            if (item.id == networkId) {
+                nextNetwork = networks[(i + 1) % networks.length]
+            }
+        }
+
+        console.log('Next network:', nextNetwork)
+        nextNetwork && (await rpc.changeNetwork(nextNetwork))
+    }
+
+    const onSlide = async (index: number) => {
+        const account = manager.accounts[index]
+        if (account == null || account.tonWallet.address === manager.selectedAccount?.tonWallet.address) {
+            return
+        }
+        await rpc.selectAccount(account.tonWallet.address)
     }
 
     return (
@@ -87,62 +108,38 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
             <div className="account-details">
                 <div className="account-details__top-panel">
                     <div
+                        className="account-details__notification-bell"
                         onClick={() => {
                             /*setNotificationsVisible(true)*/
                         }}
-                        style={{ cursor: 'pointer' }}
                     >
                         <img src={NotificationsIcon} alt="" />
                     </div>
-                    <div className="account-details__network noselect" onClick={onToggleNetwork}>
-                        {network}
-                    </div>
                     <div
-                        onClick={() => setModalVisible(true)}
-                        style={{ cursor: 'pointer', position: 'relative' }}
+                        className="account-details__network-switcher noselect"
+                        onClick={onToggleNetwork}
                     >
-                        <img src={Profile} alt="" />
+                        {rpcState.state?.selectedConnection.name}
                     </div>
-                    {modalVisible && (
-                        <AccountModal
-                            tonWalletState={tonWalletState}
-                            controllerState={controllerState}
-                            onCreateAccount={accountModalAction(onCreateAccount)}
-                            onManageSeed={accountModalAction(onManageSeed)}
-                            onOpenKeyStore={accountModalAction(onOpenKeyStore)}
-                            onLogOut={accountModalAction(onLogOut)}
-                            onClose={accountModalAction(() => {})}
-                        />
-                    )}
+                    <AccountModal />
                     {notificationsVisible && (
                         <Notifications onClose={() => setNotificationsVisible(false)} />
                     )}
                 </div>
-                <Carousel
-                    controllerRpc={controllerRpc}
-                    accountEntries={controllerState.accountEntries}
-                    accounts={accounts}
-                    content={[
-                        ...accounts.map((_el) => (
-                            <AccountCard
-                                accountName={account.name}
-                                address={account.tonWallet.address}
-                                publicKey={account?.tonWallet.publicKey}
-                                balance={convertTons(
-                                    tonWalletState?.balance || '0'
-                                ).toLocaleString()}
-                            />
-                        )),
-
-                        // <AccountCard
-                        //     accountName={account.name}
-                        //     address={account.tonWallet.address}
-                        //     publicKey={account?.tonWallet.publicKey}
-                        //     balance={convertTons(tonWalletState?.balance || '0').toLocaleString()}
-                        // />,
-                        <AddNewAccountCard handleCreateNewAcc={onCreateAccount} />,
-                    ]}
-                />
+                <Carousel initialSlide={initialSlide} onChange={onSlide}>
+                    {manager.accounts.map((account) => (
+                        <AccountCard
+                            key={account.tonWallet.address}
+                            accountName={account.name}
+                            address={account.tonWallet.address}
+                            publicKey={account.tonWallet.publicKey}
+                            balance={convertTons(
+                                manager.tonWalletState?.balance || '0'
+                            ).toLocaleString()}
+                        />
+                    ))}
+                    <AddNewAccountCard key="addSlide" handleCreateNewAcc={onCreateAccount} />
+                </Carousel>
 
                 <div className="account-details__controls noselect">
                     <button
@@ -152,7 +149,7 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         onMouseLeave={removeRipple}
                         onMouseUp={(event) => {
                             removeRipple(event)
-                            onReceive?.()
+                            onReceive()
                         }}
                     >
                         <div className="account-details__controls__button__content">
@@ -161,27 +158,30 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
                         </div>
                     </button>
 
-                    {tonWalletState && (
+                    {manager.tonWalletState !== undefined && (
                         <button
                             className="account-details__controls__button"
                             onClick={() => {}}
                             onMouseDown={createRipple}
                             onMouseLeave={removeRipple}
-                            onMouseUp={(event) => {
+                            onMouseUp={async (event) => {
                                 removeRipple(event)
                                 if (
-                                    tonWalletState.isDeployed ||
-                                    account.tonWallet.contractType == 'WalletV3'
+                                    manager.tonWalletState?.isDeployed
+                                    || manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
                                 ) {
-                                    onSend?.()
-                                } else {
-                                    onDeploy?.()
+                                    await onSend()
+                                }
+                                else {
+                                    onDeploy()
                                 }
                             }}
                         >
                             <div className="account-details__controls__button__content">
-                                {tonWalletState.isDeployed ||
-                                account.tonWallet.contractType == 'WalletV3' ? (
+                                {(
+                                    manager.tonWalletState?.isDeployed ||
+                                    manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
+                                ) ? (
                                     <>
                                         <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
                                         Send
@@ -204,5 +204,3 @@ const AccountDetails: React.FC<AccountDetailsParams> = ({
         </>
     )
 }
-
-export default AccountDetails

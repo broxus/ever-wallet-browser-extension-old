@@ -1,20 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import * as React from 'react'
 import { connect } from 'react-redux'
-import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import { AppState, StoreAction } from '@popup/store/app/types'
+import { AppState } from '@popup/store/app/types'
 import { fetchManifest } from '@popup/store/app/actions'
-import {
-    ENVIRONMENT_TYPE_POPUP,
-    ENVIRONMENT_TYPE_NOTIFICATION,
-    ENVIRONMENT_TYPE_BACKGROUND,
-    ENVIRONMENT_TYPE_FULLSCREEN,
-} from '@shared/constants'
-import init, * as nt from '@nekoton'
 
 import WelcomePage from '@popup/pages/WelcomePage'
-import MainPage from '@popup/pages/MainPage'
+import { MainPage } from '@popup/pages/MainPage'
 import ApprovalPage from '@popup/pages/ApprovalPage'
 import ConnectLedgerPage from '@popup/pages/ConnectLedgerPage'
+import { AccountsManagementProvider } from '@popup/providers/AccountsManagementProvider'
+import { DrawerPanelProvider } from '@popup/providers/DrawerPanelProvider'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import Oval from '@popup/img/oval.svg'
 import './styles/main.scss'
@@ -33,137 +29,62 @@ const closeCurrentWindow = () => {
     })
 }
 
-export type ActiveTab =
-    | nt.EnumItem<
-          typeof ENVIRONMENT_TYPE_POPUP,
-          {
-              id?: number
-              title?: string
-              origin: string
-              protocol?: string
-              url?: string
-          }
-      >
-    | nt.EnumItem<typeof ENVIRONMENT_TYPE_NOTIFICATION, undefined>
-    | nt.EnumItem<
-          typeof ENVIRONMENT_TYPE_FULLSCREEN,
-          {
-              route?: string
-          }
-      >
-    | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
-
-interface IApp {
-    activeTab: ActiveTab
-    controllerRpc: IControllerRpcClient
-    fetchManifest: StoreAction<typeof fetchManifest>
-}
-
-const App: React.FC<IApp> = ({ activeTab, controllerRpc, fetchManifest }) => {
-    const [loaded, setLoaded] = useState(false)
-    const [controllerState, setControllerState] = useState<ControllerState>()
-
-    useEffect(() => {
-        console.log(controllerState, 'controllerState')
-    })
-
-    useEffect(() => {
-        ;(async () => {
-            const [, state] = await Promise.all([
-                init('index_bg.wasm'),
-                (async () => {
-                    controllerRpc.onNotification((data) => {
-                        const state = data.params
-
-                        // if (
-                        //     activeTab.type === 'notification' &&
-                        //     Object.keys((state as any).pendingApprovals).length === 0
-                        // ) {
-                        //     closeCurrentWindow()
-                        // } else {
-                        //     console.log('Got state', state)
-                        //     setControllerState(state as any)
-                        // }
-                        console.log('Got state', state)
-                        setControllerState(state as any)
-                    })
-
-                    return await controllerRpc.getState()
-                })(),
-            ])
-
-            if (
-                state.selectedAccount == null &&
-                (activeTab.type === 'popup' || activeTab.type === 'notification')
-            ) {
-                await controllerRpc.openExtensionInBrowser({})
-                window.close()
-            } else if (
-                state.selectedAccount != null &&
-                activeTab.type === 'fullscreen' &&
-                activeTab.data.route == null
-            ) {
-                window.close()
-            } else {
-                setControllerState(state)
-            }
-
-            setLoaded(true)
-
-            fetchManifest().catch(console.error)
-        })()
-    }, [])
+function App(): JSX.Element | null {
+    const rpc = useRpc()
+    const rpcState = useRpcState()
 
     if (
-        controllerState?.selectedAccount != null &&
-        activeTab.type === 'fullscreen' &&
-        activeTab.data == null
+        rpcState.activeTab == null || (
+            rpcState.state?.selectedAccount != null &&
+            rpcState.activeTab.type === 'fullscreen' &&
+            rpcState.activeTab.data == null
+        )
     ) {
         window.close()
         return null
     }
 
-    if (controllerState == null || !loaded) {
+    if (rpcState.state == null || !rpcState.loaded) {
         return <Loader />
     }
 
-    if (activeTab.type === 'fullscreen') {
-        if (controllerState.selectedAccount != null && activeTab.data.route == 'connect-ledger') {
-            return <ConnectLedgerPage controllerRpc={controllerRpc} controllerState={controllerState} />
-        } else if (controllerState.selectedAccount == null && activeTab.data.route == null) {
-            return <WelcomePage controllerState={controllerState} controllerRpc={controllerRpc} />
+    if (rpcState.activeTab.type === 'fullscreen') {
+        if (rpcState.state.selectedAccount != null && rpcState.activeTab.data.route == 'connect-ledger') {
+            return <ConnectLedgerPage controllerRpc={rpc} controllerState={rpcState.state} />
+        } else if (rpcState.state.selectedAccount == null && rpcState.activeTab.data.route == null) {
+            return <WelcomePage controllerState={rpcState.state} controllerRpc={rpc} />
         } else {
             window.close()
             return null
         }
     }
 
-    const pendingApprovals = Object.values(controllerState?.pendingApprovals || {}) as any[]
+    const pendingApprovals = Object.values(rpcState.state.pendingApprovals || {}) as any[]
     if (pendingApprovals.length > 0) {
         return (
             <ApprovalPage
-                storedKeys={controllerState.storedKeys}
-                networkName={controllerState.selectedConnection.name}
-                accountContractStates={controllerState.accountContractStates}
-                accountEntries={controllerState.accountEntries}
+                storedKeys={rpcState.state.storedKeys}
+                networkName={rpcState.state.selectedConnection.name}
+                accountContractStates={rpcState.state.accountContractStates}
+                accountEntries={rpcState.state.accountEntries}
                 pendingApprovals={pendingApprovals}
-                checkPassword={async (password) => await controllerRpc.checkPassword(password)}
+                checkPassword={async (password) => await rpc.checkPassword(password)}
                 resolvePendingApproval={async (id, params) =>
-                    await controllerRpc.resolvePendingApproval(id, params)
+                    await rpc.resolvePendingApproval(id, params)
                 }
                 rejectPendingApproval={async (id, error) =>
-                    await controllerRpc.rejectPendingApproval(id, error as any)
+                    await rpc.rejectPendingApproval(id, error as any)
                 }
             />
         )
     }
 
     return (
-        <MainPage
-            environment={activeTab.type}
-            controllerState={controllerState}
-            controllerRpc={controllerRpc}
-        />
+        <DrawerPanelProvider>
+            <AccountsManagementProvider>
+                <MainPage />
+            </AccountsManagementProvider>
+        </DrawerPanelProvider>
     )
 }
 

@@ -45,7 +45,7 @@ const SelectContractType: React.FC<ISelectWallet> = ({
                                 onChange={updateWalletType}
                                 id={contractType}
                                 key={contractType}
-                                isSelected={walletType === contractType}
+                                checked={walletType === contractType}
                                 label={CONTRACT_TYPES[contractType]}
                                 value={contractType}
                             />

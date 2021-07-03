@@ -1,22 +1,24 @@
-import React from 'react'
+import * as React from 'react'
+import CopyToClipboard from 'react-copy-to-clipboard'
+import ReactTooltip from 'react-tooltip'
+
+import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
 import { convertAddress, convertPublicKey } from '@shared/utils'
 
-import ReactTooltip from 'react-tooltip'
-import CopyToClipboard from 'react-copy-to-clipboard'
-
 import Pattern from '@popup/img/ton-pattern.svg'
-import Ellipsis from '@popup/img/ellipsis.svg'
 
 import './style.scss'
 
-interface IAccountCard {
+type Props = {
     accountName: string
     publicKey: string
     address: string
     balance: string
 }
 
-const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, balance }) => {
+export function AccountCard({ accountName, publicKey, address, balance }: Props): JSX.Element {
+    const manager = useAccountsManagement()
+
     const wholePart = balance.split('.')?.[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     const decimals = balance.split('.')?.[1]
 
@@ -61,18 +63,12 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
                     </div>
                 </div>
 
-                <div
-                    className={`account-card__info-balance ${
-                        wholePart?.length + decimals?.length > 10
-                            ? 'account-card__info-balance--resized'
-                            : ''
-                    }`}
-                >
-                    {wholePart}
-                    <span className="account-card__info-balance-decimals">
+                {manager.selectedAccount?.tonWallet.address === address && (
+                    <div className="account-card__info-balance">
+                        {wholePart}
                         {`.${decimals || '00'} TON`}
-                    </span>
-                </div>
+                    </div>
+                )}
             </div>
             <div className="account-card__pattern">
                 <img src={Pattern} alt="" />
@@ -83,4 +79,3 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
         </div>
     )
 }
-export default AccountCard

@@ -1,12 +1,14 @@
 import '../polyfills'
 
-import React from 'react'
-import ReactDOM from 'react-dom'
+import * as React from 'react'
+import * as ReactDOM from 'react-dom'
 import { Provider } from 'react-redux'
 import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 
+import { RpcProvider } from '@popup/providers/RpcProvider'
+import { ActiveTab, RpcStateProvider } from '@popup/providers/RpcStateProvider'
 import { getEnvironmentType } from '@popup/utils/platform'
 import { getUniqueId, PortDuplexStream } from '@shared/utils'
 import {
@@ -18,7 +20,7 @@ import {
 import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import store from '@popup/store'
 
-import App, { ActiveTab } from './App'
+import App from './App'
 import Oval from '@popup/img/oval.svg'
 
 const start = async () => {
@@ -135,7 +137,11 @@ const initializeUi = (
         ReactDOM.render(
             <React.StrictMode>
                 <Provider store={store}>
-                    <App activeTab={activeTab} controllerRpc={backgroundConnection} />
+                    <RpcProvider connection={backgroundConnection}>
+                        <RpcStateProvider activeTab={activeTab}>
+                            <App />
+                        </RpcStateProvider>
+                    </RpcProvider>
                 </Provider>
             </React.StrictMode>,
             document.getElementById('root')

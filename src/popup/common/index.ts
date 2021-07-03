@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import * as React from 'react'
 
 export * from './ripple'
 
@@ -13,7 +13,8 @@ export const hideModalOnClick = (ref: React.MutableRefObject<null>, onClose: () 
             onClose()
         }
     }
-    useEffect(() => {
+
+    React.useEffect(() => {
         document.addEventListener('mousedown', handleClickOutside)
         return () => {
             document.removeEventListener('mousedown', handleClickOutside)

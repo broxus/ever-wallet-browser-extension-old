@@ -1,0 +1,256 @@
+@import '../../styles/colors';
+
+.accounts-management {
+	&__content {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		height: 100%;
+		width: 100%;
+
+		&-title {
+			margin-top: -15px;
+			margin-bottom: 20px;
+		}
+
+		&-header {
+			font-family: 'PT Root UI', sans-serif;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: 0.75px;
+			color: $seedsHeader;
+			margin-bottom: 8px;
+
+			&--lead {
+				font-size: 18px;
+				line-height: 24px;
+				font-weight: bold;
+				letter-spacing: 0.75px;
+				color: #000;
+				margin-top: 20px;
+				margin-bottom: 8px;
+			}
+		}
+
+		&-form-rows {
+			display: flex;
+			flex-direction: column;
+			row-gap: 20px;
+
+			.simple-input {
+				margin-bottom: 0;
+			}
+		}
+
+		&-buttons {
+			margin-top: 40px;
+			display: flex;
+			position: relative;
+
+			> * { width: 100%; }
+
+			&-back-btn {
+				width: 100px;
+				min-width: 100px;
+				margin-right: 12px;
+			}
+		}
+
+		&-error {
+			display: block;
+			width: 100%;
+			font-size: 12px;
+			line-height: 16px;
+			letter-spacing: 0.4px;
+			color: darkred;
+			margin-top: 10px;
+		}
+
+		&-error + &-error {
+			margin-top: 10px;
+		}
+
+		& ol {
+			counter-reset: my-counter;
+			list-style: none outside none;
+			column-count: 2;
+			margin-top: 20px;
+			margin-bottom: 20px;
+
+			& li {
+				counter-increment: my-counter;
+
+				&::before {
+					content: counter(my-counter) '. ';
+					font-style: normal;
+					font-weight: normal;
+					font-size: 16px;
+					line-height: 20px;
+					letter-spacing: 0.25px;
+					color: #96a1a7;
+					flex: none;
+					order: 0;
+					flex-grow: 0;
+					margin: 0 0;
+					width: 3em;
+					box-sizing: border-box;
+					display: inline-block;
+					padding: 0 4px;
+				}
+			}
+		}
+
+		&-word {
+			font-style: normal;
+			font-weight: normal;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			margin-bottom: 12px;
+			white-space: nowrap;
+		}
+	}
+
+	&__name-field {
+		position: relative;
+
+		.simple-input {
+			margin-bottom: 0;
+		}
+	}
+
+	&__name-button {
+		font-weight: bold;
+		font-size: 16px;
+		cursor: pointer;
+		position: absolute;
+		top: 14px;
+		right: 16px;
+	}
+
+	&__create-account {
+		cursor: pointer;
+		float: right;
+		font-size: 16px;
+		line-height: 20px;
+	}
+
+	&__public-key-placeholder {
+		cursor: copy;
+		background: #f8f9f9;
+		border: 1px solid #dde1e2;
+		box-sizing: border-box;
+		padding: 16px 20px;
+		font-size: 16px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+		word-break: break-all;
+		margin-bottom: 12px;
+	}
+
+	&__account-visibility {
+		font-size: 16px;
+		line-height: 20px;
+		margin: 16px 16px 16px 0;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+
+		.switcher {
+			margin-right: 16px;
+		}
+	}
+
+	&__qr-address-placeholder {
+		background: #f8f9f9;
+		border: 1px solid #dde1e2;
+		box-sizing: border-box;
+		padding: 10px;
+		font-size: 16px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+		word-break: break-all;
+		margin-bottom: 12px;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__qr-address-code {
+		background: #fff;
+		padding: 10px;
+		height: 100px;
+		width: 100px;
+	}
+
+	&__qr-address-address {
+		margin-left: 10px;
+	}
+
+	&__list {
+		margin: 0;
+
+		&-item {
+			cursor: pointer;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px 0;
+			font-family: 'PT Root UI', sans-serif;
+			font-size: 16px;
+			font-style: normal;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+
+			&-icon {
+				min-width: 24px;
+			}
+
+			&-title {
+				color: $seedsListItem;
+				margin: 0 16px;
+				width: 100%;
+			}
+
+			&-visibility {
+				font-weight: normal;
+				color: #96A1A7;
+				margin-right: 10px;
+			}
+
+			&--active {
+				font-weight: bold;
+			}
+
+			&-logo {
+				height: 24px;
+				width: 24px;
+			}
+
+			> a {
+				cursor: pointer;
+				font-weight: bold;
+			}
+		}
+
+		li + li {
+			border-top: 1px solid $seedsListBorder;
+		}
+
+		&--empty {
+			font-size: 14px;
+			padding: 24px 16px 16px;
+			text-align: center;
+			color: $seedsHeader;
+		}
+	}
+
+	&__divider {
+		margin: 0 -20px;
+		border-top: 1px solid $seedsDividerBorder;
+		height: 0;
+	}
+}
