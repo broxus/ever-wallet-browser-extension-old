@@ -16,7 +16,7 @@ import NotificationsIcon from '@popup/img/notifications.svg'
 import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
 
-import { ConnectionDataItem } from '@shared/approvalApi'
+import { ConnectionDataItem } from '@shared/backgroundApi'
 import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import { convertTons } from '@shared/utils'
 
@@ -52,7 +52,10 @@ export function AccountDetails(): JSX.Element {
     const [notificationsVisible, setNotificationsVisible] = React.useState(false)
 
     const initialSlide = React.useMemo(
-        () => manager.accounts.findIndex((account) => account.tonWallet.address === manager.accountAddress),
+        () =>
+            manager.accounts.findIndex(
+                (account) => account.tonWallet.address === manager.accountAddress
+            ),
         [manager.currentAccount]
     )
 
@@ -67,8 +70,7 @@ export function AccountDetails(): JSX.Element {
     const onSend = async () => {
         if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
             drawer.setPanel(Panel.SEND)
-        }
-        else {
+        } else {
             await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
             await rpc.openExtensionInExternalWindow()
             window.close()
@@ -97,7 +99,10 @@ export function AccountDetails(): JSX.Element {
 
     const onSlide = async (index: number) => {
         const account = manager.accounts[index]
-        if (account == null || account.tonWallet.address === manager.selectedAccount?.tonWallet.address) {
+        if (
+            account == null ||
+            account.tonWallet.address === manager.selectedAccount?.tonWallet.address
+        ) {
             return
         }
         await rpc.selectAccount(account.tonWallet.address)
@@ -167,21 +172,18 @@ export function AccountDetails(): JSX.Element {
                             onMouseUp={async (event) => {
                                 removeRipple(event)
                                 if (
-                                    manager.tonWalletState?.isDeployed
-                                    || manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
+                                    manager.tonWalletState?.isDeployed ||
+                                    manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
                                 ) {
                                     await onSend()
-                                }
-                                else {
+                                } else {
                                     onDeploy()
                                 }
                             }}
                         >
                             <div className="account-details__controls__button__content">
-                                {(
-                                    manager.tonWalletState?.isDeployed ||
-                                    manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
-                                ) ? (
+                                {manager.tonWalletState?.isDeployed ||
+                                manager.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
                                     <>
                                         <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
                                         Send

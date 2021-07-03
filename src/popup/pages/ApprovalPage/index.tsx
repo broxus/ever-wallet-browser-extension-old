@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { ApprovalApi, PendingApproval } from '@shared/approvalApi'
+import { ApprovalApi, PendingApproval } from '@shared/backgroundApi'
 import { JsonRpcError, NekotonRpcError, serializeError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import * as nt from '@nekoton'

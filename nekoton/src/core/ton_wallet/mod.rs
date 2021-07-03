@@ -85,26 +85,17 @@ impl TonWallet {
     pub fn prepare_deploy_with_multiple_owners(
         &self,
         timeout: u32,
-        custodians: &JsValue,
+        custodians: CustodiansList,
         req_confirms: u8,
     ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
 
-        let custodians = custodians
-            .into_serde::<Vec<String>>()
-            .map_err(|_| JsValue::from_str("Failed to parse a list of custodians"))?
-            .into_iter()
-            .map(|custodian| {
-                let custodian = parse_public_key(&custodian)
-                    .map_err(|_| JsValue::from_str("Failed to parse a public key"))?;
-                Ok(custodian)
-            })
-            .collect::<Result<Vec<ed25519_dalek::PublicKey>, JsValue>>();
+        let custodians = parse_custodians_list(custodians)?;
 
         let inner = wallet
             .prepare_deploy_with_multiple_owners(
                 core_models::Expiration::Timeout(timeout),
-                &custodians?,
+                &custodians,
                 req_confirms,
             )
             .handle_error()?;
@@ -418,6 +409,29 @@ fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonW
 }
 
 #[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type CustodiansList;
+}
+
+fn parse_custodians_list(
+    custodians: CustodiansList,
+) -> Result<Vec<ed25519_dalek::PublicKey>, JsValue> {
+    if !js_sys::Array::is_array(&custodians) {
+        return Err(TonWalletError::ExpectedArray).handle_error();
+    }
+
+    custodians
+        .unchecked_into::<js_sys::Array>()
+        .iter()
+        .map(|public_key| match public_key.as_string() {
+            Some(public_key) => parse_public_key(&public_key),
+            None => Err(TonWalletError::ExpectedPublicKeyString).handle_error(),
+        })
+        .collect::<Result<Vec<_>, JsValue>>()
+}
+
+#[wasm_bindgen]
 pub struct RawContractState {
     #[wasm_bindgen(skip)]
     pub inner: ton_block::AccountStuff,
@@ -503,4 +517,12 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Array<TonWalletTransaction>")]
     pub type TonWalletTransactionsList;
+}
+
+#[derive(thiserror::Error, Debug)]
+enum TonWalletError {
+    #[error("Expected array")]
+    ExpectedArray,
+    #[error("Expected public key string")]
+    ExpectedPublicKeyString,
 }

@@ -24,7 +24,7 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { NEKOTON_PROVIDER } from '@shared/constants'
-import { ConnectionDataItem } from '@shared/approvalApi'
+import { ConnectionDataItem } from '@shared/backgroundApi'
 
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'

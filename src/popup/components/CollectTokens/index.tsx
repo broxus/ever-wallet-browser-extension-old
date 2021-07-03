@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import Decimal from 'decimal.js'
 import { convertTons } from '@shared/utils'
-import { MessageToPrepare } from '@shared/approvalApi'
+import { MessageToPrepare } from '@shared/backgroundApi'
 import { prepareKey } from '@popup/utils'
 import * as nt from '@nekoton'
 

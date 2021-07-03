@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { SelectedAsset, TokenWalletState } from '@shared/utils'
-import { TokenWalletsToUpdate } from '@shared/approvalApi'
+import { TokenWalletsToUpdate } from '@shared/backgroundApi'
 import cn from 'classnames'
 import * as nt from '@nekoton'
 

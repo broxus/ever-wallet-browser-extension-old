@@ -6,7 +6,7 @@ import {
     ConnectionDataItem,
     GqlSocketParams,
     JrpcSocketParams,
-} from '@shared/approvalApi'
+} from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import { BaseController, BaseConfig, BaseState } from './BaseController'

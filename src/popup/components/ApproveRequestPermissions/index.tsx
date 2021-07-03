@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { convertTons } from '@shared/utils'
-import { ApprovalOutput, PendingApproval } from '@shared/approvalApi'
+import { ApprovalOutput, PendingApproval } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'

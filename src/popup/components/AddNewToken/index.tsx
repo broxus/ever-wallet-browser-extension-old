@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { useForm } from 'react-hook-form'
 import cn from 'classnames'
 import { AppState, StoreAction, TokensManifest, TokensManifestItem } from '@popup/store/app/types'
-import { TokenWalletsToUpdate } from '@shared/approvalApi'
+import { TokenWalletsToUpdate } from '@shared/backgroundApi'
 import { fetchManifest } from '@popup/store/app/actions'
 import * as nt from '@nekoton'
 

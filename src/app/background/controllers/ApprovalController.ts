@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { nanoid } from 'nanoid'
-import { ApprovalApi, Approval } from '@shared/approvalApi'
+import { ApprovalApi, Approval } from '@shared/backgroundApi'
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 

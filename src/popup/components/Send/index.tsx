@@ -12,7 +12,7 @@ import {
     TokenWalletState,
 } from '@shared/utils'
 import { prepareKey } from '@popup/utils'
-import { MessageToPrepare, TokenMessageToPrepare } from '@shared/approvalApi'
+import { MessageToPrepare, TokenMessageToPrepare } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import Select from 'react-select'

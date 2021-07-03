@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { validateMnemonic } from '@popup/store/app/actions'
-import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
+import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'

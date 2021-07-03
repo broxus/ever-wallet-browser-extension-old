@@ -251,7 +251,11 @@ const AssetFull: React.FC<IAssetFull> = ({
                                 controllerRpc.estimateDeploymentFees(accountAddress)
                             }
                             prepareDeployMessage={async (password) =>
-                                controllerRpc.prepareDeploymentMessage(accountAddress, password)
+                                controllerRpc.prepareDeploymentMessage(
+                                    accountAddress,
+                                    { type: 'single_owner' },
+                                    password
+                                )
                             }
                             sendMessage={async (message) =>
                                 controllerRpc.sendMessage(accountAddress, message)

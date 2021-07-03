@@ -17,6 +17,7 @@ import {
 import { RpcErrorCode } from '@shared/errors'
 import {
     AccountToCreate,
+    DeployMessageToPrepare,
     KeyToDerive,
     KeyToRemove,
     LedgerKeyToCreate,
@@ -25,7 +26,7 @@ import {
     SwapBackMessageToPrepare,
     TokenMessageToPrepare,
     TokenWalletsToUpdate,
-} from '@shared/approvalApi'
+} from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
@@ -89,7 +90,10 @@ export class AccountController extends BaseController<
     AccountControllerState
 > {
     private readonly _tonWalletSubscriptions: Map<string, TonWalletSubscription> = new Map()
-    private readonly _tokenWalletSubscriptions: Map<string, Map<string, TokenWalletSubscription>> = new Map()
+    private readonly _tokenWalletSubscriptions: Map<
+        string,
+        Map<string, TokenWalletSubscription>
+    > = new Map()
     private readonly _sendMessageRequests: Map<string, Map<string, SendMessageCallback>> = new Map()
     private readonly _accountsMutex = new Mutex()
 
@@ -251,7 +255,11 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createMasterKey({ name, password, seed }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
+    public async createMasterKey({
+        name,
+        password,
+        seed,
+    }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
@@ -295,7 +303,6 @@ export class AccountController extends BaseController<
     }
 
     public async selectMasterKey(masterKey: string) {
-
         this.update({
             selectedMasterKey: masterKey,
         })
@@ -557,8 +564,7 @@ export class AccountController extends BaseController<
         )
         if (entryIndex < 0) {
             pubkeyEntries.push({ ...account, name })
-        }
-        else {
+        } else {
             pubkeyEntries[entryIndex] = { ...account, name }
         }
 
@@ -791,7 +797,11 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async prepareDeploymentMessage(address: string, password: nt.KeyPassword) {
+    public async prepareDeploymentMessage(
+        address: string,
+        params: DeployMessageToPrepare,
+        password: nt.KeyPassword
+    ) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -804,7 +814,17 @@ export class AccountController extends BaseController<
                 )
             }
 
-            const unsignedMessage = wallet.prepareDeploy(60)
+            let unsignedMessage: nt.UnsignedMessage
+            if (params.type === 'single_owner') {
+                unsignedMessage = wallet.prepareDeploy(60)
+            } else {
+                unsignedMessage = wallet.prepareDeployWithMultipleOwners(
+                    60,
+                    params.custodians,
+                    params.reqConfirms
+                )
+            }
+
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
             } catch (e) {
@@ -1355,9 +1375,8 @@ export class AccountController extends BaseController<
 
     private async _saveSelectedMasterKey(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { selectedMasterKey: this.state.selectedMasterKey },
-                () => resolve()
+            chrome.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey }, () =>
+                resolve()
             )
         })
     }

@@ -37,6 +37,10 @@ export type AccountToCreate = {
     contractType: WalletContractType
 }
 
+export type DeployMessageToPrepare =
+    | { type: 'single_owner' }
+    | { type: 'multiple_owners'; custodians: string[]; reqConfirms: number }
+
 export type MessageToPrepare = {
     amount: string
     recipient: string

@@ -18,13 +18,12 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { SelectedAsset } from '@shared/utils'
-import { ConnectionDataItem } from '@shared/approvalApi'
+import { ConnectionDataItem } from '@shared/backgroundApi'
 import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 
 import './style.scss'
 
 const INITIAL_DATA_KEY = 'initial_data'
-
 
 export function MainPage(): JSX.Element | null {
     const manager = useAccountsManagement()
@@ -143,19 +142,19 @@ export function MainPage(): JSX.Element | null {
                             onBack={closePanel}
                         />
                     )}
-                    {drawer.currentPanel === Panel.MANAGE_SEEDS && (
-                        <ManageSeeds />
-                    )}
+                    {drawer.currentPanel === Panel.MANAGE_SEEDS && <ManageSeeds />}
                     {drawer.currentPanel === Panel.DEPLOY && (
                         <DeployWallet
                             account={selectedAccount}
                             keyEntry={selectedKey}
                             tonWalletState={tonWalletState}
-                            estimateFees={async () =>
-                                rpc.estimateDeploymentFees(accountAddress)
-                            }
+                            estimateFees={async () => rpc.estimateDeploymentFees(accountAddress)}
                             prepareDeployMessage={async (password) =>
-                                rpc.prepareDeploymentMessage(accountAddress, password)
+                                rpc.prepareDeploymentMessage(
+                                    accountAddress,
+                                    { type: 'single_owner' },
+                                    password
+                                )
                             }
                             sendMessage={sendMessage}
                             onBack={closePanel}

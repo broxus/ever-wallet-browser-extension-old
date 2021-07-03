@@ -1,9 +1,5 @@
 import React, { useState } from 'react'
-import {
-    AccountToCreate,
-    KeyToRemove,
-    MasterKeyToCreate,
-} from '@shared/approvalApi'
+import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 
 import Button from '@popup/components/Button'
