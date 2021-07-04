@@ -1,16 +1,17 @@
-import { ExportSeed } from '@popup/components/AccountsManagement/components'
 import * as React from 'react'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
+import { ExportSeed } from '@popup/components/AccountsManagement/components'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import Arrow from '@popup/img/arrow.svg'
-import TonKey from '@popup/img/ton-key.svg'
 import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { convertAddress } from '@shared/utils'
+
+import Arrow from '@popup/img/arrow.svg'
+import TonKey from '@popup/img/ton-key.svg'
 
 
 enum ManageSeedStep {
@@ -24,7 +25,7 @@ export function ManageSeed(): JSX.Element {
 
 	const [name, setName] = React.useState(
 		manager.currentMasterKey !== undefined
-			? manager.masterKeysNames[manager.currentMasterKey.masterKey]
+			? (manager.masterKeysNames[manager.currentMasterKey.masterKey] || '')
 			: ''
 	)
 	const [step, setStep] = React.useState<ManageSeedStep | null>(null)
@@ -61,6 +62,7 @@ export function ManageSeed(): JSX.Element {
 				break
 
 			default:
+				manager.reset()
 				manager.setStep(null)
 		}
 	}
@@ -86,7 +88,7 @@ export function ManageSeed(): JSX.Element {
 							name="seed_name"
 							label="Enter seed name"
 							type="text"
-							value={name}
+							value={name || ''}
 							onChange={setName}
 						/>
 						{(

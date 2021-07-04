@@ -158,6 +158,11 @@
 		flex-direction: row;
 		align-items: center;
 
+		&-disabled {
+			opacity: 0.5;
+			pointer-events: none;
+		}
+
 		.switcher {
 			margin-right: 16px;
 		}
@@ -252,5 +257,36 @@
 		margin: 0 -20px;
 		border-top: 1px solid $seedsDividerBorder;
 		height: 0;
+	}
+
+	&__seed-columns {
+		display: flex;
+		flex-direction: row;
+		column-gap: 12px;
+		row-gap: 12px;
+	}
+
+	&__seed-input {
+		display: flex;
+		align-items: center;
+		position: relative;
+		margin-bottom: 20px;
+		cursor: text;
+
+		&-number {
+			font-style: normal;
+			font-weight: bold;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			color: $windowFg;
+			position: absolute;
+			left: 20px;
+		}
+
+		&-placeholder {
+			margin: 0;
+			padding: 0 16px 0 48px;
+		}
 	}
 }

@@ -1,10 +1,11 @@
+import classNames from 'classnames'
 import * as React from 'react'
 import QRCode from 'react-qr-code'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import Switcher from '@popup/components/Switcher'
+import { Switcher } from '@popup/components/Switcher'
 import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
@@ -31,6 +32,11 @@ export function ManageAccount(): JSX.Element {
 		}
 		return false
 	}, [manager.accountsVisibility])
+
+	const isActive = React.useMemo(
+		() => manager.currentAccount?.tonWallet.address === manager.selectedAccount?.tonWallet.address,
+		[]
+	)
 
 	const relatedKeys = React.useMemo(() => Object.values({ ...rpcState.state?.storedKeys }).filter(
 		key => key.publicKey === manager.currentAccount?.tonWallet.publicKey
@@ -64,7 +70,7 @@ export function ManageAccount(): JSX.Element {
 	}
 
 	const onToggleVisibility = () => {
-		if (manager.currentAccount) {
+		if (manager.currentAccount && !isActive) {
 			rpc.updateAccountVisibility(manager.currentAccount.tonWallet.address, !isVisible)
 		}
 	}
@@ -83,7 +89,7 @@ export function ManageAccount(): JSX.Element {
 					name="seed_name"
 					label="Enter key name"
 					type="text"
-					value={name}
+					value={name || ''}
 					onChange={setName}
 				/>
 
@@ -98,9 +104,13 @@ export function ManageAccount(): JSX.Element {
 				)}
 			</div>
 
-			<div className="accounts-management__account-visibility">
-				<Switcher checked={isVisible} onChange={onToggleVisibility} />
-				<span>Display on the main screen</span>
+			<div
+				className={classNames('accounts-management__account-visibility', {
+					'accounts-management__account-visibility-disabled': isActive
+				})}
+			>
+				<Switcher id="visibility" checked={isVisible} onChange={onToggleVisibility} />
+				<label htmlFor="visibility">Display on the main screen</label>
 			</div>
 
 			{manager.currentAccount !== undefined && (

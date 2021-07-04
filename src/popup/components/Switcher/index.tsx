@@ -1,19 +1,18 @@
-import React from "react"
+import * as React from 'react'
 
 import './style.scss'
 
-interface ISwitcher {
-	checked?: boolean
-	onChange?: () => void
+type Props = {
+	id?: string;
+	checked?: boolean;
+	onChange?: () => void;
 }
 
-const Switcher: React.FC<ISwitcher> = ({
-   	checked,
-   	onChange,
-}) => {
+export function Switcher({ id, checked, onChange }: Props): JSX.Element {
 	return (
 		<label className="switcher">
 			<input
+				id={id}
 				type="checkbox"
 				checked={checked}
 				value="true"
@@ -23,5 +22,3 @@ const Switcher: React.FC<ISwitcher> = ({
 		</label>
 	)
 }
-
-export default Switcher

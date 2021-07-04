@@ -31,6 +31,10 @@ export function CreateAccount(): JSX.Element {
 			name,
 			publicKey: manager.currentDerivedKey.publicKey,
 			contractType,
+		}).then((account) => {
+			if (account !== undefined) {
+				manager.onManageAccount(account)
+			}
 		}).catch((err: string) => {
 			try {
 				setError(err?.toString?.().replace(/Error: /gi, ''))

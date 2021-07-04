@@ -296,13 +296,15 @@ export class AccountController extends BaseController<
                 },
             })
 
+            await this.selectMasterKey(entry.masterKey)
+
             return entry
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
 
-    public async selectMasterKey(masterKey: string) {
+    public async selectMasterKey(masterKey: string | undefined) {
         this.update({
             selectedMasterKey: masterKey,
         })
@@ -450,7 +452,7 @@ export class AccountController extends BaseController<
 
             const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
 
-            const accountEntries = this.state.accountEntries
+            const accountEntries = { ...this.state.accountEntries }
             let entries = accountEntries[publicKey]
             if (entries == null) {
                 entries = []
@@ -474,7 +476,15 @@ export class AccountController extends BaseController<
         }
     }
 
-    public async selectAccount(address: string) {
+    public async selectAccount(address: string | undefined) {
+        if (address == null) {
+            console.debug('deselectAccount')
+            this.update({
+                selectedAccount: undefined,
+            })
+            return
+        }
+
         console.debug('selectAccount')
 
         await this._accountsMutex.use(async () => {
@@ -553,19 +563,20 @@ export class AccountController extends BaseController<
 
     public updateAccountName(account: nt.AssetsList, name: string) {
         const accountEntries = { ...this.state.accountEntries }
-        let pubkeyEntries = accountEntries[account.tonWallet.publicKey]
-        if (pubkeyEntries == null) {
-            pubkeyEntries = []
-            accountEntries[account.tonWallet.publicKey] = pubkeyEntries
+        let pubkeyAssetsList = accountEntries[account.tonWallet.publicKey]
+        if (pubkeyAssetsList == null) {
+            pubkeyAssetsList = []
+            accountEntries[account.tonWallet.publicKey] = pubkeyAssetsList
         }
 
-        const entryIndex = pubkeyEntries.findIndex(
-            (item) => item.tonWallet.address == account.tonWallet.address
+        const entryIndex = pubkeyAssetsList.findIndex(
+            (item) => item.tonWallet.address === account.tonWallet.address
         )
         if (entryIndex < 0) {
-            pubkeyEntries.push({ ...account, name })
-        } else {
-            pubkeyEntries[entryIndex] = { ...account, name }
+            pubkeyAssetsList.push({ ...account, name })
+        }
+        else {
+            pubkeyAssetsList[entryIndex] = { ...account, name }
         }
 
         this.update({
@@ -1362,13 +1373,19 @@ export class AccountController extends BaseController<
         })
     }
 
+    private async _removeSelectedAccountAddress(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('selectedAccountAddress', () => resolve())
+        })
+    }
+
     private async _loadSelectedMasterKey(): Promise<string | undefined> {
         return new Promise<string | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedSeed'], ({ selectedSeed }) => {
-                if (typeof selectedSeed !== 'object') {
+            chrome.storage.local.get(['selectedMasterKey'], ({ selectedMasterKey }) => {
+                if (typeof selectedMasterKey !== 'object') {
                     return resolve(undefined)
                 }
-                resolve(selectedSeed)
+                resolve(selectedMasterKey)
             })
         })
     }
@@ -1378,12 +1395,6 @@ export class AccountController extends BaseController<
             chrome.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey }, () =>
                 resolve()
             )
-        })
-    }
-
-    private async _removeSelectedAccountAddress(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('selectedAccountAddress', () => resolve())
         })
     }
 

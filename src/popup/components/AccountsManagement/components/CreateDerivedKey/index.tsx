@@ -24,6 +24,10 @@ export function CreateDerivedKey(): JSX.Element {
 			masterKey: manager.currentMasterKey.masterKey,
 			name,
 			password,
+		}).then((derivedKey) => {
+			if (derivedKey !== undefined) {
+				manager.onManageDerivedKey(derivedKey)
+			}
 		}).catch((err: string) => {
 			try {
 				setError(err?.toString?.().replace(/Error: /gi, ''))

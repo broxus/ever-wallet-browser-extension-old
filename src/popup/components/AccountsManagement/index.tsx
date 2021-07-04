@@ -25,6 +25,7 @@ export function ManageSeeds(): JSX.Element {
 	}
 
 	const addSeed = () => {
+		manager.reset()
 		manager.setStep(Step.CREATE_SEED)
 	}
 

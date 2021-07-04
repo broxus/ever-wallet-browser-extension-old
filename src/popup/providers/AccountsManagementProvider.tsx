@@ -19,38 +19,37 @@ type Props = {
     children: React.ReactNode
 }
 
-type AccountsManagementContext = {
-    currentAccount?: nt.AssetsList
-    setCurrentAccount: React.Dispatch<React.SetStateAction<nt.AssetsList | undefined>>
-    currentDerivedKey?: nt.KeyStoreEntry
-    setCurrentDerivedKey: React.Dispatch<React.SetStateAction<nt.KeyStoreEntry | undefined>>
-    currentMasterKey?: nt.KeyStoreEntry
-    setCurrentMasterKey: React.Dispatch<React.SetStateAction<nt.KeyStoreEntry | undefined>>
-    nextAccountId: number
-    recentMasterKeys: nt.KeyStoreEntry[]
-    masterKeys: nt.KeyStoreEntry[]
-    masterKeysNames: { [masterKey: string]: string }
-    selectedMasterKey?: string
-    derivedKeys: nt.KeyStoreEntry[]
-    derivedKeysNames: { [publicKey: string]: string }
-    selectedAccount?: nt.AssetsList
-    accounts: nt.AssetsList[]
-    derivedKeyRelatedAccounts: nt.AssetsList[]
-    accountsVisibility: { [address: string]: boolean }
-    accountAddress?: string
-    accountName?: string
-    tonWalletState?: nt.ContractState
-    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
-    step: Step | null
-    setStep: React.Dispatch<React.SetStateAction<Step | null>>
-    onManageMasterKey(seed: nt.KeyStoreEntry): void
-    onCreateMasterKey(params: MasterKeyToCreate): Promise<void>
-    onManageDerivedKey(derivedKey: nt.KeyStoreEntry): void
-    onCreateDerivedKey(params: KeyToDerive): Promise<void>
-    onManageAccount(account: nt.AssetsList): void
-    onCreateAccount(params: AccountToCreate): Promise<void>
-    reset(): void
-    logOut(): Promise<void>
+interface AccountsManagementContext {
+    currentAccount?: nt.AssetsList;
+    setCurrentAccount: React.Dispatch<React.SetStateAction<nt.AssetsList | undefined>>;
+    currentDerivedKey?: nt.KeyStoreEntry;
+    setCurrentDerivedKey: React.Dispatch<React.SetStateAction<nt.KeyStoreEntry | undefined>>;
+    currentMasterKey?: nt.KeyStoreEntry;
+    setCurrentMasterKey: React.Dispatch<React.SetStateAction<nt.KeyStoreEntry | undefined>>;
+    nextAccountId: number;
+    recentMasterKeys: nt.KeyStoreEntry[];
+    masterKeys: nt.KeyStoreEntry[];
+    masterKeysNames: { [masterKey: string]: string };
+    selectedMasterKey?: string;
+    derivedKeys: nt.KeyStoreEntry[];
+    derivedKeysNames: { [publicKey: string]: string };
+    selectedAccount?: nt.AssetsList;
+    accounts: nt.AssetsList[];
+    derivedKeyRelatedAccounts: nt.AssetsList[];
+    accountsVisibility: { [address: string]: boolean };
+    selectedAccountAddress?: string;
+    tonWalletState?: nt.ContractState;
+    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState };
+    step: Step | null;
+    setStep: React.Dispatch<React.SetStateAction<Step | null>>;
+    onManageMasterKey(seed?: nt.KeyStoreEntry): void;
+    onCreateMasterKey(params: MasterKeyToCreate): Promise<nt.KeyStoreEntry | void>;
+    onManageDerivedKey(derivedKey?: nt.KeyStoreEntry): void;
+    onCreateDerivedKey(params: KeyToDerive): Promise<nt.KeyStoreEntry | void>;
+    onManageAccount(account?: nt.AssetsList): void;
+    onCreateAccount(params: AccountToCreate): Promise<nt.AssetsList | void>;
+    reset(): void;
+    logOut(): Promise<void>;
 }
 
 export const Context = React.createContext<AccountsManagementContext>({
@@ -100,13 +99,13 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
         [rpcState.state?.storedKeys]
     )
 
-    const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
+    const onManageMasterKey = (seed?: nt.KeyStoreEntry) => {
         setCurrentMasterKey(seed)
         setStep(Step.MANAGE_SEED)
     }
 
     const onCreateMasterKey = async (params: MasterKeyToCreate) => {
-        await rpc.createMasterKey(params).then(onManageMasterKey)
+        return await rpc.createMasterKey(params)
     }
 
     // Derived keys
@@ -124,20 +123,18 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
             : []
     }, [currentDerivedKey, rpcState.state?.accountEntries])
 
-    const onManageDerivedKey = (derivedKey: nt.KeyStoreEntry) => {
+    const onManageDerivedKey = (derivedKey?: nt.KeyStoreEntry) => {
         setCurrentDerivedKey(derivedKey)
         setStep(Step.MANAGE_DERIVED_KEY)
     }
 
     const onCreateDerivedKey = async (params: KeyToDerive) => {
-        await rpc.createDerivedKey(params).then(onManageDerivedKey)
+        return await rpc.createDerivedKey(params)
     }
 
     // Accounts
     const accounts = React.useMemo(() => {
-        const derivedKeysPubKeys = Object.values({
-            ...rpcState.state?.storedKeys,
-        })
+        const derivedKeysPubKeys = Object.values({ ...rpcState.state?.storedKeys })
             .filter((key) => key.masterKey === rpcState.state?.selectedMasterKey)
             .map((key) => key.publicKey)
         const availableAccounts: nt.AssetsList[] = []
@@ -158,11 +155,7 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
         rpcState.state?.storedKeys,
     ])
 
-    const accountAddress = React.useMemo(() => rpcState.state?.selectedAccount?.tonWallet.address, [
-        rpcState.state?.selectedAccount,
-    ])
-
-    const accountName = React.useMemo(() => rpcState.state?.selectedAccount?.name, [
+    const selectedAccountAddress = React.useMemo(() => rpcState.state?.selectedAccount?.tonWallet.address, [
         rpcState.state?.selectedAccount,
     ])
 
@@ -173,29 +166,29 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
         return Math.max(...ids) + 1
     }, [rpcState.state?.accountEntries, rpcState.state?.storedKeys])
 
-    const onManageAccount = (account: nt.AssetsList) => {
+    const onManageAccount = (account?: nt.AssetsList) => {
         setCurrentAccount(account)
         setStep(Step.MANAGE_ACCOUNT)
     }
 
     const onCreateAccount = async (params: AccountToCreate) => {
-        await rpc.createAccount(params).then(onManageAccount)
+        return await rpc.createAccount(params)
     }
 
     const tonWalletState = React.useMemo(
         () =>
-            accountAddress !== undefined
-                ? rpcState.state?.accountContractStates?.[accountAddress]
+            selectedAccountAddress !== undefined
+                ? rpcState.state?.accountContractStates?.[selectedAccountAddress]
                 : undefined,
-        [rpcState.state?.accountContractStates, accountAddress]
+        [rpcState.state?.accountContractStates, selectedAccountAddress]
     )
 
     const tokenWalletStates = React.useMemo(
         () =>
-            accountAddress !== undefined
-                ? rpcState.state?.accountTokenStates?.[accountAddress] || {}
+            selectedAccountAddress !== undefined
+                ? rpcState.state?.accountTokenStates?.[selectedAccountAddress] || {}
                 : {},
-        [rpcState.state?.accountTokenStates, accountAddress]
+        [rpcState.state?.accountTokenStates, selectedAccountAddress]
     )
 
     const reset = () => {
@@ -231,8 +224,7 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
                 selectedMasterKey: rpcState.state?.selectedMasterKey,
                 accounts,
                 accountsVisibility: rpcState.state?.accountsVisibility || {},
-                accountAddress,
-                accountName,
+                selectedAccountAddress,
                 nextAccountId,
                 tonWalletState,
                 tokenWalletStates,

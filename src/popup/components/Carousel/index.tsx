@@ -10,24 +10,36 @@ import './style.scss'
 type Props = {
     children: React.ReactNode;
     initialSlide?: number;
+    onInit?(): void;
+    onReInit?(): void;
     onChange?(currentIndex: number): void;
 }
 
-export function Carousel({ children, initialSlide = 0, onChange }: Props): JSX.Element {
+export const Carousel = React.forwardRef<ReactSlick, Props>(({
+    children,
+    initialSlide = 0,
+    onInit,
+    onReInit,
+    onChange,
+}, ref) => {
     return (
         <ReactSlick
-            initialSlide={initialSlide}
+            ref={ref}
             afterChange={onChange}
-            draggable={false}
+            arrows
             nextArrow={<img src={RightArrow} alt="" />}
             prevArrow={<img src={LeftArrow} alt="" />}
             dots
-            swipe={false}
+            draggable={false}
+            infinite={false}
+            initialSlide={initialSlide}
+            onInit={onInit}
+            onReInit={onReInit}
             slidesToScroll={1}
             slidesToShow={1}
-            infinite={false}
+            swipe={false}
         >
             {children}
         </ReactSlick>
     )
-}
+})

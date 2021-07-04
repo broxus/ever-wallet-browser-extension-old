@@ -1,51 +1,61 @@
 import * as React from 'react'
 import Select from 'react-select'
 
+import * as nt from '@nekoton'
+import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import {
     CheckNewSeedPhrase,
     EnterNewSeedPasswords,
+    ImportSeed,
     NewSeedPhrase,
+    NewAccountContractType,
 } from '@popup/components/AccountsManagement/components'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { selectStyles } from '@popup/constants/selectStyle'
 import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
-import { generateSeed } from '@popup/store/app/actions'
+import { generateSeed, validateMnemonic } from '@popup/store/app/actions'
 
 
 enum CreateSeedWay {
     CREATE,
     IMPORT,
     IMPORT_LEGACY,
+    CONNECT_LEDGER,
 }
 
-enum CreateWayStep {
+enum WayStep {
     SHOW_PHRASE,
     CHECK_PHRASE,
     ENTER_PASSWORD,
+    SELECT_CONTRACT_TYPE,
+    IMPORT_PHRASE,
+    CONNECT_LEDGER,
 }
 
 type OptionType = {
-    value: CreateSeedWay
-    label: string
+    value: CreateSeedWay;
+    label: string;
 }
 
 const waysOptions: OptionType[] = [
     { value: CreateSeedWay.CREATE, label: 'Create new seed' },
     { value: CreateSeedWay.IMPORT, label: 'Import seed' },
-    { value: CreateSeedWay.IMPORT_LEGACY, label: 'Import seed (legacy)' },
+    // { value: CreateSeedWay.IMPORT_LEGACY, label: 'Import seed (legacy)' },
+    // { value: CreateSeedWay.CONNECT_LEDGER, label: 'Connect Ledger' },
 ]
 
 export function CreateSeed(): JSX.Element {
     const manager = useAccountsManagement()
 
     const [error, setError] = React.useState<string>()
+    const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
     const [inProcess, setInProcess] = React.useState(false)
     const [name, setName] = React.useState('')
-    const [step, setStep] = React.useState<CreateWayStep | null>(null)
+    const [seed, setSeed] = React.useState(generateSeed())
+    const [step, setStep] = React.useState<WayStep | null>(null)
     const [way, setWay] = React.useState<OptionType | null>(waysOptions[0])
 
-    const seed = React.useMemo(() => generateSeed(), [])
     const seedWords = React.useMemo(() => seed.phrase.split(' '), [seed])
 
     const onChangeWay = (value: OptionType | null) => {
@@ -58,44 +68,85 @@ export function CreateSeed(): JSX.Element {
             name,
             password,
             seed,
+        }).then(async (seed) => {
+            if (seed !== undefined) {
+                await manager.onCreateAccount({
+                    name: `Account ${manager.nextAccountId}`,
+                    contractType,
+                    publicKey: seed.publicKey,
+                }).then((account) => {
+                    if (account !== undefined) {
+                        manager.onManageAccount(account)
+                    }
+                })
+            }
         }).catch((err: string) => {
             try {
                 setError(err?.toString?.().replace(/Error: /gi, ''))
+                setInProcess(false)
             } catch (e) {}
-        }).finally(() => {
-            setInProcess(false)
         })
     }
 
     const onNext = () => {
         switch (step) {
-            case CreateWayStep.SHOW_PHRASE:
-                setStep(CreateWayStep.CHECK_PHRASE)
+            case WayStep.SHOW_PHRASE:
+                setStep(WayStep.CHECK_PHRASE)
                 break
 
-            case CreateWayStep.CHECK_PHRASE:
-                setStep(CreateWayStep.ENTER_PASSWORD)
+            case WayStep.CHECK_PHRASE:
+                setStep(WayStep.SELECT_CONTRACT_TYPE)
+                break
+
+            case WayStep.SELECT_CONTRACT_TYPE:
+                setStep(WayStep.ENTER_PASSWORD)
                 break
 
             default:
                 if (way?.value === CreateSeedWay.CREATE) {
-                    setStep(CreateWayStep.SHOW_PHRASE)
+                    setStep(WayStep.SHOW_PHRASE)
                 }
+                else if (
+                    way?.value === CreateSeedWay.IMPORT
+                    || way?.value === CreateSeedWay.IMPORT_LEGACY
+                ) {
+                    setStep(WayStep.IMPORT_PHRASE)
+                }
+                else if (way?.value === CreateSeedWay.CONNECT_LEDGER) {
+                    setStep(WayStep.CONNECT_LEDGER)
+                }
+        }
+    }
+
+    const onNextWhenImport = (words: string[]) => {
+        const phrase = words.join(' ')
+        const mnemonicType: nt.MnemonicType = way?.value === CreateSeedWay.IMPORT_LEGACY
+            ? { type: 'legacy' }
+            : { type: 'labs', accountId: 0 }
+
+        try {
+            validateMnemonic(phrase, mnemonicType)
+            setSeed({ phrase, mnemonicType })
+            setStep(WayStep.SELECT_CONTRACT_TYPE)
+        }
+        catch (e) {
+            setError(e.toString())
         }
     }
 
     const onBack = () => {
         switch (step) {
-            case CreateWayStep.SHOW_PHRASE:
+            case WayStep.SHOW_PHRASE:
+            case WayStep.IMPORT_PHRASE:
                 setStep(null)
                 break
 
-            case CreateWayStep.CHECK_PHRASE:
-                setStep(CreateWayStep.SHOW_PHRASE)
+            case WayStep.CHECK_PHRASE:
+                setStep(WayStep.SHOW_PHRASE)
                 break
 
-            case CreateWayStep.ENTER_PASSWORD:
-                setStep(CreateWayStep.CHECK_PHRASE)
+            case WayStep.ENTER_PASSWORD:
+                setStep(WayStep.CHECK_PHRASE)
                 break
 
             default:
@@ -146,7 +197,7 @@ export function CreateSeed(): JSX.Element {
                 </div>
             )}
 
-            {step == CreateWayStep.SHOW_PHRASE && (
+            {step === WayStep.SHOW_PHRASE && (
                 <NewSeedPhrase
                     key="exportedSeed"
                     seedWords={seedWords}
@@ -155,7 +206,7 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step == CreateWayStep.CHECK_PHRASE && (
+            {step === WayStep.CHECK_PHRASE && (
                 <CheckNewSeedPhrase
                     key="checkSeed"
                     seedWords={seedWords}
@@ -164,12 +215,34 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step == CreateWayStep.ENTER_PASSWORD && (
+            {step === WayStep.SELECT_CONTRACT_TYPE && (
+                <NewAccountContractType
+                    key="accountType"
+                    contractType={contractType}
+                    error={error}
+                    disabled={inProcess}
+                    mode="import"
+                    onSelectContractType={setContractType}
+                    onSubmit={onNext}
+                    onBack={onBack}
+                />
+            )}
+
+            {step === WayStep.ENTER_PASSWORD && (
                 <EnterNewSeedPasswords
                     key="enterPasswords"
                     disabled={inProcess}
                     error={error}
                     onSubmit={onSubmit}
+                    onBack={onBack}
+                />
+            )}
+
+            {step === WayStep.IMPORT_PHRASE && (
+                <ImportSeed
+                    key="importSeed"
+                    wordsCount={way?.value === CreateSeedWay.IMPORT_LEGACY ? 24 : 12}
+                    onSubmit={onNextWhenImport}
                     onBack={onBack}
                 />
             )}

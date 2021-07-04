@@ -43,7 +43,7 @@ export function NewAccountContractType({
 	const availableContracts = React.useMemo(() => {
 		const { currentDerivedKey } = manager
 		if (currentDerivedKey == null) {
-			return []
+			return window.ObjectExt.keys(CONTRACT_TYPES)
 		}
 		const accountAddresses = manager.derivedKeyRelatedAccounts.map((account) => account.tonWallet.address)
 		return window.ObjectExt.keys(CONTRACT_TYPES).filter((type) => {

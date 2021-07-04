@@ -7,10 +7,11 @@ import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import UserAvatar from '@popup/components/UserAvatar'
-import Arrow from '@popup/img/arrow.svg'
 import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { convertAddress } from '@shared/utils'
+
+import Arrow from '@popup/img/arrow.svg'
 
 
 export function ManageDerivedKey(): JSX.Element {
@@ -19,7 +20,7 @@ export function ManageDerivedKey(): JSX.Element {
 
 	const [name, setName] = React.useState(
 		manager.currentMasterKey !== undefined
-			? manager.derivedKeysNames[manager.currentMasterKey.publicKey]
+			? (manager.derivedKeysNames[manager.currentMasterKey.publicKey] || '')
 			: ''
 	)
 
@@ -80,7 +81,7 @@ export function ManageDerivedKey(): JSX.Element {
 					name="seed_name"
 					label="Enter key name"
 					type="text"
-					value={name}
+					value={name || ''}
 					onChange={setName}
 				/>
 				{(
@@ -125,7 +126,7 @@ export function ManageDerivedKey(): JSX.Element {
 								role="button"
 								className={classNames('accounts-management__list-item', {
 									'accounts-management__list-item--active': (
-										manager.accountAddress === account.tonWallet.address
+										account.tonWallet.address === manager.selectedAccountAddress
 									)
 								})}
 								onClick={onManageAccount(account)}

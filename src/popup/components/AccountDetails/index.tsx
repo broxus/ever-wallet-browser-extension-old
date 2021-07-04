@@ -1,4 +1,6 @@
+import { debounce } from '@popup/utils/debounce'
 import * as React from 'react'
+import ReactSlick from 'react-slick'
 
 import { createRipple, removeRipple } from '@popup/common'
 import { AccountCard } from '@popup/components/AccountCard'
@@ -49,14 +51,18 @@ export function AccountDetails(): JSX.Element {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
+    const slider = React.useRef<ReactSlick>(null)
+
     const [notificationsVisible, setNotificationsVisible] = React.useState(false)
 
     const initialSlide = React.useMemo(
-        () =>
-            manager.accounts.findIndex(
-                (account) => account.tonWallet.address === manager.accountAddress
-            ),
-        [manager.currentAccount]
+        () => {
+            const index = manager.accounts.findIndex(
+                (account) => account.tonWallet.address === manager.selectedAccountAddress
+            )
+            return index >= 0 ? index : 0
+        },
+        [manager.accounts, manager.selectedAccount]
     )
 
     const onReceive = () => {
@@ -97,7 +103,7 @@ export function AccountDetails(): JSX.Element {
         nextNetwork && (await rpc.changeNetwork(nextNetwork))
     }
 
-    const onSlide = async (index: number) => {
+    const onSlide = debounce(async (index: number) => {
         const account = manager.accounts[index]
         if (
             account == null ||
@@ -106,103 +112,111 @@ export function AccountDetails(): JSX.Element {
             return
         }
         await rpc.selectAccount(account.tonWallet.address)
+    }, 200)
+
+    const onInit = () => {
+        slider.current?.slickGoTo(initialSlide)
     }
 
-    return (
-        <>
-            <div className="account-details">
-                <div className="account-details__top-panel">
-                    <div
-                        className="account-details__notification-bell"
-                        onClick={() => {
-                            /*setNotificationsVisible(true)*/
-                        }}
-                    >
-                        <img src={NotificationsIcon} alt="" />
-                    </div>
-                    <div
-                        className="account-details__network-switcher noselect"
-                        onClick={onToggleNetwork}
-                    >
-                        {rpcState.state?.selectedConnection.name}
-                    </div>
-                    <AccountModal />
-                    {notificationsVisible && (
-                        <Notifications onClose={() => setNotificationsVisible(false)} />
-                    )}
-                </div>
-                <Carousel initialSlide={initialSlide} onChange={onSlide}>
-                    {manager.accounts.map((account) => (
-                        <AccountCard
-                            key={account.tonWallet.address}
-                            accountName={account.name}
-                            address={account.tonWallet.address}
-                            publicKey={account.tonWallet.publicKey}
-                            balance={convertTons(
-                                manager.tonWalletState?.balance || '0'
-                            ).toLocaleString()}
-                        />
-                    ))}
-                    <AddNewAccountCard key="addSlide" handleCreateNewAcc={onCreateAccount} />
-                </Carousel>
+    React.useEffect(debounce(() => {
+        slider.current?.slickGoTo(initialSlide)
+        slider.current?.forceUpdate()
+    }, 100), [manager.accounts, manager.selectedAccount])
 
-                <div className="account-details__controls noselect">
+    return (
+        <div className="account-details">
+            <div className="account-details__top-panel">
+                <div
+                    className="account-details__notification-bell"
+                    onClick={() => {
+                        /*setNotificationsVisible(true)*/
+                    }}
+                >
+                    <img src={NotificationsIcon} alt="" />
+                </div>
+                <div
+                    className="account-details__network-switcher noselect"
+                    onClick={onToggleNetwork}
+                >
+                    {rpcState.state?.selectedConnection.name}
+                </div>
+                <AccountModal />
+                {notificationsVisible && (
+                    <Notifications onClose={() => setNotificationsVisible(false)} />
+                )}
+            </div>
+
+            <Carousel ref={slider} onInit={onInit} onChange={onSlide}>
+                {manager.accounts.map((account) => (
+                    <AccountCard
+                        key={account.tonWallet.address}
+                        accountName={account.name}
+                        address={account.tonWallet.address}
+                        publicKey={account.tonWallet.publicKey}
+                        balance={convertTons(
+                            rpcState.state?.accountContractStates?.[account.tonWallet.address]?.balance || '0'
+                        ).toLocaleString()}
+                    />
+                ))}
+                <AddNewAccountCard key="addSlide" handleCreateNewAcc={onCreateAccount} />
+            </Carousel>
+
+            <div className="account-details__controls noselect">
+                <button
+                    className="account-details__controls__button"
+                    onClick={() => {}}
+                    onMouseDown={createRipple}
+                    onMouseLeave={removeRipple}
+                    onMouseUp={(event) => {
+                        removeRipple(event)
+                        onReceive()
+                    }}
+                >
+                    <div className="account-details__controls__button__content">
+                        <img src={ReceiveIcon} alt="" style={{ marginRight: '8px' }} />
+                        Receive
+                    </div>
+                </button>
+
+                {manager.tonWalletState !== undefined && (
                     <button
                         className="account-details__controls__button"
                         onClick={() => {}}
                         onMouseDown={createRipple}
                         onMouseLeave={removeRipple}
-                        onMouseUp={(event) => {
+                        onMouseUp={async (event) => {
                             removeRipple(event)
-                            onReceive()
+                            if (
+                                manager.tonWalletState?.isDeployed ||
+                                manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
+                            ) {
+                                await onSend()
+                            } else {
+                                onDeploy()
+                            }
                         }}
                     >
                         <div className="account-details__controls__button__content">
-                            <img src={ReceiveIcon} alt="" style={{ marginRight: '8px' }} />
-                            Receive
+                            {manager.tonWalletState?.isDeployed ||
+                            manager.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
+                                <>
+                                    <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
+                                    Send
+                                </>
+                            ) : (
+                                <>
+                                    <img
+                                        src={DeployIcon}
+                                        alt=""
+                                        style={{ marginRight: '8px' }}
+                                    />
+                                    Deploy
+                                </>
+                            )}
                         </div>
                     </button>
-
-                    {manager.tonWalletState !== undefined && (
-                        <button
-                            className="account-details__controls__button"
-                            onClick={() => {}}
-                            onMouseDown={createRipple}
-                            onMouseLeave={removeRipple}
-                            onMouseUp={async (event) => {
-                                removeRipple(event)
-                                if (
-                                    manager.tonWalletState?.isDeployed ||
-                                    manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
-                                ) {
-                                    await onSend()
-                                } else {
-                                    onDeploy()
-                                }
-                            }}
-                        >
-                            <div className="account-details__controls__button__content">
-                                {manager.tonWalletState?.isDeployed ||
-                                manager.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
-                                    <>
-                                        <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
-                                        Send
-                                    </>
-                                ) : (
-                                    <>
-                                        <img
-                                            src={DeployIcon}
-                                            alt=""
-                                            style={{ marginRight: '8px' }}
-                                        />
-                                        Deploy
-                                    </>
-                                )}
-                            </div>
-                        </button>
-                    )}
-                </div>
+                )}
             </div>
-        </>
+        </div>
     )
 }

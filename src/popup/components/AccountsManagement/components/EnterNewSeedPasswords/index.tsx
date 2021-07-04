@@ -25,7 +25,7 @@ export function EnterNewSeedPasswords({
 
 	return (
 		<div className="accounts-management__content">
-			<h2 className="accounts-management__content-title">Create a password</h2>
+			<h2 className="accounts-management__content-title">Enter password to confirm adding</h2>
 			<form id="password" onSubmit={handleSubmit(onSubmit)}>
 				<div className="accounts-management__content-form-rows">
 					<div className="accounts-management__content-form-row">
