@@ -830,7 +830,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.2.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#bc7ae8845ea76da113f2f424b5509e2cd7652736"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#79b730d734fd1e6ffea2116b893d3197b9d79139"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1442,8 +1442,8 @@ dependencies = [
 
 [[package]]
 name = "ton_block"
-version = "1.1.28"
-source = "git+https://github.com/tonlabs/ton-labs-block.git#9a29b4bf06f59570305c42dc15a03df654373365"
+version = "1.2.15"
+source = "git+https://github.com/tonlabs/ton-labs-block.git#c8f2a3ade0590bf50af3ae97c3ea809bdd5f0ecf"
 dependencies = [
  "base64 0.10.1",
  "clear_on_drop",
@@ -1480,8 +1480,8 @@ dependencies = [
 
 [[package]]
 name = "ton_labs_assembler"
-version = "1.1.100"
-source = "git+https://github.com/tonlabs/ton-labs-assembler.git#f67b2f7382b525fdf2233e2f9e0fcbc6016c7878"
+version = "1.1.129"
+source = "git+https://github.com/tonlabs/ton-labs-assembler.git#68944e0c7684031854fb226fd5b37faf49d00b1d"
 dependencies = [
  "failure",
  "hex 0.4.3",

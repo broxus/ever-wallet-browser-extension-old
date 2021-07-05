@@ -187,6 +187,48 @@ impl KeyStore {
         })))
     }
 
+    #[wasm_bindgen(js_name = "getPublicKeys")]
+    pub fn get_public_keys(
+        &self,
+        get_public_keys: JsGetPublicKeys,
+    ) -> Result<PromisePublicKeys, JsValue> {
+        use nt::crypto::*;
+
+        let inner = self.inner.clone();
+        let get_public_keys =
+            JsValue::into_serde::<ParsedGetPublicKeys>(&get_public_keys).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            match get_public_keys {
+                ParsedGetPublicKeys::MasterKey {
+                    master_key,
+                    password,
+                    offset,
+                    limit,
+                } => {
+                    let input = DerivedKeyGetPublicKeys {
+                        master_key: parse_public_key(&master_key)?,
+                        password: password.into(),
+                        limit,
+                        offset,
+                    };
+                    inner
+                        .get_public_keys::<DerivedKeySigner>(input)
+                        .await
+                        .map(make_public_keys_list)
+                }
+                ParsedGetPublicKeys::LedgerKey { offset, limit } => {
+                    let input = LedgerKeyGetPublicKeys { offset, limit };
+                    inner
+                        .get_public_keys::<LedgerKeySigner>(input)
+                        .await
+                        .map(make_public_keys_list)
+                }
+            }
+            .handle_error()
+        })))
+    }
+
     #[wasm_bindgen]
     pub fn check_password(&self, key_password: JsKeyPassword) -> Result<PromiseBool, JsValue> {
         let inner = self.inner.clone();
@@ -432,6 +474,48 @@ enum ParsedExportKey {
         public_key: String,
         password: String,
     },
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const GET_PUBLIC_KEYS: &str = r#"
+export type GetPublicKeys =
+    | EnumItem<'master_key', { masterKey: string, password: string, offset: number, limit: number }>
+    | EnumItem<'ledger_key', { offset: number, limit: number }>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "GetPublicKeys")]
+    pub type JsGetPublicKeys;
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+enum ParsedGetPublicKeys {
+    #[serde(rename_all = "camelCase")]
+    MasterKey {
+        master_key: String,
+        password: String,
+        offset: u16,
+        limit: u16,
+    },
+    #[serde(rename_all = "camelCase")]
+    LedgerKey { offset: u16, limit: u16 },
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<string[]>")]
+    pub type PromisePublicKeys;
+}
+
+fn make_public_keys_list(public_keys: Vec<ed25519_dalek::PublicKey>) -> JsValue {
+    public_keys
+        .into_iter()
+        .map(|item| hex::encode(item.as_bytes()))
+        .map(JsValue::from)
+        .collect::<js_sys::Array>()
+        .unchecked_into()
 }
 
 #[wasm_bindgen(typescript_custom_section)]
