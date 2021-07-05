@@ -1,4 +1,3 @@
-import { debounce } from '@popup/utils/debounce'
 import * as React from 'react'
 import ReactSlick from 'react-slick'
 
@@ -11,6 +10,7 @@ import { useAccountsManagement } from '@popup/providers/AccountsManagementProvid
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { debounce } from '@popup/utils/debounce'
 
 import AddAccount from '@popup/img/add-account.svg'
 import DeployIcon from '@popup/img/deploy-icon.svg'
@@ -46,7 +46,7 @@ const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc })
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountDetails(): JSX.Element {
-    const manager = useAccountsManagement()
+    const accountability = useAccountsManagement()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -57,12 +57,12 @@ export function AccountDetails(): JSX.Element {
 
     const initialSlide = React.useMemo(
         () => {
-            const index = manager.accounts.findIndex(
-                (account) => account.tonWallet.address === manager.selectedAccountAddress
+            const index = accountability.accounts.findIndex(
+                (account) => account.tonWallet.address === accountability.selectedAccountAddress
             )
             return index >= 0 ? index : 0
         },
-        [manager.accounts, manager.selectedAccount]
+        [accountability.accounts, accountability.selectedAccount]
     )
 
     const onReceive = () => {
@@ -104,10 +104,10 @@ export function AccountDetails(): JSX.Element {
     }
 
     const onSlide = debounce(async (index: number) => {
-        const account = manager.accounts[index]
+        const account = accountability.accounts[index]
         if (
             account == null ||
-            account.tonWallet.address === manager.selectedAccount?.tonWallet.address
+            account.tonWallet.address === accountability.selectedAccount?.tonWallet.address
         ) {
             return
         }
@@ -121,7 +121,7 @@ export function AccountDetails(): JSX.Element {
     React.useEffect(debounce(() => {
         slider.current?.slickGoTo(initialSlide)
         slider.current?.forceUpdate()
-    }, 100), [manager.accounts, manager.selectedAccount])
+    }, 100), [accountability.accounts, accountability.selectedAccount])
 
     return (
         <div className="account-details">
@@ -147,7 +147,7 @@ export function AccountDetails(): JSX.Element {
             </div>
 
             <Carousel ref={slider} onInit={onInit} onChange={onSlide}>
-                {manager.accounts.map((account) => (
+                {accountability.accounts.map((account) => (
                     <AccountCard
                         key={account.tonWallet.address}
                         accountName={account.name}
@@ -178,7 +178,7 @@ export function AccountDetails(): JSX.Element {
                     </div>
                 </button>
 
-                {manager.tonWalletState !== undefined && (
+                {accountability.tonWalletState !== undefined && (
                     <button
                         className="account-details__controls__button"
                         onClick={() => {}}
@@ -187,8 +187,8 @@ export function AccountDetails(): JSX.Element {
                         onMouseUp={async (event) => {
                             removeRipple(event)
                             if (
-                                manager.tonWalletState?.isDeployed ||
-                                manager.selectedAccount?.tonWallet.contractType == 'WalletV3'
+                                accountability.tonWalletState?.isDeployed ||
+                                accountability.selectedAccount?.tonWallet.contractType == 'WalletV3'
                             ) {
                                 await onSend()
                             } else {
@@ -197,8 +197,8 @@ export function AccountDetails(): JSX.Element {
                         }}
                     >
                         <div className="account-details__controls__button__content">
-                            {manager.tonWalletState?.isDeployed ||
-                            manager.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
+                            {accountability.tonWalletState?.isDeployed ||
+                            accountability.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
                                 <>
                                     <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
                                     Send

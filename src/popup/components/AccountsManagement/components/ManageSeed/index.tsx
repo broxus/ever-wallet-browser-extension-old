@@ -19,36 +19,36 @@ enum ManageSeedStep {
 }
 
 export function ManageSeed(): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 	const rpc = useRpc()
 	const rpcState = useRpcState()
 
 	const [name, setName] = React.useState(
-		manager.currentMasterKey !== undefined
-			? (manager.masterKeysNames[manager.currentMasterKey.masterKey] || '')
+		accountability.currentMasterKey !== undefined
+			? (accountability.masterKeysNames[accountability.currentMasterKey.masterKey] || '')
 			: ''
 	)
 	const [step, setStep] = React.useState<ManageSeedStep | null>(null)
 
 	const currentDerivedKeyPubKey = React.useMemo(() => {
-		if (manager.selectedAccount?.tonWallet.publicKey !== undefined) {
-			return rpcState.state?.storedKeys[manager.selectedAccount.tonWallet.publicKey].publicKey
+		if (accountability.selectedAccount?.tonWallet.publicKey !== undefined) {
+			return rpcState.state?.storedKeys[accountability.selectedAccount.tonWallet.publicKey].publicKey
 		}
 		return undefined
-	}, [manager.selectedAccount, rpcState.state?.storedKeys])
+	}, [accountability.selectedAccount, rpcState.state?.storedKeys])
 
 	const addKey = () => {
-		manager.setStep(Step.CREATE_DERIVED_KEY)
+		accountability.setStep(Step.CREATE_DERIVED_KEY)
 	}
 
 	const saveName = () => {
-		if (manager.currentMasterKey !== undefined && name) {
-			rpc.updateMasterKeyName(manager.currentMasterKey.masterKey, name)
+		if (accountability.currentMasterKey !== undefined && name) {
+			rpc.updateMasterKeyName(accountability.currentMasterKey.masterKey, name)
 		}
 	}
 
 	const onManageDerivedKey = (key: nt.KeyStoreEntry) => {
-		return () => manager.onManageDerivedKey(key)
+		return () => accountability.onManageDerivedKey(key)
 	}
 
 	const onExportSeed = async () => {
@@ -62,19 +62,19 @@ export function ManageSeed(): JSX.Element {
 				break
 
 			default:
-				manager.reset()
-				manager.setStep(null)
+				accountability.reset()
+				accountability.setStep(null)
 		}
 	}
 
 	React.useEffect(() => {
 		if (
-			manager.currentMasterKey !== undefined
-			&& name !== manager.masterKeysNames[manager.currentMasterKey.masterKey]
+			accountability.currentMasterKey !== undefined
+			&& name !== accountability.masterKeysNames[accountability.currentMasterKey.masterKey]
 		) {
-			setName(manager.masterKeysNames[manager.currentMasterKey.masterKey])
+			setName(accountability.masterKeysNames[accountability.currentMasterKey.masterKey])
 		}
-	}, [manager.masterKeysNames])
+	}, [accountability.masterKeysNames])
 
 	return (
 		<>
@@ -92,9 +92,9 @@ export function ManageSeed(): JSX.Element {
 							onChange={setName}
 						/>
 						{(
-							manager.currentMasterKey !== undefined
-							&& (manager.masterKeysNames[manager.currentMasterKey.masterKey] !== undefined || name)
-							&& manager.masterKeysNames[manager.currentMasterKey.masterKey] !== name
+							accountability.currentMasterKey !== undefined
+							&& (accountability.masterKeysNames[accountability.currentMasterKey.masterKey] !== undefined || name)
+							&& accountability.masterKeysNames[accountability.currentMasterKey.masterKey] !== name
 						) && (
 							<a
 								role="button"
@@ -111,7 +111,7 @@ export function ManageSeed(): JSX.Element {
 					<div className="accounts-management__divider" />
 
 					<ul className="accounts-management__list">
-						{manager.derivedKeys.map(key => {
+						{accountability.derivedKeys.map(key => {
 							const isActive = currentDerivedKeyPubKey === key.publicKey
 							return (
 								<li key={key.publicKey}>
@@ -124,7 +124,7 @@ export function ManageSeed(): JSX.Element {
 									>
 										<img src={TonKey} alt="" className="accounts-management__list-item-logo" />
 										<div className="accounts-management__list-item-title">
-											{manager.derivedKeysNames[key.publicKey] || convertAddress(key.publicKey)}
+											{accountability.derivedKeysNames[key.publicKey] || convertAddress(key.publicKey)}
 										</div>
 										<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
 									</div>

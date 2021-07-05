@@ -13,27 +13,27 @@ enum CreateAccountStep {
 }
 
 export function CreateAccount(): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 
 	const [error, setError] = React.useState<string>()
 	const [inProcess, setInProcess] = React.useState(false)
 	const [step, setStep] = React.useState<CreateAccountStep | null>(null)
-	const [name, setName] = React.useState(`Account ${manager.nextAccountId}`)
+	const [name, setName] = React.useState(`Account ${accountability.nextAccountId}`)
 	const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
 	const onSubmit = async () => {
-		if (manager.currentDerivedKey == null || inProcess) {
+		if (accountability.currentDerivedKey == null || inProcess) {
 			return
 		}
 
 		setInProcess(true)
-		await manager.onCreateAccount({
+		await accountability.onCreateAccount({
 			name,
-			publicKey: manager.currentDerivedKey.publicKey,
+			publicKey: accountability.currentDerivedKey.publicKey,
 			contractType,
 		}).then((account) => {
 			if (account !== undefined) {
-				manager.onManageAccount(account)
+				accountability.onManageAccount(account)
 			}
 		}).catch((err: string) => {
 			try {
@@ -55,7 +55,7 @@ export function CreateAccount(): JSX.Element {
 				break
 
 			default:
-				manager.setStep(Step.MANAGE_DERIVED_KEY)
+				accountability.setStep(Step.MANAGE_DERIVED_KEY)
 		}
 	}
 

@@ -1,4 +1,191 @@
+@import '../../styles/colors';
+
 .deploy-wallet {
+    &__content {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        width: 100%;
+
+        &-title {
+            margin-top: -15px;
+            margin-bottom: 20px;
+        }
+
+        &-header {
+            font-family: 'PT Root UI', sans-serif;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            color: $seedsHeader;
+            margin-bottom: 4px;
+
+            &--lead {
+                font-size: 18px;
+                line-height: 24px;
+                font-weight: bold;
+                letter-spacing: 0.75px;
+                color: #000000;
+                margin-top: 20px;
+                margin-bottom: 8px;
+            }
+        }
+
+        &-wallet-type-select {
+            margin-bottom: 20px;
+        }
+
+        &-form-rows {
+            display: flex;
+            flex-direction: column;
+            row-gap: 20px;
+
+            .simple-input {
+                margin-bottom: 0;
+            }
+        }
+
+        &-form-add-field {
+            cursor: pointer;
+            font-weight: normal;
+            font-size: 14px;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+        }
+
+        &-buttons {
+            margin-top: 40px;
+            display: flex;
+            position: relative;
+
+            > * { width: 100%; }
+
+            &-back-btn {
+                width: 100px;
+                min-width: 100px;
+                margin-right: 12px;
+            }
+        }
+
+        &-error {
+            display: block;
+            width: 100%;
+            font-size: 12px;
+            line-height: 16px;
+            letter-spacing: 0.4px;
+            color: darkred;
+            margin-top: 10px;
+        }
+
+        &-error + &-error {
+            margin-top: 10px;
+        }
+    }
+
+    &__field-confirms {
+        position: relative;
+
+        .simple-input {
+            margin-bottom: 0;
+            padding-right: 155px;
+        }
+    }
+
+    &__field {
+        position: relative;
+
+        &--removable {
+            .simple-input {
+                margin-bottom: 0;
+            }
+        }
+    }
+
+    &__field-delete {
+        background: #fff;
+        color: #cc0022;
+        font-size: 16px;
+        cursor: pointer;
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        box-shadow: -20px 0 25px 15px #fff;
+    }
+
+    &__field-placeholder {
+        font-size: 16px;
+        cursor: pointer;
+        position: absolute;
+        top: 14px;
+        right: 16px;
+    }
+
+    &__form-tx-details {
+        background: #f8f9f9;
+        margin-bottom: 28px;
+        padding: 20px;
+
+        &-param {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            &:not(:last-child) {
+                margin-bottom: 16px;
+            }
+
+            &-desc {
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                color: #7d8b92;
+            }
+
+            &-value {
+                color: #000000;
+                font-family: 'PT Root UI', serif;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 16px;
+                line-height: 20px;
+                letter-spacing: 0.25px;
+                word-break: break-all;
+            }
+        }
+    }
+
+    &__qr-address-placeholder {
+        background: #f8f9f9;
+        border: 1px solid #dde1e2;
+        box-sizing: border-box;
+        padding: 10px;
+        font-size: 16px;
+        line-height: 20px;
+        letter-spacing: 0.25px;
+        word-break: break-all;
+        margin-bottom: 12px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    &__qr-address-code {
+        background: #fff;
+        padding: 10px;
+        height: 100px;
+        width: 100px;
+    }
+
+    &__qr-address-address {
+        margin-left: 10px;
+    }
+
     &__comment {
         font-style: normal;
         font-weight: normal;

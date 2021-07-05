@@ -38,6 +38,7 @@ interface AccountsManagementContext {
     derivedKeyRelatedAccounts: nt.AssetsList[];
     accountsVisibility: { [address: string]: boolean };
     selectedAccountAddress?: string;
+    selectedAccountPublicKey?: string;
     tonWalletState?: nt.ContractState;
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState };
     step: Step | null;
@@ -159,21 +160,9 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
         rpcState.state?.selectedAccount,
     ])
 
-    const nextAccountId = React.useMemo(() => {
-        const ids = Object.values({ ...rpcState.state?.storedKeys }).map(
-            ({ accountId }) => accountId
-        )
-        return Math.max(...ids) + 1
-    }, [rpcState.state?.accountEntries, rpcState.state?.storedKeys])
-
-    const onManageAccount = (account?: nt.AssetsList) => {
-        setCurrentAccount(account)
-        setStep(Step.MANAGE_ACCOUNT)
-    }
-
-    const onCreateAccount = async (params: AccountToCreate) => {
-        return await rpc.createAccount(params)
-    }
+    const selectedAccountPublicKey = React.useMemo(() => rpcState.state?.selectedAccount?.tonWallet.publicKey, [
+        rpcState.state?.selectedAccount,
+    ])
 
     const tonWalletState = React.useMemo(
         () =>
@@ -190,6 +179,22 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
                 : {},
         [rpcState.state?.accountTokenStates, selectedAccountAddress]
     )
+
+    const nextAccountId = React.useMemo(() => {
+        const ids = Object.values({ ...rpcState.state?.storedKeys }).map(
+            ({ accountId }) => accountId
+        )
+        return Math.max(...ids) + 1
+    }, [rpcState.state?.accountEntries, rpcState.state?.storedKeys])
+
+    const onManageAccount = (account?: nt.AssetsList) => {
+        setCurrentAccount(account)
+        setStep(Step.MANAGE_ACCOUNT)
+    }
+
+    const onCreateAccount = async (params: AccountToCreate) => {
+        return await rpc.createAccount(params)
+    }
 
     const reset = () => {
         setStep(null)
@@ -225,6 +230,7 @@ export function AccountsManagementProvider({ children }: Props): JSX.Element {
                 accounts,
                 accountsVisibility: rpcState.state?.accountsVisibility || {},
                 selectedAccountAddress,
+                selectedAccountPublicKey,
                 nextAccountId,
                 tonWalletState,
                 tokenWalletStates,

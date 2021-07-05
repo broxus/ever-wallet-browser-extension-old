@@ -46,7 +46,7 @@ const waysOptions: OptionType[] = [
 ]
 
 export function CreateSeed(): JSX.Element {
-    const manager = useAccountsManagement()
+    const accountability = useAccountsManagement()
 
     const [error, setError] = React.useState<string>()
     const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
@@ -64,19 +64,19 @@ export function CreateSeed(): JSX.Element {
 
     const onSubmit = async (password: string) => {
         setInProcess(true)
-        await manager.onCreateMasterKey({
+        await accountability.onCreateMasterKey({
             name,
             password,
             seed,
         }).then(async (seed) => {
             if (seed !== undefined) {
-                await manager.onCreateAccount({
-                    name: `Account ${manager.nextAccountId}`,
+                await accountability.onCreateAccount({
+                    name: `Account ${accountability.nextAccountId}`,
                     contractType,
                     publicKey: seed.publicKey,
                 }).then((account) => {
                     if (account !== undefined) {
-                        manager.onManageAccount(account)
+                        accountability.onManageAccount(account)
                     }
                 })
             }
@@ -150,7 +150,7 @@ export function CreateSeed(): JSX.Element {
                 break
 
             default:
-                manager.setStep(null)
+                accountability.setStep(null)
         }
     }
 
@@ -184,8 +184,8 @@ export function CreateSeed(): JSX.Element {
                             <Button
                                 text="Back"
                                 disabled={inProcess}
-                                onClick={onBack}
                                 white
+                                onClick={onBack}
                             />
                         </div>
                         <Button

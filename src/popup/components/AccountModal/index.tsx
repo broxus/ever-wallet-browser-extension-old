@@ -18,7 +18,7 @@ import './style.scss'
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountModal() {
-    const manager = useAccountsManagement()
+    const accountability = useAccountsManagement()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -28,11 +28,11 @@ export function AccountModal() {
     const [isActive, setActiveTo] = React.useState(false)
 
     const selectedSeedName = React.useMemo(() => {
-        if (manager.selectedMasterKey !== undefined) {
-            return manager.masterKeysNames[manager.selectedMasterKey] || convertAddress(manager.selectedMasterKey)
+        if (accountability.selectedMasterKey !== undefined) {
+            return accountability.masterKeysNames[accountability.selectedMasterKey] || convertAddress(accountability.selectedMasterKey)
         }
         return undefined
-    }, [manager.masterKeysNames, manager.selectedMasterKey])
+    }, [accountability.masterKeysNames, accountability.selectedMasterKey])
 
     const hide = () => {
         setActiveTo(false)
@@ -44,13 +44,13 @@ export function AccountModal() {
 
     const onManageMasterKey = (masterKey: string) => {
         return () => {
-            const key = manager.masterKeys.find((entry) => entry.masterKey === masterKey)
+            const key = accountability.masterKeys.find((entry) => entry.masterKey === masterKey)
             if (key == null) {
                 return
             }
             hide()
-            manager.setCurrentMasterKey(key)
-            manager.setStep(Step.MANAGE_SEED)
+            accountability.setCurrentMasterKey(key)
+            accountability.setStep(Step.MANAGE_SEED)
             drawer.setPanel(Panel.MANAGE_SEEDS)
         }
     }
@@ -95,7 +95,7 @@ export function AccountModal() {
                         </div>
 
                         <ul className="account-settings__seeds-list">
-                            {manager.masterKeys.map((key) => (
+                            {accountability.masterKeys.map((key) => (
                                 <li key={key.masterKey}>
                                     <a
                                         role="button"
@@ -103,7 +103,7 @@ export function AccountModal() {
                                         onClick={onManageMasterKey(key.masterKey)}
                                     >
                                         <div className="account-settings__seeds-list-item-title">
-                                            {manager.masterKeysNames?.[key.masterKey] || convertAddress(key.masterKey)}
+                                            {accountability.masterKeysNames?.[key.masterKey] || convertAddress(key.masterKey)}
                                         </div>
                                     </a>
                                 </li>
@@ -120,7 +120,7 @@ export function AccountModal() {
 
                     <div className="account-settings-separator" />
 
-                    <div className="account-settings-section-item-log-out" onClick={manager.logOut}>
+                    <div className="account-settings-section-item-log-out" onClick={accountability.logOut}>
                         Log out
                     </div>
                     <div className="account-settings-section-item-version">

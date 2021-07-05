@@ -18,20 +18,20 @@ import './style.scss'
 
 
 export function ManageSeeds(): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 
 	const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
-		return () => manager.onManageMasterKey(seed)
+		return () => accountability.onManageMasterKey(seed)
 	}
 
 	const addSeed = () => {
-		manager.reset()
-		manager.setStep(Step.CREATE_SEED)
+		accountability.reset()
+		accountability.setStep(Step.CREATE_SEED)
 	}
 
 	return (
 		<>
-			{manager.step == null && (
+			{accountability.step == null && (
 				<div key="start" className="accounts-management__content">
 					<h2 className="accounts-management__content-title">Manage seeds & subscriptions</h2>
 
@@ -40,8 +40,8 @@ export function ManageSeeds(): JSX.Element {
 					<div className="accounts-management__divider" />
 
 					<ul className="accounts-management__list">
-						{manager.masterKeys.map((key) => {
-							const isActive = manager.selectedMasterKey === key.masterKey
+						{accountability.masterKeys.map((key) => {
+							const isActive = accountability.selectedMasterKey === key.masterKey
 							return (
 								<li key={key.masterKey}>
 									<div
@@ -53,7 +53,7 @@ export function ManageSeeds(): JSX.Element {
 									>
 										<img src={TonLogo} alt="" className="accounts-management__list-item-logo" />
 										<div className="accounts-management__list-item-title">
-											{manager.masterKeysNames[key.masterKey] || convertAddress(key.masterKey)}
+											{accountability.masterKeysNames[key.masterKey] || convertAddress(key.masterKey)}
 											{isActive && ' (current)'}
 										</div>
 										<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
@@ -70,27 +70,27 @@ export function ManageSeeds(): JSX.Element {
 				</div>
 			)}
 
-			{manager.step === Step.CREATE_SEED && (
+			{accountability.step === Step.CREATE_SEED && (
 				<CreateSeed key="createSeed" />
 			)}
 
-			{manager.step === Step.MANAGE_SEED && (
+			{accountability.step === Step.MANAGE_SEED && (
 				<ManageSeed key="manageSeed" />
 			)}
 
-			{manager.step === Step.CREATE_DERIVED_KEY && (
+			{accountability.step === Step.CREATE_DERIVED_KEY && (
 				<CreateDerivedKey key="createDerivedKey" />
 			)}
 
-			{manager.step === Step.MANAGE_DERIVED_KEY && (
+			{accountability.step === Step.MANAGE_DERIVED_KEY && (
 				<ManageDerivedKey key="manageDerivedKey" />
 			)}
 
-			{manager.step === Step.CREATE_ACCOUNT && (
+			{accountability.step === Step.CREATE_ACCOUNT && (
 				<CreateAccount key="createAccount" />
 			)}
 
-			{manager.step === Step.MANAGE_ACCOUNT && (
+			{accountability.step === Step.MANAGE_ACCOUNT && (
 				<ManageAccount key="manageAccount" />
 			)}
 		</>

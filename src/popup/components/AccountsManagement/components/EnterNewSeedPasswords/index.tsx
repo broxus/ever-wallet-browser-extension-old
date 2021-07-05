@@ -36,9 +36,9 @@ export function EnterNewSeedPasswords({
 								minLength: 6,
 							})}
 							disabled={disabled}
-							label={'Your password'}
+							label="Your password"
 							autoFocus
-							type={'password'}
+							type="password"
 						/>
 						{errors.password && (
 							<div className="accounts-management__content-error">
@@ -54,8 +54,8 @@ export function EnterNewSeedPasswords({
 								validate: (value) => value === watch('password'),
 							})}
 							disabled={disabled}
-							label={'Confirm password'}
-							type={'password'}
+							label="Confirm password"
+							type="password"
 						/>
 						{errors.passwordConfirm && (
 							<div className="accounts-management__content-error">
@@ -73,10 +73,15 @@ export function EnterNewSeedPasswords({
 
 			<div className="accounts-management__content-buttons">
 				<div className="accounts-management__content-buttons-back-btn">
-					<Button text={'Back'} disabled={disabled} onClick={onBack} white />
+					<Button
+						text="Back"
+						disabled={disabled}
+						white
+						onClick={onBack}
+					/>
 				</div>
 				<Button
-					text={'Confirm'}
+					text="Confirm"
 					disabled={disabled}
 					onClick={handleSubmit(onSubmit)}
 				/>

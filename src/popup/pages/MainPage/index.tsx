@@ -2,13 +2,13 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import { AccountDetails } from '@popup/components/AccountDetails'
+import { DeployWallet } from '@popup/components/DeployWallet'
 import UserAssets from '@popup/components/UserAssets'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import Receive from '@popup/components/Receive'
 import Send from '@popup/components/Send'
 import { ManageSeeds } from '@popup/components/AccountsManagement'
 import KeyStorage from '@popup/components/KeyStorage'
-import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import TransactionInfo from '@popup/components/TransactionInfo'
 import AssetFull from '@popup/components/AssetFull'
 import CollectTokens from '@popup/components/CollectTokens'
@@ -18,15 +18,14 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { SelectedAsset } from '@shared/utils'
-import { ConnectionDataItem } from '@shared/backgroundApi'
-import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 
 import './style.scss'
+
 
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function MainPage(): JSX.Element | null {
-    const manager = useAccountsManagement()
+    const accountability = useAccountsManagement()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -55,7 +54,7 @@ export function MainPage(): JSX.Element | null {
         setSelectedAsset(undefined)
         setEthEventContract(undefined)
         drawer.setPanel(undefined)
-        manager.reset()
+        accountability.reset()
     }
 
     const { selectedAccount, selectedConnection, storedKeys, knownTokens } = rpcState.state
@@ -144,21 +143,7 @@ export function MainPage(): JSX.Element | null {
                     )}
                     {drawer.currentPanel === Panel.MANAGE_SEEDS && <ManageSeeds />}
                     {drawer.currentPanel === Panel.DEPLOY && (
-                        <DeployWallet
-                            account={selectedAccount}
-                            keyEntry={selectedKey}
-                            tonWalletState={tonWalletState}
-                            estimateFees={async () => rpc.estimateDeploymentFees(accountAddress)}
-                            prepareDeployMessage={async (password) =>
-                                rpc.prepareDeploymentMessage(
-                                    accountAddress,
-                                    { type: 'single_owner' },
-                                    password
-                                )
-                            }
-                            sendMessage={sendMessage}
-                            onBack={closePanel}
-                        />
+                        <DeployWallet />
                     )}
                     {drawer.currentPanel === Panel.COLLECT_TOKENS && ethEventContract && (
                         <CollectTokens

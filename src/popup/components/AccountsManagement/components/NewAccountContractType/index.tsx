@@ -34,23 +34,23 @@ export function NewAccountContractType({
 	onSubmit,
 	onBack,
 }: Props): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 
 	if (mode === 'legacy') {
 		CONTRACT_TYPES['WalletV3'] = 'WalletV3 (legacy)'
 	}
 
 	const availableContracts = React.useMemo(() => {
-		const { currentDerivedKey } = manager
+		const { currentDerivedKey } = accountability
 		if (currentDerivedKey == null) {
 			return window.ObjectExt.keys(CONTRACT_TYPES)
 		}
-		const accountAddresses = manager.derivedKeyRelatedAccounts.map((account) => account.tonWallet.address)
+		const accountAddresses = accountability.derivedKeyRelatedAccounts.map((account) => account.tonWallet.address)
 		return window.ObjectExt.keys(CONTRACT_TYPES).filter((type) => {
 			const address = nt.computeTonWalletAddress(currentDerivedKey.publicKey, type, 0)
 			return !accountAddresses.includes(address)
 		})
-	}, [manager.derivedKeyRelatedAccounts])
+	}, [accountability.derivedKeyRelatedAccounts])
 
 	React.useEffect(() => {
 		if (!availableContracts.includes(contractType)) {

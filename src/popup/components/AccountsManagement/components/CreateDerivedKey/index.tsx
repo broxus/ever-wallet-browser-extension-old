@@ -7,7 +7,7 @@ import { Step, useAccountsManagement } from '@popup/providers/AccountsManagement
 
 
 export function CreateDerivedKey(): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 
 	const { register, handleSubmit, errors } = useForm<{ name: string, password: string }>()
 
@@ -15,18 +15,18 @@ export function CreateDerivedKey(): JSX.Element {
 	const [inProcess, setInProcess] = React.useState(false)
 
 	const onSubmit = async ({ name, password }: { name: string, password: string }) => {
-		if (manager.currentMasterKey == null) {
+		if (accountability.currentMasterKey == null) {
 			return
 		}
 		setInProcess(true)
-		await manager.onCreateDerivedKey({
-			accountId: manager.nextAccountId,
-			masterKey: manager.currentMasterKey.masterKey,
+		await accountability.onCreateDerivedKey({
+			accountId: accountability.nextAccountId,
+			masterKey: accountability.currentMasterKey.masterKey,
 			name,
 			password,
 		}).then((derivedKey) => {
 			if (derivedKey !== undefined) {
-				manager.onManageDerivedKey(derivedKey)
+				accountability.onManageDerivedKey(derivedKey)
 			}
 		}).catch((err: string) => {
 			try {
@@ -38,7 +38,7 @@ export function CreateDerivedKey(): JSX.Element {
 	}
 
 	const onBack = () => {
-		manager.setStep(Step.MANAGE_SEED)
+		accountability.setStep(Step.MANAGE_SEED)
 	}
 
 	return (

@@ -4,10 +4,10 @@ import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRp
 import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
 import * as nt from '@nekoton'
 
+import { DeployWallet } from '@popup/components/DeployWallet'
 import TransactionsList from '@popup/components/TransactionsList'
 import Receive from '@popup/components/Receive'
 import Send from '@popup/components/Send'
-import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
 import TransactionInfo from '@popup/components/TransactionInfo'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import AssetIcon from '@popup/components/AssetIcon'

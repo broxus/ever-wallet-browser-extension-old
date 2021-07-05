@@ -19,7 +19,7 @@ enum ExportSeedStep {
 }
 
 export function ExportSeed({ onBack }: Props): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 	const rpc = useRpc()
 
 	const { register, handleSubmit, errors } = useForm<{ password: string }>()
@@ -34,14 +34,14 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 	}
 
 	const onSubmit = async ({ password }: { password: string }) => {
-		if (manager.currentMasterKey == null) {
+		if (accountability.currentMasterKey == null) {
 			return
 		}
 		setInProcess(true)
 		await rpc.exportMasterKey({
 			type: 'master_key',
 			data: {
-				masterKey: manager.currentMasterKey.masterKey,
+				masterKey: accountability.currentMasterKey.masterKey,
 				password,
 			}
 		}).then(({ phrase }) => {

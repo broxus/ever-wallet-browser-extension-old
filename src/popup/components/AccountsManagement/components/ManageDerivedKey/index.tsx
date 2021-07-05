@@ -15,51 +15,51 @@ import Arrow from '@popup/img/arrow.svg'
 
 
 export function ManageDerivedKey(): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 	const rpc = useRpc()
 
 	const [name, setName] = React.useState(
-		manager.currentMasterKey !== undefined
-			? (manager.derivedKeysNames[manager.currentMasterKey.publicKey] || '')
+		accountability.currentMasterKey !== undefined
+			? (accountability.derivedKeysNames[accountability.currentMasterKey.publicKey] || '')
 			: ''
 	)
 
 	const addAccount = () => {
-		manager.setStep(Step.CREATE_ACCOUNT)
+		accountability.setStep(Step.CREATE_ACCOUNT)
 	}
 
 	const saveName = () => {
-		if (manager.currentDerivedKey !== undefined && name) {
-			rpc.updateDerivedKeyName(manager.currentDerivedKey.publicKey, name)
+		if (accountability.currentDerivedKey !== undefined && name) {
+			rpc.updateDerivedKeyName(accountability.currentDerivedKey.publicKey, name)
 		}
 	}
 
 	const onManageAccount = (account: nt.AssetsList) => {
-		return () => manager.onManageAccount(account)
+		return () => accountability.onManageAccount(account)
 	}
 
 	const onBack = () => {
-		manager.setStep(Step.MANAGE_SEED)
+		accountability.setStep(Step.MANAGE_SEED)
 	}
 
 	React.useEffect(() => {
 		if (
-			manager.currentDerivedKey !== undefined
-			&& name !== manager.derivedKeysNames[manager.currentDerivedKey.publicKey]
+			accountability.currentDerivedKey !== undefined
+			&& name !== accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey]
 		) {
-			setName(manager.derivedKeysNames[manager.currentDerivedKey.publicKey])
+			setName(accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey])
 		}
-	}, [manager.derivedKeysNames])
+	}, [accountability.derivedKeysNames])
 
 	return (
 		<div className="accounts-management__content">
 			<h2 className="accounts-management__content-title">Manage key</h2>
 
-			{manager.currentDerivedKey !== undefined && (
+			{accountability.currentDerivedKey !== undefined && (
 				<>
 					<div className="accounts-management__content-header">Public key</div>
 					<CopyToClipboard
-						text={manager.currentDerivedKey.publicKey}
+						text={accountability.currentDerivedKey.publicKey}
 						onCopy={() => {
 							ReactTooltip.hide()
 						}}
@@ -68,7 +68,7 @@ export function ManageDerivedKey(): JSX.Element {
 							className="accounts-management__public-key-placeholder"
 							data-tip="Click to copy"
 						>
-							{manager.currentDerivedKey.publicKey}
+							{accountability.currentDerivedKey.publicKey}
 						</div>
 					</CopyToClipboard>
 					<ReactTooltip type="dark" effect="solid" place="top" />
@@ -85,9 +85,9 @@ export function ManageDerivedKey(): JSX.Element {
 					onChange={setName}
 				/>
 				{(
-					manager.currentDerivedKey !== undefined
-					&& (manager.derivedKeysNames[manager.currentDerivedKey.publicKey] !== undefined || name)
-					&& manager.derivedKeysNames[manager.currentDerivedKey.publicKey] !== name
+					accountability.currentDerivedKey !== undefined
+					&& (accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey] !== undefined || name)
+					&& accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey] !== name
 				) && (
 					<a
 						role="button"
@@ -114,19 +114,19 @@ export function ManageDerivedKey(): JSX.Element {
 
 			<div className="accounts-management__divider" />
 
-			{manager.derivedKeyRelatedAccounts.length === 0 ? (
+			{accountability.derivedKeyRelatedAccounts.length === 0 ? (
 				<div className="accounts-management__list--empty">
 					No accounts yet
 				</div>
 			) : (
 				<ul className="accounts-management__list">
-					{manager.derivedKeyRelatedAccounts.map(account => (
+					{accountability.derivedKeyRelatedAccounts.map(account => (
 						<li key={account.tonWallet.address}>
 							<div
 								role="button"
 								className={classNames('accounts-management__list-item', {
 									'accounts-management__list-item--active': (
-										account.tonWallet.address === manager.selectedAccountAddress
+										account.tonWallet.address === accountability.selectedAccountAddress
 									)
 								})}
 								onClick={onManageAccount(account)}
@@ -140,7 +140,7 @@ export function ManageDerivedKey(): JSX.Element {
 									{account.name || convertAddress(account.tonWallet.address)}
 								</div>
 								<div className="accounts-management__list-item-visibility">
-									{manager.accountsVisibility[account.tonWallet.address] ? 'Displayed' : 'Hidden'}
+									{accountability.accountsVisibility[account.tonWallet.address] ? 'Displayed' : 'Hidden'}
 								</div>
 								<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
 							</div>
@@ -154,9 +154,9 @@ export function ManageDerivedKey(): JSX.Element {
 					<Button text="Back" white onClick={onBack} />
 				</div>
 
-				{manager.currentDerivedKey !== undefined && (
+				{accountability.currentDerivedKey !== undefined && (
 					<div data-tip="Copied!" data-event="click focus">
-						<CopyToClipboard text={manager.currentDerivedKey.publicKey}>
+						<CopyToClipboard text={accountability.currentDerivedKey.publicKey}>
 							<Button text="Copy public key" />
 						</CopyToClipboard>
 					</div>

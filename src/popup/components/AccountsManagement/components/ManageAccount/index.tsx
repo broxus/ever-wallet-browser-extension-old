@@ -17,66 +17,66 @@ import TonKey from '@popup/img/ton-key.svg'
 
 
 export function ManageAccount(): JSX.Element {
-	const manager = useAccountsManagement()
+	const accountability = useAccountsManagement()
 	const drawer = useDrawerPanel()
 	const rpc = useRpc()
 	const rpcState = useRpcState()
 
 	const [name, setName] = React.useState(
-		manager.currentAccount ? manager.currentAccount.name : ''
+		accountability.currentAccount ? accountability.currentAccount.name : ''
 	)
 
 	const isVisible = React.useMemo(() => {
-		if (manager.currentAccount) {
-			return manager.accountsVisibility[manager.currentAccount.tonWallet.address]
+		if (accountability.currentAccount) {
+			return accountability.accountsVisibility[accountability.currentAccount.tonWallet.address]
 		}
 		return false
-	}, [manager.accountsVisibility])
+	}, [accountability.accountsVisibility])
 
 	const isActive = React.useMemo(
-		() => manager.currentAccount?.tonWallet.address === manager.selectedAccount?.tonWallet.address,
+		() => accountability.currentAccount?.tonWallet.address === accountability.selectedAccount?.tonWallet.address,
 		[]
 	)
 
 	const relatedKeys = React.useMemo(() => Object.values({ ...rpcState.state?.storedKeys }).filter(
-		key => key.publicKey === manager.currentAccount?.tonWallet.publicKey
+		key => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
 	), [rpcState.state?.storedKeys])
 
 	const saveName = () => {
-		if (manager.currentAccount !== undefined && name) {
-			rpc.updateAccountName(manager.currentAccount, name)
-			manager.setCurrentAccount({ ...manager.currentAccount, name })
+		if (accountability.currentAccount !== undefined && name) {
+			rpc.updateAccountName(accountability.currentAccount, name)
+			accountability.setCurrentAccount({ ...accountability.currentAccount, name })
 		}
 	}
 
 	const onSelectAccount = async () => {
-		if (manager.currentMasterKey == null) {
+		if (accountability.currentMasterKey == null) {
 			return
 		}
 
-		await rpc.selectMasterKey(manager.currentMasterKey.masterKey).then(async () => {
-			if (manager.currentAccount == null) {
+		await rpc.selectMasterKey(accountability.currentMasterKey.masterKey).then(async () => {
+			if (accountability.currentAccount == null) {
 				return
 			}
-			await rpc.selectAccount(manager.currentAccount.tonWallet.address).then(() => {
+			await rpc.selectAccount(accountability.currentAccount.tonWallet.address).then(() => {
 				drawer.setPanel(undefined)
-				manager.reset()
+				accountability.reset()
 			})
 		})
 	}
 
 	const onManageDerivedKey = (key: nt.KeyStoreEntry) => {
-		return () => manager.onManageDerivedKey(key)
+		return () => accountability.onManageDerivedKey(key)
 	}
 
 	const onToggleVisibility = () => {
-		if (manager.currentAccount && !isActive) {
-			rpc.updateAccountVisibility(manager.currentAccount.tonWallet.address, !isVisible)
+		if (accountability.currentAccount && !isActive) {
+			rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, !isVisible)
 		}
 	}
 
 	const onBack = () => {
-		manager.setStep(Step.MANAGE_DERIVED_KEY)
+		accountability.setStep(Step.MANAGE_DERIVED_KEY)
 	}
 
 	return (
@@ -93,7 +93,7 @@ export function ManageAccount(): JSX.Element {
 					onChange={setName}
 				/>
 
-				{(manager.currentAccount !== undefined && manager.currentAccount.name !== name) && (
+				{(accountability.currentAccount !== undefined && accountability.currentAccount.name !== name) && (
 					<a
 						role="button"
 						className="accounts-management__name-button"
@@ -113,16 +113,16 @@ export function ManageAccount(): JSX.Element {
 				<label htmlFor="visibility">Display on the main screen</label>
 			</div>
 
-			{manager.currentAccount !== undefined && (
+			{accountability.currentAccount !== undefined && (
 				<div className="accounts-management__qr-address-placeholder">
 					<div className="accounts-management__qr-address-code">
 						<QRCode
-							value={`ton://chat/${manager.currentAccount.tonWallet.address}`}
+							value={`ton://chat/${accountability.currentAccount.tonWallet.address}`}
 							size={80}
 						/>
 					</div>
 					<div className="accounts-management__qr-address-address">
-						{manager.currentAccount.tonWallet.address}
+						{accountability.currentAccount.tonWallet.address}
 					</div>
 				</div>
 			)}
@@ -141,7 +141,7 @@ export function ManageAccount(): JSX.Element {
 								>
 									<img src={TonKey} alt="" className="accounts-management__list-item-logo" />
 									<div className="accounts-management__list-item-title">
-										{manager.derivedKeysNames?.[key.publicKey] || convertAddress(key.publicKey)}
+										{accountability.derivedKeysNames?.[key.publicKey] || convertAddress(key.publicKey)}
 									</div>
 									<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
 								</div>
@@ -157,7 +157,7 @@ export function ManageAccount(): JSX.Element {
 				</div>
 				<Button
 					text="Go to account"
-					disabled={manager.selectedAccount?.tonWallet.address === manager.currentAccount?.tonWallet.address}
+					disabled={accountability.selectedAccount?.tonWallet.address === accountability.currentAccount?.tonWallet.address}
 					onClick={onSelectAccount}
 				/>
 			</div>

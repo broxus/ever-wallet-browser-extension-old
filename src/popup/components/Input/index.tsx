@@ -33,6 +33,7 @@ interface ISimpleInput {
         | 'search'
         | undefined
     min?: string
+    max?: string
     value?: string
     readOnly?: boolean
     id?: string
@@ -51,6 +52,7 @@ const Input: React.FC<ISimpleInput> = ({
     pattern = undefined,
     inputMode = undefined,
     min = undefined,
+    max,
     value = undefined,
     readOnly = false,
     id,
@@ -72,6 +74,7 @@ const Input: React.FC<ISimpleInput> = ({
             pattern={pattern}
             inputMode={inputMode}
             min={min}
+            max={max}
             step={0.000000000000000001}
             value={value}
             onChange={(e) => {
