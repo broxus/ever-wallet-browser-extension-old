@@ -44,6 +44,33 @@ impl TransportHandle {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const TON_WALLET_INIT_DATA: &'static str = r#"
+export type TonWalletInitData = {
+    publicKey: string,
+    contractType: ContractType,
+}; 
+"#;
+
+fn make_ton_wallet_init_data(
+    public_key: ed25519_dalek::PublicKey,
+    contract_type: nt::core::ton_wallet::ContractType,
+) -> JsValue {
+    ObjectBuilder::new()
+        .set("publicKey", hex::encode(public_key.as_bytes()))
+        .set(
+            "contractType",
+            crate::core::ton_wallet::ContractType::from(contract_type),
+        )
+        .build()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<TonWalletInitData>")]
+    pub type PromiseTonWalletInitData;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const TRANSACTIONS_LIST: &'static str = r#"
 export type TransactionsList = {
     transactions: Transaction[];
@@ -164,6 +191,8 @@ pub fn make_full_contract_state(
 enum TransportError {
     #[error("Method not supported")]
     MethodNotSupported,
+    #[error("Wallet not deployed")]
+    WalletNotDeployed,
 }
 
 #[wasm_bindgen]

@@ -10,8 +10,9 @@ use nt::transport::jrpc;
 use nt::transport::Transport;
 
 use super::{
-    make_transactions_list, IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
-    PromiseTokenWallet, PromiseTonWallet, PromiseTransactionsList, TransportHandle,
+    make_ton_wallet_init_data, make_transactions_list, IntoHandle, PromiseGenericContract,
+    PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet, PromiseTonWalletInitData,
+    PromiseTransactionsList, TransportError, TransportHandle,
 };
 use crate::external::{JrpcConnector, JrpcSender};
 use crate::utils::*;
@@ -151,6 +152,31 @@ impl JrpcConnection {
                 transport.into_handle(),
                 wallet,
             )))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTonWalletInitData")]
+    pub fn get_ton_wallet_init_data(
+        &self,
+        address: &str,
+    ) -> Result<PromiseTonWalletInitData, JsValue> {
+        let address = parse_address(address)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let (public_key, contract_type) = match transport
+                .get_contract_state(&address)
+                .await
+                .handle_error()?
+            {
+                nt::transport::models::RawContractState::Exists(contract) => {
+                    nt::core::ton_wallet::extract_wallet_init_data(&contract).handle_error()?
+                }
+                nt::transport::models::RawContractState::NotExists => {
+                    return Err(TransportError::WalletNotDeployed).handle_error()
+                }
+            };
+            Ok(make_ton_wallet_init_data(public_key, contract_type))
         })))
     }
 

@@ -574,8 +574,7 @@ export class AccountController extends BaseController<
         )
         if (entryIndex < 0) {
             pubkeyAssetsList.push({ ...account, name })
-        }
-        else {
+        } else {
             pubkeyAssetsList[entryIndex] = { ...account, name }
         }
 
@@ -1050,6 +1049,12 @@ export class AccountController extends BaseController<
         subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
 
         await subscription?.start()
+    }
+
+    private async _getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
+        return this.config.connectionController.use(({ data: { connection } }) =>
+            connection.getTonWalletInitData(address)
+        )
     }
 
     private async _createTokenWalletSubscription(owner: string, rootTokenContract: string) {

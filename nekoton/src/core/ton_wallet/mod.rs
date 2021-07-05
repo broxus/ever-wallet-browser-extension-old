@@ -151,7 +151,7 @@ impl TonWallet {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.get_custodians().await.handle_error()?;
+            let custodians = wallet.fetch_custodians().await.handle_error()?;
             Ok(custodians
                 .into_iter()
                 .map(|item| JsValue::from_str(&item.to_hex_string()))
@@ -168,7 +168,7 @@ impl TonWallet {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.get_pending_transactions().await.handle_error()?;
+            let custodians = wallet.fetch_pending_transactions().await.handle_error()?;
             Ok(custodians
                 .into_iter()
                 .map(make_multisig_pending_transaction)
