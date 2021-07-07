@@ -30,7 +30,6 @@ const defaultState: ApprovalControllerState = {
 
 export class ApprovalController extends BaseController<ApprovalConfig, ApprovalControllerState> {
     private _approvals: Map<string, ApprovalCallbacks<unknown>>
-    private _origins: Map<string, Set<string>>
     private readonly _showApprovalRequest: () => void
 
     constructor(config: ApprovalConfig, state?: ApprovalControllerState) {
@@ -42,7 +41,6 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         super(config, state || _.cloneDeep(defaultState))
 
         this._approvals = new Map<string, ApprovalCallbacks<unknown>>()
-        this._origins = new Map<string, Set<string>>()
         this._showApprovalRequest = showApprovalRequest
         this.initialize()
     }
@@ -82,65 +80,6 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         return info ? { ...info } : undefined
     }
 
-    public getApprovalCount(options: { origin?: string; type?: string } = {}): number {
-        if (!options.origin && !options.type) {
-            return this.state.pendingApprovalCount
-        }
-        const { origin, type } = options
-
-        if (origin && type) {
-            return Number(Boolean(this._origins.get(origin)?.has(type)))
-        }
-
-        if (origin) {
-            return this._origins.get(origin)?.size || 0
-        }
-
-        let count = 0
-        for (const approval of Object.values(this.state.pendingApprovals)) {
-            if (approval.type === type) {
-                count += 1
-            }
-        }
-        return count
-    }
-
-    public has(options: { id?: string; origin?: string; type?: string } = {}) {
-        const { id, origin, type } = options
-
-        if (id) {
-            if (typeof (id as any) !== 'string') {
-                throw new Error('Must not specify non-string id')
-            }
-            return this._approvals.has(id)
-        }
-
-        if (origin && typeof (origin as any) !== 'string') {
-            throw new Error('Must not specify non-string origin')
-        }
-        if (type && typeof (type as any) !== 'string') {
-            throw new Error('Must not specify non-string type')
-        }
-
-        if (origin) {
-            if (type) {
-                return Boolean(this._origins.get(origin)?.has(type))
-            }
-            return this._origins.has(origin)
-        }
-
-        if (type) {
-            for (const approval of Object.values(this.state.pendingApprovals)) {
-                if (approval.type === type) {
-                    return true
-                }
-            }
-            return false
-        }
-
-        throw new Error('Must specify non-empty string id, origin, or type')
-    }
-
     public resolve<O>(id: string, value?: Exclude<O, Function>) {
         this._deleteApprovalAndGetCallback(id).resolve(value)
     }
@@ -159,7 +98,6 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         for (const id of ids) {
             this.reject(id, rejectionError)
         }
-        this._origins.clear()
         this.update(defaultState, true)
     }
 
@@ -171,16 +109,8 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
     ): Promise<O> {
         this._validateAddParams(id, origin, type, requestData)
 
-        if (this._origins.get(origin)?.has(type)) {
-            throw new NekotonRpcError(
-                RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `Request of type '${type}' already pending for origin ${origin}. Please wait.`
-            )
-        }
-
         return new Promise<O>((resolve, reject) => {
             this._approvals.set(id, { resolve: resolve as ApprovalPromiseResolve<unknown>, reject })
-            this._addPendingApprovalOrigin(origin, type)
             this._addToStore<T, I>(id, origin, type, requestData)
         })
     }
@@ -201,15 +131,6 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
 
         if (errorMessage) {
             throw new NekotonRpcError(RpcErrorCode.INTERNAL, errorMessage)
-        }
-    }
-
-    private _addPendingApprovalOrigin(origin: string, type: string) {
-        const originSet = this._origins.get(origin) || new Set()
-        originSet.add(type)
-
-        if (!this._origins.has(origin)) {
-            this._origins.set(origin, originSet)
         }
     }
 
@@ -237,13 +158,6 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         this._approvals.delete(id)
 
         const approvals = this.state.pendingApprovals
-        const { origin, type } = approvals[id]
-
-        ;(this._origins.get(origin) as Set<string>).delete(type)
-        if (this._isEmptyOrigin(origin)) {
-            this._origins.delete(origin)
-        }
-
         const newApprovals = { ...approvals }
         delete newApprovals[id]
         this.update(
@@ -263,9 +177,5 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
 
         this._delete(id)
         return callbacks
-    }
-
-    private _isEmptyOrigin(origin: string): boolean {
-        return !this._origins.get(origin)?.size
     }
 }
