@@ -59,8 +59,7 @@ export function MainPage(): JSX.Element | null {
     )
     let selectedKeys: nt.KeyStoreEntry[] = [storedKeys[selectedAccount.tonWallet.publicKey]]
     if (externalAccounts !== undefined) {
-        const externalAccountsKeys = externalAccounts.externalIn.map(key => storedKeys[key])
-        selectedKeys.push(...externalAccountsKeys)
+        selectedKeys = externalAccounts.externalIn.map(key => storedKeys[key])
     }
     selectedKeys = selectedKeys.filter(e => e)
 
@@ -130,7 +129,7 @@ export function MainPage(): JSX.Element | null {
                             accountName={accountName}
                             tonWalletAsset={tonWalletAsset}
                             tokenWalletAssets={tokenWalletAssets}
-                            keyEntry={selectedKey}
+                            keyEntries={selectedKeys}
                             tonWalletState={tonWalletState}
                             tokenWalletStates={tokenWalletStates}
                             knownTokens={knownTokens}

@@ -375,6 +375,9 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
         batch_info: core_models::TransactionsBatchInfo,
     ) {
         use crate::core::models::*;
+
+        log::info!("Found transactions: {:?}", transactions);
+
         self.inner.on_transactions_found(
             transactions
                 .into_iter()
@@ -499,6 +502,7 @@ fn make_ton_wallet_transaction(
     data: core_models::TransactionWithData<core_models::TransactionAdditionalInfo>,
 ) -> TonWalletTransaction {
     let transaction = crate::core::models::make_transaction(data.transaction);
+    log::info!("Transaction data: {:?}", data.data);
     if let Some(data) = data.data {
         js_sys::Reflect::set(
             &transaction,

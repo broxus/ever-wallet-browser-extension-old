@@ -117,7 +117,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         }
 
         return window.ObjectExt.values(rpcState.state?.accountEntries || {}).filter(
-            (entry) => entry.tonWallet.publicKey == currentDerivedKey.publicKey
+            (entry) => entry.tonWallet.publicKey === currentDerivedKey.publicKey
         )
     }, [currentDerivedKey, rpcState.state?.accountEntries, rpcState.state?.storedKeys])
 

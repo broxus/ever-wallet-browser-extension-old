@@ -40,6 +40,8 @@ export function NewAccountContractType({
 		CONTRACT_TYPES['WalletV3'] = 'WalletV3 (legacy)'
 	}
 
+	console.log(accountability.currentDerivedKeyAccounts)
+
 	const availableContracts = React.useMemo(() => {
 		const { currentDerivedKey } = accountability
 		if (currentDerivedKey == null) {

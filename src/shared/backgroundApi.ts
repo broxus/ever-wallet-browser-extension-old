@@ -42,6 +42,7 @@ export type DeployMessageToPrepare =
     | { type: 'multiple_owners'; custodians: string[]; reqConfirms: number }
 
 export type MessageToPrepare = {
+    publicKey: string
     amount: string
     recipient: string
     payload?: string

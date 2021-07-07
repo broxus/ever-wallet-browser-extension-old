@@ -44,8 +44,17 @@ export function ManageAccount(): JSX.Element {
             (key) => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
         )
 
-        return keys
-    }, [rpcState.state?.storedKeys])
+
+        const externalAccount = rpcState.state?.externalAccounts.find(
+			({ address }) => address === accountability.currentAccount?.tonWallet.address
+		)
+
+		if (externalAccount !== undefined) {
+            keys.push(...externalAccount.externalIn.map(key => rpcState.state?.storedKeys[key]).filter(e => e) as nt.KeyStoreEntry[])
+		}
+
+		return keys
+	}, [rpcState.state?.storedKeys])
 
     const saveName = async () => {
         if (accountability.currentAccount !== undefined && name) {

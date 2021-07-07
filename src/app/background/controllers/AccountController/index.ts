@@ -731,7 +731,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
-                wallet.publicKey,
+                params.publicKey,
                 params.recipient,
                 params.amount,
                 false,
@@ -826,7 +826,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
-                wallet.publicKey,
+                params.publicKey,
                 params.recipient,
                 params.amount,
                 false,

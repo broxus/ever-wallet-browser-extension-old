@@ -126,7 +126,7 @@ type IPrepareMessage = {
     tonWalletAsset: nt.TonWalletAsset
     tokenWalletAssets: nt.TokenWalletAsset[]
     defaultAsset: SelectedAsset
-    keyEntry: nt.KeyStoreEntry
+    keyEntries: nt.KeyStoreEntry[]
     tonWalletState: nt.ContractState
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -155,7 +155,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     tonWalletAsset,
     tokenWalletAssets,
     defaultAsset,
-    keyEntry,
+    keyEntries,
     tonWalletState,
     tokenWalletStates,
     knownTokens,
@@ -175,6 +175,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
     const [selectedAsset, setSelectedAsset] = useState<string>(
         defaultAsset.type == 'ton_wallet' ? '' : defaultAsset.data.rootTokenContract
     )
+    const [selectedKey, setKey] = useState<nt.KeyStoreEntry>(keyEntries[0])
 
     const { register, setValue, handleSubmit, errors } = useForm<MessageParams>()
 
@@ -228,6 +229,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
         let messageToPrepare: MessageToPrepare
         if (selectedAsset.length == 0) {
             messageToPrepare = {
+                publicKey: selectedKey.publicKey,
                 recipient: nt.repackAddress(data.recipient), //shouldn't throw exceptions due to higher level validation
                 amount: parseTons(data.amount),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
@@ -249,6 +251,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             )
 
             messageToPrepare = {
+                publicKey: selectedKey.publicKey,
                 recipient: internalMessage.destination,
                 amount: internalMessage.amount,
                 payload: internalMessage.body,
@@ -285,6 +288,8 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             setMessageToPrepare(undefined)
         }
     }
+
+    console.log(selectedKey)
 
     return (
         <>
@@ -399,6 +404,15 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
                                 type="text"
                             />
                         )}
+                        {keyEntries.length > 1 ? (
+                            <Select
+                                options={keyEntries}
+                                value={selectedKey}
+                                formatOptionLabel={(value) => value.name}
+                                onChange={(v) => v == null ? null : setKey(v)}
+                                styles={selectStyles}
+                            />
+                        ) : null}
                         {selectedAsset.length > 0 && (
                             <div className="send-screen__form-checkbox">
                                 <Checkbox checked={notifyReceiver} setChecked={setNotifyReceiver} />
@@ -422,7 +436,7 @@ const PrepareMessage: React.FC<IPrepareMessage> = ({
             )}
             {localStep == PrepareStep.ENTER_PASSWORD && (
                 <EnterPassword
-                    keyEntry={keyEntry}
+                    keyEntry={selectedKey}
                     currencyName={currencyName}
                     params={messageParams}
                     fees={fees}
@@ -443,7 +457,7 @@ interface ISend {
     tonWalletAsset: nt.TonWalletAsset
     tokenWalletAssets: nt.TokenWalletAsset[]
     defaultAsset?: SelectedAsset
-    keyEntry: nt.KeyStoreEntry
+    keyEntries: nt.KeyStoreEntry[]
     tonWalletState: nt.ContractState
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -466,7 +480,7 @@ const Send: React.FC<ISend> = ({
     tonWalletAsset,
     tokenWalletAssets,
     defaultAsset,
-    keyEntry,
+    keyEntries,
     tonWalletState,
     tokenWalletStates,
     knownTokens,
@@ -500,7 +514,7 @@ const Send: React.FC<ISend> = ({
                         },
                     }
                 }
-                keyEntry={keyEntry}
+                keyEntries={keyEntries}
                 tonWalletState={tonWalletState}
                 tokenWalletStates={tokenWalletStates}
                 knownTokens={knownTokens}
