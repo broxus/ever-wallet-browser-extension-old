@@ -60,7 +60,7 @@ export interface AccountControllerState extends BaseState {
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     accountsVisibility: { [address: string]: boolean }
     derivedKeysNames: { [publicKey: string]: string }
-    externalAccountEntries: { address: string; publicKey: string; externalIn: string[] }[]
+    externalAccounts: { address: string, externalIn: string[], publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
     masterKeysNames: { [masterKey: string]: string }
     recentMasterKeys: nt.KeyStoreEntry[]
@@ -78,7 +78,7 @@ const defaultState: AccountControllerState = {
     accountPendingMessages: {},
     accountsVisibility: {},
     derivedKeysNames: {},
-    externalAccountEntries: [],
+    externalAccounts: [],
     knownTokens: {},
     masterKeysNames: {},
     recentMasterKeys: [],
@@ -134,7 +134,7 @@ export class AccountController extends BaseController<
 
         let selectedMasterKey = await this._loadSelectedMasterKey()
         if (selectedMasterKey == null && selectedAccount !== undefined) {
-            selectedMasterKey = storedKeys[selectedAccount.tonWallet.publicKey].masterKey
+            selectedMasterKey = storedKeys[selectedAccount.tonWallet.publicKey]?.masterKey
         }
 
         let accountsVisibility = await this._loadAccountsVisibility()
@@ -157,11 +157,17 @@ export class AccountController extends BaseController<
             recentMasterKeys = []
         }
 
+        let externalAccounts = await this._loadExternalAccounts()
+        if (externalAccounts == null) {
+            externalAccounts = []
+        }
+
         this.update({
             accountsVisibility,
             selectedAccount,
             accountEntries,
             derivedKeysNames,
+            externalAccounts,
             masterKeysNames,
             recentMasterKeys,
             selectedMasterKey,
@@ -363,6 +369,7 @@ export class AccountController extends BaseController<
             await this._clearDerivedKeysNames()
             await this._clearAccountsVisibility()
             await this._clearRecentMasterKeys()
+            await this._clearExternalAccounts()
             this.update(_.cloneDeep(defaultState), true)
 
             console.debug('logOut -> mutex released')
@@ -431,19 +438,17 @@ export class AccountController extends BaseController<
     }
 
     public async updateMasterKeyName(masterKey: string, name: string): Promise<void> {
-        await this._saveMasterKeyName(masterKey, name)
-
         this.update({
             masterKeysNames: {
                 ...this.state.masterKeysNames,
                 [masterKey]: name,
             },
         })
+
+        await this._saveMasterKeysNames()
     }
 
     public async updateRecentMasterKey(masterKey: nt.KeyStoreEntry): Promise<void> {
-        await this._saveRecentMasterKey(masterKey)
-
         let recentMasterKeys = this.state.recentMasterKeys.slice()
 
         recentMasterKeys = recentMasterKeys.filter((key) => key.masterKey !== masterKey.masterKey)
@@ -453,6 +458,8 @@ export class AccountController extends BaseController<
         this.update({
             recentMasterKeys,
         })
+
+        await this._saveRecentMasterKeys()
     }
 
     public async createDerivedKey({
@@ -490,14 +497,14 @@ export class AccountController extends BaseController<
     }
 
     public async updateDerivedKeyName(publicKey: string, name: string): Promise<void> {
-        await this._saveDerivedKeyName(publicKey, name)
-
         this.update({
             derivedKeysNames: {
                 ...this.state.derivedKeysNames,
                 [publicKey]: name,
             },
         })
+
+        await this._saveDerivedKeysNames()
     }
 
     public async createLedgerKey({ accountId }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
@@ -592,18 +599,18 @@ export class AccountController extends BaseController<
         }
     }
 
-    public addExternalAccount(
+    public async addExternalAccount(
         address: string,
         publicKey: string,
         externalPublicKey: string
-    ) {
-        let { externalAccountEntries } = this.state
-        let entry = externalAccountEntries.find((account) => account.address === address)
+    ): Promise<void> {
+        let { externalAccounts } = this.state
+        let entry = externalAccounts.find((account) => account.address === address)
 
         if (entry == null) {
-            externalAccountEntries.unshift({ address, publicKey, externalIn: [externalPublicKey] })
+            externalAccounts.unshift({ address, publicKey, externalIn: [externalPublicKey] })
             this.update({
-                externalAccountEntries,
+                externalAccounts,
             })
             return
         }
@@ -612,13 +619,15 @@ export class AccountController extends BaseController<
             entry.externalIn.push(externalPublicKey)
         }
 
-        const entryIndex = externalAccountEntries.findIndex((account) => account.address === address)
-        externalAccountEntries.splice(entryIndex, 1)
-        externalAccountEntries.unshift(entry)
+        const entryIndex = externalAccounts.findIndex((account) => account.address === address)
+        externalAccounts.splice(entryIndex, 1)
+        externalAccounts.unshift(entry)
 
         this.update({
-            externalAccountEntries,
+            externalAccounts,
         })
+
+        await this._saveExternalAccounts()
     }
 
     public async selectAccount(address: string | undefined) {
@@ -734,14 +743,14 @@ export class AccountController extends BaseController<
     }
 
     public async updateAccountVisibility(address: string, value: boolean): Promise<void> {
-        await this._saveAccountVisibility(address, value)
-
         this.update({
             accountsVisibility: {
                 ...this.state.accountsVisibility,
                 [address]: value,
             },
         })
+
+        await this._saveAccountVisibility()
     }
 
     public async checkPassword(password: nt.KeyPassword) {
@@ -1488,8 +1497,8 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _loadMasterKeysNames(): Promise<{ [masterKey: string]: string } | undefined> {
-        return new Promise<{ [masterKey: string]: string } | undefined>((resolve) => {
+    private async _loadMasterKeysNames(): Promise<AccountControllerState['masterKeysNames'] | undefined> {
+        return new Promise<AccountControllerState['masterKeysNames'] | undefined>((resolve) => {
             chrome.storage.local.get(['masterKeysNames'], ({ masterKeysNames }) => {
                 if (typeof masterKeysNames !== 'object') {
                     return resolve(undefined)
@@ -1505,20 +1514,14 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _saveMasterKeyName(masterKey: string, name: string): Promise<void> {
-        let masterKeysNames = await this._loadMasterKeysNames()
-        if (!masterKeysNames || typeof masterKeysNames !== 'object') {
-            masterKeysNames = {}
-        }
-        masterKeysNames[masterKey] = name
-
+    private async _saveMasterKeysNames(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ masterKeysNames }, () => resolve())
+            chrome.storage.local.set({ masterKeysNames: this.state.masterKeysNames }, () => resolve())
         })
     }
 
-    private async _loadRecentMasterKeys(): Promise<nt.KeyStoreEntry[] | undefined> {
-        return new Promise<nt.KeyStoreEntry[] | undefined>((resolve) => {
+    private async _loadRecentMasterKeys(): Promise<AccountControllerState['recentMasterKeys'] | undefined> {
+        return new Promise<AccountControllerState['recentMasterKeys'] | undefined>((resolve) => {
             chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
                 if (typeof recentMasterKeys !== 'object') {
                     return resolve(undefined)
@@ -1534,24 +1537,14 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _saveRecentMasterKey(masterKey: nt.KeyStoreEntry): Promise<void> {
-        let recentMasterKeys = await this._loadRecentMasterKeys()
-
-        if (!recentMasterKeys || !Array.isArray(recentMasterKeys)) {
-            recentMasterKeys = []
-        }
-
-        recentMasterKeys = recentMasterKeys.filter((key) => key.masterKey !== masterKey.masterKey)
-        recentMasterKeys.unshift(masterKey)
-        recentMasterKeys = recentMasterKeys.slice(0, 5)
-
+    private async _saveRecentMasterKeys(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ recentMasterKeys }, () => resolve())
+            chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () => resolve())
         })
     }
 
-    private async _loadDerivedKeysNames(): Promise<{ [publicKey: string]: string } | undefined> {
-        return new Promise<{ [publicKey: string]: string } | undefined>((resolve) => {
+    private async _loadDerivedKeysNames(): Promise<AccountControllerState['derivedKeysNames'] | undefined> {
+        return new Promise<AccountControllerState['derivedKeysNames'] | undefined>((resolve) => {
             chrome.storage.local.get(['derivedKeysNames'], ({ derivedKeysNames }) => {
                 if (typeof derivedKeysNames !== 'object') {
                     return resolve(undefined)
@@ -1567,20 +1560,14 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _saveDerivedKeyName(publicKey: string, name: string): Promise<void> {
-        let derivedKeysNames = await this._loadDerivedKeysNames()
-        if (!derivedKeysNames || typeof derivedKeysNames !== 'object') {
-            derivedKeysNames = {}
-        }
-        derivedKeysNames[publicKey] = name
-
+    private async _saveDerivedKeysNames(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ derivedKeysNames }, () => resolve())
+            chrome.storage.local.set({ derivedKeysNames: this.state.derivedKeysNames }, () => resolve())
         })
     }
 
-    private async _loadAccountsVisibility(): Promise<{ [address: string]: boolean } | undefined> {
-        return new Promise<{ [address: string]: boolean } | undefined>((resolve) => {
+    private async _loadAccountsVisibility(): Promise<AccountControllerState['accountsVisibility'] | undefined> {
+        return new Promise<AccountControllerState['accountsVisibility'] | undefined>((resolve) => {
             chrome.storage.local.get(['accountsVisibility'], ({ accountsVisibility }) => {
                 if (typeof accountsVisibility !== 'object') {
                     return resolve(undefined)
@@ -1596,17 +1583,35 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _saveAccountVisibility(address: string, visible: boolean): Promise<void> {
-        let accountsVisibility = await this._loadAccountsVisibility()
-        if (!accountsVisibility || typeof accountsVisibility !== 'object') {
-            accountsVisibility = {}
-        }
-        accountsVisibility[address] = visible
-
+    private async _saveAccountVisibility(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ accountsVisibility }, () => resolve())
+            chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () => resolve())
         })
     }
+
+    private async _loadExternalAccounts(): Promise<AccountControllerState['externalAccounts'] | undefined> {
+        return new Promise<AccountControllerState['externalAccounts'] | undefined>((resolve) => {
+            chrome.storage.local.get(['externalAccounts'], ({ externalAccounts }) => {
+                if (!Array.isArray(externalAccounts)) {
+                    return resolve(undefined)
+                }
+                resolve(externalAccounts)
+            })
+        })
+    }
+
+    private async _clearExternalAccounts(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('externalAccounts', () => resolve())
+        })
+    }
+
+    private async _saveExternalAccounts(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ externalAccounts: this.state.externalAccounts }, () => resolve())
+        })
+    }
+
 }
 
 function requireTonWalletSubscription(

@@ -58,7 +58,7 @@ export function MainPage(): JSX.Element | null {
 
     const { selectedAccount, selectedConnection, storedKeys, knownTokens } = rpcState.state
 
-    const externalAccount = rpcState.state.externalAccountEntries.find((account) => account.address === selectedAccount.tonWallet.address)
+    const externalAccount = rpcState.state.externalAccounts.find((account) => account.address === selectedAccount.tonWallet.address)
     let selectedKeys = []
     if (externalAccount !== undefined) {
         selectedKeys = externalAccount.externalIn.map(key => storedKeys[key])

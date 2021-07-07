@@ -149,12 +149,15 @@ export function CreateAccount(): JSX.Element {
 							publicKey,
 							currentPublicKey
 						)
+
+						drawer.setPanel(Panel.MANAGE_SEEDS)
+						accountability.setStep(Step.MANAGE_ACCOUNT)
 					}
 				} break
 
 				// Not custodian
 				case !custodians.includes(currentPublicKey): {
-					setError('You are not a custodian for this account')
+					setError('You are not a custodian of this account')
 				}
 			}
 

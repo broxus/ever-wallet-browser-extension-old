@@ -36,9 +36,27 @@ export function ManageAccount(): JSX.Element {
 		[accountability.selectedAccount]
 	)
 
-	const relatedKeys = React.useMemo(() => Object.values({ ...rpcState.state?.storedKeys }).filter(
-		key => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
-	), [rpcState.state?.storedKeys])
+	const linkedKeys = React.useMemo(() => {
+		const keys = Object.values({ ...rpcState.state?.storedKeys }).filter(
+			key => key.publicKey === accountability.currentAccount?.tonWallet.publicKey,
+		)
+
+		rpcState.state?.externalAccounts.forEach((account) => {
+			if (
+				accountability.currentAccount?.tonWallet.publicKey
+				&& account.externalIn.includes(accountability.currentAccount?.tonWallet.publicKey)
+			) {
+				keys.push({
+					accountId: 0,
+					masterKey: account.publicKey,
+					publicKey: account.publicKey,
+					signerName: 'master_key',
+				})
+			}
+		})
+
+		return keys
+	}, [rpcState.state?.storedKeys])
 
 	const saveName = async () => {
 		if (accountability.currentAccount !== undefined && name) {
@@ -131,12 +149,12 @@ export function ManageAccount(): JSX.Element {
 				</div>
 			)}
 
-			{relatedKeys.length > 0 && (
+			{linkedKeys.length > 0 && (
 				<>
 					<div className="accounts-management__content-header">Linked keys</div>
 					<div className="accounts-management__divider" />
 					<ul className="accounts-management__list">
-						{relatedKeys.map(key => (
+						{linkedKeys.map(key => (
 							<li key={key.publicKey}>
 								<div
 									role="button"

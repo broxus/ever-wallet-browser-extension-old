@@ -250,7 +250,7 @@ export class NekotonController extends EventEmitter {
             getLedgerNextPage: nodeifyAsync(accountController, 'getLedgerNextPage'),
             getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
-            addExternalAccount: nodeify(accountController, 'addExternalAccount'),
+            addExternalAccount: nodeifyAsync(accountController, 'addExternalAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
             updateAccountName: nodeify(accountController, 'updateAccountName'),

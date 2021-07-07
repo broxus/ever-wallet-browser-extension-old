@@ -118,7 +118,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
 
     const derivedKeyExternalAccounts = React.useMemo(() => {
         if (currentDerivedKey) {
-            const externalAccounts = rpcState.state?.externalAccountEntries.filter(
+            const externalAccounts = rpcState.state?.externalAccounts.filter(
                 (account) => account.externalIn.includes(currentDerivedKey.publicKey)
             )
             const accounts: nt.AssetsList[] = []
@@ -154,7 +154,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
             }
         })
 
-        rpcState.state?.externalAccountEntries.forEach(({ address, publicKey }) => {
+        rpcState.state?.externalAccounts.forEach(({ address, publicKey }) => {
             if (rpcState.state?.accountEntries[publicKey] !== undefined) {
                 rpcState.state?.accountEntries[publicKey].forEach((account) => {
                     if (account.tonWallet.address === address) {
@@ -172,7 +172,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
     }, [
         rpcState.state?.accountEntries,
         rpcState.state?.accountsVisibility,
-        rpcState.state?.externalAccountEntries,
+        rpcState.state?.externalAccounts,
         rpcState.state?.selectedMasterKey,
         rpcState.state?.storedKeys,
     ])

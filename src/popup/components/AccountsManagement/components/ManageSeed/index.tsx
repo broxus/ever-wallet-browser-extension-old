@@ -31,7 +31,7 @@ export function ManageSeed(): JSX.Element {
 
 	const currentDerivedKeyPubKey = React.useMemo(() => {
 		if (accountability.selectedAccount?.tonWallet.publicKey !== undefined) {
-			return rpcState.state?.storedKeys[accountability.selectedAccount.tonWallet.publicKey].publicKey
+			return rpcState.state?.storedKeys[accountability.selectedAccount.tonWallet.publicKey]?.publicKey
 		}
 		return undefined
 	}, [accountability.selectedAccount, rpcState.state?.storedKeys])
