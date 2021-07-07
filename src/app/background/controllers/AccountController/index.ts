@@ -50,7 +50,7 @@ export interface AccountControllerConfig extends BaseConfig {
 }
 
 export interface AccountControllerState extends BaseState {
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
@@ -60,7 +60,7 @@ export interface AccountControllerState extends BaseState {
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     accountsVisibility: { [address: string]: boolean }
     derivedKeysNames: { [publicKey: string]: string }
-    externalAccounts: { address: string, externalIn: string[], publicKey: string }[]
+    externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
     masterKeysNames: { [masterKey: string]: string }
     recentMasterKeys: nt.KeyStoreEntry[]
@@ -115,12 +115,7 @@ export class AccountController extends BaseController<
         const accountEntries: AccountControllerState['accountEntries'] = {}
         const entries = await this.config.accountsStorage.getStoredAccounts()
         for (const entry of entries) {
-            let item = accountEntries[entry.tonWallet.publicKey]
-            if (item == null) {
-                item = []
-                accountEntries[entry.tonWallet.publicKey] = item
-            }
-            item.push(entry)
+            accountEntries[entry.tonWallet.address] = entry
         }
 
         const selectedAccountAddress = await this._loadSelectedAccountAddress()
@@ -185,11 +180,7 @@ export class AccountController extends BaseController<
 
             const accountEntries = this.state.accountEntries
             const iterateEntries = async (f: (entry: nt.AssetsList) => void) =>
-                Promise.all(
-                    window.ObjectExt.values(accountEntries).map((entries) =>
-                        Promise.all(entries.map(f))
-                    )
-                )
+                Promise.all(window.ObjectExt.values(accountEntries).map(f))
 
             await iterateEntries(async ({ tonWallet, additionalAssets }) => {
                 await this._createTonWalletSubscription(
@@ -228,17 +219,17 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async startSubscription(address: string, publicKey: string, contractType: nt.ContractType) {
+    public async startSubscription(
+        address: string,
+        publicKey: string,
+        contractType: nt.ContractType
+    ) {
         console.debug('startSubscription')
 
         await this._accountsMutex.use(async () => {
             console.debug('startSubscription -> mutex gained')
 
-            await this._createTonWalletSubscription(
-                address,
-                publicKey,
-                contractType
-            )
+            await this._createTonWalletSubscription(address, publicKey, contractType)
         })
     }
 
@@ -389,6 +380,7 @@ export class AccountController extends BaseController<
                     ? {
                           type: 'master_key',
                           data: {
+                              name,
                               password,
                               params: {
                                   phrase: seed.phrase,
@@ -398,6 +390,7 @@ export class AccountController extends BaseController<
                     : {
                           type: 'encrypted_key',
                           data: {
+                              name,
                               password,
                               phrase: seed.phrase,
                               mnemonicType: seed.mnemonicType,
@@ -576,12 +569,7 @@ export class AccountController extends BaseController<
             const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
 
             const accountEntries = { ...this.state.accountEntries }
-            let entries = accountEntries[publicKey]
-            if (entries == null) {
-                entries = []
-                accountEntries[publicKey] = entries
-            }
-            entries.push(selectedAccount)
+            accountEntries[selectedAccount.tonWallet.address] = selectedAccount
 
             await this.updateAccountVisibility(selectedAccount.tonWallet.address, true)
 
@@ -644,13 +632,9 @@ export class AccountController extends BaseController<
         await this._accountsMutex.use(async () => {
             console.debug('selectAccount -> mutex gained')
 
-            let selectedAccount: nt.AssetsList | undefined = undefined
-            for (const entries of Object.values(this.state.accountEntries)) {
-                selectedAccount = entries.find((item) => item.tonWallet.address == address)
-                if (selectedAccount != null) {
-                    break
-                }
-            }
+            let selectedAccount = Object.values(this.state.accountEntries).find(
+                (entry) => entry.tonWallet.address == address
+            )
 
             if (selectedAccount != null) {
                 this.update({
@@ -666,7 +650,7 @@ export class AccountController extends BaseController<
 
     public async removeAccount(address: string) {
         await this._accountsMutex.use(async () => {
-            const assetsList = await this.config.accountsStorage.removeAccount(address)
+            await this.config.accountsStorage.removeAccount(address)
 
             const subscription = this._tonWalletSubscriptions.get(address)
             this._tonWalletSubscriptions.delete(address)
@@ -683,17 +667,7 @@ export class AccountController extends BaseController<
             }
 
             const accountEntries = { ...this.state.accountEntries }
-            if (assetsList != null) {
-                const publicKey = assetsList.tonWallet.publicKey
-
-                let entries = [...(accountEntries[publicKey] || [])]
-                const index = entries.findIndex((item) => item.tonWallet.address == address)
-                entries.splice(index, 1)
-
-                if (entries.length === 0) {
-                    delete accountEntries[publicKey]
-                }
-            }
+            delete accountEntries[address]
 
             const accountContractStates = { ...this.state.accountContractStates }
             delete accountContractStates[address]
@@ -715,23 +689,11 @@ export class AccountController extends BaseController<
         })
     }
 
-    public updateAccountName(account: nt.AssetsList, name: string) {
-        const accountEntries = { ...this.state.accountEntries }
-        let pubkeyAssetsList = accountEntries[account.tonWallet.publicKey]
+    public async updateAccountName(address: string, name: string) {
+        await this._accountsMutex.use(async () => {
+            const accountEntry = await this.config.accountsStorage.renameAccount(address, name)
 
-        if (!Array.isArray(pubkeyAssetsList)) {
-            return
-        }
-
-        accountEntries[account.tonWallet.publicKey] = pubkeyAssetsList.map((entry) => {
-            if (entry.tonWallet.address === account.tonWallet.address) {
-                return { ...entry, name }
-            }
-            return entry
-        })
-
-        this.update({
-            accountEntries,
+            this._updateAssetsList(accountEntry)
         })
     }
 
@@ -1240,21 +1202,7 @@ export class AccountController extends BaseController<
 
     private _updateAssetsList(assetsList: nt.AssetsList) {
         const { accountEntries } = this.state
-        let pubkeyEntries = accountEntries[assetsList.tonWallet.publicKey]
-        if (pubkeyEntries == null) {
-            pubkeyEntries = []
-            accountEntries[assetsList.tonWallet.publicKey] = pubkeyEntries
-        }
-
-        const entryIndex = pubkeyEntries.findIndex(
-            (item) => item.tonWallet.address == assetsList.tonWallet.address
-        )
-        if (entryIndex < 0) {
-            pubkeyEntries.push(assetsList)
-        } else {
-            pubkeyEntries[entryIndex] = assetsList
-        }
-
+        accountEntries[assetsList.tonWallet.address] = assetsList
         const selectedAccount =
             this.state.selectedAccount?.tonWallet.address == assetsList.tonWallet.address
                 ? assetsList
@@ -1490,7 +1438,9 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _loadMasterKeysNames(): Promise<AccountControllerState['masterKeysNames'] | undefined> {
+    private async _loadMasterKeysNames(): Promise<
+        AccountControllerState['masterKeysNames'] | undefined
+    > {
         return new Promise<AccountControllerState['masterKeysNames'] | undefined>((resolve) => {
             chrome.storage.local.get(['masterKeysNames'], ({ masterKeysNames }) => {
                 if (typeof masterKeysNames !== 'object') {
@@ -1509,11 +1459,15 @@ export class AccountController extends BaseController<
 
     private async _saveMasterKeysNames(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ masterKeysNames: this.state.masterKeysNames }, () => resolve())
+            chrome.storage.local.set({ masterKeysNames: this.state.masterKeysNames }, () =>
+                resolve()
+            )
         })
     }
 
-    private async _loadRecentMasterKeys(): Promise<AccountControllerState['recentMasterKeys'] | undefined> {
+    private async _loadRecentMasterKeys(): Promise<
+        AccountControllerState['recentMasterKeys'] | undefined
+    > {
         return new Promise<AccountControllerState['recentMasterKeys'] | undefined>((resolve) => {
             chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
                 if (!Array.isArray(recentMasterKeys)) {
@@ -1532,11 +1486,15 @@ export class AccountController extends BaseController<
 
     private async _saveRecentMasterKeys(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () => resolve())
+            chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () =>
+                resolve()
+            )
         })
     }
 
-    private async _loadDerivedKeysNames(): Promise<AccountControllerState['derivedKeysNames'] | undefined> {
+    private async _loadDerivedKeysNames(): Promise<
+        AccountControllerState['derivedKeysNames'] | undefined
+    > {
         return new Promise<AccountControllerState['derivedKeysNames'] | undefined>((resolve) => {
             chrome.storage.local.get(['derivedKeysNames'], ({ derivedKeysNames }) => {
                 if (typeof derivedKeysNames !== 'object') {
@@ -1555,11 +1513,15 @@ export class AccountController extends BaseController<
 
     private async _saveDerivedKeysNames(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ derivedKeysNames: this.state.derivedKeysNames }, () => resolve())
+            chrome.storage.local.set({ derivedKeysNames: this.state.derivedKeysNames }, () =>
+                resolve()
+            )
         })
     }
 
-    private async _loadAccountsVisibility(): Promise<AccountControllerState['accountsVisibility'] | undefined> {
+    private async _loadAccountsVisibility(): Promise<
+        AccountControllerState['accountsVisibility'] | undefined
+    > {
         return new Promise<AccountControllerState['accountsVisibility'] | undefined>((resolve) => {
             chrome.storage.local.get(['accountsVisibility'], ({ accountsVisibility }) => {
                 if (typeof accountsVisibility !== 'object') {
@@ -1578,11 +1540,15 @@ export class AccountController extends BaseController<
 
     private async _saveAccountsVisibility(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () => resolve())
+            chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () =>
+                resolve()
+            )
         })
     }
 
-    private async _loadExternalAccounts(): Promise<AccountControllerState['externalAccounts'] | undefined> {
+    private async _loadExternalAccounts(): Promise<
+        AccountControllerState['externalAccounts'] | undefined
+    > {
         return new Promise<AccountControllerState['externalAccounts'] | undefined>((resolve) => {
             chrome.storage.local.get(['externalAccounts'], ({ externalAccounts }) => {
                 if (!Array.isArray(externalAccounts)) {
@@ -1601,10 +1567,11 @@ export class AccountController extends BaseController<
 
     private async _saveExternalAccounts(): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ externalAccounts: this.state.externalAccounts }, () => resolve())
+            chrome.storage.local.set({ externalAccounts: this.state.externalAccounts }, () =>
+                resolve()
+            )
         })
     }
-
 }
 
 function requireTonWalletSubscription(

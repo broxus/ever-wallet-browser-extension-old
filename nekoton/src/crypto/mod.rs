@@ -1,5 +1,3 @@
-mod encrypted_key;
-
 use serde::Deserialize;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;

@@ -12,7 +12,7 @@ import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
 
 interface IApproveRequestPermissions {
     approval: PendingApproval<'requestPermissions'>
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
     onSubmit: (data: ApprovalOutput<'requestPermissions'>) => void
     onReject: () => void
@@ -55,36 +55,33 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             Select account to connect with Crystal wallet
                         </h2>
 
-                        {window.ObjectExt.values(accountEntries).map((items) =>
-                            items.map((item) => (
-                                <div
-                                    className="connect-wallet-select-account__item"
-                                    style={{ display: 'flex' }}
-                                >
-                                    <Checkbox
-                                        checked={
-                                            selectedAccount?.tonWallet.address ==
-                                            item.tonWallet.address
-                                        }
-                                        setChecked={(checked) => {
-                                            setSelectedAccount(checked ? item : undefined)
-                                        }}
-                                    />
-                                    <UserAvatar address={item.tonWallet.address} small />
-                                    <div style={{ padding: '0 12px' }}>
-                                        <div className="account-settings-section-account">
-                                            {item.name}
-                                        </div>
-                                        <div className="connect-wallet-select-account__item-value">
-                                            {`${convertTons(
-                                                accountContractStates[item.tonWallet.address]
-                                                    ?.balance || '0'
-                                            )} TON`}
-                                        </div>
+                        {window.ObjectExt.values(accountEntries).map((item) => (
+                            <div
+                                className="connect-wallet-select-account__item"
+                                style={{ display: 'flex' }}
+                            >
+                                <Checkbox
+                                    checked={
+                                        selectedAccount?.tonWallet.address == item.tonWallet.address
+                                    }
+                                    setChecked={(checked) => {
+                                        setSelectedAccount(checked ? item : undefined)
+                                    }}
+                                />
+                                <UserAvatar address={item.tonWallet.address} small />
+                                <div style={{ padding: '0 12px' }}>
+                                    <div className="account-settings-section-account">
+                                        {item.name}
+                                    </div>
+                                    <div className="connect-wallet-select-account__item-value">
+                                        {`${convertTons(
+                                            accountContractStates[item.tonWallet.address]
+                                                ?.balance || '0'
+                                        )} TON`}
                                     </div>
                                 </div>
-                            ))
-                        )}
+                            </div>
+                        ))}
                     </div>
                     <Button
                         type="submit"

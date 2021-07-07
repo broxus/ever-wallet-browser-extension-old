@@ -53,42 +53,50 @@ impl KeyStore {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let entry = match new_key {
-                ParsedNewKey::MasterKey { params, password } => {
+                ParsedNewKey::MasterKey {
+                    name,
+                    params,
+                    password,
+                } => {
                     inner
                         .add_key::<DerivedKeySigner>(match params {
                             ParsedNewMasterKeyParams::MasterKeyParams { phrase } => {
                                 DerivedKeyCreateInput::Import {
+                                    key_name: name,
                                     phrase: phrase.into(),
-                                    password: password.into(),
+                                    password: explicit_password(password),
                                 }
                             }
                             ParsedNewMasterKeyParams::DerivedKeyParams {
                                 master_key,
                                 account_id,
                             } => DerivedKeyCreateInput::Derive {
+                                key_name: name,
                                 master_key: parse_public_key(&master_key)?,
                                 account_id,
-                                password: password.into(),
+                                password: explicit_password(password),
                             },
                         })
                         .await
                 }
                 ParsedNewKey::EncryptedKey {
+                    name,
                     phrase,
                     mnemonic_type,
                     password,
                 } => {
                     inner
                         .add_key::<EncryptedKeySigner>(EncryptedKeyCreateInput {
+                            name,
                             phrase: phrase.into(),
                             mnemonic_type: mnemonic_type.into(),
-                            password: password.into(),
+                            password: explicit_password(password),
                         })
                         .await
                 }
-                ParsedNewKey::LedgerKey { account_id } => {
+                ParsedNewKey::LedgerKey { name, account_id } => {
                     inner
-                        .add_key::<LedgerKeySigner>(LedgerKeyCreateInput { account_id })
+                        .add_key::<LedgerKeySigner>(LedgerKeyCreateInput { name, account_id })
                         .await
                 }
             }
@@ -96,6 +104,11 @@ impl KeyStore {
 
             Ok(JsValue::from(make_key_store_entry(entry)))
         })))
+    }
+
+    #[wasm_bindgen(js_name = "renameKey")]
+    pub fn rename_key(&self) -> Result<PromiseKeyStoreEntry, JsValue> {
+        todo!()
     }
 
     #[wasm_bindgen(js_name = "changeKeyPassword")]
@@ -116,10 +129,10 @@ impl KeyStore {
                     old_password,
                     new_password,
                 } => {
-                    let input = DerivedKeyUpdateParams {
+                    let input = DerivedKeyUpdateParams::ChangePassword {
                         master_key: parse_public_key(&master_key)?,
-                        old_password: old_password.into(),
-                        new_password: new_password.into(),
+                        old_password: explicit_password(old_password),
+                        new_password: explicit_password(new_password),
                     };
 
                     inner.update_key::<DerivedKeySigner>(input).await
@@ -130,10 +143,10 @@ impl KeyStore {
                     new_password,
                 } => {
                     let public_key = parse_public_key(&public_key)?;
-                    let input = EncryptedKeyUpdateParams {
+                    let input = EncryptedKeyUpdateParams::ChangePassword {
                         public_key,
-                        old_password: old_password.into(),
-                        new_password: new_password.into(),
+                        old_password: explicit_password(old_password),
+                        new_password: explicit_password(new_password),
                     };
                     inner.update_key::<EncryptedKeySigner>(input).await
                 }
@@ -159,7 +172,7 @@ impl KeyStore {
                 } => {
                     let input = DerivedKeyExportParams {
                         master_key: parse_public_key(&master_key)?,
-                        password: password.into(),
+                        password: explicit_password(password),
                     };
                     inner
                         .export_key::<DerivedKeySigner>(input)
@@ -173,7 +186,7 @@ impl KeyStore {
                     let public_key = parse_public_key(&public_key)?;
                     let input = EncryptedKeyPassword {
                         public_key,
-                        password: password.into(),
+                        password: explicit_password(password),
                     };
                     inner
                         .export_key::<EncryptedKeySigner>(input)
@@ -208,7 +221,7 @@ impl KeyStore {
                 } => {
                     let input = DerivedKeyGetPublicKeys {
                         master_key: parse_public_key(&master_key)?,
-                        password: password.into(),
+                        password: explicit_password(password),
                         limit,
                         offset,
                     };
@@ -324,7 +337,7 @@ async fn sign_data(
             let input = DerivedKeySignParams::ByPublicKey {
                 public_key: parse_public_key(&public_key)?,
                 master_key: parse_public_key(&master_key)?,
-                password: password.into(),
+                password: explicit_password(password),
             };
             key_store.sign::<DerivedKeySigner>(data, input).await
         }
@@ -335,7 +348,7 @@ async fn sign_data(
             let public_key = parse_public_key(&public_key)?;
             let input = EncryptedKeyPassword {
                 public_key,
-                password: password.into(),
+                password: explicit_password(password),
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
         }
@@ -373,9 +386,9 @@ const LEDGER_SIGNER: &str = "ledger_key";
 #[wasm_bindgen(typescript_custom_section)]
 const NEW_KEY: &str = r#"
 export type NewKey =
-    | EnumItem<'master_key', { params: MasterKeyParams | DerivedKeyParams, password: string }>
-    | EnumItem<'encrypted_key', { phrase: string, mnemonicType: MnemonicType, password: string }>
-    | EnumItem<'ledger_key', { accountId: number }>;
+    | EnumItem<'master_key', { name?: string, params: MasterKeyParams | DerivedKeyParams, password: string }>
+    | EnumItem<'encrypted_key', { name?: string, phrase: string, mnemonicType: MnemonicType, password: string }>
+    | EnumItem<'ledger_key', { name?: string, accountId: number }>;
 "#;
 
 #[wasm_bindgen]
@@ -390,17 +403,25 @@ extern "C" {
 enum ParsedNewKey {
     #[serde(rename_all = "camelCase")]
     MasterKey {
+        #[serde(default)]
+        name: Option<String>,
         params: ParsedNewMasterKeyParams,
         password: String,
     },
     #[serde(rename_all = "camelCase")]
     EncryptedKey {
+        #[serde(default)]
+        name: Option<String>,
         phrase: String,
         mnemonic_type: crate::crypto::ParsedMnemonicType,
         password: String,
     },
     #[serde(rename_all = "camelCase")]
-    LedgerKey { account_id: u16 },
+    LedgerKey {
+        #[serde(default)]
+        name: Option<String>,
+        account_id: u16,
+    },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -590,6 +611,7 @@ enum ParsedKeyPassword {
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type KeyStoreEntry = {
+    name: string,
     signerName: 'master_key' | 'encrypted_key' | 'ledger_key',
     publicKey: string,
     masterKey: string,
@@ -605,10 +627,18 @@ extern "C" {
 
 fn make_key_store_entry(data: nt::core::keystore::KeyStoreEntry) -> KeyStoreEntry {
     ObjectBuilder::new()
+        .set("name", data.name)
         .set("signerName", data.signer_name)
         .set("publicKey", hex::encode(data.public_key.as_bytes()))
         .set("masterKey", hex::encode(data.master_key.as_bytes()))
         .set("accountId", data.account_id)
         .build()
         .unchecked_into()
+}
+
+fn explicit_password(password: String) -> nt::crypto::Password {
+    nt::crypto::Password::Explicit {
+        password: password.into(),
+        cache_behavior: Default::default(),
+    }
 }

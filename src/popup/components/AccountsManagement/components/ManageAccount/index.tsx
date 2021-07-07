@@ -15,160 +15,166 @@ import { convertAddress } from '@shared/utils'
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
-
 export function ManageAccount(): JSX.Element {
-	const accountability = useAccountability()
-	const drawer = useDrawerPanel()
-	const rpc = useRpc()
-	const rpcState = useRpcState()
+    const accountability = useAccountability()
+    const drawer = useDrawerPanel()
+    const rpc = useRpc()
+    const rpcState = useRpcState()
 
-	const [name, setName] = React.useState(accountability.currentAccount?.name || '')
+    const [name, setName] = React.useState(accountability.currentAccount?.name || '')
 
-	const isVisible = React.useMemo(() => {
-		if (accountability.currentAccount) {
-			return accountability.accountsVisibility[accountability.currentAccount.tonWallet.address]
-		}
-		return false
-	}, [accountability.accountsVisibility])
+    const isVisible = React.useMemo(() => {
+        if (accountability.currentAccount) {
+            return accountability.accountsVisibility[
+                accountability.currentAccount.tonWallet.address
+            ]
+        }
+        return false
+    }, [accountability.accountsVisibility])
 
-	const isActive = React.useMemo(
-		() => accountability.currentAccount?.tonWallet.address === accountability.selectedAccount?.tonWallet.address,
-		[accountability.selectedAccount]
-	)
+    const isActive = React.useMemo(
+        () =>
+            accountability.currentAccount?.tonWallet.address ===
+            accountability.selectedAccount?.tonWallet.address,
+        [accountability.selectedAccount]
+    )
 
-	const linkedKeys = React.useMemo(() => {
-		const keys = Object.values({ ...rpcState.state?.storedKeys }).filter(
-			key => key.publicKey === accountability.currentAccount?.tonWallet.publicKey,
-		)
+    const linkedKeys = React.useMemo(() => {
+        const keys = Object.values({ ...rpcState.state?.storedKeys }).filter(
+            (key) => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
+        )
 
-		return keys
-	}, [rpcState.state?.storedKeys])
+        return keys
+    }, [rpcState.state?.storedKeys])
 
-	const saveName = async () => {
-		if (accountability.currentAccount !== undefined && name) {
-			await rpc.updateAccountName(accountability.currentAccount, name)
-			accountability.setCurrentAccount({ ...accountability.currentAccount, name })
-		}
-	}
+    const saveName = async () => {
+        if (accountability.currentAccount !== undefined && name) {
+            await rpc.updateAccountName(accountability.currentAccount.tonWallet.address, name)
+            accountability.setCurrentAccount({ ...accountability.currentAccount, name })
+        }
+    }
 
-	const onSelectAccount = async () => {
-		if (accountability.currentMasterKey?.masterKey == null) {
-			return
-		}
+    const onSelectAccount = async () => {
+        if (accountability.currentMasterKey?.masterKey == null) {
+            return
+        }
 
-		await rpc.selectMasterKey(accountability.currentMasterKey.masterKey).then(async () => {
-			if (accountability.currentAccount == null) {
-				return
-			}
+        await rpc.selectMasterKey(accountability.currentMasterKey.masterKey).then(async () => {
+            if (accountability.currentAccount == null) {
+                return
+            }
 
-			await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
-			await rpc.selectAccount(accountability.currentAccount.tonWallet.address).then(() => {
-				drawer.setPanel(undefined)
-				accountability.reset()
-			})
+            await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
+            await rpc.selectAccount(accountability.currentAccount.tonWallet.address).then(() => {
+                drawer.setPanel(undefined)
+                accountability.reset()
+            })
 
-			if (rpcState.activeTab?.type === 'notification') {
-				closeCurrentWindow()
-			}
-		})
-	}
+            if (rpcState.activeTab?.type === 'notification') {
+                closeCurrentWindow()
+            }
+        })
+    }
 
-	const onManageDerivedKey = (key: nt.KeyStoreEntry) => {
-		return () => accountability.onManageDerivedKey(key)
-	}
+    const onManageDerivedKey = (key: nt.KeyStoreEntry) => {
+        return () => accountability.onManageDerivedKey(key)
+    }
 
-	const onToggleVisibility = () => {
-		if (accountability.currentAccount && !isActive) {
-			rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, !isVisible)
-		}
-	}
+    const onToggleVisibility = () => {
+        if (accountability.currentAccount && !isActive) {
+            rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, !isVisible)
+        }
+    }
 
-	const onBack = () => {
-		accountability.setStep(Step.MANAGE_DERIVED_KEY)
-		accountability.setCurrentAccount(undefined)
-	}
+    const onBack = () => {
+        accountability.setStep(Step.MANAGE_DERIVED_KEY)
+        accountability.setCurrentAccount(undefined)
+    }
 
-	return (
-		<div className="accounts-management__content">
-			<h2 className="accounts-management__content-title">Manage account</h2>
+    return (
+        <div className="accounts-management__content">
+            <h2 className="accounts-management__content-title">Manage account</h2>
 
-			<div className="accounts-management__content-header">Account name</div>
-			<div className="accounts-management__name-field">
-				<Input
-					name="seed_name"
-					label="Enter key name"
-					type="text"
-					value={name || ''}
-					onChange={setName}
-				/>
+            <div className="accounts-management__content-header">Account name</div>
+            <div className="accounts-management__name-field">
+                <Input
+                    name="seed_name"
+                    label="Enter key name"
+                    type="text"
+                    value={name || ''}
+                    onChange={setName}
+                />
 
-				{(accountability.currentAccount !== undefined && accountability.currentAccount.name !== name) && (
-					<a
-						role="button"
-						className="accounts-management__name-button"
-						onClick={saveName}
-					>
-						Save
-					</a>
-				)}
-			</div>
+                {accountability.currentAccount !== undefined &&
+                    accountability.currentAccount.name !== name && (
+                        <a
+                            role="button"
+                            className="accounts-management__name-button"
+                            onClick={saveName}
+                        >
+                            Save
+                        </a>
+                    )}
+            </div>
 
-			<div
-				className={classNames('accounts-management__account-visibility', {
-					'accounts-management__account-visibility-disabled': isActive
-				})}
-			>
-				<Switcher id="visibility" checked={isVisible} onChange={onToggleVisibility} />
-				<label htmlFor="visibility">Display on the main screen</label>
-			</div>
+            <div
+                className={classNames('accounts-management__account-visibility', {
+                    'accounts-management__account-visibility-disabled': isActive,
+                })}
+            >
+                <Switcher id="visibility" checked={isVisible} onChange={onToggleVisibility} />
+                <label htmlFor="visibility">Display on the main screen</label>
+            </div>
 
-			{accountability.currentAccount !== undefined && (
-				<div className="accounts-management__qr-address-placeholder">
-					<div className="accounts-management__qr-address-code">
-						<QRCode
-							value={`ton://chat/${accountability.currentAccount.tonWallet.address}`}
-							size={80}
-						/>
-					</div>
-					<div className="accounts-management__qr-address-address">
-						{accountability.currentAccount.tonWallet.address}
-					</div>
-				</div>
-			)}
+            {accountability.currentAccount !== undefined && (
+                <div className="accounts-management__qr-address-placeholder">
+                    <div className="accounts-management__qr-address-code">
+                        <QRCode
+                            value={`ton://chat/${accountability.currentAccount.tonWallet.address}`}
+                            size={80}
+                        />
+                    </div>
+                    <div className="accounts-management__qr-address-address">
+                        {accountability.currentAccount.tonWallet.address}
+                    </div>
+                </div>
+            )}
 
-			{linkedKeys.length > 0 && (
-				<>
-					<div className="accounts-management__content-header">Linked keys</div>
-					<div className="accounts-management__divider" />
-					<ul className="accounts-management__list">
-						{linkedKeys.map(key => (
-							<li key={key.publicKey}>
-								<div
-									role="button"
-									className="accounts-management__list-item"
-									onClick={onManageDerivedKey(key)}
-								>
-									<img src={TonKey} alt="" className="accounts-management__list-item-logo" />
-									<div className="accounts-management__list-item-title">
-										{accountability.derivedKeysNames?.[key.publicKey] || convertAddress(key.publicKey)}
-									</div>
-									<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
-								</div>
-							</li>
-						))}
-					</ul>
-				</>
-			)}
+            {linkedKeys.length > 0 && (
+                <>
+                    <div className="accounts-management__content-header">Linked keys</div>
+                    <div className="accounts-management__divider" />
+                    <ul className="accounts-management__list">
+                        {linkedKeys.map((key) => (
+                            <li key={key.publicKey}>
+                                <div
+                                    role="button"
+                                    className="accounts-management__list-item"
+                                    onClick={onManageDerivedKey(key)}
+                                >
+                                    <img
+                                        src={TonKey}
+                                        alt=""
+                                        className="accounts-management__list-item-logo"
+                                    />
+                                    <div className="accounts-management__list-item-title">
+                                        {accountability.derivedKeysNames?.[key.publicKey] ||
+                                            convertAddress(key.publicKey)}
+                                    </div>
+                                    <img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                </>
+            )}
 
-			<div className="accounts-management__content-buttons">
-				<div className="accounts-management__content-buttons-back-btn">
-					<Button text="Back" white onClick={onBack} />
-				</div>
-				<Button
-					text="Go to account"
-					onClick={onSelectAccount}
-				/>
-			</div>
-		</div>
-	)
+            <div className="accounts-management__content-buttons">
+                <div className="accounts-management__content-buttons-back-btn">
+                    <Button text="Back" white onClick={onBack} />
+                </div>
+                <Button text="Go to account" onClick={onSelectAccount} />
+            </div>
+        </div>
+    )
 }

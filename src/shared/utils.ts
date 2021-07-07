@@ -650,28 +650,10 @@ export const convertTons = (amount?: string) => convertCurrency(amount, 9)
 export const convertCurrency = (amount: string | undefined, decimals: number) =>
     new Decimal(amount || '0').div(multiplier(decimals)).toFixed()
 
-export const estimateUsd = (amount: string) => {
-    return `${new Decimal(amount || '0').div(multiplier(9)).mul('0.6').toFixed(2).toString()}`
-}
-
 export const parseTons = (amount: string) => parseCurrency(amount, 9)
 
 export const parseCurrency = (amount: string, decimals: number) => {
     return new Decimal(amount).mul(multiplier(decimals)).ceil().toFixed(0)
-}
-
-export function findAccountByAddress(
-    accountEntries: { [publicKey: string]: nt.AssetsList[] },
-    address: string
-): nt.AssetsList | undefined {
-    for (const accounts of window.ObjectExt.values(accountEntries)) {
-        for (const account of accounts) {
-            if (account.tonWallet.address == address) {
-                return account
-            }
-        }
-    }
-    return undefined
 }
 
 export interface SendMessageRequest {

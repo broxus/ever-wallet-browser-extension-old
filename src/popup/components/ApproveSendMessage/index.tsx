@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { convertTons, findAccountByAddress } from '@shared/utils'
+import { convertTons } from '@shared/utils'
 import { PendingApproval } from '@shared/backgroundApi'
 import Decimal from 'decimal.js'
 import { prepareKey } from '@popup/utils'
@@ -14,7 +14,7 @@ import UserAvatar from '@popup/components/UserAvatar'
 interface IApproveSendMessage {
     approval: PendingApproval<'sendMessage'>
     networkName: string
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
@@ -39,7 +39,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
 
-    const account = findAccountByAddress(accountEntries, sender)
+    const account = accountEntries[sender]
     if (account == null) {
         !inProcess && onReject()
         setInProcess(true)

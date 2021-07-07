@@ -1,13 +1,10 @@
 import React, { useState } from 'react'
-import cn from 'classnames'
-import { convertAddress, convertTons, findAccountByAddress } from '@shared/utils'
 import { PendingApproval } from '@shared/backgroundApi'
 import { prepareKey } from '@popup/utils'
 import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 
-import Arrow from '@popup/img/arrow.svg'
 import EnterPassword from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import UserAvatar from '@popup/components/UserAvatar'
@@ -16,7 +13,7 @@ import WebsiteIcon from '@popup/components/WebsiteIcon'
 interface IApproveContractInteraction {
     approval: PendingApproval<'callContractMethod'>
     networkName: string
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountEntries: { [address: string]: nt.AssetsList }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     onSubmit: (password: nt.KeyPassword) => void
@@ -39,7 +36,10 @@ const ApproveContractInteraction: React.FC<IApproveContractInteraction> = ({
     const [error, setError] = useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
 
-    const account = accountEntries[publicKey]?.[0] as nt.AssetsList | undefined
+    // TODO: somehow select proper account
+    let account = window.ObjectExt.values(accountEntries).find(
+        (account) => account.tonWallet.publicKey == publicKey
+    )
     if (account == null) {
         !inProcess && onReject()
         setInProcess(true)

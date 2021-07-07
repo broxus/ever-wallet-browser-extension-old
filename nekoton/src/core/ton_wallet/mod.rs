@@ -150,10 +150,15 @@ impl TonWallet {
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.fetch_custodians().await.handle_error()?;
+            let wallet = inner.wallet.lock().trust_me();
+            let custodians = wallet
+                .get_custodians()
+                .as_ref()
+                .ok_or_else(|| TonWalletError::CustodiansNotFound)
+                .handle_error()?;
+
             Ok(custodians
-                .into_iter()
+                .iter()
                 .map(|item| JsValue::from_str(&item.to_hex_string()))
                 .collect::<js_sys::Array>()
                 .unchecked_into())
@@ -167,8 +172,8 @@ impl TonWallet {
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.fetch_pending_transactions().await.handle_error()?;
+            let wallet = inner.wallet.lock().trust_me();
+            let custodians = wallet.get_unconfirmed_transactions().to_vec();
             Ok(custodians
                 .into_iter()
                 .map(make_multisig_pending_transaction)
@@ -525,4 +530,6 @@ enum TonWalletError {
     ExpectedArray,
     #[error("Expected public key string")]
     ExpectedPublicKeyString,
+    #[error("Custodians not found")]
+    CustodiansNotFound,
 }

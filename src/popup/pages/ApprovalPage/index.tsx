@@ -20,7 +20,7 @@ const rejectedByUser = serializeError(
 interface IApprovalPage {
     pendingApprovals: PendingApproval<keyof ApprovalApi>[]
     networkName: string
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountEntries: { [address: string]: nt.AssetsList }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     accountContractStates: { [address: string]: nt.ContractState }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
