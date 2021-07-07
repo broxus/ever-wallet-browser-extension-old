@@ -41,20 +41,6 @@ export function ManageAccount(): JSX.Element {
 			key => key.publicKey === accountability.currentAccount?.tonWallet.publicKey,
 		)
 
-		rpcState.state?.externalAccounts.forEach((account) => {
-			if (
-				accountability.currentAccount?.tonWallet.publicKey
-				&& account.externalIn.includes(accountability.currentAccount?.tonWallet.publicKey)
-			) {
-				keys.push({
-					accountId: 0,
-					masterKey: account.publicKey,
-					publicKey: account.publicKey,
-					signerName: 'master_key',
-				})
-			}
-		})
-
 		return keys
 	}, [rpcState.state?.storedKeys])
 
@@ -66,7 +52,7 @@ export function ManageAccount(): JSX.Element {
 	}
 
 	const onSelectAccount = async () => {
-		if (accountability.currentMasterKey == null) {
+		if (accountability.currentMasterKey?.masterKey == null) {
 			return
 		}
 
@@ -74,6 +60,7 @@ export function ManageAccount(): JSX.Element {
 			if (accountability.currentAccount == null) {
 				return
 			}
+
 			await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
 			await rpc.selectAccount(accountability.currentAccount.tonWallet.address).then(() => {
 				drawer.setPanel(undefined)
@@ -81,7 +68,7 @@ export function ManageAccount(): JSX.Element {
 			})
 
 			if (rpcState.activeTab?.type === 'notification') {
-			    closeCurrentWindow()
+				closeCurrentWindow()
 			}
 		})
 	}

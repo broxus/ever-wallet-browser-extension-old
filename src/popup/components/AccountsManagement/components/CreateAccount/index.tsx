@@ -97,7 +97,7 @@ export function CreateAccount(): JSX.Element {
 			switch (true) {
 				// Is deployer
 				case publicKey === currentPublicKey: {
-					const hasAccount = accountability.derivedKeyRelatedAccounts.some(
+					const hasAccount = accountability.currentDerivedKeyAccounts.some(
 						(account) => account.tonWallet.address === address
 					)
 
@@ -108,9 +108,8 @@ export function CreateAccount(): JSX.Element {
 							publicKey,
 							name: `Account ${accountability.nextAccountId + 1}`,
 						}).then((account) => {
-							accountability.setCurrentAccount(account)
-							accountability.setStep(Step.MANAGE_ACCOUNT)
 							drawer.setPanel(Panel.MANAGE_SEEDS)
+							accountability.onManageAccount(account)
 						})
 					}
 					else {
@@ -139,7 +138,7 @@ export function CreateAccount(): JSX.Element {
 								)
 							}
 							drawer.setPanel(Panel.MANAGE_SEEDS)
-							accountability.setStep(Step.MANAGE_ACCOUNT)
+							accountability.onManageAccount(account)
 						})
 					}
 					else {
@@ -150,6 +149,7 @@ export function CreateAccount(): JSX.Element {
 							currentPublicKey
 						)
 
+						rpc.updateAccountVisibility(address, true)
 						drawer.setPanel(Panel.MANAGE_SEEDS)
 						accountability.setStep(Step.MANAGE_ACCOUNT)
 					}

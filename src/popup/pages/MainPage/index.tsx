@@ -9,10 +9,8 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import Receive from '@popup/components/Receive'
 import Send from '@popup/components/Send'
 import { ManageSeeds } from '@popup/components/AccountsManagement'
-import KeyStorage from '@popup/components/KeyStorage'
 import TransactionInfo from '@popup/components/TransactionInfo'
 import AssetFull from '@popup/components/AssetFull'
-import CollectTokens from '@popup/components/CollectTokens'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
@@ -32,7 +30,6 @@ export function MainPage(): JSX.Element | null {
 
     const [selectedTransaction, setSelectedTransaction] = React.useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = React.useState<SelectedAsset>()
-    const [ethEventContract, setEthEventContract] = React.useState<string>()
     const scrollArea = React.useRef<HTMLDivElement>(null)
 
     React.useEffect(() => {
@@ -51,21 +48,21 @@ export function MainPage(): JSX.Element | null {
     const closePanel = () => {
         setSelectedTransaction(undefined)
         setSelectedAsset(undefined)
-        setEthEventContract(undefined)
         drawer.setPanel(undefined)
         accountability.reset()
     }
 
     const { selectedAccount, selectedConnection, storedKeys, knownTokens } = rpcState.state
 
-    const externalAccount = rpcState.state.externalAccounts.find((account) => account.address === selectedAccount.tonWallet.address)
-    let selectedKeys = []
-    if (externalAccount !== undefined) {
-        selectedKeys = externalAccount.externalIn.map(key => storedKeys[key])
+    const externalAccounts = rpcState.state.externalAccounts.find(
+        (account) => account.address === selectedAccount.tonWallet.address
+    )
+    let selectedKeys: nt.KeyStoreEntry[] = [storedKeys[selectedAccount.tonWallet.publicKey]]
+    if (externalAccounts !== undefined) {
+        const externalAccountsKeys = externalAccounts.externalIn.map(key => storedKeys[key])
+        selectedKeys.push(...externalAccountsKeys)
     }
-    else {
-        selectedKeys = [storedKeys[selectedAccount.tonWallet.publicKey]]
-    }
+    selectedKeys = selectedKeys.filter(e => e)
 
     const selectedKey = selectedKeys[0]
     if (selectedKey === undefined) {

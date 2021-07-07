@@ -45,12 +45,12 @@ export function NewAccountContractType({
 		if (currentDerivedKey == null) {
 			return window.ObjectExt.keys(CONTRACT_TYPES)
 		}
-		const accountAddresses = accountability.derivedKeyRelatedAccounts.map((account) => account.tonWallet.address)
+		const accountAddresses = accountability.currentDerivedKeyAccounts.map((account) => account.tonWallet.address)
 		return window.ObjectExt.keys(CONTRACT_TYPES).filter((type) => {
 			const address = nt.computeTonWalletAddress(currentDerivedKey.publicKey, type, 0)
 			return !accountAddresses.includes(address)
 		})
-	}, [accountability.derivedKeyRelatedAccounts])
+	}, [accountability.currentDerivedKeyAccounts])
 
 	React.useEffect(() => {
 		if (!availableContracts.includes(contractType)) {

@@ -123,7 +123,7 @@ export function AccountDetails(): JSX.Element {
                 )}
             </div>
 
-            <Carousel ref={slider} onInit={onInit} beforeChange={beforeSlide}>
+            <Carousel ref={slider} initialSlide={initialSlide} onInit={onInit} beforeChange={beforeSlide}>
                 {accountability.accounts.map((account) => (
                     <AccountCard
                         key={account.tonWallet.address}

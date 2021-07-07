@@ -1,18 +1,13 @@
 import * as React from 'react'
-import classNames from 'classnames'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import ReactTooltip from 'react-tooltip'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import UserAvatar from '@popup/components/UserAvatar'
+import { AccountsList } from '@popup/components/AccountsManagement/components'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { convertAddress } from '@shared/utils'
-
-import Arrow from '@popup/img/arrow.svg'
-import { AccountsList } from '@popup/components/AccountsManagement/components'
 
 
 export function ManageDerivedKey(): JSX.Element {
@@ -115,18 +110,18 @@ export function ManageDerivedKey(): JSX.Element {
 			<div className="accounts-management__content-header">My accounts</div>
 			<div className="accounts-management__divider" />
 
-			{accountability.derivedKeyRelatedAccounts.length === 0 ? (
+			{accountability.currentDerivedKeyAccounts.length === 0 ? (
 				<div className="accounts-management__list--empty">
 					No accounts yet
 				</div>
 			) : (
 				<AccountsList
-					items={accountability.derivedKeyRelatedAccounts}
+					items={accountability.currentDerivedKeyAccounts}
 					onClick={onManageAccount}
 				/>
 			)}
 
-			{accountability.derivedKeyExternalAccounts.length > 0 ? (
+			{accountability.currentDerivedKeyExternalAccounts.length > 0 ? (
 				<>
 					<div
 						className="accounts-management__content-header"
@@ -137,7 +132,7 @@ export function ManageDerivedKey(): JSX.Element {
 					<div className="accounts-management__divider" />
 
 					<AccountsList
-						items={accountability.derivedKeyExternalAccounts}
+						items={accountability.currentDerivedKeyExternalAccounts}
 						onClick={onManageAccount}
 					/>
 				</>

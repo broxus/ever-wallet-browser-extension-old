@@ -31,10 +31,10 @@ interface AccountabilityContext {
     masterKeys: nt.KeyStoreEntry[];
     masterKeysNames: { [masterKey: string]: string };
     selectedMasterKey?: string;
+    currentDerivedKeyAccounts: nt.AssetsList[];
+    currentDerivedKeyExternalAccounts: nt.AssetsList[];
     derivedKeys: nt.KeyStoreEntry[];
     derivedKeysNames: { [publicKey: string]: string };
-    derivedKeyRelatedAccounts: nt.AssetsList[];
-    derivedKeyExternalAccounts: nt.AssetsList[];
     selectedAccount?: nt.AssetsList;
     accounts: nt.AssetsList[];
     accountsVisibility: { [address: string]: boolean };
@@ -61,10 +61,10 @@ export const Context = React.createContext<AccountabilityContext>({
     recentMasterKeys: [],
     masterKeys: [],
     masterKeysNames: {},
+    currentDerivedKeyAccounts: [],
+    currentDerivedKeyExternalAccounts: [],
     derivedKeys: [],
     derivedKeysNames: {},
-    derivedKeyRelatedAccounts: [],
-    derivedKeyExternalAccounts: [],
     selectedAccount: {} as nt.AssetsList,
     accounts: [],
     accountsVisibility: {},
@@ -90,7 +90,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
     const [currentMasterKey, setCurrentMasterKey] = React.useState<nt.KeyStoreEntry>()
     const [step, setStep] = React.useState<Step>(Step.MANAGE_SEEDS)
 
-    // Seed
+    // All available seeds (master keys)
     const masterKeys = React.useMemo(
         () => Object.values({ ...rpcState.state?.storedKeys }).filter((key) => key.accountId === 0),
         [rpcState.state?.storedKeys]
@@ -101,7 +101,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         setStep(Step.MANAGE_SEED)
     }
 
-    // Derived keys
+    // All derived keys in managed seed
     const derivedKeys = React.useMemo(
         () =>
             Object.values({ ...rpcState.state?.storedKeys }).filter(
@@ -110,13 +110,15 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         [currentMasterKey, rpcState.state?.storedKeys]
     )
 
-    const derivedKeyRelatedAccounts = React.useMemo(() => {
+    // All related accounts in managed derived key
+    const currentDerivedKeyAccounts = React.useMemo(() => {
         return currentDerivedKey
             ? rpcState.state?.accountEntries[currentDerivedKey?.publicKey] || []
             : []
     }, [currentDerivedKey, rpcState.state?.accountEntries, rpcState.state?.storedKeys])
 
-    const derivedKeyExternalAccounts = React.useMemo(() => {
+    // All related external accounts in managed derived key
+    const currentDerivedKeyExternalAccounts = React.useMemo(() => {
         if (currentDerivedKey) {
             const externalAccounts = rpcState.state?.externalAccounts.filter(
                 (account) => account.externalIn.includes(currentDerivedKey.publicKey)
@@ -140,7 +142,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         setStep(Step.MANAGE_DERIVED_KEY)
     }
 
-    // Accounts
+    // All available accounts to seed
     const accounts = React.useMemo(() => {
         const derivedKeysPubKeys = Object.values({ ...rpcState.state?.storedKeys })
             .filter((key) => key.masterKey === rpcState.state?.selectedMasterKey)
@@ -154,21 +156,27 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
             }
         })
 
-        rpcState.state?.externalAccounts.forEach(({ address, publicKey }) => {
-            if (rpcState.state?.accountEntries[publicKey] !== undefined) {
-                rpcState.state?.accountEntries[publicKey].forEach((account) => {
-                    if (account.tonWallet.address === address) {
-                        availableAccounts.push(account)
-                    }
-                })
-            }
+        rpcState.state?.externalAccounts.forEach(({ address, publicKey, externalIn }) => {
+            derivedKeysPubKeys.forEach((key) => {
+                if (externalIn.includes(key) && rpcState.state?.accountEntries[publicKey] !== undefined) {
+                    rpcState.state?.accountEntries[publicKey].forEach((account) => {
+                        if (account.tonWallet.address === address) {
+                            availableAccounts.push(account)
+                        }
+                    })
+                }
+            })
         })
 
         return availableAccounts.filter((account) =>
             account.tonWallet !== undefined
                 ? rpcState.state?.accountsVisibility[account.tonWallet.address]
                 : false
-        )
+        ).sort((a, b) => {
+            if (a.name < b.name) return -1
+            if (a.name > b.name) return 1
+            return 0
+        })
     }, [
         rpcState.state?.accountEntries,
         rpcState.state?.accountsVisibility,
@@ -244,9 +252,10 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         masterKeys,
         masterKeysNames: rpcState.state?.masterKeysNames || {},
         recentMasterKeys: rpcState.state?.recentMasterKeys || [],
+        currentDerivedKeyAccounts,
+        currentDerivedKeyExternalAccounts,
         derivedKeys,
         derivedKeysNames: rpcState.state?.derivedKeysNames || {},
-        derivedKeyRelatedAccounts,
         selectedAccount: rpcState.state?.selectedAccount,
         selectedMasterKey: rpcState.state?.selectedMasterKey,
         accounts,
@@ -272,10 +281,10 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
                 masterKeys,
                 masterKeysNames: rpcState.state?.masterKeysNames || {},
                 recentMasterKeys: rpcState.state?.recentMasterKeys || [],
+                currentDerivedKeyExternalAccounts,
+                currentDerivedKeyAccounts,
                 derivedKeys,
                 derivedKeysNames: rpcState.state?.derivedKeysNames || {},
-                derivedKeyRelatedAccounts,
-                derivedKeyExternalAccounts,
                 selectedAccount: rpcState.state?.selectedAccount,
                 selectedMasterKey: rpcState.state?.selectedMasterKey,
                 accounts,

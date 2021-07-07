@@ -612,6 +612,7 @@ export class AccountController extends BaseController<
             this.update({
                 externalAccounts,
             })
+            await this._saveExternalAccounts()
             return
         }
 
@@ -619,8 +620,7 @@ export class AccountController extends BaseController<
             entry.externalIn.push(externalPublicKey)
         }
 
-        const entryIndex = externalAccounts.findIndex((account) => account.address === address)
-        externalAccounts.splice(entryIndex, 1)
+        externalAccounts = externalAccounts.filter((account) => account.address != address)
         externalAccounts.unshift(entry)
 
         this.update({
@@ -719,23 +719,16 @@ export class AccountController extends BaseController<
         const accountEntries = { ...this.state.accountEntries }
         let pubkeyAssetsList = accountEntries[account.tonWallet.publicKey]
 
-        if (pubkeyAssetsList == null) {
+        if (!Array.isArray(pubkeyAssetsList)) {
             return
         }
 
-        const entryIndex = pubkeyAssetsList.findIndex(
-            (item) => item.tonWallet.address === account.tonWallet.address
-        )
-
-        if (entryIndex < 0) {
-            return
-        }
-
-        const entry = pubkeyAssetsList[entryIndex]
-
-        pubkeyAssetsList[entryIndex] = { ...entry, name }
-
-        accountEntries[account.tonWallet.publicKey] = pubkeyAssetsList
+        accountEntries[account.tonWallet.publicKey] = pubkeyAssetsList.map((entry) => {
+            if (entry.tonWallet.address === account.tonWallet.address) {
+                return { ...entry, name }
+            }
+            return entry
+        })
 
         this.update({
             accountEntries,
@@ -750,7 +743,7 @@ export class AccountController extends BaseController<
             },
         })
 
-        await this._saveAccountVisibility()
+        await this._saveAccountsVisibility()
     }
 
     public async checkPassword(password: nt.KeyPassword) {
@@ -1475,7 +1468,7 @@ export class AccountController extends BaseController<
     private async _loadSelectedMasterKey(): Promise<string | undefined> {
         return new Promise<string | undefined>((resolve) => {
             chrome.storage.local.get(['selectedMasterKey'], ({ selectedMasterKey }) => {
-                if (typeof selectedMasterKey !== 'object') {
+                if (typeof selectedMasterKey !== 'string') {
                     return resolve(undefined)
                 }
                 resolve(selectedMasterKey)
@@ -1523,7 +1516,7 @@ export class AccountController extends BaseController<
     private async _loadRecentMasterKeys(): Promise<AccountControllerState['recentMasterKeys'] | undefined> {
         return new Promise<AccountControllerState['recentMasterKeys'] | undefined>((resolve) => {
             chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
-                if (typeof recentMasterKeys !== 'object') {
+                if (!Array.isArray(recentMasterKeys)) {
                     return resolve(undefined)
                 }
                 resolve(recentMasterKeys)
@@ -1583,7 +1576,7 @@ export class AccountController extends BaseController<
         })
     }
 
-    private async _saveAccountVisibility(): Promise<void> {
+    private async _saveAccountsVisibility(): Promise<void> {
         return new Promise<void>((resolve) => {
             chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () => resolve())
         })
