@@ -12,7 +12,7 @@ import {
 } from '@shared/constants'
 
 import { NotificationManager, openExtensionInBrowser } from '@popup/utils/platform'
-import { NekotonController } from './NekotonController'
+import { NekotonController, TriggerUiParams } from './NekotonController'
 
 const notificationManager = new NotificationManager()
 
@@ -84,7 +84,7 @@ const setupController = async () => {
     }
 }
 
-const triggerUi = async (force: boolean) => {
+const triggerUi = async (params: TriggerUiParams) => {
     const tabs = await new Promise<chrome.tabs.Tab[]>((resolve, reject) =>
         chrome.tabs.query({ active: true }, (tabs) => {
             const error = checkForError()
@@ -100,26 +100,18 @@ const triggerUi = async (force: boolean) => {
         tabs.find((tab) => tab.id != null && openNekotonTabsIDs[tab.id])
     )
 
-    if (!uiIsTriggering && (force || !popupIsOpen) && !currentlyActiveNekotonTab) {
+    if (!uiIsTriggering && (params.force || !popupIsOpen) && !currentlyActiveNekotonTab) {
         uiIsTriggering = true
         try {
-            await notificationManager.showPopup()
+            await notificationManager.showPopup({
+                group: params.group,
+                width: params.width,
+                height: params.height,
+            })
         } finally {
             uiIsTriggering = false
         }
     }
-}
-
-const openPopup = async (force: boolean) => {
-    await triggerUi(force)
-    await new Promise<void>((resolve) => {
-        const interval = setInterval(() => {
-            if (!notificationIsOpen) {
-                clearInterval(interval)
-                resolve()
-            }
-        }, 1000)
-    })
 }
 
 const ensureInitialized = initialize().catch(console.error)

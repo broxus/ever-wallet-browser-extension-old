@@ -55,15 +55,12 @@ export function AccountDetails(): JSX.Element {
 
     const [notificationsVisible, setNotificationsVisible] = React.useState(false)
 
-    const initialSlide = React.useMemo(
-        () => {
-            const index = accountability.accounts.findIndex(
-                (account) => account.tonWallet.address === accountability.selectedAccountAddress
-            )
-            return index >= 0 ? index : 0
-        },
-        [accountability.accounts, accountability.selectedAccount]
-    )
+    const initialSlide = React.useMemo(() => {
+        const index = accountability.accounts.findIndex(
+            (account) => account.tonWallet.address === accountability.selectedAccountAddress
+        )
+        return index >= 0 ? index : 0
+    }, [accountability.accounts, accountability.selectedAccount])
 
     const onReceive = () => {
         drawer.setPanel(Panel.RECEIVE)
@@ -78,7 +75,7 @@ export function AccountDetails(): JSX.Element {
             drawer.setPanel(Panel.SEND)
         } else {
             await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
-            await rpc.openExtensionInExternalWindow()
+            await rpc.openExtensionInExternalWindow('send')
             window.close()
         }
     }
@@ -118,10 +115,13 @@ export function AccountDetails(): JSX.Element {
         slider.current?.slickGoTo(initialSlide)
     }
 
-    React.useEffect(debounce(() => {
-        slider.current?.slickGoTo(initialSlide)
-        slider.current?.forceUpdate()
-    }, 100), [accountability.accounts, accountability.selectedAccount])
+    React.useEffect(
+        debounce(() => {
+            slider.current?.slickGoTo(initialSlide)
+            slider.current?.forceUpdate()
+        }, 100),
+        [accountability.accounts, accountability.selectedAccount]
+    )
 
     return (
         <div className="account-details">
@@ -154,7 +154,8 @@ export function AccountDetails(): JSX.Element {
                         address={account.tonWallet.address}
                         publicKey={account.tonWallet.publicKey}
                         balance={convertTons(
-                            rpcState.state?.accountContractStates?.[account.tonWallet.address]?.balance || '0'
+                            rpcState.state?.accountContractStates?.[account.tonWallet.address]
+                                ?.balance || '0'
                         ).toLocaleString()}
                     />
                 ))}
@@ -205,11 +206,7 @@ export function AccountDetails(): JSX.Element {
                                 </>
                             ) : (
                                 <>
-                                    <img
-                                        src={DeployIcon}
-                                        alt=""
-                                        style={{ marginRight: '8px' }}
-                                    />
+                                    <img src={DeployIcon} alt="" style={{ marginRight: '8px' }} />
                                     Deploy
                                 </>
                             )}

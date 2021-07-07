@@ -37,8 +37,15 @@ import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/plat
 
 import LedgerBridge from './ledger/LedgerBridge'
 
-interface NekotonControllerOptions {
-    openExternalWindow: (force: boolean) => void
+export interface TriggerUiParams {
+    group: string
+    force: boolean
+    width?: number
+    height?: number
+}
+
+export interface NekotonControllerOptions {
+    openExternalWindow: (params: TriggerUiParams) => void
     getOpenNekotonTabIds: () => { [id: number]: true }
 }
 
@@ -97,7 +104,11 @@ export class NekotonController extends EventEmitter {
             ledgerBridge,
         })
         const approvalController = new ApprovalController({
-            showApprovalRequest: () => options.openExternalWindow(false),
+            showApprovalRequest: () =>
+                options.openExternalWindow({
+                    group: 'approval',
+                    force: false,
+                }),
         })
         const permissionsController = new PermissionsController({
             approvalController,
@@ -218,8 +229,11 @@ export class NekotonController extends EventEmitter {
                 delete this._tempStorage[key]
                 cb(null, oldValue)
             },
-            openExtensionInExternalWindow: (cb: ApiCallback<undefined>) => {
-                this._options.openExternalWindow(true)
+            openExtensionInExternalWindow: (group: string, cb: ApiCallback<undefined>) => {
+                this._options.openExternalWindow({
+                    group,
+                    force: true,
+                })
                 cb(null)
             },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),

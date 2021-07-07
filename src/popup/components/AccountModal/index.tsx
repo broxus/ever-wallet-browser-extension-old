@@ -29,7 +29,10 @@ export function AccountModal() {
 
     const selectedSeedName = React.useMemo(() => {
         if (accountability.selectedMasterKey !== undefined) {
-            return accountability.masterKeysNames[accountability.selectedMasterKey] || convertAddress(accountability.selectedMasterKey)
+            return (
+                accountability.masterKeysNames[accountability.selectedMasterKey] ||
+                convertAddress(accountability.selectedMasterKey)
+            )
         }
         return undefined
     }, [accountability.masterKeysNames, accountability.selectedMasterKey])
@@ -60,10 +63,9 @@ export function AccountModal() {
 
         if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
             drawer.setPanel(Panel.MANAGE_SEEDS)
-        }
-        else {
+        } else {
             await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.MANAGE_SEEDS)
-            await rpc.openExtensionInExternalWindow()
+            await rpc.openExtensionInExternalWindow('manage_seeds')
             window.close()
         }
     }
@@ -72,10 +74,7 @@ export function AccountModal() {
 
     return (
         <>
-            <div
-                className="account-details__profile-icon"
-                onClick={toggle}
-            >
+            <div className="account-details__profile-icon" onClick={toggle}>
                 <img src={Profile} alt="" />
             </div>
 
@@ -90,9 +89,7 @@ export function AccountModal() {
                     <div className="account-settings-separator" />
 
                     <div className="account-settings-section">
-                        <div className="account-settings-section-header">
-                            Recent seeds
-                        </div>
+                        <div className="account-settings-section-header">Recent seeds</div>
 
                         <ul className="account-settings__seeds-list">
                             {accountability.masterKeys.map((key) => (
@@ -103,24 +100,25 @@ export function AccountModal() {
                                         onClick={onManageMasterKey(key.masterKey)}
                                     >
                                         <div className="account-settings__seeds-list-item-title">
-                                            {accountability.masterKeysNames?.[key.masterKey] || convertAddress(key.masterKey)}
+                                            {accountability.masterKeysNames?.[key.masterKey] ||
+                                                convertAddress(key.masterKey)}
                                         </div>
                                     </a>
                                 </li>
                             ))}
                         </ul>
 
-                        <div
-                            className="account-settings-section-item"
-                            onClick={onManageSeeds}
-                        >
+                        <div className="account-settings-section-item" onClick={onManageSeeds}>
                             Manage seeds & accounts
                         </div>
                     </div>
 
                     <div className="account-settings-separator" />
 
-                    <div className="account-settings-section-item-log-out" onClick={accountability.logOut}>
+                    <div
+                        className="account-settings-section-item-log-out"
+                        onClick={accountability.logOut}
+                    >
                         Log out
                     </div>
                     <div className="account-settings-section-item-version">
@@ -129,7 +127,5 @@ export function AccountModal() {
                 </div>
             )}
         </>
-
     )
 }
-
