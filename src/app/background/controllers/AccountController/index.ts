@@ -54,6 +54,7 @@ export interface AccountControllerState extends BaseState {
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
+    accountUnconfirmedTransactions: { [address: string]: nt.MultisigPendingTransaction[] }
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
@@ -74,6 +75,7 @@ const defaultState: AccountControllerState = {
     accountContractStates: {},
     accountTokenStates: {},
     accountTransactions: {},
+    accountUnconfirmedTransactions: {},
     accountTokenTransactions: {},
     accountPendingMessages: {},
     accountsVisibility: {},
@@ -1077,6 +1079,15 @@ export class AccountController extends BaseController<
             ) {
                 this._controller._updateTransactions(this._address, transactions, info)
             }
+
+            onUnconfirmedTransactionsChanged(
+                unconfirmedTransactions: nt.MultisigPendingTransaction[]
+            ) {
+                this._controller._updateUnconfirmedTransactions(
+                    this._address,
+                    unconfirmedTransactions
+                )
+            }
         }
 
         console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
@@ -1332,6 +1343,19 @@ export class AccountController extends BaseController<
         }
         this.update({
             accountTransactions: newTransactions,
+        })
+    }
+
+    private _updateUnconfirmedTransactions(
+        address: string,
+        unconfirmedTransactions: nt.MultisigPendingTransaction[]
+    ) {
+        const accountUnconfirmedTransactions = {
+            ...this.state.accountUnconfirmedTransactions,
+            [address]: unconfirmedTransactions,
+        }
+        this.update({
+            accountUnconfirmedTransactions,
         })
     }
 

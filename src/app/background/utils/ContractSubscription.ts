@@ -32,8 +32,8 @@ export interface IContract {
 export class ContractSubscription<C extends IContract> {
     private readonly _connection: nt.GqlConnection | nt.JrpcConnection
     private readonly _address: string
-    private readonly _contract: C
-    private readonly _contractMutex: Mutex = new Mutex()
+    protected readonly _contract: C
+    protected readonly _contractMutex: Mutex = new Mutex()
     private _releaseConnection?: () => void
     private _loopPromise?: Promise<void>
     private _refreshTimer?: [number, () => void]
@@ -83,6 +83,8 @@ export class ContractSubscription<C extends IContract> {
             while (this._isRunning) {
                 const pollingMethodChanged = previousPollingMethod != this._currentPollingMethod
                 previousPollingMethod = this._currentPollingMethod
+
+                await this.onBeforeRefresh()
 
                 if (isSimpleTransport || this._currentPollingMethod == 'manual') {
                     this._currentBlockId = undefined
@@ -229,4 +231,6 @@ export class ContractSubscription<C extends IContract> {
                 throw err
             })
     }
+
+    protected async onBeforeRefresh(): Promise<void> {}
 }

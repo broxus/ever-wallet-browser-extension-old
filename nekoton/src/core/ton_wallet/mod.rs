@@ -146,40 +146,34 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "getCustodians")]
-    pub fn get_custodians(&self) -> Result<PromiseCustodiansList, JsValue> {
+    pub fn get_custodians(&self) -> Result<CustodiansList, JsValue> {
         let inner = self.inner.clone();
 
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet
-                .get_custodians()
-                .as_ref()
-                .ok_or_else(|| TonWalletError::CustodiansNotFound)
-                .handle_error()?;
+        let wallet = inner.wallet.lock().trust_me();
+        let custodians = wallet
+            .get_custodians()
+            .as_ref()
+            .ok_or_else(|| TonWalletError::CustodiansNotFound)
+            .handle_error()?;
 
-            Ok(custodians
-                .iter()
-                .map(|item| JsValue::from_str(&item.to_hex_string()))
-                .collect::<js_sys::Array>()
-                .unchecked_into())
-        })))
+        Ok(custodians
+            .iter()
+            .map(|item| JsValue::from_str(&item.to_hex_string()))
+            .collect::<js_sys::Array>()
+            .unchecked_into())
     }
 
     #[wasm_bindgen(js_name = "getMultisigPendingTransactions")]
-    pub fn get_pending_transactions(
-        &self,
-    ) -> Result<PromiseMultisigPendingTransactionList, JsValue> {
+    pub fn get_pending_transactions(&self) -> Result<MultisigPendingTransactionList, JsValue> {
         let inner = self.inner.clone();
 
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.get_unconfirmed_transactions().to_vec();
-            Ok(custodians
-                .into_iter()
-                .map(make_multisig_pending_transaction)
-                .collect::<js_sys::Array>()
-                .unchecked_into())
-        })))
+        let wallet = inner.wallet.lock().trust_me();
+        let custodians = wallet.get_unconfirmed_transactions().to_vec();
+        Ok(custodians
+            .into_iter()
+            .map(make_multisig_pending_transaction)
+            .collect::<js_sys::Array>()
+            .unchecked_into())
     }
 
     #[wasm_bindgen(js_name = "getContractState")]
@@ -376,8 +370,6 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
     ) {
         use crate::core::models::*;
 
-        log::info!("Found transactions: {:?}", transactions);
-
         self.inner.on_transactions_found(
             transactions
                 .into_iter()
@@ -502,7 +494,6 @@ fn make_ton_wallet_transaction(
     data: core_models::TransactionWithData<core_models::TransactionAdditionalInfo>,
 ) -> TonWalletTransaction {
     let transaction = crate::core::models::make_transaction(data.transaction);
-    log::info!("Transaction data: {:?}", data.data);
     if let Some(data) = data.data {
         js_sys::Reflect::set(
             &transaction,
