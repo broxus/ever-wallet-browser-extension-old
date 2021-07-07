@@ -50,6 +50,14 @@ pub fn make_transaction_additional_info(
             "ton_event_status_changed",
             JsValue::from(status.to_string()),
         ),
+        models::TransactionAdditionalInfo::MultisigTransaction(multisig_transaction) => {
+            log::info!("Parsed multisig transaction: {:?}", multisig_transaction);
+            let multisig_transaction = match JsValue::from_serde(&multisig_transaction) {
+                Ok(transaction) => transaction,
+                Err(_) => return None,
+            };
+            ("multisig_transaction", multisig_transaction)
+        },
         _ => return None,
     };
 
