@@ -16,7 +16,8 @@ export type TransactionAdditionalInfo =
     | EnumItem<'depool_receive_answer', DePoolReceiveAnswerNotification>
     | EnumItem<'token_wallet_deployed', TokenWalletDeployedNotification>
     | EnumItem<'eth_event_status_changed', EthEventStatusChanged>
-    | EnumItem<'ton_event_status_changed', TonEventStatusChanged>;
+    | EnumItem<'ton_event_status_changed', TonEventStatusChanged>
+    | EnumItem<'multisig_transaction', MultisigTransactionInfo>;
 "#;
 
 #[wasm_bindgen]
@@ -50,14 +51,10 @@ pub fn make_transaction_additional_info(
             "ton_event_status_changed",
             JsValue::from(status.to_string()),
         ),
-        models::TransactionAdditionalInfo::MultisigTransaction(multisig_transaction) => {
-            log::info!("Parsed multisig transaction: {:?}", multisig_transaction);
-            let multisig_transaction = match JsValue::from_serde(&multisig_transaction) {
-                Ok(transaction) => transaction,
-                Err(_) => return None,
-            };
-            ("multisig_transaction", multisig_transaction)
-        },
+        models::TransactionAdditionalInfo::MultisigTransaction(multisig_transaction) => (
+            "multisig_transaction",
+            make_multisig_transaction_info(multisig_transaction).unchecked_into(),
+        ),
         _ => return None,
     };
 
@@ -167,6 +164,141 @@ export type TonEventStatus =
     | 'Confirmed'
     | 'Rejected';
 "#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_TRANSACTION_INFO: &str = r#"
+export type MultisigTransactionInfo =
+    | EnumItem<'send', MultisigSendTransactionInfo>
+    | EnumItem<'submit', MultisigSubmitTransactionInfo>
+    | EnumItem<'confirm', MultisigConfirmTransactionInfo>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigTransactionInfo")]
+    pub type MultisigTransactionInfo;
+}
+
+pub fn make_multisig_transaction_info(
+    data: models::MultisigTransaction,
+) -> MultisigTransactionInfo {
+    let (ty, data): (_, JsValue) = match data {
+        models::MultisigTransaction::Send(send) => (
+            "send",
+            make_multisig_send_transaction_info(send).unchecked_into(),
+        ),
+        models::MultisigTransaction::Submit(submit) => (
+            "submit",
+            make_multisig_submit_transaction_info(submit).unchecked_into(),
+        ),
+        models::MultisigTransaction::Confirm(confirm) => (
+            "confirm",
+            make_multisig_confirm_transaction_info(confirm).unchecked_into(),
+        ),
+    };
+
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("data", data)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_SEND_TRANSACTION_INFO: &str = r#"
+export type MultisigSendTransactionInfo = {
+    dest: string,
+    value: string,
+    bounce: boolean,
+    flags: number,
+    payload: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigSendTransactionInfo")]
+    pub type MultisigSendTransactionInfo;
+}
+
+pub fn make_multisig_send_transaction_info(
+    data: models::MultisigSendTransaction,
+) -> MultisigSendTransactionInfo {
+    ObjectBuilder::new()
+        .set("dest", data.dest.to_string())
+        .set("value", data.value.to_string())
+        .set("bounce", data.bounce)
+        .set("flags", data.flags)
+        .set(
+            "payload",
+            ton_types::serialize_toc(&data.payload)
+                .map(|data| base64::encode(&data))
+                .ok()
+                .unwrap_or_default(),
+        )
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_SUBMIT_TRANSACTION_INFO: &str = r#"
+export type MultisigSubmitTransactionInfo = {
+    dest: string,
+    value: string,
+    bounce: boolean,
+    allBalance: boolean,
+    payload: string,
+    transactionId: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigSubmitTransactionInfo")]
+    pub type MultisigSubmitTransactionInfo;
+}
+
+pub fn make_multisig_submit_transaction_info(
+    data: models::MultisigSubmitTransaction,
+) -> MultisigSubmitTransactionInfo {
+    ObjectBuilder::new()
+        .set("dest", data.dest.to_string())
+        .set("value", data.value.to_string())
+        .set("bounce", data.bounce)
+        .set("allBalance", data.all_balance)
+        .set(
+            "payload",
+            ton_types::serialize_toc(&data.payload)
+                .map(|data| base64::encode(&data))
+                .ok()
+                .unwrap_or_default(),
+        )
+        .set("transactionId", data.trans_id.to_string())
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_CONFIRM_TRANSACTION_INFO: &str = r#"
+export type MultisigConfirmTransactionInfo = {
+    transactionId: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigConfirmTransactionInfo")]
+    pub type MultisigConfirmTransactionInfo;
+}
+
+pub fn make_multisig_confirm_transaction_info(
+    data: models::MultisigConfirmTransaction,
+) -> MultisigConfirmTransactionInfo {
+    ObjectBuilder::new()
+        .set("transactionId", data.transaction_id.to_string())
+        .build()
+        .unchecked_into()
+}
 
 #[wasm_bindgen(typescript_custom_section)]
 const SYMBOL: &str = r#"
