@@ -44,9 +44,8 @@ ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
 
 [dependencies.nt]
 package = "nekoton"
-#git = "https://github.com/broxus/nekoton.git"
-#branch = "master"
-path = "../../nekoton"
+git = "https://github.com/broxus/nekoton.git"
+branch = "master"
 features = ["web", "gql_transport", "jrpc_transport"]
 
 [dev-dependencies]
