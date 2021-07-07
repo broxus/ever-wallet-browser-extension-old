@@ -4,11 +4,12 @@ import { useForm } from 'react-hook-form'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 
+
 type Props = {
 	disabled?: boolean;
 	error?: string;
-	onSubmit: (password: string) => void;
-	onBack: () => void;
+	onSubmit(password: string): void;
+	onBack(): void;
 }
 
 export function EnterNewSeedPasswords({
@@ -46,6 +47,7 @@ export function EnterNewSeedPasswords({
 							</div>
 						)}
 					</div>
+
 					<div className="accounts-management__content-form-row">
 						<Input
 							name="passwordConfirm"
@@ -66,7 +68,7 @@ export function EnterNewSeedPasswords({
 				</div>
 				{error !== undefined && (
 					<div className="accounts-management__content-error">
-						{}
+						{error}
 					</div>
 				)}
 			</form>

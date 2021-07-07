@@ -5,7 +5,7 @@ import ReactTooltip from 'react-tooltip'
 
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 
 
@@ -14,12 +14,13 @@ type Props = {
 }
 
 enum ExportSeedStep {
+	PASSWORD_REQUEST,
 	COPY_SEED_PHRASE,
 	SEED_PHRASE_COPIED,
 }
 
 export function ExportSeed({ onBack }: Props): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
 	const rpc = useRpc()
 
 	const { register, handleSubmit, errors } = useForm<{ password: string }>()
@@ -27,7 +28,7 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 	const [error, setError] = React.useState<string>()
 	const [inProcess, setInProcess] = React.useState(false)
 	const [seedPhrase, setSeedPhrase] = React.useState<string[]>()
-	const [step, setStep] = React.useState<ExportSeedStep | null>(null)
+	const [step, setStep] = React.useState<ExportSeedStep>(ExportSeedStep.PASSWORD_REQUEST)
 
 	const onCopy = () => {
 		setStep(ExportSeedStep.SEED_PHRASE_COPIED)
@@ -37,29 +38,37 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 		if (accountability.currentMasterKey == null) {
 			return
 		}
+
 		setInProcess(true)
-		await rpc.exportMasterKey({
-			type: 'master_key',
-			data: {
-				masterKey: accountability.currentMasterKey.masterKey,
-				password,
-			}
-		}).then(({ phrase }) => {
-			setSeedPhrase(phrase.split(' '))
-			setStep(ExportSeedStep.COPY_SEED_PHRASE)
-		}).catch((err: string) => {
-			try {
+
+		try {
+			await rpc.exportMasterKey({
+				type: 'master_key',
+				data: {
+					masterKey: accountability.currentMasterKey.masterKey,
+					password,
+				}
+			}).then(({ phrase }) => {
+				setSeedPhrase(phrase.split(' '))
+				setStep(ExportSeedStep.COPY_SEED_PHRASE)
+			}).catch((err: string) => {
 				setError(err?.toString?.().replace(/Error: /gi, ''))
-			} catch (e) {}
-		}).finally(() => {
+			}).finally(() => {
+				setInProcess(false)
+			})
+		}
+		catch (e) {
+			setError(e.toString?.().replace(/Error: /gi, ''))
+		}
+		finally {
 			setInProcess(false)
-		})
+		}
 	}
 
 	return (
 		<>
-			{step == null && (
-				<div key="start" className="accounts-management__content">
+			{step === ExportSeedStep.PASSWORD_REQUEST && (
+				<div key="passwordRequest" className="accounts-management__content">
 					<h2 className="accounts-management__content-title">Export a seed phrase</h2>
 
 					<form onSubmit={handleSubmit(onSubmit)}>
@@ -75,6 +84,7 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 									label="Enter seed password..."
 									type="password"
 								/>
+
 								{(errors.password || error) && (
 									<div className="accounts-management__content-error">
 										{errors.password && 'The password is required'}

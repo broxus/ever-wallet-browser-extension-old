@@ -1,9 +1,9 @@
-import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
 import * as React from 'react'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import RadioButton from '@popup/components/RadioButton'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
 
 
 const CONTRACT_TYPES: { [K in nt.ContractType]?: string } = {
@@ -34,7 +34,7 @@ export function NewAccountContractType({
 	onSubmit,
 	onBack,
 }: Props): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
 
 	if (mode === 'legacy') {
 		CONTRACT_TYPES['WalletV3'] = 'WalletV3 (legacy)'
@@ -91,8 +91,8 @@ export function NewAccountContractType({
 					<Button
 						text="Back"
 						disabled={disabled}
-						onClick={onBack}
 						white
+						onClick={onBack}
 					/>
 				</div>
 				<Button

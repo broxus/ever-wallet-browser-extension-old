@@ -45,6 +45,12 @@ type ContextConsumer = {
 	state?: ControllerState;
 }
 
+export const closeCurrentWindow = () => {
+	chrome.windows.getCurrent((windowDetails) => {
+		chrome.windows.remove(windowDetails.id)
+	})
+}
+
 export const Context = React.createContext<ContextConsumer>({
 	activeTab: undefined,
 	loaded: false,
@@ -77,9 +83,10 @@ function Provider({ children, activeTab, fetchManifest }: Props): JSX.Element {
 						//     Object.keys((state as any).pendingApprovals).length === 0
 						// ) {
 						//     closeCurrentWindow()
-						// } else {
+						// }
+						// else {
 						//     console.log('Got state', state)
-						//     setControllerState(state as any)
+						//     setState(state as any)
 						// }
 						console.log('Got state', state)
 						setState(state as any)
@@ -95,13 +102,15 @@ function Provider({ children, activeTab, fetchManifest }: Props): JSX.Element {
 			) {
 				await rpc.openExtensionInBrowser({})
 				window.close()
-			} else if (
+			}
+			else if (
 				state.selectedAccount != null &&
 				activeTab.type === 'fullscreen' &&
 				activeTab.data.route == null
 			) {
 				window.close()
-			} else {
+			}
+			else {
 				setState(state)
 			}
 

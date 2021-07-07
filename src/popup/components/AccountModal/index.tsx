@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import { hideModalOnClick } from '@popup/common'
-import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
@@ -18,7 +18,7 @@ import './style.scss'
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountModal() {
-    const accountability = useAccountsManagement()
+    const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -47,11 +47,16 @@ export function AccountModal() {
 
     const onManageMasterKey = (masterKey: string) => {
         return () => {
-            const key = accountability.masterKeys.find((entry) => entry.masterKey === masterKey)
+            const key = accountability.masterKeys.find(
+                (entry) => entry.masterKey === masterKey
+            )
+
             if (key == null) {
                 return
             }
+
             hide()
+
             accountability.setCurrentMasterKey(key)
             accountability.setStep(Step.MANAGE_SEED)
             drawer.setPanel(Panel.MANAGE_SEEDS)
@@ -92,7 +97,7 @@ export function AccountModal() {
                         <div className="account-settings-section-header">Recent seeds</div>
 
                         <ul className="account-settings__seeds-list">
-                            {accountability.masterKeys.map((key) => (
+                            {accountability.recentMasterKeys.map((key) => (
                                 <li key={key.masterKey}>
                                     <a
                                         role="button"

@@ -5,7 +5,7 @@ import * as nt from '@nekoton'
 import { ExportSeed } from '@popup/components/AccountsManagement/components'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { convertAddress } from '@shared/utils'
@@ -13,13 +13,12 @@ import { convertAddress } from '@shared/utils'
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
-
 enum ManageSeedStep {
 	EXPORT_SEED,
 }
 
 export function ManageSeed(): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
 	const rpc = useRpc()
 	const rpcState = useRpcState()
 
@@ -41,9 +40,9 @@ export function ManageSeed(): JSX.Element {
 		accountability.setStep(Step.CREATE_DERIVED_KEY)
 	}
 
-	const saveName = () => {
+	const saveName = async () => {
 		if (accountability.currentMasterKey !== undefined && name) {
-			rpc.updateMasterKeyName(accountability.currentMasterKey.masterKey, name)
+			await rpc.updateMasterKeyName(accountability.currentMasterKey.masterKey, name)
 		}
 	}
 
@@ -63,7 +62,7 @@ export function ManageSeed(): JSX.Element {
 
 			default:
 				accountability.reset()
-				accountability.setStep(null)
+				accountability.setStep(Step.MANAGE_SEEDS)
 		}
 	}
 

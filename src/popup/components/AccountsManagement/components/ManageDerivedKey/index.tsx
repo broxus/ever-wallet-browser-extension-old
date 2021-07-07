@@ -7,15 +7,16 @@ import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import UserAvatar from '@popup/components/UserAvatar'
-import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { convertAddress } from '@shared/utils'
 
 import Arrow from '@popup/img/arrow.svg'
+import { AccountsList } from '@popup/components/AccountsManagement/components'
 
 
 export function ManageDerivedKey(): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
 	const rpc = useRpc()
 
 	const [name, setName] = React.useState(
@@ -28,18 +29,19 @@ export function ManageDerivedKey(): JSX.Element {
 		accountability.setStep(Step.CREATE_ACCOUNT)
 	}
 
-	const saveName = () => {
+	const saveName = async () => {
 		if (accountability.currentDerivedKey !== undefined && name) {
-			rpc.updateDerivedKeyName(accountability.currentDerivedKey.publicKey, name)
+			await rpc.updateDerivedKeyName(accountability.currentDerivedKey.publicKey, name)
 		}
 	}
 
 	const onManageAccount = (account: nt.AssetsList) => {
-		return () => accountability.onManageAccount(account)
+		accountability.onManageAccount(account)
 	}
 
 	const onBack = () => {
 		accountability.setStep(Step.MANAGE_SEED)
+		accountability.setCurrentDerivedKey(undefined)
 	}
 
 	React.useEffect(() => {
@@ -111,7 +113,6 @@ export function ManageDerivedKey(): JSX.Element {
 			</div>
 
 			<div className="accounts-management__content-header">My accounts</div>
-
 			<div className="accounts-management__divider" />
 
 			{accountability.derivedKeyRelatedAccounts.length === 0 ? (
@@ -119,35 +120,28 @@ export function ManageDerivedKey(): JSX.Element {
 					No accounts yet
 				</div>
 			) : (
-				<ul className="accounts-management__list">
-					{accountability.derivedKeyRelatedAccounts.map(account => (
-						<li key={account.tonWallet.address}>
-							<div
-								role="button"
-								className={classNames('accounts-management__list-item', {
-									'accounts-management__list-item--active': (
-										account.tonWallet.address === accountability.selectedAccountAddress
-									)
-								})}
-								onClick={onManageAccount(account)}
-							>
-								<UserAvatar
-									address={account.tonWallet.address}
-									className="accounts-management__list-item-icon"
-									small
-								/>
-								<div className="accounts-management__list-item-title">
-									{account.name || convertAddress(account.tonWallet.address)}
-								</div>
-								<div className="accounts-management__list-item-visibility">
-									{accountability.accountsVisibility[account.tonWallet.address] ? 'Displayed' : 'Hidden'}
-								</div>
-								<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
-							</div>
-						</li>
-					))}
-				</ul>
+				<AccountsList
+					items={accountability.derivedKeyRelatedAccounts}
+					onClick={onManageAccount}
+				/>
 			)}
+
+			{accountability.derivedKeyExternalAccounts.length > 0 ? (
+				<>
+					<div
+						className="accounts-management__content-header"
+						style={{ marginTop: 20 }}
+					>
+						External accounts
+					</div>
+					<div className="accounts-management__divider" />
+
+					<AccountsList
+						items={accountability.derivedKeyExternalAccounts}
+						onClick={onManageAccount}
+					/>
+				</>
+			) : null}
 
 			<div className="accounts-management__content-buttons">
 				<div className="accounts-management__content-buttons-back-btn">

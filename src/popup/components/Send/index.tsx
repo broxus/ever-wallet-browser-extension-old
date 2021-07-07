@@ -40,6 +40,8 @@ type IEnterPassword = {
     onBack: () => void
 }
 
+// todo: сравнить с глобальным компонентом
+// todo: keyEntry как массив
 const EnterPassword: React.FC<IEnterPassword> = ({
     keyEntry,
     params,
@@ -509,9 +511,9 @@ const Send: React.FC<ISend> = ({
                 onSubmit={(message) => trySendMessage(message)}
             />
         )
-    } else {
-        return <TransactionProgress pendingResponse={pendingResponse} onBack={onBack} />
     }
+
+    return <TransactionProgress pendingResponse={pendingResponse} onBack={onBack} />
 }
 
 export default Send

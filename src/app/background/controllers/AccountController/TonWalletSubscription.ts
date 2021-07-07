@@ -31,7 +31,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
         }
     }
 
-    public static async subscribe_by_address(
+    public static async subscribeByAddress(
         connectionController: ConnectionController,
         address: string,
         handler: IContractHandler<nt.Transaction>

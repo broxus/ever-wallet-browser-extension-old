@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import { AccountDetails } from '@popup/components/AccountDetails'
+import { CreateAccount } from '@popup/components/AccountsManagement/components'
 import { DeployWallet } from '@popup/components/DeployWallet'
 import UserAssets from '@popup/components/UserAssets'
 import SlidingPanel from '@popup/components/SlidingPanel'
@@ -12,8 +13,7 @@ import KeyStorage from '@popup/components/KeyStorage'
 import TransactionInfo from '@popup/components/TransactionInfo'
 import AssetFull from '@popup/components/AssetFull'
 import CollectTokens from '@popup/components/CollectTokens'
-import CreateAccountPage from '@popup/pages/CreateAccountPage'
-import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
@@ -25,12 +25,11 @@ import './style.scss'
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function MainPage(): JSX.Element | null {
-    const accountability = useAccountsManagement()
+    const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
 
-    // const [openedPanel, setOpenedPanel] = React.useState<Panel>()
     const [selectedTransaction, setSelectedTransaction] = React.useState<nt.Transaction>()
     const [selectedAsset, setSelectedAsset] = React.useState<SelectedAsset>()
     const [ethEventContract, setEthEventContract] = React.useState<string>()
@@ -59,8 +58,17 @@ export function MainPage(): JSX.Element | null {
 
     const { selectedAccount, selectedConnection, storedKeys, knownTokens } = rpcState.state
 
-    const selectedKey = storedKeys[selectedAccount.tonWallet.publicKey]
-    if (selectedKey == null) {
+    const externalAccount = rpcState.state.externalAccountEntries.find((account) => account.address === selectedAccount.tonWallet.address)
+    let selectedKeys = []
+    if (externalAccount !== undefined) {
+        selectedKeys = externalAccount.externalIn.map(key => storedKeys[key])
+    }
+    else {
+        selectedKeys = [storedKeys[selectedAccount.tonWallet.publicKey]]
+    }
+
+    const selectedKey = selectedKeys[0]
+    if (selectedKey === undefined) {
         return null
     }
 
@@ -114,6 +122,7 @@ export function MainPage(): JSX.Element | null {
                     }
                 />
             </div>
+
             <SlidingPanel isOpen={drawer.currentPanel != null} onClose={closePanel}>
                 <>
                     {drawer.currentPanel === Panel.RECEIVE && (
@@ -142,33 +151,8 @@ export function MainPage(): JSX.Element | null {
                         />
                     )}
                     {drawer.currentPanel === Panel.MANAGE_SEEDS && <ManageSeeds />}
-                    {drawer.currentPanel === Panel.DEPLOY && (
-                        <DeployWallet />
-                    )}
-                    {drawer.currentPanel === Panel.COLLECT_TOKENS && ethEventContract && (
-                        <CollectTokens
-                            account={selectedAccount}
-                            keyEntry={selectedKey}
-                            ethEventAddress={ethEventContract}
-                            tonWalletState={tonWalletState}
-                            estimateFees={async (params) =>
-                                rpc.estimateFees(accountAddress, params)
-                            }
-                            prepareMessage={async (params, password) =>
-                                rpc.prepareMessage(accountAddress, params, password)
-                            }
-                            sendMessage={sendMessage}
-                            onBack={closePanel}
-                        />
-                    )}
-                    {drawer.currentPanel === Panel.KEY_STORAGE && <KeyStorage />}
-                    {drawer.currentPanel === Panel.CREATE_ACCOUNT && (
-                        <CreateAccountPage
-                            controllerRpc={rpc}
-                            controllerState={rpcState.state}
-                            onClose={() => drawer.setPanel(undefined)}
-                        />
-                    )}
+                    {drawer.currentPanel === Panel.DEPLOY && <DeployWallet />}
+                    {drawer.currentPanel === Panel.CREATE_ACCOUNT && <CreateAccount />}
                     {drawer.currentPanel === Panel.ASSET && selectedAsset && (
                         <AssetFull
                             account={selectedAccount}
@@ -179,7 +163,7 @@ export function MainPage(): JSX.Element | null {
                             controllerRpc={rpc}
                         />
                     )}
-                    {drawer.currentPanel === Panel.TRANSACTION && selectedTransaction && (
+                    {(drawer.currentPanel === Panel.TRANSACTION && selectedTransaction !== undefined) && (
                         <TransactionInfo transaction={selectedTransaction} />
                     )}
                 </>

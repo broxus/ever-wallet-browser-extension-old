@@ -8,7 +8,7 @@ import Button from '@popup/components/Button'
 import CopyButton from '@popup/components/CopyButton'
 import TransactionProgress from '@popup/components/TransactionProgress'
 import { MultisigData, MultisigForm, PreparedMessage } from '@popup/components/DeployWallet/components'
-import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
@@ -41,7 +41,7 @@ const walletTypesOptions: OptionType[] = [
 ]
 
 export function DeployWallet(): JSX.Element {
-    const accountability = useAccountsManagement()
+    const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -78,8 +78,11 @@ export function DeployWallet(): JSX.Element {
 
         const keyPassword = prepareKey(selectedDerivedKeyEntry, password)
         const params: DeployMessageToPrepare = walletType?.value === DeployWalletType.MULTISIG
-            ? {  type: 'single_owner', ...multisigData }
-            : { type: 'single_owner' }
+            ? {
+                type: 'multiple_owners',
+                custodians: (multisigData?.custodians || []),
+                reqConfirms: parseInt(multisigData?.reqConfirms as unknown as string) || 0,
+            } : { type: 'single_owner' }
 
         setError(undefined)
         setInProcess(true)
@@ -90,9 +93,9 @@ export function DeployWallet(): JSX.Element {
             keyPassword
         ).then((signedMessage) => {
             setPendingResponse(sendMessage(signedMessage))
+            setInProcess(false)
         }).catch((err) => {
             setError(err.toString())
-        }).finally(() => {
             setInProcess(false)
         })
     }
@@ -136,6 +139,8 @@ export function DeployWallet(): JSX.Element {
             setFees(fees)
         }).catch(console.error)
     }, [accountability.selectedAccountAddress, accountability.tonWalletState])
+
+    console.log(multisigData)
 
     if (pendingResponse == null) {
         const balance = new Decimal(accountability.tonWalletState?.balance || '0')
@@ -181,7 +186,11 @@ export function DeployWallet(): JSX.Element {
                                         )}
 
                                         {walletType?.value === DeployWalletType.MULTISIG && (
-                                            <MultisigForm key="multisig" onSubmit={onNextWhenMultisig} />
+                                            <MultisigForm
+                                                key="multisig"
+                                                data={multisigData}
+                                                onSubmit={onNextWhenMultisig}
+                                            />
                                         )}
                                     </>
                                 )

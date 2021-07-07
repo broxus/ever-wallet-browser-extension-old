@@ -55,6 +55,7 @@
         min-height: 32px;
 
         &.slick-disabled {
+            cursor: not-allowed;
             opacity: 0.6;
         }
     }

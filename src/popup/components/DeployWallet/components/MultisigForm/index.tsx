@@ -12,11 +12,14 @@ export type MultisigData = {
 }
 
 type Props = {
+	data?: MultisigData;
 	onSubmit: (data: MultisigData) => void;
 }
 
-export function MultisigForm({ onSubmit }: Props): JSX.Element {
-	const { register, handleSubmit, errors, getValues, setValue } = useForm()
+export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
+	const { register, handleSubmit, errors, getValues, setValue } = useForm({
+		defaultValues: data,
+	})
 
 	const [custodiansCount, setCustodiansCount] = React.useState(1)
 
@@ -40,9 +43,12 @@ export function MultisigForm({ onSubmit }: Props): JSX.Element {
 			<form id="multisig" onSubmit={handleSubmit(onSubmit)}>
 				<div className="deploy-wallet__content-form-rows">
 					<div className="deploy-wallet__content-form-row">
-						<div className="deploy-wallet__content-header">Any transaction requires the confirmation of:</div>
+						<div className="deploy-wallet__content-header">
+							Any transaction requires the confirmation of:
+						</div>
 						<div className="deploy-wallet__field-confirms">
 							<Input
+								autoFocus
 								name="reqConfirms"
 								register={register({
 									required: true,
@@ -50,8 +56,6 @@ export function MultisigForm({ onSubmit }: Props): JSX.Element {
 									max: custodiansCount,
 								})}
 								label="Enter number..."
-								autoFocus
-								type="text"
 							/>
 							<div className="deploy-wallet__field-placeholder">
 								out of {custodiansCount} custodians
@@ -97,7 +101,6 @@ export function MultisigForm({ onSubmit }: Props): JSX.Element {
 										pattern: /^[a-fA-F0-9]{64}$/
 									})}
 									label="Enter public key..."
-									autoFocus
 									type="text"
 								/>
 								{custodiansCount > 1 && (

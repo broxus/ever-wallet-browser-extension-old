@@ -111,6 +111,19 @@
 			margin-bottom: 12px;
 			white-space: nowrap;
 		}
+
+		&-comment {
+			font-family: 'PT Root UI', sans-serif;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: 0.75px;
+			color: #7D8B92;
+			a {
+				cursor: pointer;
+			}
+		}
 	}
 
 	&__name-field {
@@ -287,6 +300,54 @@
 		&-placeholder {
 			margin: 0;
 			padding: 0 16px 0 48px;
+		}
+	}
+
+	&__add-options {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		column-gap: 12px;
+		row-gap: 12px;
+		margin-top: 20px;
+
+		&-icon {
+			margin-bottom: 28px;
+		}
+
+		&-option {
+			cursor: pointer;
+			padding: 16px;
+			display: flex;
+			flex-direction: column;
+			border: 1px solid #dde1e2;
+			font-style: normal;
+			font-weight: bold;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			color: #5e6e77;
+			width: 100%;
+
+			&:first-child {
+				margin-right: 12px;
+			}
+
+			&:hover,
+			&-selected {
+				border: 1px solid rgba(0, 136, 204, 0.3);
+				color: #0088cc;
+
+				svg {
+					path,
+					rect {
+						fill: rgba(0, 136, 204, 1);
+					}
+				}
+			}
+			&-selected {
+				background-color: rgba(0, 136, 204, 0.04);
+			}
 		}
 	}
 }

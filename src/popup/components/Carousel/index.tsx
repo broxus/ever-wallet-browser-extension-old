@@ -12,7 +12,8 @@ type Props = {
     initialSlide?: number;
     onInit?(): void;
     onReInit?(): void;
-    onChange?(currentIndex: number): void;
+    afterChange?(index: number): void;
+    beforeChange?(prevIndex: number, nextIndex: number): void;
 }
 
 export const Carousel = React.forwardRef<ReactSlick, Props>(({
@@ -20,12 +21,14 @@ export const Carousel = React.forwardRef<ReactSlick, Props>(({
     initialSlide = 0,
     onInit,
     onReInit,
-    onChange,
+    afterChange,
+    beforeChange,
 }, ref) => {
     return (
         <ReactSlick
             ref={ref}
-            afterChange={onChange}
+            afterChange={afterChange}
+            beforeChange={beforeChange}
             arrows
             nextArrow={<img src={RightArrow} alt="" />}
             prevArrow={<img src={LeftArrow} alt="" />}

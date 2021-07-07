@@ -7,7 +7,7 @@ import WelcomePage from '@popup/pages/WelcomePage'
 import { MainPage } from '@popup/pages/MainPage'
 import ApprovalPage from '@popup/pages/ApprovalPage'
 import ConnectLedgerPage from '@popup/pages/ConnectLedgerPage'
-import { AccountsManagementProvider } from '@popup/providers/AccountsManagementProvider'
+import { AccountabilityProvider } from '@popup/providers/AccountabilityProvider'
 import { DrawerPanelProvider } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
@@ -23,11 +23,6 @@ const Loader: React.FC = () => {
     )
 }
 
-const closeCurrentWindow = () => {
-    chrome.windows.getCurrent((windowDetails) => {
-        chrome.windows.remove(windowDetails.id)
-    })
-}
 
 function App(): JSX.Element | null {
     const rpc = useRpc()
@@ -51,15 +46,18 @@ function App(): JSX.Element | null {
     if (rpcState.activeTab.type === 'fullscreen') {
         if (rpcState.state.selectedAccount != null && rpcState.activeTab.data.route == 'connect-ledger') {
             return <ConnectLedgerPage controllerRpc={rpc} controllerState={rpcState.state} />
-        } else if (rpcState.state.selectedAccount == null && rpcState.activeTab.data.route == null) {
+        }
+        else if (rpcState.state.selectedAccount == null && rpcState.activeTab.data.route == null) {
             return <WelcomePage controllerState={rpcState.state} controllerRpc={rpc} />
-        } else {
+        }
+        else {
             window.close()
             return null
         }
     }
 
     const pendingApprovals = Object.values(rpcState.state.pendingApprovals || {}) as any[]
+
     if (pendingApprovals.length > 0) {
         return (
             <ApprovalPage
@@ -81,9 +79,9 @@ function App(): JSX.Element | null {
 
     return (
         <DrawerPanelProvider>
-            <AccountsManagementProvider>
+            <AccountabilityProvider>
                 <MainPage />
-            </AccountsManagementProvider>
+            </AccountabilityProvider>
         </DrawerPanelProvider>
     )
 }

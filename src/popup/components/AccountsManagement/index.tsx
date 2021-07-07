@@ -5,20 +5,21 @@ import * as nt from '@nekoton'
 import {
 	CreateAccount,
 	CreateDerivedKey,
-	CreateSeed, ManageAccount,
+	CreateSeed,
+	ManageAccount,
 	ManageDerivedKey,
 	ManageSeed,
 } from '@popup/components/AccountsManagement/components'
 import Arrow from '@popup/img/arrow.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
-import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { convertAddress } from '@shared/utils'
 
 import './style.scss'
 
 
 export function ManageSeeds(): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
 
 	const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
 		return () => accountability.onManageMasterKey(seed)
@@ -31,8 +32,8 @@ export function ManageSeeds(): JSX.Element {
 
 	return (
 		<>
-			{accountability.step == null && (
-				<div key="start" className="accounts-management__content">
+			{accountability.step == Step.MANAGE_SEEDS && (
+				<div key="manageSeeds" className="accounts-management__content">
 					<h2 className="accounts-management__content-title">Manage seeds & subscriptions</h2>
 
 					<div className="accounts-management__content-header">Seeds phrases</div>

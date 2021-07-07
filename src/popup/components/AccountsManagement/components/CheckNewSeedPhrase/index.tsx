@@ -30,6 +30,7 @@ export function CheckNewSeedPhrase({ seedWords, onSubmit, onBack }: Props) {
 	return (
 		<div className="accounts-management__content">
 			<h2 className="accounts-management__content-title">Let’s check the seed phrase</h2>
+
 			<form
 				id="words"
 				onSubmit={handleSubmit(onSubmit)}

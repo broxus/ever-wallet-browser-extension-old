@@ -3,11 +3,13 @@ import { useForm } from 'react-hook-form'
 
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
+import { useRpc } from '@popup/providers/RpcProvider'
 
 
 export function CreateDerivedKey(): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
+	const rpc = useRpc()
 
 	const { register, handleSubmit, errors } = useForm<{ name: string, password: string }>()
 
@@ -18,23 +20,30 @@ export function CreateDerivedKey(): JSX.Element {
 		if (accountability.currentMasterKey == null) {
 			return
 		}
+
 		setInProcess(true)
-		await accountability.onCreateDerivedKey({
-			accountId: accountability.nextAccountId,
-			masterKey: accountability.currentMasterKey.masterKey,
-			name,
-			password,
-		}).then((derivedKey) => {
-			if (derivedKey !== undefined) {
-				accountability.onManageDerivedKey(derivedKey)
-			}
-		}).catch((err: string) => {
-			try {
+
+		try {
+			await rpc.createDerivedKey({
+				accountId: accountability.nextAccountId,
+				masterKey: accountability.currentMasterKey.masterKey,
+				name,
+				password,
+			}).then((derivedKey) => {
+				setInProcess(false)
+
+				if (derivedKey !== undefined) {
+					accountability.onManageDerivedKey(derivedKey)
+				}
+			}).catch((err: string) => {
 				setError(err?.toString?.().replace(/Error: /gi, ''))
-			} catch (e) {}
-		}).finally(() => {
+				setInProcess(false)
+			})
+		}
+		catch (e) {
+			setError(e.toString().replace(/Error: /gi, ''))
 			setInProcess(false)
-		})
+		}
 	}
 
 	const onBack = () => {

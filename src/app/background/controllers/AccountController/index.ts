@@ -60,9 +60,10 @@ export interface AccountControllerState extends BaseState {
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     accountsVisibility: { [address: string]: boolean }
     derivedKeysNames: { [publicKey: string]: string }
+    externalAccountEntries: { address: string; publicKey: string; externalIn: string[] }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
     masterKeysNames: { [masterKey: string]: string }
-    resentMasterKeys: string[]
+    recentMasterKeys: nt.KeyStoreEntry[]
     selectedAccount: nt.AssetsList | undefined
     selectedMasterKey: string | undefined
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
@@ -77,9 +78,10 @@ const defaultState: AccountControllerState = {
     accountPendingMessages: {},
     accountsVisibility: {},
     derivedKeysNames: {},
+    externalAccountEntries: [],
     knownTokens: {},
     masterKeysNames: {},
-    resentMasterKeys: [],
+    recentMasterKeys: [],
     selectedAccount: undefined,
     selectedMasterKey: undefined,
     storedKeys: {},
@@ -150,12 +152,18 @@ export class AccountController extends BaseController<
             masterKeysNames = {}
         }
 
+        let recentMasterKeys = await this._loadRecentMasterKeys()
+        if (recentMasterKeys == null) {
+            recentMasterKeys = []
+        }
+
         this.update({
             accountsVisibility,
             selectedAccount,
             accountEntries,
             derivedKeysNames,
             masterKeysNames,
+            recentMasterKeys,
             selectedMasterKey,
             storedKeys,
         })
@@ -214,6 +222,32 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async startSubscription(address: string, publicKey: string, contractType: nt.ContractType) {
+        console.debug('startSubscription')
+
+        await this._accountsMutex.use(async () => {
+            console.debug('startSubscription -> mutex gained')
+
+            await this._createTonWalletSubscription(
+                address,
+                publicKey,
+                contractType
+            )
+        })
+    }
+
+    public async stopSubscription(address: string) {
+        console.debug('stopSubscription')
+
+        await this._accountsMutex.use(async () => {
+            const subscription = this._tonWalletSubscriptions.get(address)
+            this._tonWalletSubscriptions.delete(address)
+            if (subscription != null) {
+                await subscription.stop()
+            }
+        })
+    }
+
     public async useTonWallet<T>(address: string, f: (wallet: nt.TonWallet) => Promise<T>) {
         const subscription = this._tonWalletSubscriptions.get(address)
         if (!subscription) {
@@ -223,6 +257,10 @@ export class AccountController extends BaseController<
             )
         }
         return subscription.use(f)
+    }
+
+    public async getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
+        return this._getTonWalletInitData(address)
     }
 
     public async useTokenWallet<T>(
@@ -240,6 +278,77 @@ export class AccountController extends BaseController<
         return subscription.use(f)
     }
 
+    public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
+        const { accountsStorage, connectionController } = this.config
+
+        const networkGroup = connectionController.state.selectedConnection.group
+
+        try {
+            await this._accountsMutex.use(async () => {
+                await Promise.all(
+                    Object.entries(params).map(
+                        async ([rootTokenContract, enabled]: readonly [string, boolean]) => {
+                            if (enabled) {
+                                await this._createTokenWalletSubscription(
+                                    address,
+                                    rootTokenContract
+                                )
+                                await accountsStorage.addTokenWallet(
+                                    address,
+                                    networkGroup,
+                                    rootTokenContract
+                                )
+                            } else {
+                                const tokenSubscriptions = this._tokenWalletSubscriptions.get(
+                                    address
+                                )
+                                const subscription = tokenSubscriptions?.get(rootTokenContract)
+                                if (subscription != null) {
+                                    tokenSubscriptions?.delete(rootTokenContract)
+                                    await subscription.stop()
+                                }
+                                await accountsStorage.removeTokenWallet(
+                                    address,
+                                    networkGroup,
+                                    rootTokenContract
+                                )
+                            }
+                        }
+                    )
+                )
+
+                const tokenSubscriptions = this._tokenWalletSubscriptions.get(address)
+
+                const accountTokenTransactions = this.state.accountTokenTransactions
+                const ownerTokenTransactions = {
+                    ...accountTokenTransactions[address],
+                }
+
+                const currentTokenContracts = Object.keys(ownerTokenTransactions)
+                for (const rootTokenContract of currentTokenContracts) {
+                    if (tokenSubscriptions?.get(rootTokenContract) == null) {
+                        delete ownerTokenTransactions[rootTokenContract]
+                    }
+                }
+
+                if ((tokenSubscriptions?.size || 0) == 0) {
+                    delete accountTokenTransactions[address]
+                } else {
+                    accountTokenTransactions[address] = ownerTokenTransactions
+                }
+
+                this.update({
+                    accountTokenTransactions,
+                })
+
+                const assetsList = await accountsStorage.getAccount(address)
+                assetsList && this._updateAssetsList(assetsList)
+            })
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
     public async logOut() {
         console.debug('logOut')
         await this._accountsMutex.use(async () => {
@@ -249,6 +358,11 @@ export class AccountController extends BaseController<
             await this.config.accountsStorage.clear()
             await this.config.keyStore.clear()
             await this._removeSelectedAccountAddress()
+            await this._removeSelectedMasterKey()
+            await this._clearMasterKeysNames()
+            await this._clearDerivedKeysNames()
+            await this._clearAccountsVisibility()
+            await this._clearRecentMasterKeys()
             this.update(_.cloneDeep(defaultState), true)
 
             console.debug('logOut -> mutex released')
@@ -327,6 +441,20 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async updateRecentMasterKey(masterKey: nt.KeyStoreEntry): Promise<void> {
+        await this._saveRecentMasterKey(masterKey)
+
+        let recentMasterKeys = this.state.recentMasterKeys.slice()
+
+        recentMasterKeys = recentMasterKeys.filter((key) => key.masterKey !== masterKey.masterKey)
+        recentMasterKeys.unshift(masterKey)
+        recentMasterKeys = recentMasterKeys.slice(0, 5)
+
+        this.update({
+            recentMasterKeys,
+        })
+    }
+
     public async createDerivedKey({
         accountId,
         masterKey,
@@ -349,13 +477,6 @@ export class AccountController extends BaseController<
             }
 
             this.update({
-                derivedKeysNames:
-                    typeof name === 'string'
-                        ? {
-                              ...this.state.derivedKeysNames,
-                              [entry.publicKey]: name,
-                          }
-                        : { ...this.state.derivedKeysNames },
                 storedKeys: {
                     ...this.state.storedKeys,
                     [entry.publicKey]: entry,
@@ -445,11 +566,6 @@ export class AccountController extends BaseController<
         const { accountsStorage } = this.config
 
         try {
-            const storedKeys = this.state.storedKeys
-            if (storedKeys[publicKey] == null) {
-                throw new Error('Requested key not found')
-            }
-
             const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
 
             const accountEntries = { ...this.state.accountEntries }
@@ -474,6 +590,35 @@ export class AccountController extends BaseController<
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public addExternalAccount(
+        address: string,
+        publicKey: string,
+        externalPublicKey: string
+    ) {
+        let { externalAccountEntries } = this.state
+        let entry = externalAccountEntries.find((account) => account.address === address)
+
+        if (entry == null) {
+            externalAccountEntries.unshift({ address, publicKey, externalIn: [externalPublicKey] })
+            this.update({
+                externalAccountEntries,
+            })
+            return
+        }
+
+        if (!entry.externalIn.includes(externalPublicKey)) {
+            entry.externalIn.push(externalPublicKey)
+        }
+
+        const entryIndex = externalAccountEntries.findIndex((account) => account.address === address)
+        externalAccountEntries.splice(entryIndex, 1)
+        externalAccountEntries.unshift(entry)
+
+        this.update({
+            externalAccountEntries,
+        })
     }
 
     public async selectAccount(address: string | undefined) {
@@ -564,105 +709,39 @@ export class AccountController extends BaseController<
     public updateAccountName(account: nt.AssetsList, name: string) {
         const accountEntries = { ...this.state.accountEntries }
         let pubkeyAssetsList = accountEntries[account.tonWallet.publicKey]
+
         if (pubkeyAssetsList == null) {
-            pubkeyAssetsList = []
-            accountEntries[account.tonWallet.publicKey] = pubkeyAssetsList
+            return
         }
 
         const entryIndex = pubkeyAssetsList.findIndex(
             (item) => item.tonWallet.address === account.tonWallet.address
         )
+
         if (entryIndex < 0) {
-            pubkeyAssetsList.push({ ...account, name })
-        } else {
-            pubkeyAssetsList[entryIndex] = { ...account, name }
+            return
         }
+
+        const entry = pubkeyAssetsList[entryIndex]
+
+        pubkeyAssetsList[entryIndex] = { ...entry, name }
+
+        accountEntries[account.tonWallet.publicKey] = pubkeyAssetsList
 
         this.update({
             accountEntries,
         })
     }
 
-    public async updateAccountVisibility(address: string, visible: boolean): Promise<void> {
-        await this._saveAccountVisibility(address, visible)
+    public async updateAccountVisibility(address: string, value: boolean): Promise<void> {
+        await this._saveAccountVisibility(address, value)
 
         this.update({
             accountsVisibility: {
                 ...this.state.accountsVisibility,
-                [address]: visible,
+                [address]: value,
             },
         })
-    }
-
-    public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
-        const { accountsStorage, connectionController } = this.config
-
-        const networkGroup = connectionController.state.selectedConnection.group
-
-        try {
-            await this._accountsMutex.use(async () => {
-                await Promise.all(
-                    Object.entries(params).map(
-                        async ([rootTokenContract, enabled]: readonly [string, boolean]) => {
-                            if (enabled) {
-                                await this._createTokenWalletSubscription(
-                                    address,
-                                    rootTokenContract
-                                )
-                                await accountsStorage.addTokenWallet(
-                                    address,
-                                    networkGroup,
-                                    rootTokenContract
-                                )
-                            } else {
-                                const tokenSubscriptions = this._tokenWalletSubscriptions.get(
-                                    address
-                                )
-                                const subscription = tokenSubscriptions?.get(rootTokenContract)
-                                if (subscription != null) {
-                                    tokenSubscriptions?.delete(rootTokenContract)
-                                    await subscription.stop()
-                                }
-                                await accountsStorage.removeTokenWallet(
-                                    address,
-                                    networkGroup,
-                                    rootTokenContract
-                                )
-                            }
-                        }
-                    )
-                )
-
-                const tokenSubscriptions = this._tokenWalletSubscriptions.get(address)
-
-                const accountTokenTransactions = this.state.accountTokenTransactions
-                const ownerTokenTransactions = {
-                    ...accountTokenTransactions[address],
-                }
-
-                const currentTokenContracts = Object.keys(ownerTokenTransactions)
-                for (const rootTokenContract of currentTokenContracts) {
-                    if (tokenSubscriptions?.get(rootTokenContract) == null) {
-                        delete ownerTokenTransactions[rootTokenContract]
-                    }
-                }
-
-                if ((tokenSubscriptions?.size || 0) == 0) {
-                    delete accountTokenTransactions[address]
-                } else {
-                    accountTokenTransactions[address] = ownerTokenTransactions
-                }
-
-                this.update({
-                    accountTokenTransactions,
-                })
-
-                const assetsList = await accountsStorage.getAccount(address)
-                assetsList && this._updateAssetsList(assetsList)
-            })
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
     }
 
     public async checkPassword(password: nt.KeyPassword) {
@@ -1403,6 +1482,12 @@ export class AccountController extends BaseController<
         })
     }
 
+    private async _removeSelectedMasterKey(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('selectedMasterKey', () => resolve())
+        })
+    }
+
     private async _loadMasterKeysNames(): Promise<{ [masterKey: string]: string } | undefined> {
         return new Promise<{ [masterKey: string]: string } | undefined>((resolve) => {
             chrome.storage.local.get(['masterKeysNames'], ({ masterKeysNames }) => {
@@ -1411,6 +1496,12 @@ export class AccountController extends BaseController<
                 }
                 resolve(masterKeysNames)
             })
+        })
+    }
+
+    private async _clearMasterKeysNames(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('masterKeysNames', () => resolve())
         })
     }
 
@@ -1426,6 +1517,39 @@ export class AccountController extends BaseController<
         })
     }
 
+    private async _loadRecentMasterKeys(): Promise<nt.KeyStoreEntry[] | undefined> {
+        return new Promise<nt.KeyStoreEntry[] | undefined>((resolve) => {
+            chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
+                if (typeof recentMasterKeys !== 'object') {
+                    return resolve(undefined)
+                }
+                resolve(recentMasterKeys)
+            })
+        })
+    }
+
+    private async _clearRecentMasterKeys(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('recentMasterKeys', () => resolve())
+        })
+    }
+
+    private async _saveRecentMasterKey(masterKey: nt.KeyStoreEntry): Promise<void> {
+        let recentMasterKeys = await this._loadRecentMasterKeys()
+
+        if (!recentMasterKeys || !Array.isArray(recentMasterKeys)) {
+            recentMasterKeys = []
+        }
+
+        recentMasterKeys = recentMasterKeys.filter((key) => key.masterKey !== masterKey.masterKey)
+        recentMasterKeys.unshift(masterKey)
+        recentMasterKeys = recentMasterKeys.slice(0, 5)
+
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ recentMasterKeys }, () => resolve())
+        })
+    }
+
     private async _loadDerivedKeysNames(): Promise<{ [publicKey: string]: string } | undefined> {
         return new Promise<{ [publicKey: string]: string } | undefined>((resolve) => {
             chrome.storage.local.get(['derivedKeysNames'], ({ derivedKeysNames }) => {
@@ -1434,6 +1558,12 @@ export class AccountController extends BaseController<
                 }
                 resolve(derivedKeysNames)
             })
+        })
+    }
+
+    private async _clearDerivedKeysNames(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('derivedKeysNames', () => resolve())
         })
     }
 
@@ -1457,6 +1587,12 @@ export class AccountController extends BaseController<
                 }
                 resolve(accountsVisibility)
             })
+        })
+    }
+
+    private async _clearAccountsVisibility(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('accountsVisibility', () => resolve())
         })
     }
 

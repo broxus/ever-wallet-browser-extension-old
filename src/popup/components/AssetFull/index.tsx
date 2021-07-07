@@ -242,25 +242,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                         />
                     )}
                     {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet
-                            account={account}
-                            keyEntry={selectedKey}
-                            tonWalletState={tonWalletState}
-                            onBack={closePanel}
-                            estimateFees={async () =>
-                                controllerRpc.estimateDeploymentFees(accountAddress)
-                            }
-                            prepareDeployMessage={async (password) =>
-                                controllerRpc.prepareDeploymentMessage(
-                                    accountAddress,
-                                    { type: 'single_owner' },
-                                    password
-                                )
-                            }
-                            sendMessage={async (message) =>
-                                controllerRpc.sendMessage(accountAddress, message)
-                            }
-                        />
+                        <DeployWallet />
                     )}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (
                         <TransactionInfo symbol={symbol} transaction={selectedTransaction} />

@@ -13,121 +13,136 @@ import {
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { selectStyles } from '@popup/constants/selectStyle'
-import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { generateSeed, validateMnemonic } from '@popup/store/app/actions'
+import { useRpc } from '@popup/providers/RpcProvider'
 
 
-enum CreateSeedWay {
+enum AddSeedFlow {
     CREATE,
     IMPORT,
     IMPORT_LEGACY,
     CONNECT_LEDGER,
 }
 
-enum WayStep {
+enum FlowStep {
+    INDEX,
     SHOW_PHRASE,
     CHECK_PHRASE,
-    ENTER_PASSWORD,
+    PASSWORD_REQUEST,
     SELECT_CONTRACT_TYPE,
     IMPORT_PHRASE,
     CONNECT_LEDGER,
 }
 
 type OptionType = {
-    value: CreateSeedWay;
+    value: AddSeedFlow;
     label: string;
 }
 
-const waysOptions: OptionType[] = [
-    { value: CreateSeedWay.CREATE, label: 'Create new seed' },
-    { value: CreateSeedWay.IMPORT, label: 'Import seed' },
-    // { value: CreateSeedWay.IMPORT_LEGACY, label: 'Import seed (legacy)' },
-    // { value: CreateSeedWay.CONNECT_LEDGER, label: 'Connect Ledger' },
+const flowOptions: OptionType[] = [
+    { value: AddSeedFlow.CREATE, label: 'Create new seed' },
+    { value: AddSeedFlow.IMPORT, label: 'Import seed' },
+    // { value: AddSeedFlow.IMPORT_LEGACY, label: 'Import seed (legacy)' },
+    // { value: AddSeedFlow.CONNECT_LEDGER, label: 'Connect Ledger' },
 ]
 
 export function CreateSeed(): JSX.Element {
-    const accountability = useAccountsManagement()
+    const accountability = useAccountability()
+    const rpc = useRpc()
 
     const [error, setError] = React.useState<string>()
     const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
     const [inProcess, setInProcess] = React.useState(false)
     const [name, setName] = React.useState('')
     const [seed, setSeed] = React.useState(generateSeed())
-    const [step, setStep] = React.useState<WayStep | null>(null)
-    const [way, setWay] = React.useState<OptionType | null>(waysOptions[0])
+    const [step, setStep] = React.useState<FlowStep>(FlowStep.INDEX)
+    const [flow, setFlow] = React.useState<OptionType | null>(flowOptions[0])
 
     const seedWords = React.useMemo(() => seed.phrase.split(' '), [seed])
 
-    const onChangeWay = (value: OptionType | null) => {
-        setWay(value)
+    const onChangeFlow = (value: OptionType | null) => {
+        setFlow(value)
     }
 
     const onSubmit = async (password: string) => {
         setInProcess(true)
-        await accountability.onCreateMasterKey({
-            name,
-            password,
-            seed,
-        }).then(async (seed) => {
-            if (seed !== undefined) {
-                await accountability.onCreateAccount({
-                    name: `Account ${accountability.nextAccountId}`,
-                    contractType,
-                    publicKey: seed.publicKey,
-                }).then((account) => {
-                    if (account !== undefined) {
-                        accountability.onManageAccount(account)
-                    }
-                })
-            }
-        }).catch((err: string) => {
-            try {
+
+        try {
+            await rpc.createMasterKey({
+                name,
+                password,
+                seed,
+            }).then(async (seed) => {
+                if (seed !== undefined) {
+                    accountability.onManageMasterKey(seed)
+                    accountability.onManageDerivedKey(seed)
+                    await rpc.createAccount({
+                        contractType,
+                        name: `Account ${accountability.nextAccountId + 1}`,
+                        publicKey: seed.publicKey,
+                    }).then((account) => {
+                        setInProcess(false)
+
+                        if (account !== undefined) {
+                            accountability.onManageAccount(account)
+                        }
+                    }).catch((err: string) => {
+                        setError(err?.toString?.().replace(/Error: /gi, ''))
+                        setInProcess(false)
+                    })
+                }
+            }).catch((err: string) => {
                 setError(err?.toString?.().replace(/Error: /gi, ''))
                 setInProcess(false)
-            } catch (e) {}
-        })
+            })
+        }
+        catch (e) {
+            setError(e.toString().replace(/Error: /gi, ''))
+            setInProcess(false)
+        }
     }
 
     const onNext = () => {
         switch (step) {
-            case WayStep.SHOW_PHRASE:
-                setStep(WayStep.CHECK_PHRASE)
+            case FlowStep.SHOW_PHRASE:
+                setStep(FlowStep.CHECK_PHRASE)
                 break
 
-            case WayStep.CHECK_PHRASE:
-                setStep(WayStep.SELECT_CONTRACT_TYPE)
+            case FlowStep.CHECK_PHRASE:
+                setStep(FlowStep.SELECT_CONTRACT_TYPE)
                 break
 
-            case WayStep.SELECT_CONTRACT_TYPE:
-                setStep(WayStep.ENTER_PASSWORD)
+            case FlowStep.SELECT_CONTRACT_TYPE:
+                setStep(FlowStep.PASSWORD_REQUEST)
                 break
 
             default:
-                if (way?.value === CreateSeedWay.CREATE) {
-                    setStep(WayStep.SHOW_PHRASE)
+                if (flow?.value === AddSeedFlow.CREATE) {
+                    setStep(FlowStep.SHOW_PHRASE)
                 }
                 else if (
-                    way?.value === CreateSeedWay.IMPORT
-                    || way?.value === CreateSeedWay.IMPORT_LEGACY
+                    flow?.value === AddSeedFlow.IMPORT
+                    || flow?.value === AddSeedFlow.IMPORT_LEGACY
                 ) {
-                    setStep(WayStep.IMPORT_PHRASE)
+                    setStep(FlowStep.IMPORT_PHRASE)
                 }
-                else if (way?.value === CreateSeedWay.CONNECT_LEDGER) {
-                    setStep(WayStep.CONNECT_LEDGER)
+                else if (flow?.value === AddSeedFlow.CONNECT_LEDGER) {
+                    setStep(FlowStep.CONNECT_LEDGER)
                 }
         }
     }
 
     const onNextWhenImport = (words: string[]) => {
         const phrase = words.join(' ')
-        const mnemonicType: nt.MnemonicType = way?.value === CreateSeedWay.IMPORT_LEGACY
+        const mnemonicType: nt.MnemonicType = flow?.value === AddSeedFlow.IMPORT_LEGACY
             ? { type: 'legacy' }
             : { type: 'labs', accountId: 0 }
 
         try {
             validateMnemonic(phrase, mnemonicType)
             setSeed({ phrase, mnemonicType })
-            setStep(WayStep.SELECT_CONTRACT_TYPE)
+            setStep(FlowStep.SELECT_CONTRACT_TYPE)
         }
         catch (e) {
             setError(e.toString())
@@ -136,45 +151,51 @@ export function CreateSeed(): JSX.Element {
 
     const onBack = () => {
         switch (step) {
-            case WayStep.SHOW_PHRASE:
-            case WayStep.IMPORT_PHRASE:
-                setStep(null)
+            case FlowStep.SHOW_PHRASE:
+            case FlowStep.IMPORT_PHRASE:
+                setStep(FlowStep.INDEX)
                 break
 
-            case WayStep.CHECK_PHRASE:
-                setStep(WayStep.SHOW_PHRASE)
+            case FlowStep.CHECK_PHRASE:
+                setStep(FlowStep.SHOW_PHRASE)
                 break
 
-            case WayStep.ENTER_PASSWORD:
-                setStep(WayStep.CHECK_PHRASE)
+            case FlowStep.SELECT_CONTRACT_TYPE:
+                setStep(FlowStep.CHECK_PHRASE)
+                break
+
+            case FlowStep.PASSWORD_REQUEST:
+                setStep(FlowStep.SELECT_CONTRACT_TYPE)
                 break
 
             default:
-                accountability.setStep(null)
+                accountability.setStep(Step.MANAGE_SEEDS)
         }
     }
 
     return (
         <>
-            {step == null && (
-                <div key="start" className="accounts-management__content">
+            {step === FlowStep.INDEX && (
+                <div key="index" className="accounts-management__content">
                     <h2 className="accounts-management__content-title">Add seed phrase</h2>
+
                     <div className="accounts-management__content-form-rows">
                         <div className="accounts-management__content-form-row">
                             <Input
                                 label="Enter seed name..."
                                 autoFocus
                                 type="text"
+                                value={name || ''}
                                 onChange={setName}
                             />
                         </div>
 
                         <div className="accounts-management__content-form-row">
                             <Select
-                                options={waysOptions}
-                                value={way}
+                                options={flowOptions}
+                                value={flow}
                                 styles={selectStyles}
-                                onChange={onChangeWay}
+                                onChange={onChangeFlow}
                             />
                         </div>
                     </div>
@@ -197,7 +218,7 @@ export function CreateSeed(): JSX.Element {
                 </div>
             )}
 
-            {step === WayStep.SHOW_PHRASE && (
+            {step === FlowStep.SHOW_PHRASE && (
                 <NewSeedPhrase
                     key="exportedSeed"
                     seedWords={seedWords}
@@ -206,7 +227,7 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step === WayStep.CHECK_PHRASE && (
+            {step === FlowStep.CHECK_PHRASE && (
                 <CheckNewSeedPhrase
                     key="checkSeed"
                     seedWords={seedWords}
@@ -215,7 +236,7 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step === WayStep.SELECT_CONTRACT_TYPE && (
+            {step === FlowStep.SELECT_CONTRACT_TYPE && (
                 <NewAccountContractType
                     key="accountType"
                     contractType={contractType}
@@ -228,9 +249,9 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step === WayStep.ENTER_PASSWORD && (
+            {step === FlowStep.PASSWORD_REQUEST && (
                 <EnterNewSeedPasswords
-                    key="enterPasswords"
+                    key="passwordRequest"
                     disabled={inProcess}
                     error={error}
                     onSubmit={onSubmit}
@@ -238,10 +259,10 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step === WayStep.IMPORT_PHRASE && (
+            {step === FlowStep.IMPORT_PHRASE && (
                 <ImportSeed
                     key="importSeed"
-                    wordsCount={way?.value === CreateSeedWay.IMPORT_LEGACY ? 24 : 12}
+                    wordsCount={flow?.value === AddSeedFlow.IMPORT_LEGACY ? 24 : 12}
                     onSubmit={onNextWhenImport}
                     onBack={onBack}
                 />

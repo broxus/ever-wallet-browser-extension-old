@@ -3,16 +3,16 @@ import ReactSlick from 'react-slick'
 
 import { createRipple, removeRipple } from '@popup/common'
 import { AccountCard } from '@popup/components/AccountCard'
+import { AddNewAccountCard } from '@popup/components/AddNewAccountCard'
 import { AccountModal } from '@popup/components/AccountModal'
 import { Carousel } from '@popup/components/Carousel'
 import Notifications from '@popup/components/Notifications'
-import { useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { debounce } from '@popup/utils/debounce'
 
-import AddAccount from '@popup/img/add-account.svg'
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
 import ReceiveIcon from '@popup/img/receive.svg'
@@ -24,29 +24,10 @@ import { convertTons } from '@shared/utils'
 
 import './style.scss'
 
-interface IAddNewAccountCard {
-    handleCreateNewAcc: (arg0: number) => void
-}
-
-const AddNewAccountCard: React.FC<IAddNewAccountCard> = ({ handleCreateNewAcc }) => {
-    return (
-        <div className="new-account">
-            {/*@ts-ignore*/}
-            <div onClick={() => handleCreateNewAcc()} className="new-account-icon">
-                <img src={AddAccount} alt="" />
-            </div>
-            <div className="new-account-title">Add account</div>
-            <div className="new-account-comment">
-                You can create a new account or add created one
-            </div>
-        </div>
-    )
-}
-
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountDetails(): JSX.Element {
-    const accountability = useAccountsManagement()
+    const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -80,10 +61,6 @@ export function AccountDetails(): JSX.Element {
         }
     }
 
-    const onCreateAccount = () => {
-        drawer.setPanel(Panel.CREATE_ACCOUNT)
-    }
-
     const onToggleNetwork = async () => {
         const networks = await rpc.getAvailableNetworks()
         const networkId = rpcState.state?.selectedConnection.id
@@ -100,8 +77,8 @@ export function AccountDetails(): JSX.Element {
         nextNetwork && (await rpc.changeNetwork(nextNetwork))
     }
 
-    const onSlide = debounce(async (index: number) => {
-        const account = accountability.accounts[index]
+    const beforeSlide = debounce(async (_, nextIndex: number) => {
+        const account = accountability.accounts[nextIndex]
         if (
             account == null ||
             account.tonWallet.address === accountability.selectedAccount?.tonWallet.address
@@ -146,7 +123,7 @@ export function AccountDetails(): JSX.Element {
                 )}
             </div>
 
-            <Carousel ref={slider} onInit={onInit} onChange={onSlide}>
+            <Carousel ref={slider} onInit={onInit} beforeChange={beforeSlide}>
                 {accountability.accounts.map((account) => (
                     <AccountCard
                         key={account.tonWallet.address}
@@ -159,7 +136,7 @@ export function AccountDetails(): JSX.Element {
                         ).toLocaleString()}
                     />
                 ))}
-                <AddNewAccountCard key="addSlide" handleCreateNewAcc={onCreateAccount} />
+                <AddNewAccountCard key="addSlide" />
             </Carousel>
 
             <div className="account-details__controls noselect">

@@ -1,15 +1,15 @@
-import classNames from 'classnames'
 import * as React from 'react'
+import classNames from 'classnames'
 import QRCode from 'react-qr-code'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { Switcher } from '@popup/components/Switcher'
-import { Step, useAccountsManagement } from '@popup/providers/AccountsManagementProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import { convertAddress } from '@shared/utils'
 
 import Arrow from '@popup/img/arrow.svg'
@@ -17,14 +17,12 @@ import TonKey from '@popup/img/ton-key.svg'
 
 
 export function ManageAccount(): JSX.Element {
-	const accountability = useAccountsManagement()
+	const accountability = useAccountability()
 	const drawer = useDrawerPanel()
 	const rpc = useRpc()
 	const rpcState = useRpcState()
 
-	const [name, setName] = React.useState(
-		accountability.currentAccount ? accountability.currentAccount.name : ''
-	)
+	const [name, setName] = React.useState(accountability.currentAccount?.name || '')
 
 	const isVisible = React.useMemo(() => {
 		if (accountability.currentAccount) {
@@ -35,16 +33,16 @@ export function ManageAccount(): JSX.Element {
 
 	const isActive = React.useMemo(
 		() => accountability.currentAccount?.tonWallet.address === accountability.selectedAccount?.tonWallet.address,
-		[]
+		[accountability.selectedAccount]
 	)
 
 	const relatedKeys = React.useMemo(() => Object.values({ ...rpcState.state?.storedKeys }).filter(
 		key => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
 	), [rpcState.state?.storedKeys])
 
-	const saveName = () => {
+	const saveName = async () => {
 		if (accountability.currentAccount !== undefined && name) {
-			rpc.updateAccountName(accountability.currentAccount, name)
+			await rpc.updateAccountName(accountability.currentAccount, name)
 			accountability.setCurrentAccount({ ...accountability.currentAccount, name })
 		}
 	}
@@ -58,10 +56,15 @@ export function ManageAccount(): JSX.Element {
 			if (accountability.currentAccount == null) {
 				return
 			}
+			await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
 			await rpc.selectAccount(accountability.currentAccount.tonWallet.address).then(() => {
 				drawer.setPanel(undefined)
 				accountability.reset()
 			})
+
+			if (rpcState.activeTab?.type === 'notification') {
+			    closeCurrentWindow()
+			}
 		})
 	}
 
@@ -77,6 +80,7 @@ export function ManageAccount(): JSX.Element {
 
 	const onBack = () => {
 		accountability.setStep(Step.MANAGE_DERIVED_KEY)
+		accountability.setCurrentAccount(undefined)
 	}
 
 	return (
@@ -157,7 +161,6 @@ export function ManageAccount(): JSX.Element {
 				</div>
 				<Button
 					text="Go to account"
-					disabled={accountability.selectedAccount?.tonWallet.address === accountability.currentAccount?.tonWallet.address}
 					onClick={onSelectAccount}
 				/>
 			</div>
