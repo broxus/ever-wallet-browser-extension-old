@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import Select from 'react-select'
 
 import * as nt from '@nekoton'
+import { Fees } from '@popup/utils'
 import Checkbox from '@popup/components/Checkbox'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
@@ -73,7 +74,7 @@ export function PrepareMessage({
     const [inProcess, setInProcess] = React.useState(false)
     const [error, setError] = React.useState<string>()
     const [messageToPrepare, setMessageToPrepare] = React.useState<TransferMessageToPrepare>()
-    const [fees, setFees] = React.useState<string>()
+    const [fees, setFees] = React.useState<Fees>()
     const [notifyReceiver, setNotifyReceiver] = React.useState<boolean>(false)
     const [messageParams, setMessageParams] = React.useState<Message>()
     const [selectedAsset, setSelectedAsset] = React.useState<string>(
@@ -130,6 +131,8 @@ export function PrepareMessage({
     }, [localStep])
 
     const submitMessageParams = async (data: MessageParams) => {
+        let attachedAmount: string | undefined = undefined
+
         let messageToPrepare: TransferMessageToPrepare
         if (selectedAsset.length == 0) {
             messageToPrepare = {
@@ -154,6 +157,8 @@ export function PrepareMessage({
                 }
             )
 
+            attachedAmount = internalMessage.amount
+
             messageToPrepare = {
                 publicKey: selectedKey.publicKey,
                 recipient: internalMessage.destination,
@@ -164,8 +169,11 @@ export function PrepareMessage({
 
         setFees(undefined)
         estimateFees(messageToPrepare)
-            .then((fees) => {
-                setFees(fees)
+            .then((transactionFees) => {
+                setFees({
+                    transactionFees,
+                    attachedAmount,
+                })
             })
             .catch(console.error)
 
