@@ -36,7 +36,7 @@ export type ActiveTab =
 
 type Props = {
     children: React.ReactNode
-    group: string
+    group?: string
     activeTab: ActiveTab
     fetchManifest: StoreAction<typeof fetchManifest>
 }
