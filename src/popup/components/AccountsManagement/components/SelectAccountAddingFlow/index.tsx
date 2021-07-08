@@ -64,13 +64,14 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
     const accountability = useAccountability()
 
     const derivedKeysOptions = React.useMemo<nt.KeyStoreEntry[]>(
-        () => window.ObjectExt
-	        .values(accountability.derivedKeys)
-	        .sort((a, b) => a.accountId - b.accountId), [accountability.derivedKeys]
+    	() => accountability.derivedKeys.sort(
+    		(a, b) => a.accountId - b.accountId
+	    ),
+	    [accountability.derivedKeys]
     )
 
 	const [selectedDerivedKey, setDerivedKey] = React.useState(() => {
-		const key = window.ObjectExt.values(accountability.derivedKeys).find(
+		const key = accountability.derivedKeys.find(
 			(derivedKey) => derivedKey.publicKey === accountability.currentDerivedKey?.publicKey
 		)
 		return key || accountability.derivedKeys[0]

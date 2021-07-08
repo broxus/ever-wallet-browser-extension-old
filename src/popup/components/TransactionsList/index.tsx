@@ -1,14 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react'
-import * as nt from '@nekoton'
+import * as React from 'react'
 
-import TransactionListItem from '@popup/components/TransactionsListItem'
+import * as nt from '@nekoton'
+import { ListItem } from '@popup/components/TransactionsList/ListItem'
 
 import './style.scss'
+
 
 const TRANSACTION_HEIGHT = 109
 const PRELOAD_HEIGHT = TRANSACTION_HEIGHT * 12
 
-type TransactionListProps = {
+type Props = {
     topOffset: number
     fullHeight: number
     scrollArea: React.RefObject<HTMLDivElement>
@@ -18,7 +19,7 @@ type TransactionListProps = {
     preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 }
 
-const TransactionsList: React.FC<TransactionListProps> = ({
+export function TransactionsList({
     topOffset,
     fullHeight,
     scrollArea,
@@ -26,15 +27,15 @@ const TransactionsList: React.FC<TransactionListProps> = ({
     transactions,
     onViewTransaction,
     preloadTransactions,
-}) => {
-    const [scroll, setScroll] = useState(scrollArea.current?.scrollTop || 0)
-    const [latestContinuation, setLatestContinuation] = useState<nt.TransactionId>()
+}: Props) {
+    const [scroll, setScroll] = React.useState(scrollArea.current?.scrollTop || 0)
+    const [latestContinuation, setLatestContinuation] = React.useState<nt.TransactionId>()
 
-    useEffect(() => {
+    React.useEffect(() => {
         setScroll(scrollArea.current?.scrollTop || 0)
     })
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (scrollArea.current == null || transactions.length == 0) {
             return
         }
@@ -110,7 +111,7 @@ const TransactionsList: React.FC<TransactionListProps> = ({
             <div style={{ height: `${offsetHeight}px` }} />
             {slice.map((transaction) => {
                 return (
-                    <TransactionListItem
+                    <ListItem
                         key={`${transaction.id.lt}`}
                         symbol={symbol}
                         transaction={transaction}
@@ -124,5 +125,3 @@ const TransactionsList: React.FC<TransactionListProps> = ({
         </div>
     )
 }
-
-export default TransactionsList

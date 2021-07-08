@@ -32,11 +32,11 @@ export function ManageSeed(): JSX.Element {
 
     const currentDerivedKeyPubKey = React.useMemo(() => {
         if (accountability.selectedAccount?.tonWallet.publicKey !== undefined) {
-            return rpcState.state?.storedKeys[accountability.selectedAccount.tonWallet.publicKey]
+            return rpcState.state.storedKeys[accountability.selectedAccount.tonWallet.publicKey]
                 ?.publicKey
         }
         return undefined
-    }, [accountability.selectedAccount, rpcState.state?.storedKeys])
+    }, [accountability.selectedAccount, rpcState.state.storedKeys])
 
     const addKey = () => {
         accountability.setStep(Step.CREATE_DERIVED_KEY)
@@ -83,18 +83,15 @@ export function ManageSeed(): JSX.Element {
                             value={name || ''}
                             onChange={setName}
                         />
-                        {accountability.currentMasterKey !== undefined &&
-                            (accountability.masterKeysNames[
-                                accountability.currentMasterKey.masterKey
-                            ] !== undefined ||
-                                name) &&
-                            accountability.masterKeysNames[
-                                accountability.currentMasterKey.masterKey
-                            ] !== name && (
+                        {(
+                            accountability.currentMasterKey !== undefined
+                            && (accountability.masterKeysNames[accountability.currentMasterKey.masterKey] !== undefined || name)
+                            && accountability.masterKeysNames[accountability.currentMasterKey.masterKey] !== name
+                        ) && (
                                 <a
                                     role="button"
                                     className="accounts-management__name-button"
-                                    onClick={saveName}
+                                    onMouseDown={saveName}
                                 >
                                     Save
                                 </a>
@@ -108,7 +105,7 @@ export function ManageSeed(): JSX.Element {
                     <div className="accounts-management__divider" />
 
                     <ul className="accounts-management__list">
-                        {window.ObjectExt.values(accountability.derivedKeys)
+                        {accountability.derivedKeys
                             .sort((a, b) => a.accountId - b.accountId)
                             .map((key) => {
                                 const isActive = currentDerivedKeyPubKey === key.publicKey

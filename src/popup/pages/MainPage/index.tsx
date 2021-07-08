@@ -2,15 +2,16 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import { AccountDetails } from '@popup/components/AccountDetails'
+import { ManageSeeds } from '@popup/components/AccountsManagement'
 import { CreateAccount } from '@popup/components/AccountsManagement/components'
 import { DeployWallet } from '@popup/components/DeployWallet'
-import UserAssets from '@popup/components/UserAssets'
-import SlidingPanel from '@popup/components/SlidingPanel'
-import Receive from '@popup/components/Receive'
+import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
 import { Send } from '@popup/components/Send'
-import { ManageSeeds } from '@popup/components/AccountsManagement'
-import TransactionInfo from '@popup/components/TransactionInfo'
+import { TransactionInfo } from '@popup/components/TransactionInfo'
+import { UserAssets } from '@popup/components/UserAssets'
 import AssetFull from '@popup/components/AssetFull'
+import Receive from '@popup/components/Receive'
+import SlidingPanel from '@popup/components/SlidingPanel'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
@@ -28,7 +29,10 @@ export function MainPage(): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
-    const [selectedTransaction, setSelectedTransaction] = React.useState<nt.Transaction>()
+    const [
+        selectedTransaction,
+        setSelectedTransaction
+    ] = React.useState<nt.TonWalletTransaction | nt.TokenWalletTransaction>()
     const [selectedAsset, setSelectedAsset] = React.useState<SelectedAsset>()
     const scrollArea = React.useRef<HTMLDivElement>(null)
 
@@ -41,7 +45,7 @@ export function MainPage(): JSX.Element | null {
         })()
     }, [])
 
-    if (rpcState.state?.selectedAccount == null) {
+    if (accountability.selectedAccount == null) {
         return null
     }
 
@@ -52,38 +56,40 @@ export function MainPage(): JSX.Element | null {
         accountability.reset()
     }
 
-    const { selectedAccount, selectedConnection, storedKeys, knownTokens } = rpcState.state
+    const { externalAccounts, knownTokens, selectedAccount, selectedConnection, storedKeys } = rpcState.state
 
-    const externalAccounts = rpcState.state.externalAccounts.find(
-        (account) => account.address === selectedAccount.tonWallet.address
-    )
-    let selectedKeys: nt.KeyStoreEntry[] = [storedKeys[selectedAccount.tonWallet.publicKey]]
-    if (externalAccounts !== undefined) {
-        selectedKeys = externalAccounts.externalIn.map(key => storedKeys[key])
-    }
-    selectedKeys = selectedKeys.filter(e => e)
+    const accountName = selectedAccount?.name as string
+    const accountAddress = selectedAccount?.tonWallet.address as string
+    const accountPublicKey = selectedAccount?.tonWallet.publicKey as string
 
-    const selectedKey = selectedKeys[0]
-    if (selectedKey === undefined) {
+    const selectedKeys = React.useMemo(() => {
+        let keys: nt.KeyStoreEntry[] = [storedKeys[accountPublicKey]]
+        const externals = externalAccounts.find((account) => account.address === accountAddress)
+
+        if (externals !== undefined) {
+            keys = externals.externalIn.map(key => storedKeys[key])
+        }
+
+        return keys.filter(e => e)
+    }, [
+        accountability.selectedAccount,
+        externalAccounts,
+        storedKeys,
+    ])
+
+    if (selectedKeys[0] === undefined) {
         return null
     }
 
-    const accountName = selectedAccount.name
-    const accountAddress = selectedAccount.tonWallet.address
-
-    const tonWalletAsset = selectedAccount.tonWallet
-    const tokenWalletAssets =
-        selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
-
-    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
-        | nt.ContractState
-        | undefined
+    const tonWalletAsset = accountability.selectedAccount.tonWallet
+    const tokenWalletAssets = accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as nt.ContractState | undefined
     const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
 
     const transactions = rpcState.state.accountTransactions[accountAddress] || []
 
     const sendMessage = async (message: nt.SignedMessage) => {
-        return rpc.sendMessage(accountAddress, message)
+        return rpc.sendMessage(accountAddress as string, message)
     }
 
     const showTransaction = (transaction: nt.Transaction) => {
@@ -98,6 +104,7 @@ export function MainPage(): JSX.Element | null {
 
     return (
         <>
+
             <div className="main-page__content" ref={scrollArea}>
                 <AccountDetails />
                 <UserAssets
@@ -151,16 +158,27 @@ export function MainPage(): JSX.Element | null {
                     {drawer.currentPanel === Panel.CREATE_ACCOUNT && <CreateAccount />}
                     {drawer.currentPanel === Panel.ASSET && selectedAsset && (
                         <AssetFull
-                            account={selectedAccount}
+                            account={accountability.selectedAccount}
                             tokenWalletStates={tokenWalletStates}
-                            selectedKey={selectedKey}
+                            selectedKeys={selectedKeys}
                             selectedAsset={selectedAsset}
                             controllerState={rpcState.state}
                             controllerRpc={rpc}
                         />
                     )}
-                    {(drawer.currentPanel === Panel.TRANSACTION && selectedTransaction !== undefined) && (
-                        <TransactionInfo transaction={selectedTransaction} />
+                    {(
+                        drawer.currentPanel === Panel.TRANSACTION
+                        && selectedTransaction !== undefined
+                        && selectedTransaction.info?.type === 'multisig_transaction'
+                        && selectedTransaction.info?.data.type === 'submit'
+                        && selectedTransaction.info.data.data.transactionId != '0'
+                    ) ? (
+                        <MultisigTransactionSign
+                            transaction={selectedTransaction}
+                            selectedKeys={selectedKeys}
+                        />
+                    ) : (
+                        <TransactionInfo transaction={selectedTransaction as nt.TonWalletTransaction} />
                     )}
                 </>
             </SlidingPanel>

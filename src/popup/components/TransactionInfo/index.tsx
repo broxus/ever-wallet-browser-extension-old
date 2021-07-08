@@ -1,4 +1,9 @@
-import React, { useMemo } from 'react'
+import * as React from 'react'
+import Decimal from 'decimal.js'
+
+import * as nt from '@nekoton'
+import Button from '@popup/components/Button'
+import { CopyText } from '@popup/components/CopyText'
 import {
     convertCurrency,
     convertTons,
@@ -7,18 +12,13 @@ import {
     extractTransactionAddress,
     extractTransactionValue, trimTokenName,
 } from '@shared/utils'
-import Decimal from 'decimal.js'
-import * as nt from '@nekoton'
-
-import Button from '@popup/components/Button'
-import { CopyText } from '@popup/components/CopyText'
 
 import './style.scss'
-import { TokenWalletTransactionInfo } from '@nekoton'
 
-interface ITransactionInfo {
+
+type Props = {
     symbol?: nt.Symbol
-    transaction: nt.Transaction
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
 }
 
 const TRANSACTION_NAMES = {
@@ -39,26 +39,24 @@ const TransferTypeMapping = {
     swap_back_bounced: 'Swap back bounced',
 }
 
-const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) => {
-    // const { direction, address } = extractTransactionAddress(transaction)
-
-    const value = useMemo(() => {
+export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
+    const value = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionValue(transaction)
         } else {
-            return extractTokenTransactionValue(transaction) || new Decimal(0)
+            return extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
         }
     }, [transaction])
 
-    debugger
-
-    let direction: string | undefined, address: string | undefined
+    let direction: string | undefined,
+        address: string | undefined
 
     if (symbol == null) {
         const txAddress = extractTransactionAddress(transaction)
         direction = TRANSACTION_NAMES[txAddress.direction]
         address = txAddress.address
-    } else {
+    }
+    else {
         const tokenTransaction = transaction as nt.TokenWalletTransaction
 
         const txAddress = extractTokenTransactionAddress(tokenTransaction)
@@ -69,18 +67,10 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
     }
 
     const decimals = symbol == null ? 9 : symbol.decimals
-
     const fee = new Decimal(transaction.totalFees)
-
-    let total = value.abs().add(fee.abs())
-
-    if (value.lessThan(0)) {
-        total = new Decimal(-total)
-    }
-
     const txHash = transaction.id.hash
 
-    let info: TokenWalletTransactionInfo | undefined
+    let info: nt.TokenWalletTransactionInfo | undefined
     const currencyName = symbol == null ? 'TON' : symbol.name
 
     if (symbol) {
@@ -99,12 +89,20 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 </div>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Hash (ID)</span>
-                    <CopyText id={`copy-${txHash}`} text={txHash} />
+                    <CopyText
+                        className="transaction-info-tx-details-param-value copy"
+                        id={`copy-${txHash}`}
+                        text={txHash}
+                    />
                 </div>
-                {address && (
+                {address !== undefined && (
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">{direction}</span>
-                        <CopyText id={`copy-${address}`} text={address} />
+                        <CopyText
+                            className="transaction-info-tx-details-param-value copy"
+                            id={`copy-${address}`}
+                            text={address}
+                        />
                     </div>
                 )}
                 {info && (
@@ -129,12 +127,6 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                         {`${convertTons(fee.toString())} TON`}
                     </span>
                 </div>
-                {/*<div className="transaction-info-tx-details-param">*/}
-                {/*    <span className="transaction-info-tx-details-param-desc">Total amount</span>*/}
-                {/*    <span className="transaction-info-tx-details-param-value">*/}
-                {/*        {`${convertTons(total.toString())} TON `}*/}
-                {/*    </span>*/}
-                {/*</div>*/}
             </div>
             <Button
                 white
@@ -144,10 +136,8 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                         active: false,
                     })
                 }
-                text={'Open in explorer'}
+                text="Open in explorer"
             />
         </>
     )
 }
-
-export default TransactionInfo

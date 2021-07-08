@@ -42,7 +42,7 @@ export function AccountDetails(): JSX.Element {
             (account) => account.tonWallet.address === accountability.selectedAccountAddress
         )
         return index >= 0 ? index : 0
-    }, [accountability.accounts, accountability.selectedAccount])
+    }, [accountability.accounts, accountability.selectedAccountAddress])
 
     const onReceive = () => {
         drawer.setPanel(Panel.RECEIVE)
@@ -64,7 +64,7 @@ export function AccountDetails(): JSX.Element {
 
     const onToggleNetwork = async () => {
         const networks = await rpc.getAvailableNetworks()
-        const networkId = rpcState.state?.selectedConnection.id
+        const networkId = rpcState.state.selectedConnection.id
 
         let nextNetwork: ConnectionDataItem | undefined
         for (let i = 0; i < networks.length; ++i) {
@@ -98,7 +98,10 @@ export function AccountDetails(): JSX.Element {
             slider.current?.slickGoTo(initialSlide)
             slider.current?.forceUpdate()
         }, 100),
-        [accountability.accounts, accountability.selectedAccount]
+        [
+            accountability.accounts.length,
+            accountability.selectedAccount?.tonWallet.address
+        ]
     )
 
     return (
@@ -116,7 +119,7 @@ export function AccountDetails(): JSX.Element {
                     className="account-details__network-switcher noselect"
                     onClick={onToggleNetwork}
                 >
-                    {rpcState.state?.selectedConnection.name}
+                    {rpcState.state.selectedConnection.name}
                 </div>
                 <AccountModal />
                 {notificationsVisible && (
@@ -132,7 +135,7 @@ export function AccountDetails(): JSX.Element {
                         address={account.tonWallet.address}
                         publicKey={account.tonWallet.publicKey}
                         balance={convertTons(
-                            rpcState.state?.accountContractStates?.[account.tonWallet.address]
+                            rpcState.state.accountContractStates?.[account.tonWallet.address]
                                 ?.balance || '0'
                         ).toLocaleString()}
                     />

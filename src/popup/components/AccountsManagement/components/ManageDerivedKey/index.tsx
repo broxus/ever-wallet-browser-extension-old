@@ -25,6 +25,10 @@ export function ManageDerivedKey(): JSX.Element {
                 ...accountability.currentDerivedKey,
                 name,
             })
+	        accountability.setCurrentDerivedKey({
+		        ...accountability.currentDerivedKey,
+		        name,
+	        })
         }
     }
 

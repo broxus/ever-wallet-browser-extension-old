@@ -1,4 +1,7 @@
-import React, { useMemo } from 'react'
+import * as React from 'react'
+
+import * as nt from '@nekoton'
+import AssetIcon from '@popup/components/AssetIcon'
 import {
     extractTransactionValue,
     extractTransactionAddress,
@@ -9,17 +12,16 @@ import {
     convertCurrency,
     trimTokenName,
 } from '@shared/utils'
-import * as nt from '@nekoton'
 
 import './style.scss'
-import AssetIcon from '@popup/components/AssetIcon'
+
 
 const splitAddress = (address: string | undefined) => {
     const half = address != null ? Math.ceil(address.length / 2) : 0
     return half > 0 ? `${address!.slice(0, half)}\n${address!.slice(-half)}` : ''
 }
 
-type ITransactionsListItem = {
+type Props = {
     symbol?: nt.Symbol
     transaction: nt.Transaction
     additionalInfo?: 'staking_reward'
@@ -27,20 +29,20 @@ type ITransactionsListItem = {
     onViewTransaction: (transaction: nt.Transaction) => void
 }
 
-const TransactionListItem: React.FC<ITransactionsListItem> = ({
+export function ListItem({
     symbol,
     transaction,
     style,
     onViewTransaction,
-}) => {
-    const value = useMemo(() => {
+}: Props): JSX.Element {
+    const value = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionValue(transaction)
         } else {
             return extractTokenTransactionValue(transaction) || new Decimal(0)
         }
     }, [transaction])
-    const txAddress = useMemo(() => {
+    const txAddress = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionAddress(transaction)
         } else {
@@ -108,5 +110,3 @@ const TransactionListItem: React.FC<ITransactionsListItem> = ({
         </div>
     )
 }
-
-export default TransactionListItem

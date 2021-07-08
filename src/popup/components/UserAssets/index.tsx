@@ -1,104 +1,22 @@
-import React, { useState } from 'react'
-import { SelectedAsset, TokenWalletState } from '@shared/utils'
-import { TokenWalletsToUpdate } from '@shared/backgroundApi'
-import cn from 'classnames'
-import * as nt from '@nekoton'
+import * as React from 'react'
+import classNames from 'classnames'
 
-import SlidingPanel from '@popup/components/SlidingPanel'
-import AddNewToken from '@popup/components/AddNewToken'
-import Button from '@popup/components/Button'
-import AssetsListItem from '@popup/components/AssetsListItem'
-import TransactionsList from '@popup/components/TransactionsList'
+import * as nt from '@nekoton'
+import { TokenWalletsToUpdate } from '@shared/backgroundApi'
+import { SelectedAsset, TokenWalletState } from '@shared/utils'
+
+import { TransactionsList } from '@popup/components/TransactionsList'
+import { AssetsList } from '@popup/components/UserAssets/components'
 
 import './style.scss'
 
-type AssetsListProps = {
-    tonWalletAsset: nt.TonWalletAsset
-    tokenWalletAssets: nt.TokenWalletAsset[]
-    tonWalletState: nt.ContractState | undefined
-    tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
-    knownTokens: { [rootTokenContract: string]: nt.Symbol }
-    updateTokenWallets: (params: TokenWalletsToUpdate) => Promise<void>
-    onViewAsset: (asset: SelectedAsset) => void
+
+enum AssetsTab {
+    ASSETS,
+    TRANSACTIONS,
 }
 
-enum Panel {
-    ADD_NEW_TOKEN,
-}
-
-const AssetsList: React.FC<AssetsListProps> = ({
-    tonWalletAsset,
-    tokenWalletAssets,
-    tonWalletState,
-    tokenWalletStates,
-    knownTokens,
-    updateTokenWallets,
-    onViewAsset,
-}) => {
-    const [openedPanel, setOpenedPanel] = useState<Panel>()
-
-    const closePanel = () => setOpenedPanel(undefined)
-
-    return (
-        <div className="user-assets__assets-list">
-            <AssetsListItem
-                type={'ton_wallet'}
-                address={tonWalletAsset.address}
-                balance={tonWalletState?.balance}
-                name={'TON'}
-                decimals={9}
-                onClick={() =>
-                    onViewAsset({
-                        type: 'ton_wallet',
-                        data: {
-                            address: tonWalletAsset.address,
-                        },
-                    })
-                }
-            />
-            {tokenWalletAssets.map(({ rootTokenContract }) => {
-                const symbol = knownTokens[rootTokenContract]
-                const balance = tokenWalletStates[rootTokenContract]?.balance
-                return (
-                    <AssetsListItem
-                        key={rootTokenContract}
-                        type={'token_wallet'}
-                        address={rootTokenContract}
-                        balance={balance}
-                        name={symbol?.name}
-                        decimals={symbol?.decimals}
-                        onClick={() => {
-                            onViewAsset({
-                                type: 'token_wallet',
-                                data: {
-                                    owner: tonWalletAsset.address,
-                                    rootTokenContract,
-                                },
-                            })
-                        }}
-                    />
-                )
-            })}
-            <div className="user-assets__assets-list__add-new-btn">
-                <Button
-                    text={'Select assets'}
-                    white
-                    onClick={() => setOpenedPanel(Panel.ADD_NEW_TOKEN)}
-                />
-            </div>
-            <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
-                <AddNewToken
-                    tokenWallets={tokenWalletAssets}
-                    knownTokens={knownTokens}
-                    onSubmit={updateTokenWallets}
-                    onBack={closePanel}
-                />
-            </SlidingPanel>
-        </div>
-    )
-}
-
-type IUserAssets = {
+type Props = {
     tonWalletAsset: nt.TonWalletAsset
     tokenWalletAssets: nt.TokenWalletAsset[]
     tonWalletState: nt.ContractState | undefined
@@ -112,12 +30,7 @@ type IUserAssets = {
     preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 }
 
-enum AssetsTab {
-    ASSETS,
-    TRANSACTIONS,
-}
-
-const UserAssets: React.FC<IUserAssets> = ({
+export function UserAssets({
     tonWalletAsset,
     tokenWalletAssets,
     tonWalletState,
@@ -129,15 +42,15 @@ const UserAssets: React.FC<IUserAssets> = ({
     onViewTransaction,
     onViewAsset,
     preloadTransactions,
-}) => {
-    const [activeTab, setActiveTab] = useState<AssetsTab>(AssetsTab.ASSETS)
+}: Props): JSX.Element {
+    const [activeTab, setActiveTab] = React.useState<AssetsTab>(AssetsTab.ASSETS)
 
     return (
         <>
             <div className="user-assets">
                 <div className="user-assets__panel noselect">
                     <div
-                        className={cn('user-assets__panel__tab', {
+                        className={classNames('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.ASSETS,
                         })}
                         onClick={() => setActiveTab(AssetsTab.ASSETS)}
@@ -145,7 +58,7 @@ const UserAssets: React.FC<IUserAssets> = ({
                         Assets
                     </div>
                     <div
-                        className={cn('user-assets__panel__tab', {
+                        className={classNames('user-assets__panel__tab', {
                             _active: activeTab == AssetsTab.TRANSACTIONS,
                         })}
                         onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}
@@ -178,5 +91,3 @@ const UserAssets: React.FC<IUserAssets> = ({
         </>
     )
 }
-
-export default UserAssets

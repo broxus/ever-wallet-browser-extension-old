@@ -30,7 +30,7 @@ function App(): JSX.Element | null {
 
     if (
         rpcState.activeTab == null || (
-            rpcState.state?.selectedAccount != null &&
+            rpcState.state.selectedAccount != null &&
             rpcState.activeTab.type === 'fullscreen' &&
             rpcState.activeTab.data == null
         )

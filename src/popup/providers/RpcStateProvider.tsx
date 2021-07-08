@@ -1,4 +1,5 @@
 import * as React from 'react'
+import isEqual from 'lodash.isequal'
 import { connect } from 'react-redux'
 
 import init, * as nt from '@nekoton'
@@ -42,7 +43,7 @@ type Props = {
 type ContextConsumer = {
 	activeTab?: ActiveTab;
 	loaded: boolean;
-	state?: ControllerState;
+	state: ControllerState;
 }
 
 export const closeCurrentWindow = () => {
@@ -54,6 +55,7 @@ export const closeCurrentWindow = () => {
 export const Context = React.createContext<ContextConsumer>({
 	activeTab: undefined,
 	loaded: false,
+	state: {} as ControllerState
 })
 
 export function useRpcState() {
@@ -64,7 +66,7 @@ function Provider({ children, activeTab, fetchManifest }: Props): JSX.Element {
 	const rpc = useRpc()
 
 	const [loaded, setLoaded] = React.useState(false)
-	const [state, setState] = React.useState<ControllerState>()
+	const [state, setState] = React.useState<ControllerState>({} as ControllerState)
 
 	React.useEffect(() => {
 		console.log(state, 'controllerState')
@@ -76,20 +78,27 @@ function Provider({ children, activeTab, fetchManifest }: Props): JSX.Element {
 				init('index_bg.wasm'),
 				(async () => {
 					rpc.onNotification((data) => {
-						const state = data.params
+						const stateToUpdate = data.params
 
 						// if (
 						//     activeTab.type === 'notification' &&
-						//     Object.keys((state as any).pendingApprovals).length === 0
+						//     Object.keys((stateToUpdate as any).pendingApprovals).length === 0
 						// ) {
 						//     closeCurrentWindow()
 						// }
 						// else {
-						//     console.log('Got state', state)
-						//     setState(state as any)
+						//     console.log('Got state', stateToUpdate)
+						//     setState(stateToUpdate as any)
 						// }
-						console.log('Got state', state)
-						setState(state as any)
+						if (!isEqual(state, stateToUpdate)) {
+							try {
+								console.log('Got state', stateToUpdate)
+								setState(stateToUpdate as ControllerState)
+							}
+							catch (e) {
+								console.log(e.toString())
+							}
+						}
 					})
 
 					return await rpc.getState()

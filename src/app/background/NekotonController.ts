@@ -255,7 +255,6 @@ export class NekotonController extends EventEmitter {
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
             renameAccount: nodeifyAsync(accountController, 'renameAccount'),
             updateAccountVisibility: nodeifyAsync(accountController, 'updateAccountVisibility'),
-            // fixme: remove derived keys names
             updateDerivedKeyName: nodeifyAsync(accountController, 'updateDerivedKeyName'),
             startSubscription: nodeifyAsync(accountController, 'startSubscription'),
             stopSubscription: nodeifyAsync(accountController, 'stopSubscription'),

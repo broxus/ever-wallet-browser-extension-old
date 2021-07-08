@@ -307,6 +307,14 @@ export function PrepareMessage({
 								type="text"
 							/>
 						)}
+						{selectedAsset.length > 0 && (
+							<div className="send-screen__form-checkbox">
+								<Checkbox checked={notifyReceiver} setChecked={setNotifyReceiver} />
+								<span className="send-screen__form-checkbox-label">
+                                    Notify receiver
+                                </span>
+							</div>
+						)}
 						{keyEntries.length > 1 ? (
 							<Select
 								className="send-screen__form-input"
@@ -317,14 +325,6 @@ export function PrepareMessage({
 								onChange={(v) => v == null ? null : setKey(v)}
 							/>
 						) : null}
-						{selectedAsset.length > 0 && (
-							<div className="send-screen__form-checkbox">
-								<Checkbox checked={notifyReceiver} setChecked={setNotifyReceiver} />
-								<span className="send-screen__form-checkbox-label">
-                                    Notify receiver
-                                </span>
-							</div>
-						)}
 					</form>
 					<div style={{ display: 'flex' }}>
 						<div style={{ width: '50%', marginRight: '12px' }}>

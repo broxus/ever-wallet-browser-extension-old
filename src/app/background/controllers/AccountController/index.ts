@@ -479,7 +479,6 @@ export class AccountController extends BaseController<
         }
     }
 
-    // fixme: remove derived keys names
     public async updateDerivedKeyName(entry: nt.KeyStoreEntry): Promise<void> {
         const { signerName, masterKey, publicKey, name } = entry
 
@@ -521,6 +520,7 @@ export class AccountController extends BaseController<
         }
 
         const newEntry = await this.config.keyStore.renameKey(params)
+
         this.update({
             storedKeys: {
                 ...this.state.storedKeys,
@@ -718,15 +718,20 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async renameAccount(address: string, name: string) {
+    public async renameAccount(address: string, name: string): Promise<void> {
         await this._accountsMutex.use(async () => {
             const accountEntry = await this.config.accountsStorage.renameAccount(address, name)
 
-            this._updateAssetsList(accountEntry)
+            this.update({
+                accountEntries: {
+                    ...this.state.accountEntries,
+                    [address]: accountEntry,
+                }
+            })
         })
     }
 
-    public async updateAccountVisibility(address: string, value: boolean) {
+    public async updateAccountVisibility(address: string, value: boolean): Promise<void> {
         this.update({
             accountsVisibility: {
                 ...this.state.accountsVisibility,

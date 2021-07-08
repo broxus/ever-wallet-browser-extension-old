@@ -5,10 +5,10 @@ import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
 import * as nt from '@nekoton'
 
 import { DeployWallet } from '@popup/components/DeployWallet'
-import TransactionsList from '@popup/components/TransactionsList'
+import { TransactionsList } from '@popup/components/TransactionsList'
 import Receive from '@popup/components/Receive'
-import Send from '@popup/components/Send'
-import TransactionInfo from '@popup/components/TransactionInfo'
+import { Send } from '@popup/components/Send'
+import { TransactionInfo } from '@popup/components/TransactionInfo'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import AssetIcon from '@popup/components/AssetIcon'
 
@@ -21,7 +21,7 @@ import './style.scss'
 type IAssetFull = {
     account: nt.AssetsList
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
-    selectedKey: nt.KeyStoreEntry
+    selectedKeys: nt.KeyStoreEntry[]
     selectedAsset: SelectedAsset
     controllerState: ControllerState
     controllerRpc: IControllerRpcClient
@@ -38,7 +38,7 @@ const AssetFull: React.FC<IAssetFull> = ({
     account,
     tokenWalletStates,
     selectedAsset,
-    selectedKey,
+    selectedKeys,
     controllerState,
     controllerRpc,
 }) => {
@@ -222,7 +222,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                             tonWalletAsset={tonWalletAsset}
                             tokenWalletAssets={tokenWalletAssets}
                             defaultAsset={selectedAsset}
-                            keyEntry={selectedKey}
+                            keyEntries={selectedKeys}
                             tonWalletState={tonWalletState}
                             tokenWalletStates={tokenWalletStates}
                             knownTokens={knownTokens}

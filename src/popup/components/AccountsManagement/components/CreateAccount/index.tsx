@@ -91,7 +91,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
         await rpc.getTonWalletInitData(address).then(async ({ publicKey, contractType }) => {
             await rpc.startSubscription(address, publicKey, contractType)
             const custodians = await rpc.getCustodians(address)
-            await rpc.stopSubscription(address)
+            // await rpc.stopSubscription(address)
 
             if (accountability.currentDerivedKey == null) {
                 return
@@ -123,7 +123,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                     break
 
                 case custodians.includes(currentPublicKey): {
-                        const hasAccount = rpcState.state?.accountEntries[address]
+                        const hasAccount = rpcState.state.accountEntries[address]
 
                         if (!hasAccount) {
                             await rpc.createAccount({
@@ -143,7 +143,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                 console.log('create and add account to externals')
                             })
                         } else {
-                            const account = rpcState.state?.accountEntries[address]
+                            const account = rpcState.state.accountEntries[address]
                             if (account !== undefined) {
                                 await rpc.updateAccountVisibility(address, true)
                                 await rpc.addExternalAccount(address, publicKey, currentPublicKey)

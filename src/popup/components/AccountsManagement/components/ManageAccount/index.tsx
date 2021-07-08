@@ -15,6 +15,7 @@ import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvid
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
+
 export function ManageAccount(): JSX.Element {
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
@@ -34,30 +35,33 @@ export function ManageAccount(): JSX.Element {
 
     const isActive = React.useMemo(
         () =>
-            accountability.currentAccount?.tonWallet.address ===
+            accountability.currentAccount?.tonWallet.address
+            === accountability.selectedAccount?.tonWallet.address,
+        [
+            accountability.currentAccount?.tonWallet.address,
             accountability.selectedAccount?.tonWallet.address,
-        [accountability.selectedAccount]
+        ]
     )
 
     const linkedKeys = React.useMemo(() => {
-        const keys = window.ObjectExt.values({ ...rpcState.state?.storedKeys }).filter(
+        const keys = window.ObjectExt.values({ ...rpcState.state.storedKeys }).filter(
             (key) => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
         )
 
-        const externalAccount = rpcState.state?.externalAccounts.find(
+        const externalAccount = rpcState.state.externalAccounts.find(
             ({ address }) => address === accountability.currentAccount?.tonWallet.address
         )
 
 		if (externalAccount !== undefined) {
             keys.push(
-                ...(externalAccount.externalIn.map(
-                    (key) => rpcState.state?.storedKeys[key]
-                ).filter((e) => e) as nt.KeyStoreEntry[]
+                ...externalAccount.externalIn.map(
+                    (key) => rpcState.state.storedKeys[key]
+                ).filter((e) => e)
             )
 		}
 
         return keys
-    }, [rpcState.state?.storedKeys])
+    }, [rpcState.state.storedKeys])
 
     const saveName = async () => {
         if (accountability.currentAccount !== undefined && name) {
@@ -117,8 +121,11 @@ export function ManageAccount(): JSX.Element {
                     onChange={setName}
                 />
 
-                {accountability.currentAccount !== undefined &&
-                    accountability.currentAccount.name !== name && (
+                {(
+                    accountability.currentAccount !== undefined
+                    && (accountability.currentAccount.name !== undefined || name)
+                    && accountability.currentAccount.name !== name
+                ) && (
                         <a
                             role="button"
                             className="accounts-management__name-button"
