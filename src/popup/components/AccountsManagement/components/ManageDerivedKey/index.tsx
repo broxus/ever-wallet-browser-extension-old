@@ -9,33 +9,35 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import { useRpc } from '@popup/providers/RpcProvider'
 import { CopyText } from '@popup/components/CopyText'
 
-
 export function ManageDerivedKey(): JSX.Element {
-	const accountability = useAccountability()
-	const rpc = useRpc()
+    const accountability = useAccountability()
+    const rpc = useRpc()
 
 	const [name, setName] = React.useState(accountability.currentDerivedKey?.name || '')
 
-	const addAccount = () => {
-		accountability.setStep(Step.CREATE_ACCOUNT)
-	}
+    const addAccount = () => {
+        accountability.setStep(Step.CREATE_ACCOUNT)
+    }
 
-	const saveName = async () => {
-		if (accountability.currentDerivedKey !== undefined && name) {
-			await rpc.updateDerivedKeyName(accountability.currentDerivedKey.publicKey, name)
-		}
-	}
+    const saveName = async () => {
+        if (accountability.currentDerivedKey !== undefined && name) {
+            await rpc.updateDerivedKeyName({
+                ...accountability.currentDerivedKey,
+                name,
+            })
+        }
+    }
 
-	const onManageAccount = (account: nt.AssetsList) => {
-		accountability.onManageAccount(account)
-	}
+    const onManageAccount = (account: nt.AssetsList) => {
+        accountability.onManageAccount(account)
+    }
 
-	const onBack = () => {
-		accountability.setStep(Step.MANAGE_SEED)
-		accountability.setCurrentDerivedKey(undefined)
-	}
+    const onBack = () => {
+        accountability.setStep(Step.MANAGE_SEED)
+        accountability.setCurrentDerivedKey(undefined)
+    }
 
-	return (
+    return (
 		<div className="accounts-management__content">
 			<h2 className="accounts-management__content-title">Manage key</h2>
 
@@ -46,11 +48,11 @@ export function ManageDerivedKey(): JSX.Element {
 					<div className="accounts-management__public-key-placeholder">
 						<CopyText
 							id="copy-placeholder"
-							text={accountability.currentDerivedKey.publicKey}
-						/>
-					</div>
-				</>
-			)}
+                            text={accountability.currentDerivedKey.publicKey}
+                        />
+                    </div>
+                </>
+            )}
 
 			<div className="accounts-management__content-header">Key name</div>
 			<div className="accounts-management__name-field">
@@ -76,59 +78,54 @@ export function ManageDerivedKey(): JSX.Element {
 				)}
 			</div>
 
-			<div className="accounts-management__content-header--lead">
-				Accounts
-				<a
-					role="button"
-					className="accounts-management__create-account"
-					onClick={addAccount}
-				>
-					+ Add new
-				</a>
-			</div>
+            <div className="accounts-management__content-header--lead">
+                Accounts
+                <a
+                    role="button"
+                    className="accounts-management__create-account"
+                    onClick={addAccount}
+                >
+                    + Add new
+                </a>
+            </div>
 
-			<div className="accounts-management__content-header">My accounts</div>
-			<div className="accounts-management__divider" />
+            <div className="accounts-management__content-header">My accounts</div>
+            <div className="accounts-management__divider" />
 
-			{accountability.currentDerivedKeyAccounts.length === 0 ? (
-				<div className="accounts-management__list--empty">
-					No accounts yet
-				</div>
-			) : (
-				<AccountsList
-					items={accountability.currentDerivedKeyAccounts}
-					onClick={onManageAccount}
-				/>
-			)}
+            {accountability.currentDerivedKeyAccounts.length === 0 ? (
+                <div className="accounts-management__list--empty">No accounts yet</div>
+            ) : (
+                <AccountsList
+                    items={accountability.currentDerivedKeyAccounts}
+                    onClick={onManageAccount}
+                />
+            )}
 
-			{accountability.currentDerivedKeyExternalAccounts.length > 0 ? (
-				<>
-					<div
-						className="accounts-management__content-header"
-						style={{ marginTop: 20 }}
-					>
-						External accounts
-					</div>
-					<div className="accounts-management__divider" />
+            {accountability.currentDerivedKeyExternalAccounts.length > 0 ? (
+                <>
+                    <div className="accounts-management__content-header" style={{ marginTop: 20 }}>
+                        External accounts
+                    </div>
+                    <div className="accounts-management__divider" />
 
-					<AccountsList
-						items={accountability.currentDerivedKeyExternalAccounts}
-						onClick={onManageAccount}
-					/>
-				</>
-			) : null}
+                    <AccountsList
+                        items={accountability.currentDerivedKeyExternalAccounts}
+                        onClick={onManageAccount}
+                    />
+                </>
+            ) : null}
 
-			<div className="accounts-management__content-buttons">
-				<div className="accounts-management__content-buttons-back-btn">
-					<Button text="Back" white onClick={onBack} />
-				</div>
+            <div className="accounts-management__content-buttons">
+                <div className="accounts-management__content-buttons-back-btn">
+                    <Button text="Back" white onClick={onBack} />
+                </div>
 
-				{accountability.currentDerivedKey !== undefined && (
-					<CopyButton id="pubkey-copy-button" text={accountability.currentDerivedKey.publicKey}>
+                {accountability.currentDerivedKey !== undefined && (
+                    <CopyButton id="pubkey-copy-button" text={accountability.currentDerivedKey.publicKey}>
 						<Button text="Copy public key" />
 					</CopyButton>
-				)}
-			</div>
-		</div>
-	)
+                )}
+            </div>
+        </div>
+    )
 }
