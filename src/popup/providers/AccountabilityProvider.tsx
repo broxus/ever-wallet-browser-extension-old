@@ -224,7 +224,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
     )
 
     const nextAccountId = React.useMemo(() => derivedKeys.length, [
-        currentDerivedKey,
+        derivedKeys,
         rpcState.state.accountEntries,
     ])
 

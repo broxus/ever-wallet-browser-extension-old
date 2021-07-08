@@ -11,17 +11,20 @@ export function CreateDerivedKey(): JSX.Element {
 	const accountability = useAccountability()
 	const rpc = useRpc()
 
-	const { register, handleSubmit, errors } = useForm<{ name: string, password: string }>()
+	const { register, handleSubmit, errors } = useForm<{ name: string | undefined, password: string }>()
 
 	const [error, setError] = React.useState<string>()
 	const [inProcess, setInProcess] = React.useState(false)
 
-	const onSubmit = async ({ name, password }: { name: string, password: string }) => {
+	const onSubmit = async ({ name, password }: { name: string | undefined, password: string }) => {
 		if (accountability.currentMasterKey == null) {
 			return
 		}
 
 		setInProcess(true)
+
+		name = name !== undefined ? name.trim() : name;
+		name = name === '' ? undefined : name;
 
 		try {
 			await rpc.createDerivedKey({

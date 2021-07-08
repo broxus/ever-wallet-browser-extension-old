@@ -71,25 +71,19 @@ export function ManageAccount(): JSX.Element {
     }
 
     const onSelectAccount = async () => {
-        if (accountability.currentMasterKey?.masterKey == null) {
-            return
-        }
 
-        await rpc.selectMasterKey(accountability.currentMasterKey.masterKey).then(async () => {
-            if (accountability.currentAccount == null) {
-                return
-            }
+        if (accountability.currentMasterKey?.masterKey == null) { return }
 
-            await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
-            await rpc.selectAccount(accountability.currentAccount.tonWallet.address).then(() => {
-                drawer.setPanel(undefined)
-                accountability.reset()
-            })
+        await rpc.selectMasterKey(accountability.currentMasterKey.masterKey)
+        if (accountability.currentAccount == null) { return }
 
-            if (rpcState.activeTab?.type === 'notification') {
-                closeCurrentWindow()
-            }
-        })
+        await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
+        await rpc.selectAccount(accountability.currentAccount.tonWallet.address)
+
+        drawer.setPanel(undefined)
+        accountability.reset()
+
+        if (rpcState.activeTab?.type === 'notification') { closeCurrentWindow() }
     }
 
     const onManageDerivedKey = (key: nt.KeyStoreEntry) => {

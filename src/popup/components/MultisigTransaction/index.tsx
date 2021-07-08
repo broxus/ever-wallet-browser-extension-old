@@ -4,7 +4,7 @@ import * as nt from '@nekoton'
 import {
 	convertCurrency,
 	extractTokenTransactionAddress,
-	extractTransactionAddress,
+	extractTransactionAddress, parseCurrency,
 	trimTokenName,
 } from '@shared/utils'
 
@@ -16,6 +16,8 @@ import Input from '@popup/components/Input'
 import { useState } from 'react'
 import Select from 'react-select'
 import { selectStyles } from '@popup/constants/selectStyle'
+import {ConfirmMessageToPrepare, TransferMessageToPrepare} from "@shared/backgroundApi";
+import {prepareKey} from "@popup/utils";
 
 
 type Props = {
@@ -80,6 +82,10 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
 	}, [custodians, transaction])
 	const confirmations: string[] = unconfirmedTransaction?.confirmations || []
 
+	console.log(confirmations)
+	console.log(selectedKeys)
+	console.log(selectedKeys.filter(key => !confirmations.includes(key.publicKey)))
+
 	const [keys, setKeys] = React.useState(selectedKeys.filter(key => !confirmations.includes(key.publicKey)))
 	const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(keys[0])
 
@@ -92,7 +98,18 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
 	}
 
 	const onSubmit = async () => {
-
+		let messageToPrepare: ConfirmMessageToPrepare;
+		messageToPrepare = {
+			publicKey: selectedKey.publicKey,
+			transactionId: transactionId
+		}
+		if (transaction.inMessage.dst === undefined) return
+		const internalMessage = await rpc.prepareConfirmMessage(
+			transaction.inMessage.dst,
+			messageToPrepare,
+			prepareKey(selectedKey, password)
+		)
+		await rpc.sendMessage(transaction.inMessage.dst, internalMessage)
 	}
 
 	React.useEffect(() => {

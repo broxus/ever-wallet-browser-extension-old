@@ -71,7 +71,7 @@ export function MainPage(): JSX.Element | null {
         const externals = externalAccounts.find((account) => account.address === accountAddress)
 
         if (externals !== undefined) {
-            keys = externals.externalIn.map((key) => storedKeys[key])
+            keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
         }
 
         return keys.filter((e) => e)
