@@ -11,10 +11,15 @@ import Input from '@popup/components/Input'
 import { Message, EnterPassword } from '@popup/components/Send/components'
 import UserAvatar from '@popup/components/UserAvatar'
 import { selectStyles } from '@popup/constants/selectStyle'
-import { TransferMessageToPrepare, TokenMessageToPrepare } from '@shared/backgroundApi'
+import {
+    TransferMessageToPrepare,
+    TokenMessageToPrepare,
+    WalletMessageToSend,
+} from '@shared/backgroundApi'
 import {
     amountPattern,
     convertCurrency,
+    currentUtime,
     parseCurrency,
     parseTons,
     SelectedAsset,
@@ -51,7 +56,7 @@ type Props = {
         rootTokenContract: string,
         params: TokenMessageToPrepare
     ) => Promise<nt.InternalMessage>
-    onSubmit: (message: nt.SignedMessage) => void
+    onSubmit: (message: WalletMessageToSend) => void
     onBack: () => void
 }
 
@@ -191,7 +196,14 @@ export function PrepareMessage({
         setInProcess(true)
         try {
             const signedMessage = await prepareMessage(messageToPrepare, password)
-            await onSubmit(signedMessage)
+            await onSubmit({
+                signedMessage,
+                info: {
+                    createdAt: currentUtime(),
+                    amount: messageToPrepare.amount,
+                    recipient: messageToPrepare.recipient,
+                },
+            })
         } catch (e) {
             setError(e.toString())
             setInProcess(false)

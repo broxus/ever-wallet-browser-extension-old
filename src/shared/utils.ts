@@ -64,6 +64,21 @@ function arrayClone<T>(arr: T[]): T[] {
     return copy
 }
 
+type ObjectValueOfMap<M extends {}, K extends keyof M> = M[K] extends {} ? M[K] : never
+export const getOrInsertDefault = <M extends {}, K extends keyof M>(
+    map: M,
+    key: K
+): ObjectValueOfMap<M, K> => {
+    let result = map[key] as M[K] | undefined
+    if (result == null) {
+        result = {} as M[K]
+        map[key] = result
+    }
+    return result
+}
+
+export const currentUtime = () => (new Date().getTime() / 1000) | 0
+
 export class SafeEventEmitter extends EventEmitter {
     emit(type: string, ...args: any[]): boolean {
         let doError = type === 'error'
@@ -654,11 +669,6 @@ export const parseTons = (amount: string) => parseCurrency(amount, 9)
 
 export const parseCurrency = (amount: string, decimals: number) => {
     return new Decimal(amount).mul(multiplier(decimals)).ceil().toFixed(0)
-}
-
-export interface SendMessageRequest {
-    expireAt: number
-    boc: string
 }
 
 export interface SendMessageCallback {

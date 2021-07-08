@@ -9,9 +9,9 @@ import {
     extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
+    getOrInsertDefault,
     NekotonRpcError,
     SendMessageCallback,
-    SendMessageRequest,
     TokenWalletState,
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
@@ -27,6 +27,8 @@ import {
     TokenMessageToPrepare,
     TokenWalletsToUpdate,
     ConfirmMessageToPrepare,
+    WalletMessageToSend,
+    BriefMessageInfo,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
@@ -35,7 +37,7 @@ import { ConnectionController } from '../ConnectionController'
 import { NotificationController } from '../NotificationController'
 
 import { DEFAULT_POLLING_INTERVAL, BACKGROUND_POLLING_INTERVAL } from './constants'
-import { TonWalletSubscription } from './TonWalletSubscription'
+import { ITonWalletHandler, TonWalletSubscription } from './TonWalletSubscription'
 import { ITokenWalletHandler, TokenWalletSubscription } from './TokenWalletSubscription'
 import { IContractHandler } from '../../utils/ContractSubscription'
 
@@ -61,7 +63,7 @@ export interface AccountControllerState extends BaseState {
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
-    accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
+    accountPendingTransactions: { [address: string]: { [bodyHash: string]: BriefMessageInfo } }
     accountsVisibility: { [address: string]: boolean }
     externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -79,7 +81,7 @@ const defaultState: AccountControllerState = {
     accountTransactions: {},
     accountUnconfirmedTransactions: {},
     accountTokenTransactions: {},
-    accountPendingMessages: {},
+    accountPendingTransactions: {},
     accountsVisibility: {},
     externalAccounts: [],
     knownTokens: {},
@@ -255,21 +257,6 @@ export class AccountController extends BaseController<
 
     public async getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
         return this._getTonWalletInitData(address)
-    }
-
-    public async useTokenWallet<T>(
-        owner: string,
-        rootTokenContract: string,
-        f: (wallet: nt.TokenWallet) => Promise<T>
-    ) {
-        const subscription = this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
-        if (!subscription) {
-            throw new NekotonRpcError(
-                RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `There is no token wallet subscription for address ${owner} for root ${rootTokenContract}`
-            )
-        }
-        return subscription.use(f)
     }
 
     public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
@@ -1015,7 +1002,7 @@ export class AccountController extends BaseController<
         return this.config.keyStore.sign(unsignedMessage, password)
     }
 
-    public async sendMessage(address: string, signedMessage: nt.SignedMessage) {
+    public async sendMessage(address: string, { signedMessage, info }: WalletMessageToSend) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -1032,7 +1019,23 @@ export class AccountController extends BaseController<
             await subscription.prepareReliablePolling()
             await this.useTonWallet(address, async (wallet) => {
                 try {
-                    await wallet.sendMessage(signedMessage)
+                    const pendingTransaction = await wallet.sendMessage(signedMessage)
+
+                    if (info != null) {
+                        const accountPendingTransactions = {
+                            ...this.state.accountPendingTransactions,
+                        }
+                        const pendingTransactions = getOrInsertDefault(
+                            accountPendingTransactions,
+                            address
+                        )
+                        pendingTransactions[pendingTransaction.bodyHash] = info
+
+                        this.update({
+                            accountPendingTransactions,
+                        })
+                    }
+
                     subscription.skipRefreshTimer()
                 } catch (e) {
                     throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
@@ -1114,7 +1117,7 @@ export class AccountController extends BaseController<
             return
         }
 
-        class TonWalletHandler implements IContractHandler<nt.TonWalletTransaction> {
+        class TonWalletHandler implements ITonWalletHandler {
             private readonly _address: string
             private readonly _controller: AccountController
 
@@ -1124,6 +1127,11 @@ export class AccountController extends BaseController<
             }
 
             onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+                this._controller._clearPendingTransaction(
+                    this._address,
+                    pendingTransaction.bodyHash,
+                    false
+                )
                 this._controller._rejectMessageRequest(
                     this._address,
                     pendingTransaction.bodyHash,
@@ -1132,6 +1140,11 @@ export class AccountController extends BaseController<
             }
 
             onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+                this._controller._clearPendingTransaction(
+                    this._address,
+                    pendingTransaction.bodyHash,
+                    true
+                )
                 this._controller._resolveMessageRequest(
                     this._address,
                     pendingTransaction.bodyHash,
@@ -1277,7 +1290,6 @@ export class AccountController extends BaseController<
             accountTokenStates: {},
             accountTransactions: {},
             accountTokenTransactions: {},
-            accountPendingMessages: {},
         })
     }
 
@@ -1338,21 +1350,17 @@ export class AccountController extends BaseController<
         if (accountMessageRequests.size === 0) {
             this._sendMessageRequests.delete(address)
         }
+    }
 
-        const currentPendingMessages = this.state.accountPendingMessages
-
-        const newAccountPendingMessages = { ...currentPendingMessages[address] }
-        delete newAccountPendingMessages[id]
-
-        const newPendingMessages = { ...currentPendingMessages }
-        if (accountMessageRequests.size > 0) {
-            newPendingMessages[address] = newAccountPendingMessages
-        } else {
-            delete newPendingMessages[address]
+    private _clearPendingTransaction(address: string, bodyHash: string, _sent: boolean) {
+        const accountPendingTransactions = {
+            ...this.state.accountPendingTransactions,
         }
+        const pendingTransactions = getOrInsertDefault(accountPendingTransactions, address)
+        delete pendingTransactions[bodyHash]
 
         this.update({
-            accountPendingMessages: newPendingMessages,
+            accountPendingTransactions,
         })
     }
 

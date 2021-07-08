@@ -7,18 +7,20 @@ import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import { CopyButton } from '@popup/components/CopyButton'
 import TransactionProgress from '@popup/components/TransactionProgress'
-import { MultisigData, MultisigForm, PreparedMessage } from '@popup/components/DeployWallet/components'
+import {
+    MultisigData,
+    MultisigForm,
+    PreparedMessage,
+} from '@popup/components/DeployWallet/components'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { selectStyles } from '@popup/constants/selectStyle'
 import { prepareKey } from '@popup/utils'
-import { DeployMessageToPrepare } from '@shared/backgroundApi'
-
+import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
 
 import './style.scss'
-
 
 enum DeployWalletStep {
     SELECT_TYPE,
@@ -31,8 +33,8 @@ enum DeployWalletType {
 }
 
 type OptionType = {
-    value: DeployWalletType;
-    label: string;
+    value: DeployWalletType
+    label: string
 }
 
 const walletTypesOptions: OptionType[] = [
@@ -50,7 +52,9 @@ export function DeployWallet(): JSX.Element {
     const [multisigData, setMultisigData] = React.useState<MultisigData>()
     const [error, setError] = React.useState<string>()
     const [fees, setFees] = React.useState<string>()
-    const [pendingResponse, setPendingResponse] = React.useState<Promise<nt.Transaction | undefined>>()
+    const [pendingResponse, setPendingResponse] = React.useState<
+        Promise<nt.Transaction | undefined>
+    >()
     const [step, setStep] = React.useState(DeployWalletStep.SELECT_TYPE)
     const [walletType, setWalletType] = React.useState<OptionType | null>(walletTypesOptions[0])
 
@@ -60,7 +64,7 @@ export function DeployWallet(): JSX.Element {
             : undefined
     }, [accountability.selectedAccountPublicKey])
 
-    const sendMessage = async (message: nt.SignedMessage): Promise<nt.Transaction> => {
+    const sendMessage = async (message: WalletMessageToSend): Promise<nt.Transaction> => {
         if (accountability.selectedAccountAddress == null) {
             return Promise.reject()
         }
@@ -77,27 +81,28 @@ export function DeployWallet(): JSX.Element {
         }
 
         const keyPassword = prepareKey(selectedDerivedKeyEntry, password)
-        const params: DeployMessageToPrepare = walletType?.value === DeployWalletType.MULTISIG
-            ? {
-                type: 'multiple_owners',
-                custodians: (multisigData?.custodians || []),
-                reqConfirms: parseInt(multisigData?.reqConfirms as unknown as string) || 0,
-            } : { type: 'single_owner' }
+        const params: DeployMessageToPrepare =
+            walletType?.value === DeployWalletType.MULTISIG
+                ? {
+                      type: 'multiple_owners',
+                      custodians: multisigData?.custodians || [],
+                      reqConfirms: parseInt((multisigData?.reqConfirms as unknown) as string) || 0,
+                  }
+                : { type: 'single_owner' }
 
         setError(undefined)
         setInProcess(true)
 
-        await rpc.prepareDeploymentMessage(
-            accountability.selectedAccountAddress,
-            params,
-            keyPassword
-        ).then((signedMessage) => {
-            setPendingResponse(sendMessage(signedMessage))
-            setInProcess(false)
-        }).catch((err) => {
-            setError(err.toString())
-            setInProcess(false)
-        })
+        await rpc
+            .prepareDeploymentMessage(accountability.selectedAccountAddress, params, keyPassword)
+            .then((signedMessage) => {
+                setPendingResponse(sendMessage({ signedMessage }))
+                setInProcess(false)
+            })
+            .catch((err) => {
+                setError(err.toString())
+                setInProcess(false)
+            })
     }
 
     const onNext = () => {
@@ -126,18 +131,18 @@ export function DeployWallet(): JSX.Element {
 
     React.useEffect(() => {
         if (
-            accountability.selectedAccountAddress == null
-            || accountability.tonWalletState == null
-            || accountability.tonWalletState?.isDeployed
+            accountability.selectedAccountAddress == null ||
+            accountability.tonWalletState == null ||
+            accountability.tonWalletState?.isDeployed
         ) {
             return
         }
 
-        rpc.estimateDeploymentFees(
-            accountability.selectedAccountAddress
-        ).then((fees) => {
-            setFees(fees)
-        }).catch(console.error)
+        rpc.estimateDeploymentFees(accountability.selectedAccountAddress)
+            .then((fees) => {
+                setFees(fees)
+            })
+            .catch(console.error)
     }, [accountability.selectedAccountAddress, accountability.tonWalletState])
 
     if (pendingResponse == null) {
@@ -178,7 +183,10 @@ export function DeployWallet(): JSX.Element {
                                         </div>
 
                                         {walletType?.value === DeployWalletType.STANDARD && (
-                                            <div key="standard" className="deploy-wallet__content-buttons">
+                                            <div
+                                                key="standard"
+                                                className="deploy-wallet__content-buttons"
+                                            >
                                                 <Button text="Next" onClick={onNext} />
                                             </div>
                                         )}

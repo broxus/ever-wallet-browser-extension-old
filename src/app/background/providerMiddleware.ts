@@ -7,7 +7,7 @@ import {
     RawTokensObject,
 } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
-import { NekotonRpcError, UniqueArray } from '@shared/utils'
+import { currentUtime, NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
 import * as nt from '@nekoton'
 
@@ -816,10 +816,14 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         unsignedMessage.free()
     }
 
-    const transaction: nt.Transaction = await accountController.sendMessage(
-        selectedAddress,
-        signedMessage
-    )
+    const transaction: nt.Transaction = await accountController.sendMessage(selectedAddress, {
+        signedMessage,
+        info: {
+            createdAt: currentUtime(),
+            amount,
+            recipient,
+        },
+    })
 
     if (transaction.outMessages.findIndex((message: nt.Message) => message.dst == recipient) < 0) {
         throw invalidRequest(req, 'No output messages produced')

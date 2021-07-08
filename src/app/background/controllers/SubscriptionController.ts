@@ -1,4 +1,4 @@
-import { NekotonRpcError, SendMessageCallback, SendMessageRequest } from '@shared/utils'
+import { NekotonRpcError, SendMessageCallback } from '@shared/utils'
 import {
     ContractUpdatesSubscription,
     ProviderEvent,
@@ -23,14 +23,10 @@ export interface SubscriptionControllerConfig extends BaseConfig {
     getOriginTabs?: (origin: string) => number[]
 }
 
-export interface SubscriptionControllerState extends BaseState {
-    subscriptionPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
-}
+export interface SubscriptionControllerState extends BaseState {}
 
 function makeDefaultState(): SubscriptionControllerState {
-    return {
-        subscriptionPendingMessages: {},
-    }
+    return {}
 }
 
 function makeDefaultSubscriptionState(): ContractUpdatesSubscription {
@@ -62,7 +58,7 @@ export class SubscriptionController extends BaseController<
     ): Promise<ContractUpdatesSubscription> {
         return this._subscriptionsMutex.use(async () => {
             let tabSubscriptions = this._tabs.get(tabId)
-            if (params == {}) {
+            if (window.ObjectExt.keys(params).length == 0) {
                 return tabSubscriptions?.get(address) || makeDefaultSubscriptionState()
             }
 
@@ -307,22 +303,6 @@ export class SubscriptionController extends BaseController<
         if (accountMessageRequests.size === 0) {
             this._sendMessageRequests.delete(address)
         }
-
-        const currentPendingMessages = this.state.subscriptionPendingMessages
-
-        const newAccountPendingMessages = { ...currentPendingMessages[address] }
-        delete newAccountPendingMessages[id]
-
-        const newPendingMessages = { ...currentPendingMessages }
-        if (accountMessageRequests.size > 0) {
-            newPendingMessages[address] = newAccountPendingMessages
-        } else {
-            delete newPendingMessages[address]
-        }
-
-        this.update({
-            subscriptionPendingMessages: newPendingMessages,
-        })
     }
 
     private _notifyStateChanged(address: string, state: nt.ContractState) {

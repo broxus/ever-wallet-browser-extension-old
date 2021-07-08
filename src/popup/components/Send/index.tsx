@@ -3,7 +3,11 @@ import * as React from 'react'
 import * as nt from '@nekoton'
 import { PrepareMessage } from '@popup/components/Send/components'
 import TransactionProgress from '@popup/components/TransactionProgress'
-import { TransferMessageToPrepare, TokenMessageToPrepare } from '@shared/backgroundApi'
+import {
+    TransferMessageToPrepare,
+    TokenMessageToPrepare,
+    WalletMessageToSend,
+} from '@shared/backgroundApi'
 import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import './style.scss'
@@ -27,7 +31,7 @@ type Props = {
         rootTokenContract: string,
         params: TokenMessageToPrepare
     ): Promise<nt.InternalMessage>
-    sendMessage(params: nt.SignedMessage): Promise<nt.Transaction>
+    sendMessage(params: WalletMessageToSend): Promise<nt.Transaction>
     onBack(): void
 }
 
@@ -48,7 +52,7 @@ export function Send({
 }: Props): JSX.Element {
     const [pendingResponse, setPendingResponse] = React.useState<Promise<nt.Transaction>>()
 
-    const trySendMessage = (message: nt.SignedMessage) => {
+    const trySendMessage = (message: WalletMessageToSend) => {
         if (pendingResponse == null) {
             setPendingResponse(sendMessage(message))
         } else {

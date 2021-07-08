@@ -75,6 +75,17 @@ export type SwapBackMessageToPrepare = {
     proxyAddress?: string
 }
 
+export type WalletMessageToSend = {
+    signedMessage: nt.SignedMessage
+    info?: BriefMessageInfo
+}
+
+export type BriefMessageInfo = {
+    createdAt: number
+    amount: string
+    recipient: string
+}
+
 export interface Approval<T extends string, D> {
     id: string
     origin: string

@@ -17,6 +17,7 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { SelectedAsset } from '@shared/utils'
+import { WalletMessageToSend } from '@shared/backgroundApi'
 
 import './style.scss'
 
@@ -95,7 +96,7 @@ export function MainPage(): JSX.Element | null {
 
     const now = new Date().getTime()
 
-    const sendMessage = async (message: nt.SignedMessage) => {
+    const sendMessage = async (message: WalletMessageToSend) => {
         return rpc.sendMessage(accountAddress as string, message)
     }
 
