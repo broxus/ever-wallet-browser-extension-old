@@ -1363,7 +1363,7 @@ export class AccountController extends BaseController<
         if (
             currentState?.balance === state.balance &&
             currentState?.isDeployed === state.isDeployed &&
-            currentState?.lastTransactionId?.hash === state.lastTransactionId?.hash
+            currentState?.lastTransactionId?.lt === state.lastTransactionId?.lt
         ) {
             return
         }

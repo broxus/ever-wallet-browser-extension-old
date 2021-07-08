@@ -10,6 +10,7 @@ export interface ITonWalletHandler extends IContractHandler<nt.Transaction> {
 export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     private readonly _contractType: nt.ContractType
     private readonly _handler: ITonWalletHandler
+    private _lastTransactionLt?: string
 
     public static async subscribe(
         connectionController: ConnectionController,
@@ -62,6 +63,12 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
         }
 
         await this._contractMutex.use(async () => {
+            const state: nt.ContractState = this._contract.contractState()
+            if (state.lastTransactionId?.lt === this._lastTransactionLt) {
+                return
+            }
+            this._lastTransactionLt = state.lastTransactionId?.lt
+
             const unconfirmedTransactions = this._contract.getMultisigPendingTransactions()
             this._handler.onUnconfirmedTransactionsChanged(unconfirmedTransactions)
         })
