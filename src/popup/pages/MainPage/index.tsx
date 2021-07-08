@@ -181,11 +181,6 @@ export function MainPage(): JSX.Element | null {
                         ) : (
                             <TransactionInfo transaction={selectedTransaction} />
                         ))}
-
-                    {drawer.currentPanel === Panel.TRANSACTION &&
-                        selectedTransaction !== undefined && (
-                            <TransactionInfo transaction={selectedTransaction} />
-                        )}
                 </>
             </SlidingPanel>
         </>
