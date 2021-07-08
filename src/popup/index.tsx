@@ -9,7 +9,7 @@ import pump from 'pump'
 
 import { RpcProvider } from '@popup/providers/RpcProvider'
 import { ActiveTab, RpcStateProvider } from '@popup/providers/RpcStateProvider'
-import { getEnvironmentType } from '@popup/utils/platform'
+import { getCurrentWindow, getEnvironmentType } from '@popup/utils/platform'
 import { getUniqueId, PortDuplexStream } from '@shared/utils'
 import {
     Environment,
@@ -17,6 +17,7 @@ import {
     ENVIRONMENT_TYPE_FULLSCREEN,
     ENVIRONMENT_TYPE_POPUP,
 } from '@shared/constants'
+import { WindowInfo } from '@shared/backgroundApi'
 import { IControllerRpcClient, makeControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import store from '@popup/store'
 
@@ -29,16 +30,39 @@ const start = async () => {
 
     const container = document.getElementById('root')
 
+    const windowId = (await getCurrentWindow()).id
+
     const makeConnection = () => {
-        return new Promise<PortDuplexStream>((resolve, reject) => {
+        return new Promise<{
+            group?: string
+            connectionStream: PortDuplexStream
+        }>((resolve, reject) => {
             console.log('Connecting')
 
             const extensionPort = chrome.runtime.connect({ name: windowType })
             const connectionStream = new PortDuplexStream(extensionPort)
 
-            const onConnect = () => {
+            const initId = getUniqueId()
+
+            const onConnect = ({
+                data,
+                name,
+            }: {
+                data?: { id?: number; result?: WindowInfo }
+                name?: string
+            }) => {
+                if (name !== 'controller' || typeof data !== 'object') {
+                    return
+                }
+                if (data.id !== initId || typeof data.result !== 'object') {
+                    return
+                }
+
                 extensionPort.onMessage.removeListener(onConnect)
-                resolve(connectionStream)
+                resolve({
+                    group: data.result.group,
+                    connectionStream,
+                })
             }
             const onDisconnect = () => reject(new Error('Port closed'))
 
@@ -48,9 +72,10 @@ const start = async () => {
             extensionPort.postMessage({
                 name: 'controller',
                 data: {
-                    id: getUniqueId(),
+                    id: initId,
                     jsonrpc: '2.0',
-                    method: 'ping',
+                    method: 'initialize',
+                    params: [windowId],
                 },
             })
         })
@@ -74,12 +99,12 @@ const start = async () => {
         container.innerHTML = `<div class="loader-page"><img src="${iconSrc}" class="loader-page__spinner" alt="" /></div>`
     }
 
-    const connectionStream = await tryConnect()
+    const { group, connectionStream } = await tryConnect()
 
     console.log('Connected')
 
     const activeTab = await queryCurrentActiveTab(windowType)
-    initializeUi(activeTab, connectionStream, (error?: Error) => {
+    initializeUi(group, activeTab, connectionStream, (error?: Error) => {
         if (error) {
             if (container) {
                 container.innerHTML =
@@ -125,6 +150,7 @@ const queryCurrentActiveTab = async (windowType: Environment) => {
 }
 
 const initializeUi = (
+    group: string | undefined,
     activeTab: ActiveTab,
     connectionStream: Duplex,
     callback: (error: Error | undefined) => void
@@ -138,7 +164,7 @@ const initializeUi = (
             <React.StrictMode>
                 <Provider store={store}>
                     <RpcProvider connection={backgroundConnection}>
-                        <RpcStateProvider activeTab={activeTab}>
+                        <RpcStateProvider group={group} activeTab={activeTab}>
                             <App />
                         </RpcStateProvider>
                     </RpcProvider>

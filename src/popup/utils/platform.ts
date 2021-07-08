@@ -78,6 +78,19 @@ export const openWindow = (
     })
 }
 
+export const getCurrentWindow = (): Promise<chrome.windows.Window> => {
+    return new Promise<chrome.windows.Window>((resolve, reject) => {
+        chrome.windows.getCurrent((windowDetails) => {
+            const error = checkForError()
+            if (error) {
+                reject(error)
+            } else {
+                resolve(windowDetails)
+            }
+        })
+    })
+}
+
 export const updateWindowPosition = (id: number, left: number, top: number): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
         chrome.windows.update(id, { left, top }, () => {
@@ -134,11 +147,15 @@ interface ShowPopupParams {
     height?: number
 }
 
-export class NotificationManager {
+export class WindowManager {
     private _groups: { [group: string]: number } = {}
     private _popups: { [popup: number]: string } = {}
 
     constructor() {}
+
+    public getGroup(windowId: number): string | undefined {
+        return this._popups[windowId] as string | undefined
+    }
 
     public async showPopup(params: ShowPopupParams) {
         const popup = await this._getPopup(params.group)

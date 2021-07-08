@@ -7,10 +7,10 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { fetchManifest } from '@popup/store/app/actions'
 import { AppState, StoreAction } from '@popup/store/app/types'
 import {
-	ENVIRONMENT_TYPE_BACKGROUND,
-	ENVIRONMENT_TYPE_FULLSCREEN,
-	ENVIRONMENT_TYPE_NOTIFICATION,
-	ENVIRONMENT_TYPE_POPUP,
+    ENVIRONMENT_TYPE_BACKGROUND,
+    ENVIRONMENT_TYPE_FULLSCREEN,
+    ENVIRONMENT_TYPE_NOTIFICATION,
+    ENVIRONMENT_TYPE_POPUP,
 } from '@shared/constants'
 import { ControllerState } from '@popup/utils/ControllerRpcClient'
 
@@ -35,111 +35,108 @@ export type ActiveTab =
     | nt.EnumItem<typeof ENVIRONMENT_TYPE_BACKGROUND, undefined>
 
 type Props = {
-	children: React.ReactNode;
-	activeTab: ActiveTab;
-	fetchManifest: StoreAction<typeof fetchManifest>
+    children: React.ReactNode
+    group: string
+    activeTab: ActiveTab
+    fetchManifest: StoreAction<typeof fetchManifest>
 }
 
 type ContextConsumer = {
-	activeTab?: ActiveTab;
-	loaded: boolean;
-	state: ControllerState;
+    activeTab?: ActiveTab
+    group?: string
+    loaded: boolean
+    state: ControllerState
 }
 
 export const closeCurrentWindow = () => {
-	chrome.windows.getCurrent((windowDetails) => {
-		chrome.windows.remove(windowDetails.id)
-	})
+    chrome.windows.getCurrent((windowDetails) => {
+        chrome.windows.remove(windowDetails.id)
+    })
 }
 
 export const Context = React.createContext<ContextConsumer>({
-	activeTab: undefined,
-	loaded: false,
-	state: {} as ControllerState
+    activeTab: undefined,
+    loaded: false,
+    state: {} as ControllerState,
 })
 
 export function useRpcState() {
-	return React.useContext(Context)
+    return React.useContext(Context)
 }
 
-function Provider({ children, activeTab, fetchManifest }: Props): JSX.Element {
-	const rpc = useRpc()
+function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Element {
+    const rpc = useRpc()
 
-	const [loaded, setLoaded] = React.useState(false)
-	const [state, setState] = React.useState<ControllerState>({} as ControllerState)
+    const [loaded, setLoaded] = React.useState(false)
+    const [state, setState] = React.useState<ControllerState>({} as ControllerState)
 
-	React.useEffect(() => {
-		console.log(state, 'controllerState')
-	})
+    React.useEffect(() => {
+        console.log(state, 'controllerState')
+    })
 
-	React.useEffect(() => {
-		;(async () => {
-			const [, state] = await Promise.all([
-				init('index_bg.wasm'),
-				(async () => {
-					rpc.onNotification((data) => {
-						const stateToUpdate = data.params
+    React.useEffect(() => {
+        ;(async () => {
+            const [, state] = await Promise.all([
+                init('index_bg.wasm'),
+                (async () => {
+                    rpc.onNotification((data) => {
+                        const stateToUpdate = data.params
 
-						// if (
-						//     activeTab.type === 'notification' &&
-						//     Object.keys((stateToUpdate as any).pendingApprovals).length === 0
-						// ) {
-						//     closeCurrentWindow()
-						// }
-						// else {
-						//     console.log('Got state', stateToUpdate)
-						//     setState(stateToUpdate as any)
-						// }
-						if (!isEqual(state, stateToUpdate)) {
-							try {
-								console.log('Got state', stateToUpdate)
-								setState(stateToUpdate as ControllerState)
-							}
-							catch (e) {
-								console.log(e.toString())
-							}
-						}
-					})
+                        // if (
+                        //     activeTab.type === 'notification' &&
+                        //     Object.keys((stateToUpdate as any).pendingApprovals).length === 0
+                        // ) {
+                        //     closeCurrentWindow()
+                        // }
+                        // else {
+                        //     console.log('Got state', stateToUpdate)
+                        //     setState(stateToUpdate as any)
+                        // }
+                        if (!isEqual(state, stateToUpdate)) {
+                            try {
+                                console.log('Got state', stateToUpdate)
+                                setState(stateToUpdate as ControllerState)
+                            } catch (e) {
+                                console.log(e.toString())
+                            }
+                        }
+                    })
 
-					return await rpc.getState()
-				})(),
-			])
+                    return await rpc.getState()
+                })(),
+            ])
 
-			if (
-				state.selectedAccount == null &&
-				(activeTab.type === 'popup' || activeTab.type === 'notification')
-			) {
-				await rpc.openExtensionInBrowser({})
-				window.close()
-			}
-			else if (
-				state.selectedAccount != null &&
-				activeTab.type === 'fullscreen' &&
-				activeTab.data.route == null
-			) {
-				window.close()
-			}
-			else {
-				setState(state)
-			}
+            if (
+                state.selectedAccount == null &&
+                (activeTab.type === 'popup' || activeTab.type === 'notification')
+            ) {
+                await rpc.openExtensionInBrowser({})
+                window.close()
+            } else if (
+                state.selectedAccount != null &&
+                activeTab.type === 'fullscreen' &&
+                activeTab.data.route == null
+            ) {
+                window.close()
+            } else {
+                setState(state)
+            }
 
-			setLoaded(true)
+            setLoaded(true)
 
-			fetchManifest().catch(console.error)
-		})()
-	}, [])
+            fetchManifest().catch(console.error)
+        })()
+    }, [])
 
-	return (
-		<Context.Provider value={{ activeTab, loaded, state }}>
-			{children}
-		</Context.Provider>
-	)
+    return (
+        <Context.Provider value={{ group, activeTab, loaded, state }}>{children}</Context.Provider>
+    )
 }
 
 const mapStateToProps = (store: { app: AppState }) => ({
-	tokensManifest: store.app.tokensManifest,
+    tokensManifest: store.app.tokensManifest,
 })
 
 export const RpcStateProvider = connect(mapStateToProps, {
-	fetchManifest,
+    fetchManifest,
 })(Provider)

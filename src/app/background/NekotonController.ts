@@ -24,7 +24,7 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { NEKOTON_PROVIDER } from '@shared/constants'
-import { ConnectionDataItem } from '@shared/backgroundApi'
+import { ConnectionDataItem, WindowInfo } from '@shared/backgroundApi'
 
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
@@ -33,7 +33,7 @@ import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
-import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
+import { focusTab, focusWindow, WindowManager, openExtensionInBrowser } from '@popup/utils/platform'
 
 import LedgerBridge from './ledger/LedgerBridge'
 
@@ -45,6 +45,7 @@ export interface TriggerUiParams {
 }
 
 export interface NekotonControllerOptions {
+    windowManager: WindowManager
     openExternalWindow: (params: TriggerUiParams) => void
     getOpenNekotonTabIds: () => { [id: number]: true }
 }
@@ -53,6 +54,7 @@ interface NekotonControllerComponents {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
+    windowManager: WindowManager
     accountController: AccountController
     approvalController: ApprovalController
     connectionController: ConnectionController
@@ -128,6 +130,7 @@ export class NekotonController extends EventEmitter {
             storage,
             accountsStorage,
             keyStore,
+            windowManager: options.windowManager,
             accountController,
             approvalController,
             connectionController,
@@ -194,10 +197,20 @@ export class NekotonController extends EventEmitter {
     public getApi() {
         type ApiCallback<T> = (error: Error | null, result?: T) => void
 
-        const { approvalController, accountController, connectionController } = this._components
+        const {
+            windowManager,
+            approvalController,
+            accountController,
+            connectionController,
+        } = this._components
 
         return {
-            ping: (cb: ApiCallback<void>) => cb(null),
+            initialize: (windowId: number | undefined, cb: ApiCallback<WindowInfo>) => {
+                const group = windowId != null ? windowManager.getGroup(windowId) : undefined
+                cb(null, {
+                    group,
+                })
+            },
             getState: (cb: ApiCallback<ReturnType<typeof NekotonController.prototype.getState>>) =>
                 cb(null, this.getState()),
             getAvailableNetworks: (cb: ApiCallback<ConnectionDataItem[]>) =>

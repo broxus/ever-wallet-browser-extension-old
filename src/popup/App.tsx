@@ -23,17 +23,15 @@ const Loader: React.FC = () => {
     )
 }
 
-
 function App(): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
     if (
-        rpcState.activeTab == null || (
-            rpcState.state.selectedAccount != null &&
+        rpcState.activeTab == null ||
+        (rpcState.state.selectedAccount != null &&
             rpcState.activeTab.type === 'fullscreen' &&
-            rpcState.activeTab.data == null
-        )
+            rpcState.activeTab.data == null)
     ) {
         window.close()
         return null
@@ -44,13 +42,17 @@ function App(): JSX.Element | null {
     }
 
     if (rpcState.activeTab.type === 'fullscreen') {
-        if (rpcState.state.selectedAccount != null && rpcState.activeTab.data.route == 'connect-ledger') {
+        if (
+            rpcState.state.selectedAccount != null &&
+            rpcState.activeTab.data.route == 'connect-ledger'
+        ) {
             return <ConnectLedgerPage controllerRpc={rpc} controllerState={rpcState.state} />
-        }
-        else if (rpcState.state.selectedAccount == null && rpcState.activeTab.data.route == null) {
+        } else if (
+            rpcState.state.selectedAccount == null &&
+            rpcState.activeTab.data.route == null
+        ) {
             return <WelcomePage controllerState={rpcState.state} controllerRpc={rpc} />
-        }
-        else {
+        } else {
             window.close()
             return null
         }

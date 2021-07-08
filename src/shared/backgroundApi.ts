@@ -6,6 +6,10 @@ import {
 } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
+export type WindowInfo = {
+    group?: string
+}
+
 export type MasterKeyToCreate = {
     seed: nt.GeneratedMnemonic
     password: string

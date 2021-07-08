@@ -11,10 +11,10 @@ import {
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
 
-import { NotificationManager, openExtensionInBrowser } from '@popup/utils/platform'
+import { WindowManager, openExtensionInBrowser } from '@popup/utils/platform'
 import { NekotonController, TriggerUiParams } from './NekotonController'
 
-const notificationManager = new NotificationManager()
+const windowManager = new WindowManager()
 
 let popupIsOpen: boolean = false
 let notificationIsOpen: boolean = false
@@ -30,6 +30,7 @@ const setupController = async () => {
     console.log('Setup controller')
 
     const controller = await NekotonController.load({
+        windowManager,
         openExternalWindow: triggerUi,
         getOpenNekotonTabIds: () => {
             return openNekotonTabsIDs
@@ -103,7 +104,7 @@ const triggerUi = async (params: TriggerUiParams) => {
     if (!uiIsTriggering && (params.force || !popupIsOpen) && !currentlyActiveNekotonTab) {
         uiIsTriggering = true
         try {
-            await notificationManager.showPopup({
+            await windowManager.showPopup({
                 group: params.group,
                 width: params.width,
                 height: params.height,
