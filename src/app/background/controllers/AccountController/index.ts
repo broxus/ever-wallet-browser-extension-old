@@ -1358,6 +1358,16 @@ export class AccountController extends BaseController<
 
     private _updateTonWalletState(address: string, state: nt.ContractState) {
         const currentStates = this.state.accountContractStates
+
+        const currentState = currentStates[address] as nt.ContractState | undefined
+        if (
+            currentState?.balance === state.balance &&
+            currentState?.isDeployed === state.isDeployed &&
+            currentState?.lastTransactionId?.hash === state.lastTransactionId?.hash
+        ) {
+            return
+        }
+
         const newStates = {
             ...currentStates,
             [address]: state,

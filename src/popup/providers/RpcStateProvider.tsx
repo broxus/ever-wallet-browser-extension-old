@@ -92,13 +92,12 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
                         //     console.log('Got state', stateToUpdate)
                         //     setState(stateToUpdate as any)
                         // }
-                        if (!isEqual(state, stateToUpdate)) {
-                            try {
-                                console.log('Got state', stateToUpdate)
-                                setState(stateToUpdate as ControllerState)
-                            } catch (e) {
-                                console.log(e.toString())
-                            }
+
+                        try {
+                            console.log('Got state', stateToUpdate)
+                            setState(stateToUpdate as ControllerState)
+                        } catch (e) {
+                            console.log(e.toString())
                         }
                     })
 
