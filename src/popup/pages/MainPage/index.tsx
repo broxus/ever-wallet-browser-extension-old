@@ -172,13 +172,15 @@ export function MainPage(): JSX.Element | null {
                         && selectedTransaction.info?.type === 'multisig_transaction'
                         && selectedTransaction.info?.data.type === 'submit'
                         && selectedTransaction.info.data.data.transactionId != '0'
-                    ) ? (
+                    ) && (
                         <MultisigTransactionSign
                             transaction={selectedTransaction}
                             selectedKeys={selectedKeys}
                         />
-                    ) : (
-                        <TransactionInfo transaction={selectedTransaction as nt.TonWalletTransaction} />
+                    )}
+
+                    {(drawer.currentPanel === Panel.TRANSACTION && selectedTransaction !== undefined) && (
+                        <TransactionInfo transaction={selectedTransaction} />
                     )}
                 </>
             </SlidingPanel>
