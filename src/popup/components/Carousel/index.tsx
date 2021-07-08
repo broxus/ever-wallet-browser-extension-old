@@ -40,6 +40,7 @@ export const Carousel = React.forwardRef<ReactSlick, Props>(({
             onReInit={onReInit}
             slidesToScroll={1}
             slidesToShow={1}
+            speed={300}
             swipe={false}
         >
             {children}

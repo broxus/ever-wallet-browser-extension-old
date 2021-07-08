@@ -53,13 +53,14 @@ export function AccountDetails(): JSX.Element {
     }
 
     const onSend = async () => {
-        if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
+        drawer.setPanel(Panel.SEND)
+        /*if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
             drawer.setPanel(Panel.SEND)
         } else {
             await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
             await rpc.openExtensionInExternalWindow('send')
             window.close()
-        }
+        }*/
     }
 
     const onToggleNetwork = async () => {
@@ -78,16 +79,22 @@ export function AccountDetails(): JSX.Element {
         nextNetwork && (await rpc.changeNetwork(nextNetwork))
     }
 
-    const beforeSlide = debounce(async (_, nextIndex: number) => {
+    const timeout = React.useRef<number>();
+
+    const beforeSlide =  (nextIndex: number) => {
         const account = accountability.accounts[nextIndex]
+
+        if (timeout.current !== undefined) { window.clearTimeout(timeout.current) }
         if (
             account === undefined ||
             account?.tonWallet.address === accountability.selectedAccount?.tonWallet.address
         ) {
             return
         }
-        await rpc.selectAccount(account.tonWallet.address)
-    }, 200)
+        timeout.current = window.setTimeout(async () => {
+            await rpc.selectAccount(account.tonWallet.address);
+        }, 500);
+    }
 
     const onInit = () => {
         slider.current?.slickGoTo(initialSlide)
@@ -127,7 +134,7 @@ export function AccountDetails(): JSX.Element {
                 )}
             </div>
 
-            <Carousel ref={slider} onInit={onInit} beforeChange={beforeSlide}>
+            <Carousel ref={slider} onInit={onInit} afterChange={beforeSlide}>
                 {accountability.accounts.map((account) => (
                     <AccountCard
                         key={account.tonWallet.address}
