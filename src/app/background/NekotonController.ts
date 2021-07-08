@@ -24,7 +24,7 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { NEKOTON_PROVIDER } from '@shared/constants'
-import { ConnectionDataItem, WindowInfo } from '@shared/backgroundApi'
+import { ConnectionDataItem, ExternalWindowParams, WindowInfo } from '@shared/backgroundApi'
 
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
@@ -242,9 +242,14 @@ export class NekotonController extends EventEmitter {
                 delete this._tempStorage[key]
                 cb(null, oldValue)
             },
-            openExtensionInExternalWindow: (group: string, cb: ApiCallback<undefined>) => {
+            openExtensionInExternalWindow: (
+                { group, width, height }: ExternalWindowParams,
+                cb: ApiCallback<undefined>
+            ) => {
                 this._options.openExternalWindow({
                     group,
+                    width,
+                    height,
                     force: true,
                 })
                 cb(null)

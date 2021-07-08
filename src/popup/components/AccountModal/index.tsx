@@ -15,7 +15,6 @@ import manifest from '../../../manifest.json'
 
 import './style.scss'
 
-
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountModal() {
@@ -48,9 +47,7 @@ export function AccountModal() {
 
     const onManageMasterKey = (masterKey: string) => {
         return () => {
-            const key = accountability.masterKeys.find(
-                (entry) => entry.masterKey === masterKey
-            )
+            const key = accountability.masterKeys.find((entry) => entry.masterKey === masterKey)
 
             if (key == null) {
                 return
@@ -71,7 +68,9 @@ export function AccountModal() {
             drawer.setPanel(Panel.MANAGE_SEEDS)
         } else {
             await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.MANAGE_SEEDS)
-            await rpc.openExtensionInExternalWindow('manage_seeds')
+            await rpc.openExtensionInExternalWindow({
+                group: 'manage_seeds',
+            })
             window.close()
         }
     }

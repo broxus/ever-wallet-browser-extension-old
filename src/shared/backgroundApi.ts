@@ -10,6 +10,12 @@ export type WindowInfo = {
     group?: string
 }
 
+export type ExternalWindowParams = {
+    group: string
+    width?: number
+    height?: number
+}
+
 export type MasterKeyToCreate = {
     seed: nt.GeneratedMnemonic
     password: string
