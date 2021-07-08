@@ -82,6 +82,7 @@ export function MainPage(): JSX.Element | null {
     }
 
     const tonWalletAsset = accountability.selectedAccount.tonWallet
+    const contractTypeDetails = nt.getContractTypeDetails(tonWalletAsset.contractType)
     const tokenWalletAssets =
         accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets ||
         []
@@ -91,6 +92,8 @@ export function MainPage(): JSX.Element | null {
     const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
 
     const transactions = rpcState.state.accountTransactions[accountAddress] || []
+
+    const now = new Date().getTime()
 
     const sendMessage = async (message: nt.SignedMessage) => {
         return rpc.sendMessage(accountAddress as string, message)
@@ -104,6 +107,17 @@ export function MainPage(): JSX.Element | null {
     const showAsset = (selectedAsset: SelectedAsset) => {
         setSelectedAsset(selectedAsset)
         drawer.setPanel(Panel.ASSET)
+    }
+
+    const isUnconfirmedTransaction = (
+        transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
+    ) => {
+        return (
+            transaction.info?.type === 'multisig_transaction' &&
+            transaction.info?.data.type === 'submit' &&
+            transaction.info.data.data.transactionId != '0' &&
+            (transaction.createdAt + contractTypeDetails.expirationTime) * 1000 > now
+        )
     }
 
     return (
@@ -169,11 +183,9 @@ export function MainPage(): JSX.Element | null {
                             controllerRpc={rpc}
                         />
                     )}
-                    {selectedTransaction != null &&
-                        (drawer.currentPanel === Panel.TRANSACTION &&
-                        selectedTransaction.info?.type === 'multisig_transaction' &&
-                        selectedTransaction.info?.data.type === 'submit' &&
-                        selectedTransaction.info.data.data.transactionId != '0' ? (
+                    {drawer.currentPanel === Panel.TRANSACTION &&
+                        selectedTransaction != null &&
+                        (isUnconfirmedTransaction(selectedTransaction) ? (
                             <MultisigTransactionSign
                                 transaction={selectedTransaction}
                                 selectedKeys={selectedKeys}

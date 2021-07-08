@@ -413,6 +413,7 @@ export type TonWalletDetails = {
     minAmount: string,
     supportsPayload: boolean,
     supportsMultipleOwners: boolean,
+    expirationTime: number,
 };
 "#;
 
@@ -428,6 +429,7 @@ fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonW
         .set("minAmount", data.min_amount.to_string())
         .set("supportsPayload", data.supports_payload)
         .set("supportsMultipleOwners", data.supports_multiple_owners)
+        .set("expirationTime", data.expiration_time)
         .build()
         .unchecked_into()
 }
