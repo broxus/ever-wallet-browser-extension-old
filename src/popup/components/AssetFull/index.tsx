@@ -231,7 +231,11 @@ const AssetFull: React.FC<IAssetFull> = ({
                                 await controllerRpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
-                                controllerRpc.prepareMessage(accountAddress, params, password)
+                                controllerRpc.prepareTransferMessage(
+                                    accountAddress,
+                                    params,
+                                    password
+                                )
                             }
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
                                 controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
@@ -241,9 +245,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                             }
                         />
                     )}
-                    {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet />
-                    )}
+                    {openedPanel == Panel.DEPLOY && <DeployWallet />}
                     {openedPanel == Panel.TRANSACTION && selectedTransaction && (
                         <TransactionInfo symbol={symbol} transaction={selectedTransaction} />
                     )}

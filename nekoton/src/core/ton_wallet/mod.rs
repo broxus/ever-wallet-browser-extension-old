@@ -102,6 +102,30 @@ impl TonWallet {
         Ok(crate::crypto::UnsignedMessage { inner })
     }
 
+    #[wasm_bindgen(js_name = "prepareConfirm")]
+    pub fn prepare_confirm(
+        &self,
+        raw_current_state: &RawContractState,
+        public_key: &str,
+        transaction_id: &str,
+        timeout: u32,
+    ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
+        let public_key = parse_public_key(public_key)?;
+        let transaction_id = u64::from_str(transaction_id).handle_error()?;
+
+        let wallet = self.inner.wallet.lock().unwrap();
+        let message = wallet
+            .prepare_confirm_transaction(
+                &raw_current_state.inner,
+                &public_key,
+                transaction_id,
+                core_models::Expiration::Timeout(timeout),
+            )
+            .handle_error()?;
+
+        Ok(crate::crypto::UnsignedMessage { inner: message })
+    }
+
     #[wasm_bindgen(js_name = "prepareTransfer")]
     pub fn prepare_transfer(
         &self,

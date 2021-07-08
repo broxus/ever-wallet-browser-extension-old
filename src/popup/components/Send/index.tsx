@@ -3,14 +3,10 @@ import * as React from 'react'
 import * as nt from '@nekoton'
 import { PrepareMessage } from '@popup/components/Send/components'
 import TransactionProgress from '@popup/components/TransactionProgress'
-import { MessageToPrepare, TokenMessageToPrepare } from '@shared/backgroundApi'
-import {
-    SelectedAsset,
-    TokenWalletState,
-} from '@shared/utils'
+import { TransferMessageToPrepare, TokenMessageToPrepare } from '@shared/backgroundApi'
+import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import './style.scss'
-
 
 type Props = {
     accountName: string
@@ -21,9 +17,9 @@ type Props = {
     tonWalletState: nt.ContractState
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
-    estimateFees(params: MessageToPrepare): Promise<string>
+    estimateFees(params: TransferMessageToPrepare): Promise<string>
     prepareMessage(
-        params: MessageToPrepare,
+        params: TransferMessageToPrepare,
         keyPassword: nt.KeyPassword
     ): Promise<nt.SignedMessage>
     prepareTokenMessage(

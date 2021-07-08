@@ -20,7 +20,6 @@ import { SelectedAsset } from '@shared/utils'
 
 import './style.scss'
 
-
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function MainPage(): JSX.Element | null {
@@ -29,10 +28,9 @@ export function MainPage(): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
-    const [
-        selectedTransaction,
-        setSelectedTransaction
-    ] = React.useState<nt.TonWalletTransaction | nt.TokenWalletTransaction>()
+    const [selectedTransaction, setSelectedTransaction] = React.useState<
+        nt.TonWalletTransaction | nt.TokenWalletTransaction
+    >()
     const [selectedAsset, setSelectedAsset] = React.useState<SelectedAsset>()
     const scrollArea = React.useRef<HTMLDivElement>(null)
 
@@ -56,7 +54,13 @@ export function MainPage(): JSX.Element | null {
         accountability.reset()
     }
 
-    const { externalAccounts, knownTokens, selectedAccount, selectedConnection, storedKeys } = rpcState.state
+    const {
+        externalAccounts,
+        knownTokens,
+        selectedAccount,
+        selectedConnection,
+        storedKeys,
+    } = rpcState.state
 
     const accountName = selectedAccount?.name as string
     const accountAddress = selectedAccount?.tonWallet.address as string
@@ -67,23 +71,23 @@ export function MainPage(): JSX.Element | null {
         const externals = externalAccounts.find((account) => account.address === accountAddress)
 
         if (externals !== undefined) {
-            keys = externals.externalIn.map(key => storedKeys[key])
+            keys = externals.externalIn.map((key) => storedKeys[key])
         }
 
-        return keys.filter(e => e)
-    }, [
-        accountability.selectedAccount,
-        externalAccounts,
-        storedKeys,
-    ])
+        return keys.filter((e) => e)
+    }, [accountability.selectedAccount, externalAccounts, storedKeys])
 
     if (selectedKeys[0] === undefined) {
         return null
     }
 
     const tonWalletAsset = accountability.selectedAccount.tonWallet
-    const tokenWalletAssets = accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
-    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as nt.ContractState | undefined
+    const tokenWalletAssets =
+        accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets ||
+        []
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
+        | nt.ContractState
+        | undefined
     const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
 
     const transactions = rpcState.state.accountTransactions[accountAddress] || []
@@ -104,7 +108,6 @@ export function MainPage(): JSX.Element | null {
 
     return (
         <>
-
             <div className="main-page__content" ref={scrollArea}>
                 <AccountDetails />
                 <UserAssets
@@ -144,7 +147,7 @@ export function MainPage(): JSX.Element | null {
                                 await rpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
-                                rpc.prepareMessage(accountAddress, params, password)
+                                rpc.prepareTransferMessage(accountAddress, params, password)
                             }
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
                                 rpc.prepareTokenMessage(owner, rootTokenContract, params)
@@ -166,22 +169,23 @@ export function MainPage(): JSX.Element | null {
                             controllerRpc={rpc}
                         />
                     )}
-                    {(
-                        drawer.currentPanel === Panel.TRANSACTION
-                        && selectedTransaction !== undefined
-                        && selectedTransaction.info?.type === 'multisig_transaction'
-                        && selectedTransaction.info?.data.type === 'submit'
-                        && selectedTransaction.info.data.data.transactionId != '0'
-                    ) && (
-                        <MultisigTransactionSign
-                            transaction={selectedTransaction}
-                            selectedKeys={selectedKeys}
-                        />
-                    )}
+                    {selectedTransaction != null &&
+                        (drawer.currentPanel === Panel.TRANSACTION &&
+                        selectedTransaction.info?.type === 'multisig_transaction' &&
+                        selectedTransaction.info?.data.type === 'submit' &&
+                        selectedTransaction.info.data.data.transactionId != '0' ? (
+                            <MultisigTransactionSign
+                                transaction={selectedTransaction}
+                                selectedKeys={selectedKeys}
+                            />
+                        ) : (
+                            <TransactionInfo transaction={selectedTransaction} />
+                        ))}
 
-                    {(drawer.currentPanel === Panel.TRANSACTION && selectedTransaction !== undefined) && (
-                        <TransactionInfo transaction={selectedTransaction} />
-                    )}
+                    {drawer.currentPanel === Panel.TRANSACTION &&
+                        selectedTransaction !== undefined && (
+                            <TransactionInfo transaction={selectedTransaction} />
+                        )}
                 </>
             </SlidingPanel>
         </>

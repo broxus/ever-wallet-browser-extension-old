@@ -22,10 +22,11 @@ import {
     KeyToRemove,
     LedgerKeyToCreate,
     MasterKeyToCreate,
-    MessageToPrepare,
+    TransferMessageToPrepare,
     SwapBackMessageToPrepare,
     TokenMessageToPrepare,
     TokenWalletsToUpdate,
+    ConfirmMessageToPrepare,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
@@ -54,7 +55,9 @@ export interface AccountControllerState extends BaseState {
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
-    accountUnconfirmedTransactions: { [address: string]: { [transactionId: string] : nt.MultisigPendingTransaction } }
+    accountUnconfirmedTransactions: {
+        [address: string]: { [transactionId: string]: nt.MultisigPendingTransaction }
+    }
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
@@ -726,7 +729,7 @@ export class AccountController extends BaseController<
                 accountEntries: {
                     ...this.state.accountEntries,
                     [address]: accountEntry,
-                }
+                },
             })
         })
     }
@@ -750,7 +753,7 @@ export class AccountController extends BaseController<
         return this.config.keyStore.check_password(password)
     }
 
-    public async estimateFees(address: string, params: MessageToPrepare) {
+    public async estimateFees(address: string, params: TransferMessageToPrepare) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -841,9 +844,9 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async prepareMessage(
+    public async prepareTransferMessage(
         address: string,
-        params: MessageToPrepare,
+        params: TransferMessageToPrepare,
         password: nt.KeyPassword
     ) {
         const subscription = await this._tonWalletSubscriptions.get(address)
@@ -880,6 +883,41 @@ export class AccountController extends BaseController<
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
+            }
+        })
+    }
+
+    public async prepareConfirmMessage(
+        address: string,
+        params: ConfirmMessageToPrepare,
+        password: nt.KeyPassword
+    ) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            let unsignedMessage: nt.UnsignedMessage | undefined
+            try {
+                unsignedMessage = wallet.prepareConfirm(
+                    contractState,
+                    params.publicKey,
+                    params.transactionId,
+                    60
+                )
+
+                return await this.config.keyStore.sign(unsignedMessage, password)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage?.free()
             }
         })
     }

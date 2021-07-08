@@ -41,11 +41,16 @@ export type DeployMessageToPrepare =
     | { type: 'single_owner' }
     | { type: 'multiple_owners'; custodians: string[]; reqConfirms: number }
 
-export type MessageToPrepare = {
+export type TransferMessageToPrepare = {
     publicKey: string
     amount: string
     recipient: string
     payload?: string
+}
+
+export type ConfirmMessageToPrepare = {
+    publicKey: string
+    transactionId: string
 }
 
 export type TokenMessageToPrepare = {
