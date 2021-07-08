@@ -44,17 +44,20 @@ export function ManageAccount(): JSX.Element {
             (key) => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
         )
 
-
         const externalAccount = rpcState.state?.externalAccounts.find(
-			({ address }) => address === accountability.currentAccount?.tonWallet.address
-		)
+            ({ address }) => address === accountability.currentAccount?.tonWallet.address
+        )
 
-		if (externalAccount !== undefined) {
-            keys.push(...externalAccount.externalIn.map(key => rpcState.state?.storedKeys[key]).filter(e => e) as nt.KeyStoreEntry[])
-		}
+        if (externalAccount !== undefined) {
+            keys.push(
+                ...(externalAccount.externalIn
+                    .map((key) => rpcState.state?.storedKeys[key])
+                    .filter((e) => e) as nt.KeyStoreEntry[])
+            )
+        }
 
-		return keys
-	}, [rpcState.state?.storedKeys])
+        return keys
+    }, [rpcState.state?.storedKeys])
 
     const saveName = async () => {
         if (accountability.currentAccount !== undefined && name) {
@@ -167,8 +170,7 @@ export function ManageAccount(): JSX.Element {
                                         className="accounts-management__list-item-logo"
                                     />
                                     <div className="accounts-management__list-item-title">
-                                        {accountability.derivedKeysNames?.[key.publicKey] ||
-                                            convertAddress(key.publicKey)}
+                                        {accountability.derivedKeys[key.publicKey].name}
                                     </div>
                                     <img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
                                 </div>

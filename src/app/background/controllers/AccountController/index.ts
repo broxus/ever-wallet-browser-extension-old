@@ -60,13 +60,12 @@ export interface AccountControllerState extends BaseState {
     }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     accountsVisibility: { [address: string]: boolean }
-    derivedKeysNames: { [publicKey: string]: string }
     externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
-    masterKeysNames: { [masterKey: string]: string }
     recentMasterKeys: nt.KeyStoreEntry[]
     selectedAccount: nt.AssetsList | undefined
     selectedMasterKey: string | undefined
+    masterKeysNames: { [masterKey: string]: string }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
 }
 
@@ -79,7 +78,6 @@ const defaultState: AccountControllerState = {
     accountTokenTransactions: {},
     accountPendingMessages: {},
     accountsVisibility: {},
-    derivedKeysNames: {},
     externalAccounts: [],
     knownTokens: {},
     masterKeysNames: {},
@@ -139,11 +137,6 @@ export class AccountController extends BaseController<
             accountsVisibility = {}
         }
 
-        let derivedKeysNames = await this._loadDerivedKeysNames()
-        if (derivedKeysNames == null) {
-            derivedKeysNames = {}
-        }
-
         let masterKeysNames = await this._loadMasterKeysNames()
         if (masterKeysNames == null) {
             masterKeysNames = {}
@@ -163,7 +156,6 @@ export class AccountController extends BaseController<
             accountsVisibility,
             selectedAccount,
             accountEntries,
-            derivedKeysNames,
             externalAccounts,
             masterKeysNames,
             recentMasterKeys,
@@ -359,7 +351,6 @@ export class AccountController extends BaseController<
             await this._removeSelectedAccountAddress()
             await this._removeSelectedMasterKey()
             await this._clearMasterKeysNames()
-            await this._clearDerivedKeysNames()
             await this._clearAccountsVisibility()
             await this._clearRecentMasterKeys()
             await this._clearExternalAccounts()
@@ -469,14 +460,11 @@ export class AccountController extends BaseController<
             const entry = await keyStore.addKey({
                 type: 'master_key',
                 data: {
+                    name,
                     password,
                     params: { masterKey, accountId },
                 },
             })
-
-            if (name !== undefined) {
-                await this.updateDerivedKeyName(entry.publicKey, name)
-            }
 
             this.update({
                 storedKeys: {
@@ -491,15 +479,54 @@ export class AccountController extends BaseController<
         }
     }
 
-    public async updateDerivedKeyName(publicKey: string, name: string): Promise<void> {
+    public async updateDerivedKeyName(entry: nt.KeyStoreEntry): Promise<void> {
+        const { signerName, masterKey, publicKey, name } = entry
+
+        let params: nt.RenameKey
+        switch (signerName) {
+            case 'master_key': {
+                params = {
+                    type: 'master_key',
+                    data: {
+                        masterKey,
+                        publicKey,
+                        name,
+                    },
+                }
+                break
+            }
+            case 'encrypted_key': {
+                params = {
+                    type: 'encrypted_key',
+                    data: {
+                        publicKey,
+                        name,
+                    },
+                }
+                break
+            }
+            case 'ledger_key': {
+                params = {
+                    type: 'ledger_key',
+                    data: {
+                        publicKey,
+                        name,
+                    },
+                }
+                break
+            }
+            default:
+                return
+        }
+
+        const newEntry = await this.config.keyStore.renameKey(params)
+
         this.update({
-            derivedKeysNames: {
-                ...this.state.derivedKeysNames,
-                [publicKey]: name,
+            storedKeys: {
+                ...this.state.storedKeys,
+                [publicKey]: newEntry,
             },
         })
-
-        await this._saveDerivedKeysNames()
     }
 
     public async createLedgerKey({ accountId }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
@@ -1511,33 +1538,6 @@ export class AccountController extends BaseController<
     private async _saveRecentMasterKeys(): Promise<void> {
         return new Promise<void>((resolve) => {
             chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () =>
-                resolve()
-            )
-        })
-    }
-
-    private async _loadDerivedKeysNames(): Promise<
-        AccountControllerState['derivedKeysNames'] | undefined
-    > {
-        return new Promise<AccountControllerState['derivedKeysNames'] | undefined>((resolve) => {
-            chrome.storage.local.get(['derivedKeysNames'], ({ derivedKeysNames }) => {
-                if (typeof derivedKeysNames !== 'object') {
-                    return resolve(undefined)
-                }
-                resolve(derivedKeysNames)
-            })
-        })
-    }
-
-    private async _clearDerivedKeysNames(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('derivedKeysNames', () => resolve())
-        })
-    }
-
-    private async _saveDerivedKeysNames(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ derivedKeysNames: this.state.derivedKeysNames }, () =>
                 resolve()
             )
         })

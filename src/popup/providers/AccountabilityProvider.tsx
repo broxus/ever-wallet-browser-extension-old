@@ -33,8 +33,7 @@ interface AccountabilityContext {
     selectedMasterKey?: string
     currentDerivedKeyAccounts: nt.AssetsList[]
     currentDerivedKeyExternalAccounts: nt.AssetsList[]
-    derivedKeys: nt.KeyStoreEntry[]
-    derivedKeysNames: { [publicKey: string]: string }
+    derivedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     selectedAccount?: nt.AssetsList
     accounts: nt.AssetsList[]
     accountsVisibility: { [address: string]: boolean }
@@ -63,8 +62,7 @@ export const Context = React.createContext<AccountabilityContext>({
     masterKeysNames: {},
     currentDerivedKeyAccounts: [],
     currentDerivedKeyExternalAccounts: [],
-    derivedKeys: [],
-    derivedKeysNames: {},
+    derivedKeys: {},
     selectedAccount: {} as nt.AssetsList,
     accounts: [],
     accountsVisibility: {},
@@ -104,9 +102,12 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
     // All derived keys in managed seed
     const derivedKeys = React.useMemo(
         () =>
-            Object.values({ ...rpcState.state?.storedKeys }).filter(
-                (key) => key.masterKey === currentMasterKey?.masterKey
-            ),
+            window.ObjectExt.values(rpcState.state?.storedKeys || {})
+                .filter((key) => key.masterKey === currentMasterKey?.masterKey)
+                .reduce((derivedKeys, key) => {
+                    derivedKeys[key.publicKey] = key
+                    return derivedKeys
+                }, {} as AccountabilityContext['derivedKeys']),
         [currentMasterKey, rpcState.state?.storedKeys]
     )
 
@@ -211,7 +212,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
     )
 
     // fix
-    const nextAccountId = React.useMemo(() => derivedKeys.length, [
+    const nextAccountId = React.useMemo(() => window.ObjectExt.keys(derivedKeys).length, [
         currentDerivedKey,
         rpcState.state?.accountEntries,
     ])
@@ -257,7 +258,6 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         currentDerivedKeyAccounts,
         currentDerivedKeyExternalAccounts,
         derivedKeys,
-        derivedKeysNames: rpcState.state?.derivedKeysNames || {},
         selectedAccount: rpcState.state?.selectedAccount,
         selectedMasterKey: rpcState.state?.selectedMasterKey,
         accounts,
@@ -286,7 +286,6 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
                 currentDerivedKeyExternalAccounts,
                 currentDerivedKeyAccounts,
                 derivedKeys,
-                derivedKeysNames: rpcState.state?.derivedKeysNames || {},
                 selectedAccount: rpcState.state?.selectedAccount,
                 selectedMasterKey: rpcState.state?.selectedMasterKey,
                 accounts,

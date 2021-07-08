@@ -107,8 +107,45 @@ impl KeyStore {
     }
 
     #[wasm_bindgen(js_name = "renameKey")]
-    pub fn rename_key(&self) -> Result<PromiseKeyStoreEntry, JsValue> {
-        todo!()
+    pub fn rename_key(&self, rename: JsRenameKey) -> Result<PromiseKeyStoreEntry, JsValue> {
+        use nt::crypto::*;
+
+        let inner = self.inner.clone();
+        let rename = JsValue::into_serde::<ParsedRenameKey>(&rename).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let entry = match rename {
+                ParsedRenameKey::MasterKey {
+                    master_key,
+                    public_key,
+                    name,
+                } => {
+                    let input = DerivedKeyUpdateParams::RenameKey {
+                        master_key: parse_public_key(&master_key)?,
+                        public_key: parse_public_key(&public_key)?,
+                        name,
+                    };
+                    inner.update_key::<DerivedKeySigner>(input).await
+                }
+                ParsedRenameKey::EncryptedKey { public_key, name } => {
+                    let input = EncryptedKeyUpdateParams::Rename {
+                        public_key: parse_public_key(&public_key)?,
+                        name,
+                    };
+                    inner.update_key::<EncryptedKeySigner>(input).await
+                }
+                ParsedRenameKey::LedgerKey { public_key, name } => {
+                    let input = LedgerUpdateKeyInput::Rename {
+                        public_key: parse_public_key(&public_key)?,
+                        name,
+                    };
+                    inner.update_key::<LedgerKeySigner>(input).await
+                }
+            }
+            .handle_error()?;
+
+            Ok(make_key_store_entry(entry).unchecked_into())
+        })))
     }
 
     #[wasm_bindgen(js_name = "changeKeyPassword")]
@@ -134,7 +171,6 @@ impl KeyStore {
                         old_password: explicit_password(old_password),
                         new_password: explicit_password(new_password),
                     };
-
                     inner.update_key::<DerivedKeySigner>(input).await
                 }
                 ParsedChangeKeyPassword::EncryptedKey {
@@ -437,6 +473,35 @@ enum ParsedNewMasterKeyParams {
     MasterKeyParams { phrase: String },
     #[serde(rename_all = "camelCase")]
     DerivedKeyParams { master_key: String, account_id: u16 },
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const RENAME_KEY: &str = r#"
+export type RenameKey =
+    | EnumItem<'master_key', { masterKey: string, publicKey: string, name: string }>
+    | EnumItem<'encrypted_key', { publicKey: string, name: string }>
+    | EnumItem<'ledger_key', { publicKey: string, name: string }>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "RenameKey")]
+    pub type JsRenameKey;
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "type", content = "data", rename_all = "snake_case")]
+enum ParsedRenameKey {
+    #[serde(rename_all = "camelCase")]
+    MasterKey {
+        master_key: String,
+        public_key: String,
+        name: String,
+    },
+    #[serde(rename_all = "camelCase")]
+    EncryptedKey { public_key: String, name: String },
+    #[serde(rename_all = "camelCase")]
+    LedgerKey { public_key: String, name: String },
 }
 
 #[wasm_bindgen(typescript_custom_section)]
