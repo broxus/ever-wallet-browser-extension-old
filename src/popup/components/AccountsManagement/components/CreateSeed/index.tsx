@@ -51,13 +51,13 @@ export function CreateSeed(): JSX.Element {
     const accountability = useAccountability()
     const rpc = useRpc()
 
-    const [error, setError] = React.useState<string>()
     const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
+    const [error, setError] = React.useState<string>()
+    const [flow, setFlow] = React.useState<OptionType | null>(flowOptions[0])
     const [inProcess, setInProcess] = React.useState(false)
     const [name, setName] = React.useState('')
     const [seed, setSeed] = React.useState(generateSeed())
     const [step, setStep] = React.useState<FlowStep>(FlowStep.INDEX)
-    const [flow, setFlow] = React.useState<OptionType | null>(flowOptions[0])
 
     const seedWords = React.useMemo(() => seed.phrase.split(' '), [seed])
 

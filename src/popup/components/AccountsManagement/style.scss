@@ -43,6 +43,13 @@
 			}
 		}
 
+		&-form-row-hint {
+			margin-top: 5px;
+			font-size: 12px;
+			line-height: 18px;
+			color: $seedsHeader;
+		}
+
 		&-buttons {
 			margin-top: 40px;
 			display: flex;
@@ -180,7 +187,7 @@
 		}
 	}
 
-	&__qr-address-placeholder {
+	&__address-placeholder {
 		background: #f8f9f9;
 		border: 1px solid #dde1e2;
 		box-sizing: border-box;
@@ -196,14 +203,15 @@
 		justify-content: center;
 	}
 
-	&__qr-address-code {
+	&__address-qr-code {
 		background: #fff;
 		padding: 10px;
 		height: 100px;
 		width: 100px;
 	}
 
-	&__qr-address-address {
+	&__address-text {
+		cursor: copy;
 		margin-left: 10px;
 	}
 

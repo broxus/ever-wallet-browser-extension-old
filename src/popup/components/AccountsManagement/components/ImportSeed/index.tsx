@@ -38,7 +38,7 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
 	}
 
 	const onSubmit = (data: { [word: string]: string }) => {
-		props.onSubmit(Object.values(data))
+		props.onSubmit(window.ObjectExt.values(data))
 	}
 
 	return (

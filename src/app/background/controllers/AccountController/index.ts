@@ -54,12 +54,13 @@ export interface AccountControllerState extends BaseState {
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
-    accountUnconfirmedTransactions: { [address: string]: nt.MultisigPendingTransaction[] }
+    accountUnconfirmedTransactions: { [address: string]: { [transactionId: string] : nt.MultisigPendingTransaction } }
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
     accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
     accountsVisibility: { [address: string]: boolean }
+    // fixme: remove derived keys names
     derivedKeysNames: { [publicKey: string]: string }
     externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -79,6 +80,7 @@ const defaultState: AccountControllerState = {
     accountTokenTransactions: {},
     accountPendingMessages: {},
     accountsVisibility: {},
+    // fixme: remove derived keys names
     derivedKeysNames: {},
     externalAccounts: [],
     knownTokens: {},
@@ -139,6 +141,7 @@ export class AccountController extends BaseController<
             accountsVisibility = {}
         }
 
+        // fixme: remove derived keys names
         let derivedKeysNames = await this._loadDerivedKeysNames()
         if (derivedKeysNames == null) {
             derivedKeysNames = {}
@@ -163,6 +166,7 @@ export class AccountController extends BaseController<
             accountsVisibility,
             selectedAccount,
             accountEntries,
+            // fixme: remove derived keys names
             derivedKeysNames,
             externalAccounts,
             masterKeysNames,
@@ -359,6 +363,7 @@ export class AccountController extends BaseController<
             await this._removeSelectedAccountAddress()
             await this._removeSelectedMasterKey()
             await this._clearMasterKeysNames()
+            // fixme: remove derived keys names
             await this._clearDerivedKeysNames()
             await this._clearAccountsVisibility()
             await this._clearRecentMasterKeys()
@@ -491,6 +496,7 @@ export class AccountController extends BaseController<
         }
     }
 
+    // fixme: remove derived keys names
     public async updateDerivedKeyName(publicKey: string, name: string): Promise<void> {
         this.update({
             derivedKeysNames: {
@@ -691,7 +697,7 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async updateAccountName(address: string, name: string) {
+    public async renameAccount(address: string, name: string) {
         await this._accountsMutex.use(async () => {
             const accountEntry = await this.config.accountsStorage.renameAccount(address, name)
 
@@ -699,7 +705,7 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async updateAccountVisibility(address: string, value: boolean): Promise<void> {
+    public async updateAccountVisibility(address: string, value: boolean) {
         this.update({
             accountsVisibility: {
                 ...this.state.accountsVisibility,
@@ -1350,10 +1356,19 @@ export class AccountController extends BaseController<
         address: string,
         unconfirmedTransactions: nt.MultisigPendingTransaction[]
     ) {
-        const accountUnconfirmedTransactions = {
-            ...this.state.accountUnconfirmedTransactions,
-            [address]: unconfirmedTransactions,
+        let { accountUnconfirmedTransactions } = this.state
+
+        const entries: { [transitionId: string]: nt.MultisigPendingTransaction } = {}
+
+        unconfirmedTransactions.forEach((transaction) => {
+            entries[transaction.id] = transaction
+        })
+
+        accountUnconfirmedTransactions = {
+            ...accountUnconfirmedTransactions,
+            [address]: entries,
         }
+
         this.update({
             accountUnconfirmedTransactions,
         })
@@ -1516,6 +1531,8 @@ export class AccountController extends BaseController<
         })
     }
 
+    // fixme: remove derived keys names
+    // start
     private async _loadDerivedKeysNames(): Promise<
         AccountControllerState['derivedKeysNames'] | undefined
     > {
@@ -1542,6 +1559,7 @@ export class AccountController extends BaseController<
             )
         })
     }
+    // end
 
     private async _loadAccountsVisibility(): Promise<
         AccountControllerState['accountsVisibility'] | undefined

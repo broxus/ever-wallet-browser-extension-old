@@ -15,6 +15,7 @@ import manifest from '../../../manifest.json'
 
 import './style.scss'
 
+
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountModal() {

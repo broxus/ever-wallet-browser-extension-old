@@ -4,13 +4,13 @@ import QRCode from 'react-qr-code'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
+import { CopyText } from '@popup/components/CopyText'
 import Input from '@popup/components/Input'
 import { Switcher } from '@popup/components/Switcher'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
-import { convertAddress } from '@shared/utils'
 
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
@@ -40,17 +40,20 @@ export function ManageAccount(): JSX.Element {
     )
 
     const linkedKeys = React.useMemo(() => {
-        const keys = Object.values({ ...rpcState.state?.storedKeys }).filter(
+        const keys = window.ObjectExt.values({ ...rpcState.state?.storedKeys }).filter(
             (key) => key.publicKey === accountability.currentAccount?.tonWallet.publicKey
         )
-
 
         const externalAccount = rpcState.state?.externalAccounts.find(
 			({ address }) => address === accountability.currentAccount?.tonWallet.address
 		)
 
 		if (externalAccount !== undefined) {
-            keys.push(...externalAccount.externalIn.map(key => rpcState.state?.storedKeys[key]).filter(e => e) as nt.KeyStoreEntry[])
+            keys.push(
+                ...externalAccount.externalIn.map(
+                    key => rpcState.state?.storedKeys[key]
+                ).filter(e => e) as nt.KeyStoreEntry[]
+            )
 		}
 
 		return keys
@@ -58,7 +61,7 @@ export function ManageAccount(): JSX.Element {
 
     const saveName = async () => {
         if (accountability.currentAccount !== undefined && name) {
-            await rpc.updateAccountName(accountability.currentAccount.tonWallet.address, name)
+            await rpc.renameAccount(accountability.currentAccount.tonWallet.address, name)
             accountability.setCurrentAccount({ ...accountability.currentAccount, name })
         }
     }
@@ -136,15 +139,17 @@ export function ManageAccount(): JSX.Element {
             </div>
 
             {accountability.currentAccount !== undefined && (
-                <div className="accounts-management__qr-address-placeholder">
-                    <div className="accounts-management__qr-address-code">
+                <div className="accounts-management__address-placeholder">
+                    <div className="accounts-management__address-qr-code">
                         <QRCode
                             value={`ton://chat/${accountability.currentAccount.tonWallet.address}`}
                             size={80}
                         />
                     </div>
-                    <div className="accounts-management__qr-address-address">
-                        {accountability.currentAccount.tonWallet.address}
+                    <div>
+                        <div className="accounts-management__address-text">
+                            <CopyText text={accountability.currentAccount.tonWallet.address} />
+                        </div>
                     </div>
                 </div>
             )}
@@ -167,8 +172,7 @@ export function ManageAccount(): JSX.Element {
                                         className="accounts-management__list-item-logo"
                                     />
                                     <div className="accounts-management__list-item-title">
-                                        {accountability.derivedKeysNames?.[key.publicKey] ||
-                                            convertAddress(key.publicKey)}
+                                        {key.name}
                                     </div>
                                     <img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
                                 </div>

@@ -8,12 +8,13 @@ import Input from '@popup/components/Input'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { convertAddress } from '@shared/utils'
 
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
+
 enum ManageSeedStep {
+	INDEX,
 	EXPORT_SEED,
 }
 
@@ -27,7 +28,7 @@ export function ManageSeed(): JSX.Element {
 			? (accountability.masterKeysNames[accountability.currentMasterKey.masterKey] || '')
 			: ''
 	)
-	const [step, setStep] = React.useState<ManageSeedStep | null>(null)
+	const [step, setStep] = React.useState<ManageSeedStep>(ManageSeedStep.INDEX)
 
 	const currentDerivedKeyPubKey = React.useMemo(() => {
 		if (accountability.selectedAccount?.tonWallet.publicKey !== undefined) {
@@ -57,7 +58,7 @@ export function ManageSeed(): JSX.Element {
 	const onBack = () => {
 		switch (step) {
 			case ManageSeedStep.EXPORT_SEED:
-				setStep(null)
+				setStep(ManageSeedStep.INDEX)
 				break
 
 			default:
@@ -66,19 +67,10 @@ export function ManageSeed(): JSX.Element {
 		}
 	}
 
-	React.useEffect(() => {
-		if (
-			accountability.currentMasterKey !== undefined
-			&& name !== accountability.masterKeysNames[accountability.currentMasterKey.masterKey]
-		) {
-			setName(accountability.masterKeysNames[accountability.currentMasterKey.masterKey])
-		}
-	}, [accountability.masterKeysNames])
-
 	return (
 		<>
-			{step == null && (
-				<div key="start" className="accounts-management__content">
+			{step == ManageSeedStep.INDEX && (
+				<div key="index" className="accounts-management__content">
 					<h2 className="accounts-management__content-title">Manage seed phrase</h2>
 
 					<div className="accounts-management__content-header">Seed name</div>
@@ -123,7 +115,7 @@ export function ManageSeed(): JSX.Element {
 									>
 										<img src={TonKey} alt="" className="accounts-management__list-item-logo" />
 										<div className="accounts-management__list-item-title">
-											{accountability.derivedKeysNames[key.publicKey] || convertAddress(key.publicKey)}
+											{key.name}
 										</div>
 										<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
 									</div>

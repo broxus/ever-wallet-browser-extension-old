@@ -1,7 +1,7 @@
 import React from 'react'
 
 import QRCode from 'react-qr-code'
-import CopyButton from '@popup/components/CopyButton'
+import { CopyButton } from '@popup/components/CopyButton'
 import Button from '@popup/components/Button'
 import UserAvatar from '@popup/components/UserAvatar'
 

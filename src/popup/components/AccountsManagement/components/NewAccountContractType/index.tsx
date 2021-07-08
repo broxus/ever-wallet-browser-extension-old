@@ -40,14 +40,15 @@ export function NewAccountContractType({
 		CONTRACT_TYPES['WalletV3'] = 'WalletV3 (legacy)'
 	}
 
-	console.log(accountability.currentDerivedKeyAccounts)
-
 	const availableContracts = React.useMemo(() => {
 		const { currentDerivedKey } = accountability
+
 		if (currentDerivedKey == null) {
 			return window.ObjectExt.keys(CONTRACT_TYPES)
 		}
+
 		const accountAddresses = accountability.currentDerivedKeyAccounts.map((account) => account.tonWallet.address)
+
 		return window.ObjectExt.keys(CONTRACT_TYPES).filter((type) => {
 			const address = nt.computeTonWalletAddress(currentDerivedKey.publicKey, type, 0)
 			return !accountAddresses.includes(address)

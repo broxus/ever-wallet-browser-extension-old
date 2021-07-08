@@ -24,6 +24,7 @@ import { convertTons } from '@shared/utils'
 
 import './style.scss'
 
+
 const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountDetails(): JSX.Element {
@@ -123,7 +124,7 @@ export function AccountDetails(): JSX.Element {
                 )}
             </div>
 
-            <Carousel ref={slider} initialSlide={initialSlide} onInit={onInit} beforeChange={beforeSlide}>
+            <Carousel ref={slider} onInit={onInit} beforeChange={beforeSlide}>
                 {accountability.accounts.map((account) => (
                     <AccountCard
                         key={account.tonWallet.address}

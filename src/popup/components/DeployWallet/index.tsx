@@ -5,7 +5,7 @@ import Select from 'react-select'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
-import CopyButton from '@popup/components/CopyButton'
+import { CopyButton } from '@popup/components/CopyButton'
 import TransactionProgress from '@popup/components/TransactionProgress'
 import { MultisigData, MultisigForm, PreparedMessage } from '@popup/components/DeployWallet/components'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
@@ -139,8 +139,6 @@ export function DeployWallet(): JSX.Element {
             setFees(fees)
         }).catch(console.error)
     }, [accountability.selectedAccountAddress, accountability.tonWalletState])
-
-    console.log(multisigData)
 
     if (pendingResponse == null) {
         const balance = new Decimal(accountability.tonWalletState?.balance || '0')

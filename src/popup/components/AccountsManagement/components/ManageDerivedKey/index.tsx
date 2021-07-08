@@ -1,24 +1,20 @@
 import * as React from 'react'
-import CopyToClipboard from 'react-copy-to-clipboard'
-import ReactTooltip from 'react-tooltip'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
+import { CopyButton } from '@popup/components/CopyButton'
 import Input from '@popup/components/Input'
 import { AccountsList } from '@popup/components/AccountsManagement/components'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
+import { CopyText } from '@popup/components/CopyText'
 
 
 export function ManageDerivedKey(): JSX.Element {
 	const accountability = useAccountability()
 	const rpc = useRpc()
 
-	const [name, setName] = React.useState(
-		accountability.currentMasterKey !== undefined
-			? (accountability.derivedKeysNames[accountability.currentMasterKey.publicKey] || '')
-			: ''
-	)
+	const [name, setName] = React.useState(accountability.currentDerivedKey?.name || '')
 
 	const addAccount = () => {
 		accountability.setStep(Step.CREATE_ACCOUNT)
@@ -39,15 +35,6 @@ export function ManageDerivedKey(): JSX.Element {
 		accountability.setCurrentDerivedKey(undefined)
 	}
 
-	React.useEffect(() => {
-		if (
-			accountability.currentDerivedKey !== undefined
-			&& name !== accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey]
-		) {
-			setName(accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey])
-		}
-	}, [accountability.derivedKeysNames])
-
 	return (
 		<div className="accounts-management__content">
 			<h2 className="accounts-management__content-title">Manage key</h2>
@@ -55,20 +42,13 @@ export function ManageDerivedKey(): JSX.Element {
 			{accountability.currentDerivedKey !== undefined && (
 				<>
 					<div className="accounts-management__content-header">Public key</div>
-					<CopyToClipboard
-						text={accountability.currentDerivedKey.publicKey}
-						onCopy={() => {
-							ReactTooltip.hide()
-						}}
-					>
-						<div
-							className="accounts-management__public-key-placeholder"
-							data-tip="Click to copy"
-						>
-							{accountability.currentDerivedKey.publicKey}
-						</div>
-					</CopyToClipboard>
-					<ReactTooltip type="dark" effect="solid" place="top" />
+
+					<div className="accounts-management__public-key-placeholder">
+						<CopyText
+							id="copy-placeholder"
+							text={accountability.currentDerivedKey.publicKey}
+						/>
+					</div>
 				</>
 			)}
 
@@ -83,8 +63,8 @@ export function ManageDerivedKey(): JSX.Element {
 				/>
 				{(
 					accountability.currentDerivedKey !== undefined
-					&& (accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey] !== undefined || name)
-					&& accountability.derivedKeysNames[accountability.currentDerivedKey.publicKey] !== name
+					&& (accountability.currentDerivedKey.name !== undefined || name)
+					&& accountability.currentDerivedKey.name !== name
 				) && (
 					<a
 						role="button"
@@ -144,11 +124,9 @@ export function ManageDerivedKey(): JSX.Element {
 				</div>
 
 				{accountability.currentDerivedKey !== undefined && (
-					<div data-tip="Copied!" data-event="click focus">
-						<CopyToClipboard text={accountability.currentDerivedKey.publicKey}>
-							<Button text="Copy public key" />
-						</CopyToClipboard>
-					</div>
+					<CopyButton id="pubkey-copy-button" text={accountability.currentDerivedKey.publicKey}>
+						<Button text="Copy public key" />
+					</CopyButton>
 				)}
 			</div>
 		</div>

@@ -11,7 +11,7 @@ import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
-import CopyAddress from '@popup/components/CopyAddress'
+import { CopyText } from '@popup/components/CopyText'
 
 import './style.scss'
 import { TokenWalletTransactionInfo } from '@nekoton'
@@ -49,6 +49,8 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
             return extractTokenTransactionValue(transaction) || new Decimal(0)
         }
     }, [transaction])
+
+    debugger
 
     let direction: string | undefined, address: string | undefined
 
@@ -97,12 +99,12 @@ const TransactionInfo: React.FC<ITransactionInfo> = ({ transaction, symbol }) =>
                 </div>
                 <div className="transaction-info-tx-details-param">
                     <span className="transaction-info-tx-details-param-desc">Hash (ID)</span>
-                    <CopyAddress address={txHash} />
+                    <CopyText id={`copy-${txHash}`} text={txHash} />
                 </div>
                 {address && (
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">{direction}</span>
-                        <CopyAddress address={address} />
+                        <CopyText id={`copy-${address}`} text={address} />
                     </div>
                 )}
                 {info && (

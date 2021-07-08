@@ -1,24 +1,28 @@
-import React from 'react'
+import * as React from 'react'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
 import ReactTooltip from 'react-tooltip'
 
 import './style.scss'
 
-interface ICopyButton {
-    children: JSX.Element
+
+type Props = {
+    children: React.ReactNode
+    id?: string
     text: string
 }
 
-const CopyButton: React.FC<ICopyButton> = ({ children, text }) => {
+export function CopyButton({ children, id = 'copy-button', text }: Props): JSX.Element {
     return (
-        <>
-            <ReactTooltip type={'dark'} effect={'solid'} globalEventOff="click" />
-            <div className="panel" data-tip="Copied!" data-event="click focus">
-                <CopyToClipboard text={text} onCopy={() => {}}>
-                    {children}
-                </CopyToClipboard>
-            </div>
-        </>
+        <div data-tip="Copied!" data-for={id} data-event="click focus">
+            <CopyToClipboard text={text}>
+                {children}
+            </CopyToClipboard>
+            <ReactTooltip
+                id={id}
+                type="dark"
+                effect="solid"
+                place="top"
+            />
+        </div>
     )
 }
-export default CopyButton

@@ -30,6 +30,10 @@ export function ManageSeeds(): JSX.Element {
 		accountability.setStep(Step.CREATE_SEED)
 	}
 
+	const onBackInCreateAccountIndex = () => {
+		accountability.setStep(Step.MANAGE_DERIVED_KEY)
+	}
+
 	return (
 		<>
 			{accountability.step == Step.MANAGE_SEEDS && (
@@ -88,7 +92,7 @@ export function ManageSeeds(): JSX.Element {
 			)}
 
 			{accountability.step === Step.CREATE_ACCOUNT && (
-				<CreateAccount key="createAccount" />
+				<CreateAccount key="createAccount" onBackFromIndex={onBackInCreateAccountIndex} />
 			)}
 
 			{accountability.step === Step.MANAGE_ACCOUNT && (

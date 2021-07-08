@@ -2,11 +2,11 @@ import * as React from 'react'
 import classNames from 'classnames'
 import Select from 'react-select'
 
+import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import { AddAccountFlow } from '@popup/components/AccountsManagement/components'
 import { selectStyles } from '@popup/constants/selectStyle'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
-import { convertAddress } from '@shared/utils'
 
 
 const CreateAccountIcon = ({ className }: { className?: string }) => {
@@ -31,42 +31,39 @@ const PlusIcon = ({ className }: { className?: string }) => {
 	)
 }
 
-type Props = {
-	flow: AddAccountFlow,
-	onSelect(flow: AddAccountFlow): void;
-	onNext(): void;
-}
-
 type OptionType = {
 	label: string;
 	value: string;
 }
 
-export function SelectAccountAddingFlow({ flow, onSelect, onNext }: Props): JSX.Element {
+type Props = {
+	flow: AddAccountFlow,
+	onSelect(flow: AddAccountFlow): void;
+	onNext(): void;
+	onBack?(): void;
+}
+
+export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Props): JSX.Element {
 	const accountability = useAccountability()
 
-	const derivedKeysOptions = React.useMemo<OptionType[]>(
-		() => accountability.derivedKeys.map((derivedKey) => ({
-			label: accountability.derivedKeysNames[derivedKey.publicKey] || convertAddress(derivedKey.publicKey),
-			value: derivedKey.publicKey,
-		})),
-		[accountability.derivedKeys]
-	)
+	const [selectedDerivedKey, setDerivedKey] = React.useState(() => {
+		const key = accountability.derivedKeys.find(
+			(derivedKey) => derivedKey.publicKey === accountability.currentDerivedKey?.publicKey
+		)
+		return key || accountability.derivedKeys[0]
+	})
 
-	const [selectedDerivedKey, setDerivedKey] = React.useState<OptionType | null>(derivedKeysOptions[0])
+	const onChangeDerivedKey = (value: nt.KeyStoreEntry | null) => {
+		if (value != null) {
+			setDerivedKey(value)
+		}
+	}
 
-	const onChange = (flow: AddAccountFlow) => {
+	const onChangeFlow = (flow: AddAccountFlow) => {
 		return () => {
 			onSelect(flow)
 		}
 	}
-
-	React.useEffect(() => {
-		const derivedKey = accountability.derivedKeys.find((key) => key.publicKey === selectedDerivedKey?.value)
-		if (derivedKey !== undefined) {
-			accountability.setCurrentDerivedKey(derivedKey)
-		}
-	}, [selectedDerivedKey])
 
 	return (
 		<div className="accounts-management__content">
@@ -75,10 +72,11 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext }: Props): JSX.
 			<div className="accounts-management__content-form-rows">
 				<div className="accounts-management__content-form-row">
 					<Select
-						options={derivedKeysOptions}
+						options={accountability.derivedKeys}
 						value={selectedDerivedKey}
+						formatOptionLabel={(value) => value.name}
 						styles={selectStyles}
-						onChange={setDerivedKey}
+						onChange={onChangeDerivedKey}
 					/>
 				</div>
 			</div>
@@ -88,7 +86,7 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext }: Props): JSX.
 					className={classNames('accounts-management__add-options-option', {
 						'accounts-management__add-options-option-selected': flow === AddAccountFlow.CREATE,
 					})}
-					onClick={onChange(AddAccountFlow.CREATE)}
+					onClick={onChangeFlow(AddAccountFlow.CREATE)}
 				>
 					<CreateAccountIcon className="accounts-management__add-options-icon" />
 					Create new account
@@ -97,7 +95,7 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext }: Props): JSX.
 					className={classNames('accounts-management__add-options-option', {
 						'accounts-management__add-options-option-selected': flow === AddAccountFlow.IMPORT,
 					})}
-					onClick={onChange(AddAccountFlow.IMPORT)}
+					onClick={onChangeFlow(AddAccountFlow.IMPORT)}
 				>
 					<PlusIcon className="accounts-management__add-options-icon" />
 					Add an existing account
@@ -105,6 +103,11 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext }: Props): JSX.
 			</div>
 
 			<div className="accounts-management__content-buttons">
+				{typeof onBack === 'function' && (
+					<div className="accounts-management__content-buttons-back-btn">
+						<Button text="Back" white onClick={onBack} />
+					</div>
+				)}
 				<Button text="Next" onClick={onNext} />
 			</div>
 		</div>

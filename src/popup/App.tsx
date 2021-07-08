@@ -56,7 +56,7 @@ function App(): JSX.Element | null {
         }
     }
 
-    const pendingApprovals = Object.values(rpcState.state.pendingApprovals || {}) as any[]
+    const pendingApprovals = window.ObjectExt.values(rpcState.state.pendingApprovals || {}) as any[]
 
     if (pendingApprovals.length > 0) {
         return (

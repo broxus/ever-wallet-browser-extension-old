@@ -8,7 +8,7 @@ import * as nt from '@nekoton'
 import QRCode from 'react-qr-code'
 
 import Button from '@popup/components/Button'
-import CopyButton from '@popup/components/CopyButton'
+import { CopyButton } from '@popup/components/CopyButton'
 import EnterPassword from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import TransactionProgress from '@popup/components/TransactionProgress'
@@ -49,6 +49,7 @@ const CollectTokens: React.FC<ICollectTokens> = ({
         const internalMessage = nt.TokenWallet.makeCollectTokensCall(ethEventAddress)
 
         const messageToPrepare = {
+            publicKey: keyEntry.publicKey,
             amount: internalMessage.amount,
             payload: internalMessage.body,
             recipient: internalMessage.destination,

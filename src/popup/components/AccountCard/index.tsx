@@ -1,21 +1,21 @@
 import * as React from 'react'
-import CopyToClipboard from 'react-copy-to-clipboard'
-import ReactTooltip from 'react-tooltip'
 
+import { CopyText } from '@popup/components/CopyText'
 import { convertAddress, convertPublicKey } from '@shared/utils'
 
 import Pattern from '@popup/img/ton-pattern.svg'
 
 import './style.scss'
 
+
 type Props = {
     accountName: string
-    publicKey: string
-    address: string
+    address?: string
     balance: string
+    publicKey: string
 }
 
-export function AccountCard({ accountName, publicKey, address, balance }: Props): JSX.Element {
+export function AccountCard({ accountName, address, balance, publicKey }: Props): JSX.Element {
     const wholePart = balance.split('.')?.[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     const decimals = balance.split('.')?.[1]
 
@@ -26,37 +26,31 @@ export function AccountCard({ accountName, publicKey, address, balance }: Props)
                     <div className="account-card__info-details-name">{accountName}</div>
                     <div className="account-card__info-details-public-key noselect">
                         Public key
-                        <CopyToClipboard
+                        <CopyText
+                            className="account-card__info-details-public-key-value"
+                            id={`copy-${publicKey}-${address}`}
+                            place="top"
                             text={publicKey}
-                            onCopy={() => {
-                                ReactTooltip.hide()
-                            }}
                         >
-                            <span
-                                className="account-card__info-details-public-key-value"
-                                data-tip="Click to copy"
-                            >
-                                {convertPublicKey(publicKey)}
-                            </span>
-                        </CopyToClipboard>
-                        <ReactTooltip type="dark" effect="solid" place="bottom" />
+                            {convertPublicKey(publicKey)}
+                        </CopyText>
                     </div>
                     <div className="account-card__info-details-public-key noselect">
                         Address
-                        <CopyToClipboard
-                            text={address}
-                            onCopy={() => {
-                                ReactTooltip.hide()
-                            }}
-                        >
-                            <span
+                        {address !== undefined ? (
+                            <CopyText
                                 className="account-card__info-details-public-key-value"
-                                data-tip="Click to copy"
+                                id={`copy-${address}`}
+                                place="top"
+                                text={address}
                             >
-                                {convertAddress(address) || 'Not created'}
+                                {convertAddress(address)}
+                            </CopyText>
+                        ) : (
+                            <span className="account-card__info-details-public-key-value">
+                                Not created
                             </span>
-                        </CopyToClipboard>
-                        <ReactTooltip type="dark" effect="solid" place="bottom" />
+                        )}
                     </div>
                 </div>
                 <div className="account-card__info-balance">
@@ -64,6 +58,7 @@ export function AccountCard({ accountName, publicKey, address, balance }: Props)
                     {`.${decimals || '00'} TON`}
                 </div>
             </div>
+
             <div className="account-card__pattern">
                 <img src={Pattern} alt="" />
                 {/*<div className="account-card__pattern-ellipsis">*/}

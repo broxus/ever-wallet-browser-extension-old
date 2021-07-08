@@ -65,7 +65,11 @@ export function CreateDerivedKey(): JSX.Element {
 							autoFocus
 							type="text"
 						/>
+						<div className="accounts-management__content-form-row-hint">
+							<sup>*</sup> Will be generated automatically
+						</div>
 					</div>
+
 					<div className="accounts-management__content-form-row">
 						<Input
 							name="password"
