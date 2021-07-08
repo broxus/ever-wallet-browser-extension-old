@@ -81,6 +81,7 @@ export function AccountDetails(): JSX.Element {
     const beforeSlide = debounce(async (_, nextIndex: number) => {
         const account = accountability.accounts[nextIndex]
         if (
+            account === undefined ||
             account?.tonWallet.address === accountability.selectedAccount?.tonWallet.address
         ) {
             return
