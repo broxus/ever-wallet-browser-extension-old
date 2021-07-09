@@ -119,3 +119,7 @@ h3 {
 .copy {
     cursor: copy;
 }
+
+img {
+    -webkit-user-drag: none;
+}
