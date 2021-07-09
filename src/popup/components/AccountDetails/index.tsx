@@ -98,21 +98,18 @@ export function AccountDetails(): JSX.Element {
         await rpc.selectAccount(account.tonWallet.address)
     }, 500)
 
-    React.useEffect(
-        debounce(() => {
-            const index = accountability.accounts.findIndex(
-                (account) => account.tonWallet.address === accountability.selectedAccountAddress
-            )
-            const selectedItem = slider.current?.state.selectedItem
+    React.useEffect(() => {
+        const index = accountability.accounts.findIndex(
+            (account) => account.tonWallet.address === accountability.selectedAccountAddress
+        )
+        const selectedItem = slider.current?.state.selectedItem
 
-            if (index === selectedItem || accountability.accounts.length === selectedItem) {
-                return
-            }
+        if (index === selectedItem || accountability.accounts.length === selectedItem) {
+            return
+        }
 
-            slider.current?.setPosition(index >= 0 ? index : 0)
-        }, 600),
-        [accountability.selectedAccountAddress]
-    )
+        slider.current?.setPosition(index >= 0 ? index : 0)
+    }, [accountability.selectedAccountAddress])
 
     return (
         <div className="account-details">

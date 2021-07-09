@@ -15,9 +15,7 @@ import { convertAddress } from '@shared/utils'
 import manifest from '../../../manifest.json'
 
 import './style.scss'
-import window = chrome.app.window
 
-const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountModal() {
     const accountability = useAccountability()
@@ -71,7 +69,6 @@ export function AccountModal() {
         if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
             drawer.setPanel(Panel.MANAGE_SEEDS)
         } else {
-            await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.MANAGE_SEEDS)
             await rpc.openExtensionInExternalWindow({
                 group: 'manage_seeds',
                 width: 360 + scrollWidth - 1,

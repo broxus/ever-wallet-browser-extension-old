@@ -20,6 +20,7 @@ import { SelectedAsset } from '@shared/utils'
 import { WalletMessageToSend } from '@shared/backgroundApi'
 
 import './style.scss'
+import window = chrome.app.window
 
 const INITIAL_DATA_KEY = 'initial_data'
 
@@ -69,7 +70,9 @@ export function MainPage(): JSX.Element | null {
 
     const selectedKeys = React.useMemo(() => {
         let keys: nt.KeyStoreEntry[] = [storedKeys[accountPublicKey]]
-        const externals = externalAccounts.find((account) => account.address === accountAddress)
+        const externals = externalAccounts.find(
+            (account) => account.address === accountAddress
+        )
 
         if (externals !== undefined) {
             keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
@@ -94,8 +97,6 @@ export function MainPage(): JSX.Element | null {
 
     const transactions = rpcState.state.accountTransactions[accountAddress] || []
 
-    const now = new Date().getTime()
-
     const sendMessage = async (message: WalletMessageToSend) => {
         return rpc.sendMessage(accountAddress as string, message)
     }
@@ -109,6 +110,8 @@ export function MainPage(): JSX.Element | null {
         setSelectedAsset(selectedAsset)
         drawer.setPanel(Panel.ASSET)
     }
+
+    const now = new Date().getTime()
 
     const isUnconfirmedTransaction = (
         transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction

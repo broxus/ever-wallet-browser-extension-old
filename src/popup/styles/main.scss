@@ -36,11 +36,20 @@ body {
 
 #root {
     width: 100%;
-    height: 100%;
+    height: 100vh;
     min-width: 360px;
+}
+
+.popup-view #root {
     min-height: 600px;
     overflow-y: auto;
+}
 
+.notification-view {
+    overflow-y: auto;
+    &::-webkit-scrollbar {
+        width: 0;
+    }
 }
 
 body.fullscreen {

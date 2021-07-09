@@ -14,6 +14,7 @@ import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import Oval from '@popup/img/oval.svg'
 import './styles/main.scss'
+import { AccountsManagerPage } from '@popup/pages/AccountsManagerPage'
 
 const Loader: React.FC = () => {
     return (
@@ -37,7 +38,7 @@ function App(): JSX.Element | null {
         return null
     }
 
-    if (rpcState.state == null || !rpcState.loaded) {
+    if (/*rpcState.state == null || */!rpcState.loaded) {
         return <Loader />
     }
 
@@ -77,6 +78,10 @@ function App(): JSX.Element | null {
                 }
             />
         )
+    }
+
+    if (rpcState.activeTab.type === 'notification' && rpcState.group === 'manage_seeds') {
+        return <AccountsManagerPage key="accounts-manager" />
     }
 
     return (
