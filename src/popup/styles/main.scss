@@ -12,11 +12,10 @@ html {
     box-sizing: border-box;
 
     font-family: $font-family;
+    overflow: hidden;
 }
 
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     height: 100%;
@@ -29,6 +28,10 @@ body {
     justify-content: center;
 
     background-color: $windowBg;
+
+    *:not(.initial-scroll)::-webkit-scrollbar {
+        width: 0;
+    }
 }
 
 #root {
@@ -37,6 +40,7 @@ body {
     min-width: 360px;
     min-height: 600px;
     overflow-y: auto;
+
 }
 
 body.fullscreen {
@@ -78,11 +82,6 @@ h3 {
 
 .noselect {
     user-select: none;
-}
-
-::-webkit-scrollbar {
-    //display: none;
-    width: 0;
 }
 
 .page {

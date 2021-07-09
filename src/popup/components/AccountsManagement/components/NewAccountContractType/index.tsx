@@ -99,7 +99,7 @@ export function NewAccountContractType({
 					/>
 				</div>
 				<Button
-					text="Confirm"
+					text="Create account"
 					disabled={disabled}
 					onClick={onSubmit}
 				/>

@@ -1,5 +1,7 @@
 import * as React from 'react'
-import ReactSlick from 'react-slick'
+import classNames from 'classnames'
+import { Carousel as ReactCarousel } from 'react-responsive-carousel'
+
 
 import RightArrow from '@popup/img/right-arrow.svg'
 import LeftArrow from '@popup/img/left-arrow.svg'
@@ -8,42 +10,65 @@ import './style.scss'
 
 
 type Props = {
+    centerMode?: boolean;
     children: React.ReactNode;
-    initialSlide?: number;
-    onInit?(): void;
-    onReInit?(): void;
-    afterChange?(index: number): void;
-    beforeChange?(prevIndex: number, nextIndex: number): void;
+    selectedItem?: number;
+    transitionTime?: number;
+    onChange?(index: number): void;
 }
 
-export const Carousel = React.forwardRef<ReactSlick, Props>(({
+export const Carousel = React.forwardRef<ReactCarousel, Props>(({
+    centerMode= true,
     children,
-    initialSlide = 0,
-    onInit,
-    onReInit,
-    afterChange,
-    beforeChange,
+    selectedItem = 0,
+    transitionTime = 200,
+    onChange
 }, ref) => {
     return (
-        <ReactSlick
+        <ReactCarousel
             ref={ref}
-            afterChange={afterChange}
-            beforeChange={beforeChange}
-            arrows
-            nextArrow={<img src={RightArrow} alt="" />}
-            prevArrow={<img src={LeftArrow} alt="" />}
-            dots
-            draggable={false}
-            infinite={false}
-            initialSlide={initialSlide}
-            onInit={onInit}
-            onReInit={onReInit}
-            slidesToScroll={1}
-            slidesToShow={1}
-            speed={300}
-            swipe={false}
+            autoPlay={false}
+            centerMode={centerMode}
+            centerSlidePercentage={100}
+            infiniteLoop={false}
+            renderArrowNext={(clickHandler, hasNext, label )  => (
+                <a
+                    role="button"
+                    aria-label={label}
+                    className={classNames([
+                        'control-arrow',
+                        'control-next',
+                    ], {
+                        'control-disabled': !hasNext
+                    })}
+                    onClick={clickHandler}
+                >
+                    <img src={RightArrow} alt="" />
+                </a>
+            )}
+            renderArrowPrev={(clickHandler, hasPrev, label) => (
+                <a
+                    role="button"
+                    aria-label={label}
+                    className={classNames([
+                        'control-arrow',
+                        'control-prev',
+                    ], {
+                        'control-disabled': !hasPrev
+                    })}
+                    onClick={clickHandler}
+                >
+                    <img src={LeftArrow} alt="" />
+                </a>
+            )}
+            selectedItem={selectedItem}
+            showThumbs={false}
+            showStatus={false}
+            swipeable={false}
+            transitionTime={transitionTime}
+            onChange={onChange}
         >
-            {children}
-        </ReactSlick>
+            {children as React.ReactChild[]}
+        </ReactCarousel>
     )
 })

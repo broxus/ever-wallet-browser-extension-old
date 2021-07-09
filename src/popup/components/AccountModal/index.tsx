@@ -5,6 +5,7 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { getScrollWidth } from '@popup/utils/getScrollWidth'
 
 import Profile from '@popup/img/profile.svg'
 
@@ -14,6 +15,7 @@ import { convertAddress } from '@shared/utils'
 import manifest from '../../../manifest.json'
 
 import './style.scss'
+import window = chrome.app.window
 
 const INITIAL_DATA_KEY = 'initial_data'
 
@@ -26,6 +28,8 @@ export function AccountModal() {
     const wrapperRef = React.useRef(null)
 
     const [isActive, setActiveTo] = React.useState(false)
+
+    const scrollWidth = React.useMemo(() => getScrollWidth(), [])
 
     const selectedSeedName = React.useMemo(() => {
         if (accountability.selectedMasterKey !== undefined) {
@@ -70,6 +74,8 @@ export function AccountModal() {
             await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.MANAGE_SEEDS)
             await rpc.openExtensionInExternalWindow({
                 group: 'manage_seeds',
+                width: 360 + scrollWidth - 1,
+                height: 600 + scrollWidth - 1,
             })
             window.close()
         }

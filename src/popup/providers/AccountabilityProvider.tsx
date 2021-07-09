@@ -150,7 +150,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         setStep(Step.MANAGE_DERIVED_KEY)
     }
 
-    // All available accounts to seed
+    // All available accounts of the selected seed
     const accounts = React.useMemo(() => {
         const derivedKeysPubKeys = window.ObjectExt.values({ ...rpcState.state.storedKeys })
             .filter((key) => key.masterKey === rpcState.state.selectedMasterKey)
@@ -257,28 +257,31 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         })()
     }, [rpcState.state.selectedMasterKey])
 
-    console.log('ACCOUNTABILITY', {
-        currentAccount,
-        currentDerivedKey,
-        currentMasterKey,
-        step,
-        setStep,
-        masterKeys,
-        masterKeysNames: rpcState.state.masterKeysNames || {},
-        recentMasterKeys: rpcState.state.recentMasterKeys || [],
-        currentDerivedKeyAccounts,
-        currentDerivedKeyExternalAccounts,
-        derivedKeys,
-        selectedAccount: rpcState.state.selectedAccount,
-        selectedMasterKey: rpcState.state.selectedMasterKey,
-        accounts,
-        accountsVisibility: rpcState.state.accountsVisibility || {},
-        selectedAccountAddress,
-        selectedAccountPublicKey,
-        nextAccountId,
-        tonWalletState,
-        tokenWalletStates,
-    })
+    if (process.env.NODE_ENV !== 'production') {
+        console.log('ACCOUNTABILITY', {
+            currentAccount,
+            currentDerivedKey,
+            currentMasterKey,
+            step,
+            setStep,
+            masterKeys,
+            masterKeysNames: rpcState.state.masterKeysNames || {},
+            recentMasterKeys: rpcState.state.recentMasterKeys || [],
+            currentDerivedKeyAccounts,
+            currentDerivedKeyExternalAccounts,
+            derivedKeys,
+            selectedAccount: rpcState.state.selectedAccount,
+            selectedMasterKey: rpcState.state.selectedMasterKey,
+            accounts,
+            accountsVisibility: rpcState.state.accountsVisibility || {},
+            selectedAccountAddress,
+            selectedAccountPublicKey,
+            nextAccountId,
+            tonWalletState,
+            tokenWalletStates,
+        })
+        console.log(currentDerivedKey)
+    }
 
     return (
         <Context.Provider

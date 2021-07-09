@@ -224,7 +224,12 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
                 )}
             </div>
 
-            <Button text="Confirm" onClick={onConfirm} />
+            <div className="transaction-info-buttons">
+				<div className="transaction-info-buttons-btn-back">
+					<Button text="Confirm" onClick={onConfirm} />
+				</div>
+				<Button text="Confirm" onClick={onConfirm} />
+			</div>
         </>
     )
 }

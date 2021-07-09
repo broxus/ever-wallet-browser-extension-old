@@ -57,4 +57,20 @@ a {
             }
         }
     }
+
+
+    &-buttons {
+        margin-top: 40px;
+        display: flex;
+        position: relative;
+
+        > * { width: 100%; }
+
+        &-back-btn {
+            width: 100px;
+            min-width: 100px;
+            margin-right: 12px;
+        }
+    }
+
 }

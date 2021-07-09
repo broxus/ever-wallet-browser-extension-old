@@ -1,5 +1,5 @@
 import * as React from 'react'
-import ReactSlick from 'react-slick'
+import { Carousel as ReactCarousel } from 'react-responsive-carousel'
 
 import { createRipple, removeRipple } from '@popup/common'
 import { AccountCard } from '@popup/components/AccountCard'
@@ -33,16 +33,16 @@ export function AccountDetails(): JSX.Element {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
-    const slider = React.useRef<ReactSlick>(null)
+    const slider = React.useRef<ReactCarousel>(null)
 
     const [notificationsVisible, setNotificationsVisible] = React.useState(false)
 
-    const initialSlide = React.useMemo(() => {
+    const initialSelectedAccountIndex = React.useMemo(() => {
         const index = accountability.accounts.findIndex(
             (account) => account.tonWallet.address === accountability.selectedAccountAddress
         )
         return index >= 0 ? index : 0
-    }, [accountability.accounts, accountability.selectedAccountAddress])
+    }, [accountability.accounts.length])
 
     const onReceive = () => {
         drawer.setPanel(Panel.RECEIVE)
@@ -79,36 +79,39 @@ export function AccountDetails(): JSX.Element {
         nextNetwork && (await rpc.changeNetwork(nextNetwork))
     }
 
-    const timeout = React.useRef<number>();
+    const onSlide = debounce( async (index: number) => {
+        // if not a last slide
+        if (accountability.accounts.length === index) {
+            const account = accountability.accounts[index - 1]
+            if (account === undefined || account?.tonWallet.address === accountability.selectedAccountAddress) {
+                return
+            }
+            await rpc.selectAccount(account.tonWallet.address)
+        }
 
-    const beforeSlide =  (nextIndex: number) => {
-        const account = accountability.accounts[nextIndex]
+        const account = accountability.accounts[index]
 
-        if (timeout.current !== undefined) { window.clearTimeout(timeout.current) }
-        if (
-            account === undefined ||
-            account?.tonWallet.address === accountability.selectedAccount?.tonWallet.address
-        ) {
+        if (account === undefined || account?.tonWallet.address === accountability.selectedAccountAddress) {
             return
         }
-        timeout.current = window.setTimeout(async () => {
-            await rpc.selectAccount(account.tonWallet.address);
-        }, 500);
-    }
 
-    const onInit = () => {
-        slider.current?.slickGoTo(initialSlide)
-    }
+        await rpc.selectAccount(account.tonWallet.address)
+    }, 500)
 
     React.useEffect(
         debounce(() => {
-            slider.current?.slickGoTo(initialSlide)
-            slider.current?.forceUpdate()
-        }, 100),
-        [
-            accountability.accounts.length,
-            accountability.selectedAccount?.tonWallet.address
-        ]
+            const index = accountability.accounts.findIndex(
+                (account) => account.tonWallet.address === accountability.selectedAccountAddress
+            )
+            const selectedItem = slider.current?.state.selectedItem
+
+            if (index === selectedItem || accountability.accounts.length === selectedItem) {
+                return
+            }
+
+            slider.current?.setPosition(index >= 0 ? index : 0)
+        }, 600),
+        [accountability.selectedAccountAddress]
     )
 
     return (
@@ -134,7 +137,7 @@ export function AccountDetails(): JSX.Element {
                 )}
             </div>
 
-            <Carousel ref={slider} onInit={onInit} afterChange={beforeSlide}>
+            <Carousel ref={slider} selectedItem={initialSelectedAccountIndex} onChange={onSlide}>
                 {accountability.accounts.map((account) => (
                     <AccountCard
                         key={account.tonWallet.address}

@@ -203,6 +203,13 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
         }
     }
 
+    React.useEffect(() => {
+        if (accountability.currentDerivedKey == null && accountability.derivedKeys[0] !== undefined) {
+            accountability.setCurrentDerivedKey(accountability.derivedKeys[0])
+        }
+        setContractType(DEFAULT_CONTRACT_TYPE)
+    }, [accountability.currentDerivedKey])
+
     return (
         <>
             {step === FlowStep.INDEX && (
@@ -268,7 +275,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                         </div>
                         <Button
                             text={
-                                step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Create account'
+                                step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Next'
                             }
                             disabled={
                                 step === FlowStep.ENTER_ADDRESS ? address.length === 0 : false

@@ -8,6 +8,7 @@ import { AddAccountFlow } from '@popup/components/AccountsManagement/components'
 import { selectStyles } from '@popup/constants/selectStyle'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 
+
 const CreateAccountIcon = ({ className }: { className?: string }) => {
     return (
         <svg
@@ -48,10 +49,6 @@ const PlusIcon = ({ className }: { className?: string }) => {
     )
 }
 
-type OptionType = {
-	label: string;
-	value: string;
-}
 
 type Props = {
 	flow: AddAccountFlow,
@@ -70,16 +67,9 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
 	    [accountability.derivedKeys]
     )
 
-	const [selectedDerivedKey, setDerivedKey] = React.useState(() => {
-		const key = accountability.derivedKeys.find(
-			(derivedKey) => derivedKey.publicKey === accountability.currentDerivedKey?.publicKey
-		)
-		return key || accountability.derivedKeys[0]
-	})
-
     const onChangeDerivedKey = (value: nt.KeyStoreEntry | null) => {
 		if (value != null) {
-			setDerivedKey(value)
+			accountability.setCurrentDerivedKey(value)
 		}
 	}
 
@@ -97,7 +87,7 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
                 <div className="accounts-management__content-form-row">
                     <Select
                         options={derivedKeysOptions}
-                        value={selectedDerivedKey}
+                        value={accountability.currentDerivedKey || accountability.derivedKeys[0]}
                         formatOptionLabel={(value) => value.name}
 						styles={selectStyles}
 						onChange={onChangeDerivedKey}

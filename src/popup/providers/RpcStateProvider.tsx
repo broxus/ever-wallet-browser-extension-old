@@ -1,5 +1,4 @@
 import * as React from 'react'
-import isEqual from 'lodash.isequal'
 import { connect } from 'react-redux'
 
 import init, * as nt from '@nekoton'
