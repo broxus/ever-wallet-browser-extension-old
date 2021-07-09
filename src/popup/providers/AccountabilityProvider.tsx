@@ -280,7 +280,6 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
             tonWalletState,
             tokenWalletStates,
         })
-        console.log(currentDerivedKey)
     }
 
     return (

@@ -2,6 +2,7 @@ import * as React from 'react'
 import { connect } from 'react-redux'
 
 import init, * as nt from '@nekoton'
+import { LoaderPage } from '@popup/components/LoaderPage'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { fetchManifest } from '@popup/store/app/actions'
 import { AppState, StoreAction } from '@popup/store/app/types'
@@ -125,6 +126,10 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
             fetchManifest().catch(console.error)
         })()
     }, [])
+
+    if (!loaded) {
+        return <LoaderPage />
+    }
 
     return (
         <Context.Provider value={{ group, activeTab, loaded, state }}>{children}</Context.Provider>

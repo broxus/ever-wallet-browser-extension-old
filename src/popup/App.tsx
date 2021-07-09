@@ -4,25 +4,17 @@ import { AppState } from '@popup/store/app/types'
 import { fetchManifest } from '@popup/store/app/actions'
 
 import WelcomePage from '@popup/pages/WelcomePage'
+import { AccountsManagerPage } from '@popup/pages/AccountsManagerPage'
 import { MainPage } from '@popup/pages/MainPage'
+import { SendPage } from '@popup/pages/SendPage'
 import ApprovalPage from '@popup/pages/ApprovalPage'
 import ConnectLedgerPage from '@popup/pages/ConnectLedgerPage'
-import { AccountabilityProvider } from '@popup/providers/AccountabilityProvider'
 import { DrawerPanelProvider } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 
-import Oval from '@popup/img/oval.svg'
 import './styles/main.scss'
-import { AccountsManagerPage } from '@popup/pages/AccountsManagerPage'
 
-const Loader: React.FC = () => {
-    return (
-        <div className="loader-page">
-            <img src={Oval} className="loader-page__spinner" alt="" />
-        </div>
-    )
-}
 
 function App(): JSX.Element | null {
     const rpc = useRpc()
@@ -36,10 +28,6 @@ function App(): JSX.Element | null {
     ) {
         window.close()
         return null
-    }
-
-    if (/*rpcState.state == null || */!rpcState.loaded) {
-        return <Loader />
     }
 
     if (rpcState.activeTab.type === 'fullscreen') {
@@ -80,15 +68,17 @@ function App(): JSX.Element | null {
         )
     }
 
+    if (rpcState.activeTab.type === 'notification' && rpcState.group === 'send') {
+        return <SendPage />
+    }
+
     if (rpcState.activeTab.type === 'notification' && rpcState.group === 'manage_seeds') {
-        return <AccountsManagerPage key="accounts-manager" />
+        return <AccountsManagerPage key="accountsManagerPAge" />
     }
 
     return (
-        <DrawerPanelProvider>
-            <AccountabilityProvider>
-                <MainPage />
-            </AccountabilityProvider>
+        <DrawerPanelProvider key="mainPage" >
+            <MainPage />
         </DrawerPanelProvider>
     )
 }

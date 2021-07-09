@@ -214,7 +214,7 @@ export function PrepareMessage({
     }
 
     return (
-        <>
+        <div className="send-screen__content">
             <div className="send-screen__account_details">
                 <UserAvatar address={tonWalletAsset.address} small />{' '}
                 <span className="send-screen__account_details-title">{accountName}</span>
@@ -371,6 +371,6 @@ export function PrepareMessage({
                     }}
                 />
             )}
-        </>
+        </div>
     )
 }

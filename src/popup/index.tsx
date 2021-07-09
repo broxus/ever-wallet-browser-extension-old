@@ -7,6 +7,7 @@ import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 
+import { AccountabilityProvider } from '@popup/providers/AccountabilityProvider'
 import { RpcProvider } from '@popup/providers/RpcProvider'
 import { ActiveTab, RpcStateProvider } from '@popup/providers/RpcStateProvider'
 import { getCurrentWindow, getEnvironmentType } from '@popup/utils/platform'
@@ -165,7 +166,9 @@ const initializeUi = (
                 <Provider store={store}>
                     <RpcProvider connection={backgroundConnection}>
                         <RpcStateProvider group={group} activeTab={activeTab}>
-                            <App />
+                            <AccountabilityProvider>
+                                <App />
+                            </AccountabilityProvider>
                         </RpcStateProvider>
                     </RpcProvider>
                 </Provider>
