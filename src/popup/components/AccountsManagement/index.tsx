@@ -13,16 +13,13 @@ import {
 import Arrow from '@popup/img/arrow.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
-import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import { convertAddress } from '@shared/utils'
 
 import './style.scss'
-import Button from '@popup/components/Button'
 
 
 export function ManageSeeds(): JSX.Element {
 	const accountability = useAccountability()
-	const rpcState = useRpcState()
 
 	const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
 		return () => accountability.onManageMasterKey(seed)
@@ -75,14 +72,6 @@ export function ManageSeeds(): JSX.Element {
 							</div>
 						</li>
 					</ul>
-
-					{(rpcState.activeTab?.type === 'notification' && rpcState.group === 'manage_seeds') && (
-						<div className="accounts-management__content-buttons">
-							<div className="accounts-management__content-buttons-back-btn">
-								<Button text="Exit" white onClick={closeCurrentWindow} />
-							</div>
-						</div>
-					)}
 				</div>
 			)}
 
