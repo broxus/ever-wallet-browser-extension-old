@@ -25,17 +25,18 @@ export function useSelectableKeys(selectedAccount?: nt.AssetsList) {
 
 	return React.useMemo(() => {
 		let keys: nt.KeyStoreEntry[] = [storedKeys[accountPublicKey]]
+
 		const externals = externalAccounts.find(
 			(account) => account.address === accountAddress
 		)
 
 		if (externals !== undefined) {
-			keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
+			keys = keys.concat(externals.externalIn.map((key) => storedKeys[key])).filter(
+				(key) => key.publicKey != selectedAccount?.tonWallet.publicKey
+			)
 		}
 
-		return keys.filter((key) => key).filter(
-			(key) => key.publicKey != selectedAccount?.tonWallet.publicKey
-		)
+		return keys.filter((key) => key)
 	}, [account, externalAccounts, storedKeys])
 
 }

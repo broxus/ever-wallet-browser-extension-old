@@ -13,8 +13,8 @@ import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import Input from '@popup/components/Input'
-import { useState } from 'react'
 import Select from 'react-select'
 import { selectStyles } from '@popup/constants/selectStyle'
 import { ConfirmMessageToPrepare, TransferMessageToPrepare } from '@shared/backgroundApi'
@@ -23,7 +23,6 @@ import { prepareKey } from '@popup/utils'
 type Props = {
     symbol?: nt.Symbol
     transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
-    selectedKeys: nt.KeyStoreEntry[]
 }
 
 enum LocalStep {
@@ -40,9 +39,10 @@ const TRANSACTION_NAMES = {
     swap_back: 'Recipient',
 }
 
-export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: Props): JSX.Element | null {
+export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
+    const selectableKeys = useSelectableKeys()
 
     if ((
         transaction.info?.type !== 'wallet_interaction' ||
@@ -54,10 +54,8 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
     }
 
     const [custodians, setCustodians] = React.useState<string[]>([])
-    const [password, setPassword] = useState<string>('')
+    const [password, setPassword] = React.useState<string>('')
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
-
-    console.log('_TRANS', transaction, rpcState.state.accountUnconfirmedTransactions)
 
     const value = React.useMemo(() => {
         return transaction.info?.data.method.data.data.value
@@ -90,11 +88,12 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
     const confirmations: string[] = unconfirmedTransaction?.confirmations || []
 
     console.log(confirmations)
-    console.log(selectedKeys)
-    console.log(selectedKeys.filter((key) => !confirmations.includes(key.publicKey)))
+    console.log(selectableKeys)
+    console.log(selectableKeys.filter((key) => !confirmations.includes(key.publicKey)))
 
-    const [keys, setKeys] = React.useState(
-        selectedKeys.filter((key) => !confirmations.includes(key.publicKey))
+    const keys = React.useMemo(
+        () => selectableKeys.filter((key) => !confirmations.includes(key.publicKey)),
+        [confirmations, selectableKeys]
     )
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(keys[0])
 
@@ -235,7 +234,7 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
 
             <div className="transaction-info-buttons">
 				<div className="transaction-info-buttons-btn-back">
-					<Button text="Confirm" onClick={onConfirm} />
+					<Button text="Back" onClick={onBack} />
 				</div>
 				<Button text="Confirm" onClick={onConfirm} />
 			</div>

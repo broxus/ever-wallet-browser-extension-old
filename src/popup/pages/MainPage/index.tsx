@@ -192,7 +192,6 @@ export function MainPage(): JSX.Element | null {
                         (isUnconfirmedTransaction(selectedTransaction) ? (
                             <MultisigTransactionSign
                                 transaction={selectedTransaction}
-                                selectedKeys={selectedKeys}
                             />
                         ) : (
                             <TransactionInfo transaction={selectedTransaction} />

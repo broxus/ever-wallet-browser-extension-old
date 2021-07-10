@@ -2,12 +2,13 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import { PrepareMessage } from '@popup/components/Send/components'
-import TransactionProgress from '@popup/components/TransactionProgress'
+import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import {
     TransferMessageToPrepare,
     TokenMessageToPrepare,
     WalletMessageToSend,
 } from '@shared/backgroundApi'
+import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import './style.scss'
@@ -50,42 +51,37 @@ export function Send({
     sendMessage,
     onBack,
 }: Props): JSX.Element {
-    const [pendingResponse, setPendingResponse] = React.useState<Promise<nt.Transaction>>()
+    const rpcState = useRpcState()
 
-    const trySendMessage = (message: WalletMessageToSend) => {
-        if (pendingResponse == null) {
-            setPendingResponse(sendMessage(message))
-        } else {
-            throw new Error('Pending response is already set')
+    const trySendMessage = async (message: WalletMessageToSend) => {
+        await sendMessage(message)
+        if (rpcState.activeTab?.type === ENVIRONMENT_TYPE_NOTIFICATION) {
+            closeCurrentWindow()
         }
     }
 
-    if (pendingResponse == null) {
-        return (
-            <PrepareMessage
-                accountName={accountName}
-                tonWalletAsset={tonWalletAsset}
-                tokenWalletAssets={tokenWalletAssets}
-                defaultAsset={
-                    defaultAsset || {
-                        type: 'ton_wallet',
-                        data: {
-                            address: tonWalletAsset.address,
-                        },
-                    }
+    return (
+        <PrepareMessage
+            accountName={accountName}
+            tonWalletAsset={tonWalletAsset}
+            tokenWalletAssets={tokenWalletAssets}
+            defaultAsset={
+                defaultAsset || {
+                    type: 'ton_wallet',
+                    data: {
+                        address: tonWalletAsset.address,
+                    },
                 }
-                keyEntries={keyEntries}
-                tonWalletState={tonWalletState}
-                tokenWalletStates={tokenWalletStates}
-                knownTokens={knownTokens}
-                prepareMessage={prepareMessage}
-                prepareTokenMessage={prepareTokenMessage}
-                estimateFees={estimateFees}
-                onBack={onBack}
-                onSubmit={(message) => trySendMessage(message)}
-            />
-        )
-    }
-
-    return <TransactionProgress pendingResponse={pendingResponse} onBack={onBack} />
+            }
+            keyEntries={keyEntries}
+            tonWalletState={tonWalletState}
+            tokenWalletStates={tokenWalletStates}
+            knownTokens={knownTokens}
+            prepareMessage={prepareMessage}
+            prepareTokenMessage={prepareTokenMessage}
+            estimateFees={estimateFees}
+            onBack={onBack}
+            onSubmit={(message) => trySendMessage(message)}
+        />
+    )
 }
