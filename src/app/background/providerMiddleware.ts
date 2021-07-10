@@ -744,9 +744,11 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     const selectedAddress = allowedAccount.address
 
     let body: string = ''
+    let knownPayload: nt.KnownPayload | undefined = undefined
     if (payload != null) {
         try {
             body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
+            knownPayload = nt.parseKnownPayload(body)
         } catch (e) {
             throw invalidRequest(req, e.toString())
         }
@@ -803,6 +805,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             bounce,
             payload,
             fees,
+            knownPayload,
         },
     })
 

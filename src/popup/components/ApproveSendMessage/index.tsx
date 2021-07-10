@@ -33,7 +33,9 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     onSubmit,
 }) => {
     const { origin } = approval
-    const { sender, recipient, amount, fees, payload } = approval.requestData
+    const { sender, recipient, amount, fees, payload, knownPayload } = approval.requestData
+
+    console.log('KNOWN PAYLOAD:', knownPayload) // TODO: remove
 
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
