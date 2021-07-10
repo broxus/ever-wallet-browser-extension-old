@@ -1,8 +1,10 @@
+@import '../../styles/colors';
+
 .send-screen {
     &__page {
         .send-screen {
             &__content {
-                padding: 20px 20px 0;
+                padding: 20px;
             }
 
             &__content-title {
@@ -52,6 +54,10 @@
 
         &-input {
             margin-bottom: 28px;
+        }
+
+        &-password {
+            margin-bottom: 0;
         }
 
         &-token-dropdown {
@@ -137,6 +143,14 @@
                 }
             }
         }
+
+        &-field-hint {
+            margin-top: 5px;
+            font-size: 12px;
+            line-height: 18px;
+            color: $seedsHeader;
+            margin-bottom: 28px;
+        }
     }
 
     &__tx-sending {
@@ -149,5 +163,25 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    &__footer {
+        background: #fff;
+        bottom: 0;
+        box-shadow: 0 -10px 15px 10px #fff;
+        display: flex;
+        margin: 32px 0 0;
+        padding: 0 0 20px;
+        position: sticky;
+        z-index: 1;
+        column-gap: 12px;
+
+        > * { width: 100%; }
+
+        &-button-back {
+            width: 100px;
+            min-width: 100px;
+            margin-right: 12px;
+        }
     }
 }

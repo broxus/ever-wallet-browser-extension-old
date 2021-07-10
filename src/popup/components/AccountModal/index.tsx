@@ -1,18 +1,16 @@
 import * as React from 'react'
 
+import manifest from '../../../manifest.json'
+
 import { hideModalOnClick } from '@popup/common'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 
 import Profile from '@popup/img/profile.svg'
 
-import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import { convertAddress } from '@shared/utils'
-
-import manifest from '../../../manifest.json'
 
 import './style.scss'
 
@@ -21,7 +19,6 @@ export function AccountModal() {
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
-    const rpcState = useRpcState()
 
     const wrapperRef = React.useRef(null)
 
@@ -64,18 +61,12 @@ export function AccountModal() {
     }
 
     const onManageSeeds = async () => {
-        hide()
-
-        if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
-            drawer.setPanel(Panel.MANAGE_SEEDS)
-        } else {
-            await rpc.openExtensionInExternalWindow({
-                group: 'manage_seeds',
-                width: 360 + scrollWidth - 1,
-                height: 600 + scrollWidth - 1,
-            })
-            window.close()
-        }
+        await rpc.openExtensionInExternalWindow({
+            group: 'manage_seeds',
+            width: 360 + scrollWidth - 1,
+            height: 600 + scrollWidth - 1,
+        })
+        window.close()
     }
 
     hideModalOnClick(wrapperRef, hide)

@@ -6,7 +6,7 @@ import { ManageSeeds } from '@popup/components/AccountsManagement'
 import { CreateAccount } from '@popup/components/AccountsManagement/components'
 import { DeployWallet } from '@popup/components/DeployWallet'
 import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
-import { Send } from '@popup/components/Send'
+// import { Send } from '@popup/components/Send'
 import { TransactionInfo } from '@popup/components/TransactionInfo'
 import { UserAssets } from '@popup/components/UserAssets'
 import AssetFull from '@popup/components/AssetFull'
@@ -17,10 +17,9 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { SelectedAsset } from '@shared/utils'
-import { WalletMessageToSend } from '@shared/backgroundApi'
+// import { WalletMessageToSend } from '@shared/backgroundApi'
 
 import './style.scss'
-import window = chrome.app.window
 
 const INITIAL_DATA_KEY = 'initial_data'
 
@@ -95,9 +94,9 @@ export function MainPage(): JSX.Element | null {
 
     const transactions = rpcState.state.accountTransactions[accountAddress] || []
 
-    const sendMessage = async (message: WalletMessageToSend) => {
-        return rpc.sendMessage(accountAddress as string, message)
-    }
+    // const sendMessage = async (message: WalletMessageToSend) => {
+    //     return rpc.sendMessage(accountAddress as string, message)
+    // }
 
     const showTransaction = (transaction: nt.Transaction) => {
         setSelectedTransaction(transaction)
@@ -117,7 +116,7 @@ export function MainPage(): JSX.Element | null {
         return (
             transaction.info?.type === 'wallet_interaction' &&
             transaction.info.data.method.type === 'multisig' &&
-            transaction.info.data.method.data.type === 'confirm' &&
+            transaction.info.data.method.data.type === 'submit' &&
             transaction.info.data.method.data.data.transactionId != '0' &&
             (transaction.createdAt + contractTypeDetails.expirationTime) * 1000 > now
         )
@@ -151,6 +150,7 @@ export function MainPage(): JSX.Element | null {
                     {drawer.currentPanel === Panel.RECEIVE && (
                         <Receive accountName={accountName} address={accountAddress} />
                     )}
+                    {/*
                     {drawer.currentPanel === Panel.SEND && tonWalletState && (
                         <Send
                             accountName={accountName}
@@ -173,6 +173,7 @@ export function MainPage(): JSX.Element | null {
                             onBack={closePanel}
                         />
                     )}
+                    */}
                     {drawer.currentPanel === Panel.MANAGE_SEEDS && <ManageSeeds />}
                     {drawer.currentPanel === Panel.DEPLOY && <DeployWallet />}
                     {drawer.currentPanel === Panel.CREATE_ACCOUNT && <CreateAccount />}

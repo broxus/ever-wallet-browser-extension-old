@@ -1,68 +1,99 @@
-import React, { useState } from 'react'
-import { convertTons } from '@shared/utils'
-import { PendingApproval } from '@shared/backgroundApi'
+import * as React from 'react'
 import Decimal from 'decimal.js'
-import { prepareKey } from '@popup/utils'
+
 import * as nt from '@nekoton'
-
 import Button from '@popup/components/Button'
-import SlidingPanel from '@popup/components/SlidingPanel'
-import EnterPassword from '@popup/components/EnterPassword'
-import WebsiteIcon from '@popup/components/WebsiteIcon'
+// import EnterPassword from '@popup/components/EnterPassword'
+// import SlidingPanel from '@popup/components/SlidingPanel'
 import UserAvatar from '@popup/components/UserAvatar'
+import WebsiteIcon from '@popup/components/WebsiteIcon'
+import { EnterPassword } from '@popup/components/Send/components'
+import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { Fees } from '@popup/utils'
+import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
+import { convertTons, parseTons } from '@shared/utils'
 
-interface IApproveSendMessage {
+import './style.scss'
+
+enum ApproveStep {
+    MESSAGE_PREVIEW,
+    ENTER_PASSWORD,
+}
+
+type Props = {
     approval: PendingApproval<'sendMessage'>
-    networkName: string
-    accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
-    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
+    accountEntries: { [address: string]: nt.AssetsList }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
+    networkName: string
+    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
 }
 
-const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
+export function ApproveSendMessage({
     approval,
     networkName,
     accountEntries,
     accountContractStates,
-    storedKeys,
     checkPassword,
     onReject,
     onSubmit,
-}) => {
+}: Props): JSX.Element | null {
+    const rpc = useRpc()
+
     const { origin } = approval
     const { sender, recipient, amount, payload, knownPayload } = approval.requestData
 
-    console.log('KNOWN PAYLOAD:', knownPayload) // TODO: remove
+    console.log('KNOWN PAYLOAD:', knownPayload, approval.requestData) // TODO: remove
 
-    const [inProcess, setInProcess] = useState(false)
-    const [error, setError] = useState<string>()
-    const [passwordModalVisible, setPasswordModalVisible] = useState<boolean>(false)
+    const [inProcess, setInProcess] = React.useState(false)
 
-    const account = accountEntries[sender]
+    const account = React.useMemo(() => accountEntries[sender], [sender])
     if (account == null) {
-        !inProcess && onReject()
+        if (!inProcess) {
+            onReject()
+        }
         setInProcess(true)
         return null
+    }
+
+    const selectableKeys = useSelectableKeys(account)
+
+    // if (selectableKeys[0] == null) {
+    //     return null
+    // }
+
+    const [localStep, setLocalStep] = React.useState(ApproveStep.MESSAGE_PREVIEW)
+    const [error, setError] = React.useState<string>()
+    const [fees, setFees] = React.useState<Fees>()
+    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(selectableKeys[0])
+
+    const updateFees = async () => {
+        let messageToPrepare: TransferMessageToPrepare = {
+            publicKey: selectedKey.publicKey,
+            recipient: nt.repackAddress(recipient), //shouldn't throw exceptions due to higher level validation
+            amount: parseTons(amount),
+            payload: undefined,
+        }
+
+        await rpc.estimateFees(account.tonWallet.address, messageToPrepare)
+            .then((transactionFees) => {
+                setFees({
+                    transactionFees,
+                    attachedAmount: undefined,
+                })
+            })
+            .catch(console.error)
     }
 
     const contractState = accountContractStates[account.tonWallet.address]
     const balance = new Decimal(contractState?.balance || '0')
 
-    console.log(contractState, balance, sender)
-
-    const trySubmit = async (password: string) => {
-        const keyEntry = storedKeys[account.tonWallet.publicKey]
-        if (keyEntry == null) {
-            setError('Key entry not found')
-            return
-        }
-
+    const trySubmit = async (keyPassword: nt.KeyPassword) => {
         setInProcess(true)
         try {
-            const keyPassword = prepareKey(keyEntry, password)
             const isValid = await checkPassword(keyPassword)
             if (isValid) {
                 onSubmit(keyPassword)
@@ -76,112 +107,148 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
         }
     }
 
+    React.useEffect(() => {
+        updateFees()
+    }, [selectedKey])
+
     return (
-        <div className="connect-wallet">
-            <div className="connect-wallet__spend-top-panel">
-                <div className="connect-wallet__spend-top-panel__network">
-                    <div className="connect-wallet__address-entry">
+        <div className="send-message">
+            <header className="send-message__header">
+                <div className="send-message__meta">
+                    <div className="send-message__account">
                         <UserAvatar address={account.tonWallet.address} small />
-                        <div className="connect-wallet__spend-top-panel__account">
+                        <div className="send-message__account-name">
                             {account?.name}
                         </div>
                     </div>
-                    <div className="connect-wallet__network" style={{ marginBottom: '0' }}>
-                        {networkName}
-                    </div>
+                    <div className="send-message__network">{networkName}</div>
                 </div>
-                <div className="connect-wallet__spend-top-panel__site">
+                <div className="send-message__origin-source">
                     <WebsiteIcon origin={origin} />
-                    <div className="connect-wallet__address-entry">{origin}</div>
+                    <div className="send-message__origin-source-value">{origin}</div>
                 </div>
-                <h3 className="connect-wallet__spend-top-panel__header noselect">
-                    Send internal message
-                </h3>
-            </div>
-            <div className="connect-wallet__spend-details">
-                <div className="connect-wallet__details__description">
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Recipient
-                        </span>
-                        <span className="connect-wallet__details__description-param-value">
-                            {recipient}
-                        </span>
-                    </div>
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Amount
-                        </span>
-                        <span className="connect-wallet__details__description-param-value">
-                            {convertTons(amount)} TON
-                        </span>
-                        {balance.lessThan(amount) && (
-                            <div
-                                className="check-seed__content-error"
-                                style={{ marginBottom: '16px', marginTop: '-12px' }}
-                            >
-                                Insufficient funds
-                            </div>
-                        )}
-                    </div>
-                    <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Blockchain fee
-                        </span>
-                        {/*TODO*/}
-                        {/*<span className="connect-wallet__details__description-param-value">*/}
-                        {/*    ~{convertTons(fees)} TON*/}
-                        {/*</span>*/}
-                    </div>
-                    {payload && (
-                        <div className="connect-wallet__details__description-param">
-                            <span className="connect-wallet__details__description-param-desc">
-                                Data
+                {localStep === ApproveStep.MESSAGE_PREVIEW && (
+                    <h3 className="send-message__header-title noselect">
+                        Send internal message
+                    </h3>
+                )}
+                {localStep === ApproveStep.ENTER_PASSWORD && (
+                    <h3 className="send-message__header-title noselect">
+                        Confirm message
+                    </h3>
+                )}
+            </header>
+
+            <div className="send-message__wrapper">
+                {localStep === ApproveStep.MESSAGE_PREVIEW && (
+                    <>
+                        <div key="message" className="send-message__spend-details">
+                            <div className="send-message__spend-details-param">
+                            <span className="send-message__spend-details-param-desc">
+                                Recipient
                             </span>
-                            <div className="connect-wallet__details__description-param-data">
-                                <div className="connect-wallet__details__description-param-data__method">
-                                    <span>Method:</span>
-                                    <span>{payload.method}</span>
-                                </div>
-                                {Object.entries(payload.params).map(([key, value], i) => (
+                                <span className="send-message__spend-details-param-value">
+                                {recipient}
+                            </span>
+                            </div>
+                            <div className="send-message__spend-details-param">
+                            <span className="send-message__spend-details-param-desc">
+                                Amount
+                            </span>
+                                <span className="send-message__spend-details-param-value">
+                                {convertTons(amount)} TON
+                            </span>
+                                {balance.lessThan(amount) && (
                                     <div
-                                        className="connect-wallet__details__description-param-data__block"
-                                        key={i}
+                                        className="check-seed__content-error"
+                                        style={{ marginBottom: '16px', marginTop: '-12px' }}
                                     >
-                                        <div className="connect-wallet__details__description-param-data__block--param-name">
-                                            {key}
-                                        </div>
-                                        {value instanceof Array ? (
-                                            <div className="connect-wallet__details__description-param-data__block--value">
-                                                {JSON.stringify(value, undefined, 4)}
-                                            </div>
-                                        ) : (
-                                            <div className="connect-wallet__details__description-param-data__block--value">
-                                                {value.toString()}
-                                            </div>
-                                        )}
+                                        Insufficient funds
                                     </div>
-                                ))}
+                                )}
+                            </div>
+                            <div className="send-message__spend-details-param">
+                                <span className="send-message__spend-details-param-desc">
+                                    Blockchain fee
+                                </span>
+                                <span className="send-message__spend-details-param-value">
+                                    {fees?.transactionFees !== undefined
+                                        ? `~${convertTons(fees.transactionFees)} TON`
+                                        : 'calculating...'}
+                                </span>
+                            </div>
+                            {payload && (
+                                <div className="send-message__spend-details-param">
+                                <span className="send-message__spend-details-param-desc">
+                                    Data
+                                </span>
+                                    <div className="send-message__spend-details-param-data">
+                                        <div className="send-message__spend-details-param-data__method">
+                                            <span>Method:</span>
+                                            <span>{payload.method}</span>
+                                        </div>
+                                        {Object.entries(payload.params).map(([key, value], i) => (
+                                            <div
+                                                className="send-message__spend-details-param-data__block"
+                                                key={i}
+                                            >
+                                                <div className="send-message__spend-details-param-data__block--param-name">
+                                                    {key}
+                                                </div>
+                                                {value instanceof Array ? (
+                                                    <div className="send-message__spend-details-param-data__block--value">
+                                                        {JSON.stringify(value, undefined, 4)}
+                                                    </div>
+                                                ) : (
+                                                    <div className="send-message__spend-details-param-data__block--value">
+                                                        {value.toString()}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="send-message__footer">
+                            <div className="send-message__buttons-button">
+                                <Button type="button" white text="Reject" onClick={onReject} />
+                            </div>
+                            <div className="send-message__buttons-button">
+                                <Button
+                                    type="submit"
+                                    text="Send"
+                                    disabled={balance.lessThan(amount)}
+                                    onClick={() => {
+                                        setLocalStep(ApproveStep.ENTER_PASSWORD)
+                                    }}
+                                />
                             </div>
                         </div>
-                    )}
-                </div>
-            </div>
-            <div className="connect-wallet__buttons">
-                <div className="connect-wallet__buttons-button">
-                    <Button type="button" white text="Reject" onClick={onReject} />
-                </div>
-                <div className="connect-wallet__buttons-button">
-                    <Button
-                        type="submit"
-                        text="Send"
-                        disabled={balance.lessThan(amount)}
-                        onClick={() => {
-                            setPasswordModalVisible(true)
+                    </>
+                )}
+
+                {localStep === ApproveStep.ENTER_PASSWORD && (
+                    <EnterPassword
+                        keyEntries={selectableKeys}
+                        keyEntry={selectedKey}
+                        currencyName="TON"
+                        fees={fees}
+                        params={{ recipient, amount: convertTons(amount) }}
+                        error={error}
+                        disabled={inProcess}
+                        showHeading={false}
+                        onSubmit={trySubmit}
+                        onBack={() => {
+                            setLocalStep(ApproveStep.MESSAGE_PREVIEW)
                         }}
+                        onChangeKeyEntry={setKey}
                     />
-                </div>
+                )}
             </div>
+
+            {/*
             <SlidingPanel
                 isOpen={passwordModalVisible}
                 onClose={() => setPasswordModalVisible(false)}
@@ -193,8 +260,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                     handleBack={() => setPasswordModalVisible(false)}
                 />
             </SlidingPanel>
+            */}
         </div>
     )
 }
-
-export default ApproveSendMessage

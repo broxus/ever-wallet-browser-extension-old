@@ -257,6 +257,14 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         })()
     }, [rpcState.state.selectedMasterKey])
 
+    React.useEffect(() => {
+        window.ObjectExt.keys({ ...rpcState.state.accountEntries }).forEach(async (address) => {
+            if (rpcState.state.accountsVisibility[address] == null) {
+                await rpc.updateAccountVisibility(address as string, true)
+            }
+        })
+    }, [])
+
     if (process.env.NODE_ENV !== 'production') {
         console.log('ACCOUNTABILITY', {
             currentAccount,

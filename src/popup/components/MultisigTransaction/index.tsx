@@ -40,9 +40,18 @@ const TRANSACTION_NAMES = {
     swap_back: 'Recipient',
 }
 
-export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: Props): JSX.Element {
+export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: Props): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
+
+    if ((
+        transaction.info?.type !== 'wallet_interaction' ||
+        transaction.info.data.method.type !== 'multisig' ||
+        transaction.info.data.method.data.type !== 'submit' ||
+        transaction.info.data.method.data.data.transactionId === '0')
+    ) {
+        return null
+    }
 
     const [custodians, setCustodians] = React.useState<string[]>([])
     const [password, setPassword] = useState<string>('')
@@ -51,7 +60,7 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
     console.log('_TRANS', transaction, rpcState.state.accountUnconfirmedTransactions)
 
     const value = React.useMemo(() => {
-        return transaction.info?.data.data.value
+        return transaction.info?.data.method.data.data.value
     }, [symbol, transaction])
 
     let direction: string | undefined, address: string | undefined
@@ -71,7 +80,7 @@ export function MultisigTransactionSign({ transaction, symbol, selectedKeys }: P
 
     const decimals = symbol == null ? 9 : symbol.decimals
     const currencyName = symbol == null ? 'TON' : symbol.name
-    const transactionId = transaction.info?.data.data.transactionId as string
+    const transactionId = transaction.info?.data.method.data.data.transactionId as string
 
     const unconfirmedTransaction = React.useMemo(() => {
         return address !== undefined

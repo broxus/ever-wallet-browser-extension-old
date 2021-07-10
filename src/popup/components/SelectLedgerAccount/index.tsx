@@ -4,7 +4,7 @@ import Right from '@popup/img/right-arrow-blue.svg'
 import Left from '@popup/img/left-arrow-blue.svg'
 import Button from '@popup/components/Button'
 
-import Checkbox from '@popup/components/Checkbox'
+import { Checkbox } from '@popup/components/Checkbox'
 import UserAvatar from '@popup/components/UserAvatar'
 import { convertAddress, convertTons } from '@shared/utils'
 
@@ -48,7 +48,7 @@ const LedgerAccount: React.FC<ILedgerAccount> = ({
         >
             <Checkbox
                 checked={checked || preselected}
-                setChecked={!preselected ? setChecked : () => {}}
+                onChange={!preselected ? setChecked : () => {}}
             />
             <UserAvatar
                 address={nt.computeTonWalletAddress(publicKey, 'SafeMultisigWallet', 0)}

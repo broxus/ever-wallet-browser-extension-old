@@ -6,6 +6,7 @@ import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import { WalletMessageToSend } from '@shared/backgroundApi'
+import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 
 
 export function SendPage(): JSX.Element | null {
@@ -13,63 +14,42 @@ export function SendPage(): JSX.Element | null {
 	const rpc = useRpc()
 	const rpcState = useRpcState()
 
-	if (accountability.selectedAccount == null) {
+	const selectedAccount = React.useMemo(() => accountability.selectedAccount, [])
+
+	if (selectedAccount == null) {
 		return null
 	}
 
-	const {
-		externalAccounts,
-		knownTokens,
-		selectedAccount,
-		selectedConnection,
-		storedKeys,
-	} = rpcState.state
-
+	const { knownTokens, selectedConnection } = rpcState.state
 	const accountName = selectedAccount?.name as string
 	const accountAddress = selectedAccount?.tonWallet.address as string
-	const accountPublicKey = selectedAccount?.tonWallet.publicKey as string
+	const selectableKeys = useSelectableKeys(selectedAccount)
 
-	const selectedKeys = React.useMemo(() => {
-		let keys: nt.KeyStoreEntry[] = [storedKeys[accountPublicKey]]
-		const externals = externalAccounts.find(
-			(account) => account.address === accountAddress
-		)
+	// if (selectableKeys[0] == null) {
+	// 	return null
+	// }
 
-		if (externals !== undefined) {
-			keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
-		}
+	const tonWalletAsset = selectedAccount.tonWallet
+	const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
 
-		return keys.filter((e) => e)
-	}, [accountability.selectedAccount, externalAccounts, storedKeys])
-
-	if (selectedKeys[0] === undefined) {
+	if (tonWalletState == null) {
 		return null
 	}
 
-	const tonWalletAsset = accountability.selectedAccount.tonWallet
-	const tokenWalletAssets =
-		accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets ||
-		[]
-	const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
-		| nt.ContractState
-		| undefined
+	const tokenWalletAssets = selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
 	const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
 
 	const sendMessage = async (message: WalletMessageToSend) => {
-		return rpc.sendMessage(accountAddress as string, message)
+	    return rpc.sendMessage(accountAddress as string, message)
 	}
 
-	const onBack = () => {
-		closeCurrentWindow()
-	}
-
-	return tonWalletState !== undefined ? (
+	return (
 		<div className="send-screen__page">
 			<Send
 				accountName={accountName}
 				tonWalletAsset={tonWalletAsset}
 				tokenWalletAssets={tokenWalletAssets}
-				keyEntries={selectedKeys}
+				keyEntries={selectableKeys}
 				tonWalletState={tonWalletState}
 				tokenWalletStates={tokenWalletStates}
 				knownTokens={knownTokens}
@@ -83,8 +63,10 @@ export function SendPage(): JSX.Element | null {
 					rpc.prepareTokenMessage(owner, rootTokenContract, params)
 				}
 				sendMessage={sendMessage}
-				onBack={onBack}
+				onBack={() => {
+					closeCurrentWindow()
+				}}
 			/>
 		</div>
-	) : null
+	)
 }

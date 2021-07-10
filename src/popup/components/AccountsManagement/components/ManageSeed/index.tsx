@@ -8,6 +8,7 @@ import Input from '@popup/components/Input'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
 
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
@@ -148,9 +149,11 @@ export function ManageSeed(): JSX.Element {
                     </ul>
 
                     <div className="accounts-management__content-buttons">
-                        <div className="accounts-management__content-buttons-back-btn">
-                            <Button text="Back" white onClick={onBack} />
-                        </div>
+                        {rpcState.activeTab?.type != ENVIRONMENT_TYPE_POPUP && (
+                            <div className="accounts-management__content-buttons-back-btn">
+                                <Button text="Back" white onClick={onBack} />
+                            </div>
+                        )}
                         <Button text="Export seed" onClick={onExportSeed} />
                     </div>
                 </div>

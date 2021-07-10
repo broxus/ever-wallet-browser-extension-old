@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
 import Button from '@popup/components/Button'
-import Checkbox from '@popup/components/Checkbox'
+import { Checkbox } from '@popup/components/Checkbox'
 
 import Signature from '@popup/img/policy-sign.svg'
 
@@ -22,7 +22,7 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
                 <h2>Sign the decentralization policy to proceed</h2>
                 <img src={Signature} alt="" />
                 <div className="policy-sign-page__content-checkbox">
-                    <Checkbox checked={checked} setChecked={setChecked} />
+                    <Checkbox checked={checked} onChange={setChecked} />
                     <span className="policy-sign-page__content-checkbox-label">
                         I accept{' '}
                         <span

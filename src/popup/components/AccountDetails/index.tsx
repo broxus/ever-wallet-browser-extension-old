@@ -12,6 +12,7 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { debounce } from '@popup/utils/debounce'
+import { getScrollWidth } from '@popup/utils/getScrollWidth'
 
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
@@ -19,13 +20,10 @@ import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
 
 import { ConnectionDataItem } from '@shared/backgroundApi'
-import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import { convertTons } from '@shared/utils'
 
 import './style.scss'
 
-
-const INITIAL_DATA_KEY = 'initial_data'
 
 export function AccountDetails(): JSX.Element {
     const accountability = useAccountability()
@@ -36,6 +34,8 @@ export function AccountDetails(): JSX.Element {
     const slider = React.useRef<ReactCarousel>(null)
 
     const [notificationsVisible, setNotificationsVisible] = React.useState(false)
+
+    const scrollWidth = React.useMemo(() => getScrollWidth(), [])
 
     const initialSelectedAccountIndex = React.useMemo(() => {
         const index = accountability.accounts.findIndex(
@@ -53,14 +53,12 @@ export function AccountDetails(): JSX.Element {
     }
 
     const onSend = async () => {
-        drawer.setPanel(Panel.SEND)
-        /*if (rpcState.activeTab?.type == ENVIRONMENT_TYPE_NOTIFICATION) {
-            drawer.setPanel(Panel.SEND)
-        } else {
-            await rpc.tempStorageInsert(INITIAL_DATA_KEY, Panel.SEND)
-            await rpc.openExtensionInExternalWindow('send')
-            window.close()
-        }*/
+        await rpc.openExtensionInExternalWindow({
+            group: 'send',
+            width: 360 + scrollWidth - 1,
+            height: 600 + scrollWidth - 1,
+        })
+        window.close()
     }
 
     const onToggleNetwork = async () => {

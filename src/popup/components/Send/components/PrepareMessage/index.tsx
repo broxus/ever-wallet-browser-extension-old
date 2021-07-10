@@ -5,7 +5,7 @@ import Select from 'react-select'
 
 import * as nt from '@nekoton'
 import { Fees } from '@popup/utils'
-import Checkbox from '@popup/components/Checkbox'
+import { Checkbox } from '@popup/components/Checkbox'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { Message, EnterPassword } from '@popup/components/Send/components'
@@ -78,10 +78,10 @@ export function PrepareMessage({
     const [localStep, setLocalStep] = React.useState(PrepareStep.ENTER_ADDRESS)
     const [inProcess, setInProcess] = React.useState(false)
     const [error, setError] = React.useState<string>()
-    const [messageToPrepare, setMessageToPrepare] = React.useState<TransferMessageToPrepare>()
     const [fees, setFees] = React.useState<Fees>()
-    const [notifyReceiver, setNotifyReceiver] = React.useState<boolean>(false)
     const [messageParams, setMessageParams] = React.useState<Message>()
+    const [messageToPrepare, setMessageToPrepare] = React.useState<TransferMessageToPrepare>()
+    const [notifyReceiver, setNotifyReceiver] = React.useState<boolean>(false)
     const [selectedAsset, setSelectedAsset] = React.useState<string>(
         defaultAsset.type == 'ton_wallet' ? '' : defaultAsset.data.rootTokenContract
     )
@@ -117,7 +117,8 @@ export function PrepareMessage({
         balance = new Decimal(tonWalletState?.balance || '0')
         decimals = 9
         currencyName = 'TON'
-    } else {
+    }
+    else {
         balance = new Decimal(tokenWalletStates[selectedAsset]?.balance || '0')
 
         const symbol = knownTokens[selectedAsset] as nt.Symbol | undefined
@@ -126,14 +127,6 @@ export function PrepareMessage({
     }
 
     const walletInfo = nt.getContractTypeDetails(tonWalletAsset.contractType)
-
-    React.useEffect(() => {
-        if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
-            setValue('amount', messageParams.amount)
-            setValue('recipient', messageParams.recipient)
-            setValue('comment', messageParams.comment)
-        }
-    }, [localStep])
 
     const submitMessageParams = async (data: MessageParams) => {
         let attachedAmount: string | undefined = undefined
@@ -146,7 +139,8 @@ export function PrepareMessage({
                 amount: parseTons(data.amount),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
             }
-        } else {
+        }
+        else {
             if (decimals == null) {
                 setError('Invalid decimals')
                 return
@@ -212,6 +206,20 @@ export function PrepareMessage({
             setMessageToPrepare(undefined)
         }
     }
+
+    React.useEffect(() => {
+        if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
+            setValue('amount', messageParams.amount)
+            setValue('recipient', messageParams.recipient)
+            setValue('comment', messageParams.comment)
+        }
+    }, [localStep])
+
+    React.useEffect(() => {
+        if (messageParams != null) {
+            submitMessageParams(messageParams)
+        }
+    }, [selectedKey])
 
     return (
         <div className="send-screen__content">
@@ -328,22 +336,12 @@ export function PrepareMessage({
                         )}
                         {selectedAsset.length > 0 && (
                             <div className="send-screen__form-checkbox">
-                                <Checkbox checked={notifyReceiver} setChecked={setNotifyReceiver} />
+                                <Checkbox checked={notifyReceiver} onChange={setNotifyReceiver} />
                                 <span className="send-screen__form-checkbox-label">
                                     Notify receiver
                                 </span>
                             </div>
                         )}
-                        {keyEntries.length > 1 ? (
-                            <Select
-                                className="send-screen__form-input"
-                                styles={selectStyles}
-                                options={keyEntries}
-                                value={selectedKey}
-                                formatOptionLabel={(value) => value.name}
-                                onChange={(v) => (v == null ? null : setKey(v))}
-                            />
-                        ) : null}
                     </form>
                     <div style={{ display: 'flex' }}>
                         <div style={{ width: '50%', marginRight: '12px' }}>
@@ -359,6 +357,7 @@ export function PrepareMessage({
             )}
             {localStep == PrepareStep.ENTER_PASSWORD && (
                 <EnterPassword
+                    keyEntries={keyEntries}
                     keyEntry={selectedKey}
                     currencyName={currencyName}
                     params={messageParams}
@@ -369,6 +368,7 @@ export function PrepareMessage({
                     onBack={() => {
                         setLocalStep(PrepareStep.ENTER_ADDRESS)
                     }}
+                    onChangeKeyEntry={setKey}
                 />
             )}
         </div>
