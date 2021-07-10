@@ -53,7 +53,7 @@ export type TonWalletInitData = {
 
 fn make_ton_wallet_init_data(
     public_key: ed25519_dalek::PublicKey,
-    contract_type: nt::core::ton_wallet::ContractType,
+    contract_type: nt::core::ton_wallet::WalletType,
 ) -> JsValue {
     ObjectBuilder::new()
         .set("publicKey", hex::encode(public_key.as_bytes()))

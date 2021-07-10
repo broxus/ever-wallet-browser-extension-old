@@ -21,7 +21,7 @@ pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub public_key: String,
     #[wasm_bindgen(skip)]
-    pub contract_type: ton_wallet::ContractType,
+    pub contract_type: ton_wallet::WalletType,
     #[wasm_bindgen(skip)]
     pub details: ton_wallet::TonWalletDetails,
     #[wasm_bindgen(skip)]
@@ -33,7 +33,7 @@ impl TonWallet {
         Self {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
-            contract_type: wallet.contract_type(),
+            contract_type: wallet.wallet_type(),
             details: wallet.details(),
             inner: Arc::new(TonWalletImpl {
                 transport,
@@ -481,7 +481,7 @@ export type ContractType =
     | 'WalletV3';
 "#;
 
-impl TryFrom<ContractType> for nt::core::ton_wallet::ContractType {
+impl TryFrom<ContractType> for nt::core::ton_wallet::WalletType {
     type Error = JsValue;
 
     fn try_from(value: ContractType) -> Result<Self, Self::Error> {
@@ -489,19 +489,19 @@ impl TryFrom<ContractType> for nt::core::ton_wallet::ContractType {
             .as_string()
             .ok_or_else(|| JsValue::from_str("String with contract type name expected"))?;
 
-        ton_wallet::ContractType::from_str(&contract_type).handle_error()
+        ton_wallet::WalletType::from_str(&contract_type).handle_error()
     }
 }
 
-impl From<nt::core::ton_wallet::ContractType> for ContractType {
-    fn from(c: nt::core::ton_wallet::ContractType) -> Self {
+impl From<nt::core::ton_wallet::WalletType> for ContractType {
+    fn from(c: nt::core::ton_wallet::WalletType) -> Self {
         JsValue::from(c.to_string()).unchecked_into()
     }
 }
 
 #[wasm_bindgen(js_name = "getContractTypeDetails")]
 pub fn get_contract_type_details(contract_type: ContractType) -> Result<TonWalletDetails, JsValue> {
-    let contract_type: nt::core::ton_wallet::ContractType = contract_type.try_into()?;
+    let contract_type: nt::core::ton_wallet::WalletType = contract_type.try_into()?;
     Ok(make_ton_wallet_details(contract_type.details()))
 }
 

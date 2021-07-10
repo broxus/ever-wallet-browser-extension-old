@@ -312,7 +312,10 @@ fn make_token_wallet_transaction_info(
         core_models::TokenWalletTransaction::OutgoingTransfer(transfer) => (
             "outgoing_transfer",
             ObjectBuilder::new()
-                .set("to", make_transfer_recipient(transfer.to))
+                .set(
+                    "to",
+                    crate::core::models::make_transfer_recipient(transfer.to),
+                )
                 .set("tokens", transfer.tokens.to_string())
                 .build(),
         ),
@@ -346,33 +349,6 @@ fn make_token_wallet_transaction_info(
     ObjectBuilder::new()
         .set("type", ty)
         .set("data", data)
-        .build()
-        .unchecked_into()
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const TRANSFER_RECIPIENT: &str = r#"
-export type TransferRecipient = {
-    type: 'owner_wallet' | 'token_wallet',
-    address: string,
-};
-"#;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(typescript_type = "TransferRecipient")]
-    pub type TransferRecipient;
-}
-
-fn make_transfer_recipient(data: core_models::TransferRecipient) -> TransferRecipient {
-    let (ty, address) = match data {
-        core_models::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
-        core_models::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
-    };
-
-    ObjectBuilder::new()
-        .set("type", ty)
-        .set("address", address.to_string())
         .build()
         .unchecked_into()
 }

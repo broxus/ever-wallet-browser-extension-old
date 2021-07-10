@@ -17,7 +17,7 @@ export type TransactionAdditionalInfo =
     | EnumItem<'token_wallet_deployed', TokenWalletDeployedNotification>
     | EnumItem<'eth_event_status_changed', EthEventStatusChanged>
     | EnumItem<'ton_event_status_changed', TonEventStatusChanged>
-    | EnumItem<'multisig_transaction', MultisigTransactionInfo>;
+    | EnumItem<'wallet_interaction', WalletInteractionInfo>;
 "#;
 
 #[wasm_bindgen]
@@ -51,9 +51,9 @@ pub fn make_transaction_additional_info(
             "ton_event_status_changed",
             JsValue::from(status.to_string()),
         ),
-        models::TransactionAdditionalInfo::MultisigTransaction(multisig_transaction) => (
-            "multisig_transaction",
-            make_multisig_transaction_info(multisig_transaction).unchecked_into(),
+        models::TransactionAdditionalInfo::WalletInteraction(data) => (
+            "wallet_interaction",
+            make_wallet_interaction_info(*data).unchecked_into(),
         ),
         _ => return None,
     };
@@ -164,6 +164,103 @@ export type TonEventStatus =
     | 'Confirmed'
     | 'Rejected';
 "#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const WALLET_INTERACTION_INFO: &str = r#"
+export type WalletInteractionInfo = {
+    knownPayload: KnownPayload | undefined,
+    method: WalletInteractionMethod
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "WalletInteractionInfo")]
+    pub type WalletInteractionInfo;
+}
+
+pub fn make_wallet_interaction_info(data: models::WalletInteractionInfo) -> WalletInteractionInfo {
+    ObjectBuilder::new()
+        .set("knownPayload", make_known_payload(data.known_payload))
+        .set("method", make_wallet_interaction_method(data.method))
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const WALLET_INTERACTION_METHOD: &str = r#"
+export type WalletInteractionMethod =
+    | EnumItem<'wallet_v3_transfer', undefined>
+    | EnumItem<'multisig', MultisigTransactionInfo>
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "WalletInteractionMethod")]
+    pub type WalletInteractionMethod;
+}
+
+pub fn make_wallet_interaction_method(
+    data: models::WalletInteractionMethod,
+) -> WalletInteractionMethod {
+    let (ty, data) = match data {
+        models::WalletInteractionMethod::WalletV3Transfer => {
+            ("wallet_v3_transfer", JsValue::undefined())
+        }
+        models::WalletInteractionMethod::Multisig(data) => (
+            "multisig",
+            make_multisig_transaction_info(data).unchecked_into(),
+        ),
+    };
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("data", data)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const KNOWN_PAYLOAD: &str = r#"
+export type KnownPayload =
+    | EnumItem<'comment', string>
+    | EnumItem<'token_outgoing_transfer', { to: TransferRecipient, tokens: string }>
+    | EnumItem<'token_swap_back', { tokens: string, to: string }>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "KnownPayload")]
+    pub type KnownPayload;
+}
+
+pub fn make_known_payload(data: Option<models::KnownPayload>) -> Option<KnownPayload> {
+    let (ty, data) = match data? {
+        models::KnownPayload::Comment(comment) => ("comment", JsValue::from(comment)),
+        models::KnownPayload::TokenOutgoingTransfer(transfer) => (
+            "token_outgoing_transfer",
+            ObjectBuilder::new()
+                .set("to", make_transfer_recipient(transfer.to))
+                .set("tokens", transfer.tokens.to_string())
+                .build(),
+        ),
+        models::KnownPayload::TokenSwapBack(swap_back) => (
+            "token_swap_back",
+            ObjectBuilder::new()
+                .set("tokens", swap_back.tokens.to_string())
+                .set("to", swap_back.to)
+                .build(),
+        ),
+        _ => return None,
+    };
+
+    Some(
+        ObjectBuilder::new()
+            .set("type", ty)
+            .set("data", data)
+            .build()
+            .unchecked_into(),
+    )
+}
 
 #[wasm_bindgen(typescript_custom_section)]
 const MULTISIG_TRANSACTION_INFO: &str = r#"
@@ -296,6 +393,33 @@ pub fn make_multisig_confirm_transaction_info(
 ) -> MultisigConfirmTransactionInfo {
     ObjectBuilder::new()
         .set("transactionId", data.transaction_id.to_string())
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TRANSFER_RECIPIENT: &str = r#"
+export type TransferRecipient = {
+    type: 'owner_wallet' | 'token_wallet',
+    address: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TransferRecipient")]
+    pub type TransferRecipient;
+}
+
+pub fn make_transfer_recipient(data: models::TransferRecipient) -> TransferRecipient {
+    let (ty, address) = match data {
+        models::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
+        models::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
+    };
+
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("address", address.to_string())
         .build()
         .unchecked_into()
 }

@@ -126,6 +126,12 @@ pub fn create_external_message(
     })
 }
 
+#[wasm_bindgen(js_name = "parseKnownPayload")]
+pub fn parse_known_payload(payload: &str) -> Option<crate::core::models::KnownPayload> {
+    let payload = parse_slice(payload).ok()?;
+    crate::core::models::make_known_payload(nt::core::parsing::parse_payload(payload))
+}
+
 #[wasm_bindgen(js_name = "decodeInput")]
 pub fn decode_input(
     message_body: &str,

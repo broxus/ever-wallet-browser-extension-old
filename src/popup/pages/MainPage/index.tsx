@@ -70,9 +70,7 @@ export function MainPage(): JSX.Element | null {
 
     const selectedKeys = React.useMemo(() => {
         let keys: nt.KeyStoreEntry[] = [storedKeys[accountPublicKey]]
-        const externals = externalAccounts.find(
-            (account) => account.address === accountAddress
-        )
+        const externals = externalAccounts.find((account) => account.address === accountAddress)
 
         if (externals !== undefined) {
             keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
@@ -117,9 +115,10 @@ export function MainPage(): JSX.Element | null {
         transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
     ) => {
         return (
-            transaction.info?.type === 'multisig_transaction' &&
-            transaction.info?.data.type === 'submit' &&
-            transaction.info.data.data.transactionId != '0' &&
+            transaction.info?.type === 'wallet_interaction' &&
+            transaction.info.data.method.type === 'multisig' &&
+            transaction.info.data.method.data.type === 'confirm' &&
+            transaction.info.data.method.data.data.transactionId != '0' &&
             (transaction.createdAt + contractTypeDetails.expirationTime) * 1000 > now
         )
     }
