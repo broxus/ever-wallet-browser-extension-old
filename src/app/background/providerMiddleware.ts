@@ -754,47 +754,6 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         }
     }
 
-    const { unsignedMessage, fees } = await accountController.useTonWallet(
-        selectedAddress,
-        async (wallet) => {
-            const contractState = await wallet.getContractState()
-            if (contractState == null) {
-                throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
-            }
-
-            let unsignedMessage: nt.UnsignedMessage | undefined = undefined
-            try {
-                unsignedMessage = wallet.prepareTransfer(
-                    contractState,
-                    wallet.publicKey,
-                    recipient,
-                    amount,
-                    false,
-                    body,
-                    60
-                )
-            } finally {
-                contractState.free()
-            }
-
-            if (unsignedMessage == null) {
-                throw invalidRequest(req, 'Contract must be deployed first')
-            }
-
-            try {
-                const signedMessage = unsignedMessage.signFake()
-                const fees = await wallet.estimateFees(signedMessage)
-
-                return {
-                    unsignedMessage,
-                    fees,
-                }
-            } catch (e) {
-                throw invalidRequest(req, e.toString())
-            }
-        }
-    )
-
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
         type: 'sendMessage',
@@ -804,20 +763,43 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             amount,
             bounce,
             payload,
-            fees,
             knownPayload,
         },
     })
 
-    let signedMessage: nt.SignedMessage
-    try {
-        unsignedMessage.refreshTimeout()
-        signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
-    } catch (e) {
-        throw invalidRequest(req, e.toString())
-    } finally {
-        unsignedMessage.free()
-    }
+    const signedMessage = await accountController.useTonWallet(selectedAddress, async (wallet) => {
+        const contractState = await wallet.getContractState()
+        if (contractState == null) {
+            throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
+        }
+
+        let unsignedMessage: nt.UnsignedMessage | undefined = undefined
+        try {
+            unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                password.data.publicKey,
+                recipient,
+                amount,
+                false,
+                body,
+                60
+            )
+        } finally {
+            contractState.free()
+        }
+
+        if (unsignedMessage == null) {
+            throw invalidRequest(req, 'Contract must be deployed first')
+        }
+
+        try {
+            return await accountController.signPreparedMessage(unsignedMessage, password)
+        } catch (e) {
+            throw invalidRequest(req, e.toString())
+        } finally {
+            unsignedMessage.free()
+        }
+    })
 
     const transaction: nt.Transaction = await accountController.sendMessage(selectedAddress, {
         signedMessage,

@@ -33,7 +33,7 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
     onSubmit,
 }) => {
     const { origin } = approval
-    const { sender, recipient, amount, fees, payload, knownPayload } = approval.requestData
+    const { sender, recipient, amount, payload, knownPayload } = approval.requestData
 
     console.log('KNOWN PAYLOAD:', knownPayload) // TODO: remove
 
@@ -128,9 +128,10 @@ const ApproveSendMessage: React.FC<IApproveSendMessage> = ({
                         <span className="connect-wallet__details__description-param-desc">
                             Blockchain fee
                         </span>
-                        <span className="connect-wallet__details__description-param-value">
-                            ~{convertTons(fees)} TON
-                        </span>
+                        {/*TODO*/}
+                        {/*<span className="connect-wallet__details__description-param-value">*/}
+                        {/*    ~{convertTons(fees)} TON*/}
+                        {/*</span>*/}
                     </div>
                     {payload && (
                         <div className="connect-wallet__details__description-param">

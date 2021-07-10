@@ -135,7 +135,6 @@ export type ApprovalApi = {
             amount: string
             bounce: boolean
             payload?: RawFunctionCall
-            fees: string
             knownPayload: nt.KnownPayload | undefined
         }
         output: nt.KeyPassword
