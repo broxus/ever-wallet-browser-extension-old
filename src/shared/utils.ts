@@ -606,6 +606,30 @@ export type TransactionDirection = 'from' | 'to' | 'service'
 export const extractTransactionAddress = (
     transaction: nt.Transaction
 ): { direction: TransactionDirection; address: string } => {
+    const transactionWithInfo = transaction as nt.TonWalletTransaction
+    if (
+        transactionWithInfo.info?.type === 'wallet_interaction' &&
+        transactionWithInfo.info.data.method.type === 'multisig'
+    ) {
+        switch (transactionWithInfo.info.data.method.data.type) {
+            case 'submit':
+                return {
+                    direction: 'to',
+                    address: transactionWithInfo.info.data.method.data.data.dest,
+                }
+            case 'send':
+                return {
+                    direction: 'to',
+                    address: transactionWithInfo.info.data.method.data.data.dest,
+                }
+            case 'confirm':
+                return {
+                    direction: 'service',
+                    address: '',
+                }
+        }
+    }
+
     for (const item of transaction.outMessages) {
         if (item.dst != null) {
             return { direction: 'to', address: item.dst }
