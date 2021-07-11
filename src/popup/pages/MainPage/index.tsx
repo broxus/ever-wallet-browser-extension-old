@@ -15,7 +15,7 @@ import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { SelectedAsset } from '@shared/utils'
+import { SelectedAsset, isUnconfirmedTransaction } from '@shared/utils'
 
 import './style.scss'
 
@@ -81,7 +81,6 @@ export function MainPage(): JSX.Element | null {
     }
 
     const tonWalletAsset = accountability.selectedAccount.tonWallet
-    const contractTypeDetails = nt.getContractTypeDetails(tonWalletAsset.contractType)
     const tokenWalletAssets =
         accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets ||
         []
@@ -100,20 +99,6 @@ export function MainPage(): JSX.Element | null {
     const showAsset = (selectedAsset: SelectedAsset) => {
         setSelectedAsset(selectedAsset)
         drawer.setPanel(Panel.ASSET)
-    }
-
-    const now = new Date().getTime()
-
-    const isUnconfirmedTransaction = (
-        transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
-    ) => {
-        return (
-            transaction.info?.type === 'wallet_interaction' &&
-            transaction.info.data.method.type === 'multisig' &&
-            transaction.info.data.method.data.type === 'submit' &&
-            transaction.info.data.method.data.data.transactionId != '0' &&
-            (transaction.createdAt + contractTypeDetails.expirationTime) * 1000 > now
-        )
     }
 
     return (
@@ -156,7 +141,10 @@ export function MainPage(): JSX.Element | null {
                     )}
                     {drawer.currentPanel === Panel.TRANSACTION &&
                         selectedTransaction != null &&
-                        (isUnconfirmedTransaction(selectedTransaction) ? (
+                        ((
+                            accountability.contractTypeDetails != null
+                            && isUnconfirmedTransaction(selectedTransaction, accountability.contractTypeDetails)
+                        ) ? (
                             <MultisigTransactionSign
                                 transaction={selectedTransaction}
                             />

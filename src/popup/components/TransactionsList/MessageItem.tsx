@@ -47,9 +47,7 @@ export function MessageItem({
                 <div className="transactions-list-item__amount">
                     <div>
                         <div className="transactions-list-item__description transactions-list-item__expense">
-                            {'- '}
-                            {convertCurrency(amount, 9)}
-                            {' TON'}
+                            -{convertCurrency(amount, 9)}{' TON'}
                         </div>
                     </div>
                 </div>

@@ -57,6 +57,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
 
+    const source = transaction.inMessage.dst!
     const value = React.useMemo(() => {
         return transaction.info?.data.method.data.data.value
     }, [symbol, transaction])
@@ -81,13 +82,16 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const decimals = symbol == null ? 9 : symbol.decimals
     const currencyName = symbol == null ? 'TON' : symbol.name
     const transactionId = transaction.info?.data.method.data.data.transactionId as string
+    const creator = transaction.info.data.method.data.data.custodian
 
-    const unconfirmedTransaction = React.useMemo(() => {
-        return address !== undefined
-            ? rpcState.state.accountUnconfirmedTransactions[address][transactionId]
+    const multisigTransaction = React.useMemo(() => {
+        return source !== undefined
+            ? rpcState.state.accountMultisigTransactions[source]?.[transactionId]
             : undefined
-    }, [custodians, transaction])
-    const confirmations: string[] = unconfirmedTransaction?.confirmations || []
+    }, [source, transactionId, rpcState.state.accountMultisigTransactions])
+    console.log(multisigTransaction, source, transactionId)
+
+    const confirmations: string[] = multisigTransaction?.confirmations || []
 
     const filteredSelectableKeys = React.useMemo(
         () => selectableKeys.filter((key) => !confirmations.includes(key.publicKey)),
@@ -126,10 +130,10 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     }
 
     React.useEffect(() => {
-        if (address !== undefined) {
+        if (source !== undefined) {
             ;(async () => {
                 try {
-                    await rpc.getCustodians(address as string).then((res: string[]) => {
+                    await rpc.getCustodians(source as string).then((res: string[]) => {
                         setCustodians(res)
                     })
                 } catch (e) {}
@@ -228,7 +232,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
 
                             {custodians.map((custodian, idx) => {
                                 const isSigned = confirmations.includes(custodian)
-                                const isInitiator = unconfirmedTransaction?.creator === custodian
+                                const isInitiator = creator === custodian
 
                                 return (
                                     <div key={custodian} className="transaction-info-tx-details-param">

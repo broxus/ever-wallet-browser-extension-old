@@ -2,6 +2,8 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import AssetIcon from '@popup/components/AssetIcon'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 import {
     extractTransactionValue,
     extractTransactionAddress,
@@ -10,7 +12,7 @@ import {
     extractTokenTransactionValue,
     extractTokenTransactionAddress,
     convertCurrency,
-    trimTokenName,
+    trimTokenName, isUnconfirmedTransaction, isExpiredTransaction,
 } from '@shared/utils'
 
 import './style.scss'
@@ -23,7 +25,7 @@ const splitAddress = (address: string | undefined) => {
 
 type Props = {
     symbol?: nt.Symbol
-    transaction: nt.Transaction
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
     additionalInfo?: 'staking_reward'
     style?: React.CSSProperties
     onViewTransaction: (transaction: nt.Transaction) => void
@@ -35,20 +37,27 @@ export function ListItem({
     style,
     onViewTransaction,
 }: Props): JSX.Element {
+    const accountability = useAccountability()
+
     const value = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionValue(transaction)
         } else {
-            return extractTokenTransactionValue(transaction) || new Decimal(0)
+            return extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
         }
     }, [transaction])
     const txAddress = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionAddress(transaction)
-        } else {
-            return extractTokenTransactionAddress(transaction)
         }
+        return extractTokenTransactionAddress(transaction as nt.TokenWalletTransaction)
     }, [transaction])
+    const isUnconfirmed = accountability.contractTypeDetails != null
+        ? isUnconfirmedTransaction(transaction, accountability.contractTypeDetails)
+        : false
+    const isExpired = accountability.contractTypeDetails != null
+        ? isExpiredTransaction(transaction, accountability.contractTypeDetails)
+        : false
 
     const decimals = symbol == null ? 9 : symbol.decimals
     const currencyName = symbol == null ? 'TON' : symbol.name
@@ -94,21 +103,37 @@ export function ListItem({
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span
-                        className="transactions-list-item__description transactions-list-item__address"
-                        data-tooltip={txAddress ? splitAddress(txAddress.address) : 'Unknown'}
-                    >
-                        {txAddress ? txAddress.address && convertAddress(txAddress.address) : 'Unknown'}
-                    </span>
-                    <span className="transactions-list-item__description transactions-list-item__date">
-                        {new Date(transaction.createdAt * 1000).toLocaleString('default', {
-                            month: 'long',
-                            day: 'numeric',
-                            hour: 'numeric',
-                            minute: 'numeric',
-                        })}
-                    </span>
+                        <span
+                            className="transactions-list-item__description transactions-list-item__address"
+                            data-tooltip={txAddress ? splitAddress(txAddress.address) : 'Unknown'}
+                        >
+                            {txAddress ? txAddress.address && convertAddress(txAddress.address) : 'Unknown'}
+                        </span>
+                        <span className="transactions-list-item__description transactions-list-item__date">
+                            {new Date(transaction.createdAt * 1000).toLocaleString('default', {
+                                month: 'long',
+                                day: 'numeric',
+                                hour: 'numeric',
+                                minute: 'numeric',
+                            })}
+                        </span>
                 </div>
+
+                {isUnconfirmed && (
+                    <div className="transactions-list-item__labels">
+                        <div className="transactions-list-item__label-waiting">
+                            Waiting for confirmation
+                        </div>
+                    </div>
+                )}
+
+                {isExpired && (
+                    <div className="transactions-list-item__labels">
+                        <div className="transactions-list-item__label-failed">
+                            Expired
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

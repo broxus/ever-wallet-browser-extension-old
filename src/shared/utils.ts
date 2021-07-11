@@ -613,6 +613,34 @@ export const extractTransactionValue = (transaction: nt.Transaction): Decimal =>
 
 export type TransactionDirection = 'from' | 'to' | 'service'
 
+export const isUnconfirmedTransaction = (
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction,
+    contractTypeDetails: nt.TonWalletDetails
+) => {
+    const now = new Date().getTime()
+    return (
+        transaction.info?.type === 'wallet_interaction' &&
+        transaction.info.data.method.type === 'multisig' &&
+        transaction.info.data.method.data.type === 'submit' &&
+        transaction.info.data.method.data.data.transactionId != '0' &&
+        (transaction.createdAt + contractTypeDetails.expirationTime) * 1000 > now
+    )
+}
+
+export const isExpiredTransaction = (
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction,
+    contractTypeDetails: nt.TonWalletDetails
+) => {
+    const now = new Date().getTime()
+    return (
+        transaction.info?.type === 'wallet_interaction' &&
+        transaction.info.data.method.type === 'multisig' &&
+        transaction.info.data.method.data.type === 'submit' &&
+        transaction.info.data.method.data.data.transactionId != '0' &&
+        (transaction.createdAt + contractTypeDetails.expirationTime) * 1000 <= now
+    )
+}
+
 export const extractTransactionAddress = (
     transaction: nt.Transaction
 ): { direction: TransactionDirection; address: string } => {

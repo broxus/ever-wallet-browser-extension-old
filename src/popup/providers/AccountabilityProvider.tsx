@@ -42,6 +42,7 @@ interface AccountabilityContext {
     selectedAccount: nt.AssetsList | undefined
     selectedAccountAddress: string | undefined
     selectedAccountPublicKey: string | undefined
+    contractTypeDetails: nt.TonWalletDetails | undefined
     tonWalletState: nt.ContractState | undefined
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     logOut(): Promise<void>
@@ -73,6 +74,7 @@ export const Context = React.createContext<AccountabilityContext>({
     selectedAccount: undefined,
     selectedAccountAddress: undefined,
     selectedAccountPublicKey: undefined,
+    contractTypeDetails: undefined,
     tonWalletState: undefined,
     tokenWalletStates: {},
     async logOut() {},
@@ -223,6 +225,16 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         [selectedAccountAddress, rpcState.state?.accountTokenStates]
     )
 
+    const contractTypeDetails = React.useMemo(
+        () => {
+            if (rpcState.state.selectedAccount == null) {
+                return undefined
+            }
+            return nt.getContractTypeDetails(rpcState.state.selectedAccount.tonWallet.contractType)
+        },
+        []
+    )
+
     const nextAccountId = React.useMemo(() => derivedKeys.length, [
         derivedKeys,
         rpcState.state.accountEntries,
@@ -314,6 +326,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
                 selectedAccount: rpcState.state.selectedAccount,
                 selectedAccountAddress,
                 selectedAccountPublicKey,
+                contractTypeDetails,
                 tonWalletState,
                 tokenWalletStates,
                 logOut,
