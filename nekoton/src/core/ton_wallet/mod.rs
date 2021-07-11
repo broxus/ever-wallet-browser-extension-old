@@ -111,7 +111,7 @@ impl TonWallet {
         timeout: u32,
     ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
         let public_key = parse_public_key(public_key)?;
-        let transaction_id = u64::from_str(transaction_id).handle_error()?;
+        let transaction_id = u64::from_str_radix(transaction_id, 16).handle_error()?;
 
         let wallet = self.inner.wallet.lock().unwrap();
         let message = wallet

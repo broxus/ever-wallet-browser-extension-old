@@ -843,7 +843,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.2.1"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#aa4dc3325f93e216e9a4f36c126cbb5c6b2008f1"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#f9562ca1462be4b1edb47aabea05156282ca9236"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1473,7 +1473,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "1.0.0"
-source = "git+https://github.com/tonlabs/ton-labs-abi#597778d8691f013cc17030f8eec3ec8feb3f130a"
+source = "git+https://github.com/tonlabs/ton-labs-abi.git#597778d8691f013cc17030f8eec3ec8feb3f130a"
 dependencies = [
  "base64 0.10.1",
  "byteorder",
