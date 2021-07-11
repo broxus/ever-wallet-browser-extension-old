@@ -2,14 +2,19 @@ import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
 import { mergeTransactions } from 'ton-inpage-provider'
 import {
+    AggregatedMultisigTransactionInfo,
+    AggregatedMultisigTransactions,
     convertAddress,
     convertCurrency,
     convertTons,
+    currentUtime,
+    extractMultisigTransactionTime,
     extractTokenTransactionAddress,
     extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
     getOrInsertDefault,
+    MultisigTransactionStatus,
     NekotonRpcError,
     SendMessageCallback,
     TokenWalletState,
@@ -57,6 +62,7 @@ export interface AccountControllerState extends BaseState {
     accountContractStates: { [address: string]: nt.ContractState }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
+    accountMultisigTransactions: { [address: string]: AggregatedMultisigTransactions }
     accountUnconfirmedTransactions: {
         [address: string]: { [transactionId: string]: nt.MultisigPendingTransaction }
     }
@@ -79,6 +85,7 @@ const defaultState: AccountControllerState = {
     accountContractStates: {},
     accountTokenStates: {},
     accountTransactions: {},
+    accountMultisigTransactions: {},
     accountUnconfirmedTransactions: {},
     accountTokenTransactions: {},
     accountPendingTransactions: {},
@@ -1119,10 +1126,16 @@ export class AccountController extends BaseController<
 
         class TonWalletHandler implements ITonWalletHandler {
             private readonly _address: string
+            private readonly _walletDetails: nt.TonWalletDetails
             private readonly _controller: AccountController
 
-            constructor(address: string, controller: AccountController) {
+            constructor(
+                address: string,
+                contractType: nt.ContractType,
+                controller: AccountController
+            ) {
                 this._address = address
+                this._walletDetails = nt.getContractTypeDetails(contractType)
                 this._controller = controller
             }
 
@@ -1160,7 +1173,12 @@ export class AccountController extends BaseController<
                 transactions: Array<nt.TonWalletTransaction>,
                 info: nt.TransactionsBatchInfo
             ) {
-                this._controller._updateTransactions(this._address, transactions, info)
+                this._controller._updateTransactions(
+                    this._address,
+                    this._walletDetails,
+                    transactions,
+                    info
+                )
             }
 
             onUnconfirmedTransactionsChanged(
@@ -1178,7 +1196,7 @@ export class AccountController extends BaseController<
             this.config.connectionController,
             publicKey,
             contractType,
-            new TonWalletHandler(address, this)
+            new TonWalletHandler(address, contractType, this)
         )
         console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
 
@@ -1404,6 +1422,7 @@ export class AccountController extends BaseController<
 
     private _updateTransactions(
         address: string,
+        walletDetails: nt.TonWalletDetails,
         transactions: nt.TonWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
@@ -1429,9 +1448,98 @@ export class AccountController extends BaseController<
             ...currentTransactions,
             [address]: mergeTransactions(currentTransactions[address] || [], transactions, info),
         }
-        this.update({
+
+        const update = {
             accountTransactions: newTransactions,
-        })
+        } as Partial<AccountControllerState>
+
+        let multisigTransactions = this.state.accountMultisigTransactions[address] as
+            | AggregatedMultisigTransactions
+            | undefined
+        let multisigTransactionsChanged = false
+
+        if (walletDetails.supportsMultipleOwners) {
+            outer: for (const transaction of transactions) {
+                if (transaction.info?.type !== 'wallet_interaction') {
+                    continue
+                }
+
+                if (transaction.info.data.method.type !== 'multisig') {
+                    break
+                }
+
+                const method = transaction.info.data.method.data
+
+                switch (method.type) {
+                    case 'submit': {
+                        const transactionId = method.data.transactionId
+                        if (transactionId == '0') {
+                            break outer
+                        }
+
+                        if (multisigTransactions == null) {
+                            multisigTransactions = {}
+                            this.state.accountMultisigTransactions[address] = multisigTransactions
+                        }
+
+                        multisigTransactionsChanged = true
+
+                        let multisigTransaction = multisigTransactions[transactionId] as
+                            | AggregatedMultisigTransactionInfo
+                            | undefined
+                        if (multisigTransaction == null) {
+                            multisigTransactions[transactionId] = {
+                                status: 'unconfirmed',
+                                confirmations: [method.data.custodian],
+                                createdAt: transaction.createdAt,
+                            }
+                        } else {
+                            multisigTransaction.createdAt = transaction.createdAt
+                            multisigTransaction.confirmations.push(method.data.custodian)
+                        }
+
+                        break
+                    }
+                    case 'confirm': {
+                        const transactionId = method.data.transactionId
+
+                        if (multisigTransactions == null) {
+                            multisigTransactions = {}
+                            this.state.accountMultisigTransactions[address] = multisigTransactions
+                        }
+
+                        multisigTransactionsChanged = true
+
+                        const status: MultisigTransactionStatus =
+                            transaction.outMessages.length > 0 ? 'sent' : 'unconfirmed'
+
+                        let multisigTransaction = multisigTransactions[transactionId] as
+                            | AggregatedMultisigTransactionInfo
+                            | undefined
+                        if (multisigTransaction == null) {
+                            multisigTransactions[transactionId] = {
+                                status,
+                                confirmations: [method.data.custodian],
+                                createdAt: extractMultisigTransactionTime(transactionId),
+                            }
+                        } else {
+                            multisigTransaction.status = status
+                            multisigTransaction.confirmations.push(method.data.custodian)
+                        }
+
+                        break
+                    }
+                    default:
+                        break
+                }
+            }
+        }
+
+        if (multisigTransactionsChanged) {
+            update.accountMultisigTransactions = this.state.accountMultisigTransactions
+        }
+
+        this.update(update)
     }
 
     private _updateUnconfirmedTransactions(

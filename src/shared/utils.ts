@@ -578,6 +578,21 @@ export const shuffleArray = <T>(array: T[]) => {
     return array
 }
 
+export type MultisigTransactionStatus = 'unconfirmed' | 'sent'
+
+export type AggregatedMultisigTransactionInfo = {
+    status: MultisigTransactionStatus
+    confirmations: string[]
+    createdAt: number
+}
+
+export type AggregatedMultisigTransactions = {
+    [transactionId: string]: AggregatedMultisigTransactionInfo
+}
+
+export const extractMultisigTransactionTime = (transactionId: string) =>
+    parseInt(transactionId.slice(0, -8), 16)
+
 export const extractTransactionValue = (transaction: nt.Transaction) => {
     const outgoing = transaction.outMessages.reduce(
         (total, msg) => total.add(msg.value),

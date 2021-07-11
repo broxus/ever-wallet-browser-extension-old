@@ -53,7 +53,7 @@ pub fn make_transaction_additional_info(
         ),
         models::TransactionAdditionalInfo::WalletInteraction(data) => (
             "wallet_interaction",
-            make_wallet_interaction_info(*data).unchecked_into(),
+            make_wallet_interaction_info(data).unchecked_into(),
         ),
         _ => return None,
     };
@@ -209,7 +209,7 @@ pub fn make_wallet_interaction_method(
         }
         models::WalletInteractionMethod::Multisig(data) => (
             "multisig",
-            make_multisig_transaction_info(data).unchecked_into(),
+            make_multisig_transaction_info(*data).unchecked_into(),
         ),
     };
     ObjectBuilder::new()
@@ -340,6 +340,7 @@ pub fn make_multisig_send_transaction_info(
 #[wasm_bindgen(typescript_custom_section)]
 const MULTISIG_SUBMIT_TRANSACTION_INFO: &str = r#"
 export type MultisigSubmitTransactionInfo = {
+    custodian: string,
     dest: string,
     value: string,
     bounce: boolean,
@@ -359,6 +360,7 @@ pub fn make_multisig_submit_transaction_info(
     data: models::MultisigSubmitTransaction,
 ) -> MultisigSubmitTransactionInfo {
     ObjectBuilder::new()
+        .set("custodian", data.custodian.to_hex_string())
         .set("dest", data.dest.to_string())
         .set("value", data.value.to_string())
         .set("bounce", data.bounce)
@@ -370,7 +372,7 @@ pub fn make_multisig_submit_transaction_info(
                 .ok()
                 .unwrap_or_default(),
         )
-        .set("transactionId", data.trans_id.to_string())
+        .set("transactionId", format!("{:x}", data.trans_id))
         .build()
         .unchecked_into()
 }
@@ -378,6 +380,7 @@ pub fn make_multisig_submit_transaction_info(
 #[wasm_bindgen(typescript_custom_section)]
 const MULTISIG_CONFIRM_TRANSACTION_INFO: &str = r#"
 export type MultisigConfirmTransactionInfo = {
+    custodian: string, 
     transactionId: string,
 };
 "#;
@@ -392,7 +395,8 @@ pub fn make_multisig_confirm_transaction_info(
     data: models::MultisigConfirmTransaction,
 ) -> MultisigConfirmTransactionInfo {
     ObjectBuilder::new()
-        .set("transactionId", data.transaction_id.to_string())
+        .set("custodian", data.custodian.to_hex_string())
+        .set("transactionId", format!("{:x}", data.transaction_id))
         .build()
         .unchecked_into()
 }
