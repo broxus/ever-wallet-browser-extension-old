@@ -100,7 +100,6 @@ export function TransactionsList({
             current.removeEventListener('scroll', onScroll)
         }
     }, [scrollArea, transactions, preloadTransactions])
-
     const now = currentUtime()
 
     const detailsPart = Math.max(topOffset - scroll, 0)
@@ -213,9 +212,7 @@ export function TransactionsList({
                     />
                 )
             })}
-            {endIndex != null && (
-                <div style={{ height: `${totalHeight - maxVisibleHeight - offsetHeight}px` }} />
-            )}
+            {endIndex != null && <div style={{ height: `${totalHeight - maxVisibleHeight}px` }} />}
         </div>
     )
 }
