@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import Button from '@popup/components/Button'
-import EnterPassword from '@popup/components/EnterPassword'
+import { EnterPassword } from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import { convertTons } from '@shared/utils'
 
@@ -36,41 +36,38 @@ export function PreparedMessage({
 	}
 
 	return (
-		<>
-			<h3 className="deploy-wallet__content-title">
-				Funds will be debited from your balance to deploy.
-			</h3>
-			<div className="deploy-wallet__form-tx-details">
-				<div className="deploy-wallet__form-tx-details-param">
-                    <span className="deploy-wallet__form-tx-details-param-desc">
+		<div className="deploy-wallet__wrapper">
+			<div className="deploy-wallet__details">
+				<div className="deploy-wallet__details-param">
+                    <span className="deploy-wallet__details-param-desc">
                         Account balance
                     </span>
-					<span className="deploy-wallet__form-tx-details-param-value">
+					<span className="deploy-wallet__details-param-value">
                         {`${convertTons(balance).toLocaleString()} TON`}
                     </span>
 				</div>
 
-				<div className="deploy-wallet__form-tx-details-param">
-					<span className="deploy-wallet__form-tx-details-param-desc">Fee</span>
-					<span className="deploy-wallet__form-tx-details-param-value">
+				<div className="deploy-wallet__details-param">
+					<span className="deploy-wallet__details-param-desc">Fee</span>
+					<span className="deploy-wallet__details-param-value">
 	                    {fees ? `${convertTons(fees)} TON` : 'calculating...'}
 	                </span>
 				</div>
 
 				{custodians?.map((custodian, idx) => (
-					<div key={custodian} className="deploy-wallet__form-tx-details-param">
-						<span className="deploy-wallet__form-tx-details-param-desc">
+					<div key={custodian} className="deploy-wallet__details-param">
+						<span className="deploy-wallet__details-param-desc">
 							Custodian {idx + 1}
 						</span>
-						<span className="deploy-wallet__form-tx-details-param-value">
+						<span className="deploy-wallet__details-param-value">
 		                    {custodian}
 		                </span>
 					</div>
 				))}
 			</div>
 
-			<div className="deploy-wallet__content-buttons">
-				<div className="accounts-management__content-buttons-back-btn">
+			<footer className="deploy-wallet__footer">
+				<div className="deploy-wallet__footer-button-back">
 					<Button text="Back" white onClick={onBack} />
 				</div>
 				<Button
@@ -78,7 +75,7 @@ export function PreparedMessage({
 					disabled={!fees}
 					onClick={onDeploy}
 				/>
-			</div>
+			</footer>
 
 
 			<SlidingPanel
@@ -92,6 +89,6 @@ export function PreparedMessage({
                     handleBack={onCancel}
                 />
 			</SlidingPanel>
-		</>
+		</div>
 	)
 }

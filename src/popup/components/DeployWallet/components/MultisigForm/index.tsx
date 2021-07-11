@@ -39,7 +39,7 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
 	}
 
 	return (
-		<>
+		<div className="approve-send-message__wrapper">
 			<form id="multisig" onSubmit={handleSubmit(onSubmit)}>
 				<div className="deploy-wallet__content-form-rows">
 					<div className="deploy-wallet__content-form-row">
@@ -133,9 +133,9 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
 				</div>
 			</form>
 
-			<div className="deploy-wallet__content-buttons">
+			<footer className="approve-send-message__footer">
 				<Button text="Next" onClick={handleSubmit(onSubmit)} />
-			</div>
-		</>
+			</footer>
+		</div>
 	)
 }

@@ -217,7 +217,7 @@ export function ApproveSendMessage({
                         )}
                     </div>
 
-                    <div className="approve-send-message__footer">
+                    <footer className="approve-send-message__footer">
                         <div className="approve-send-message__buttons-button">
                             <Button type="button" white text="Reject" onClick={onReject} />
                         </div>
@@ -231,7 +231,7 @@ export function ApproveSendMessage({
                                 }}
                             />
                         </div>
-                    </div>
+                    </footer>
                 </div>
             )}
 

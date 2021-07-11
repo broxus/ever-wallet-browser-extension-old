@@ -5,6 +5,7 @@ import { fetchManifest } from '@popup/store/app/actions'
 
 import { AccountsManagerPage } from '@popup/pages/AccountsManagerPage'
 import { ApprovalPage } from '@popup/pages/ApprovalPage'
+import { DeployMultisigWallet } from '@popup/pages/DeployMultisigWallet'
 import { MainPage } from '@popup/pages/MainPage'
 import { SendPage } from '@popup/pages/SendPage'
 import { WelcomePage } from '@popup/pages/WelcomePage'
@@ -49,6 +50,10 @@ function App(): JSX.Element | null {
 
     if (rpcState.state.pendingApprovalCount) {
         return <ApprovalPage key="approvalPage" />
+    }
+
+    if (isNotification && rpcState.group === 'deploy_multisig_wallet') {
+        return <DeployMultisigWallet key="deployMultisigWallet" />
     }
 
     if (isNotification && rpcState.group === 'send') {

@@ -6,18 +6,14 @@ import Select from 'react-select'
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import { CopyButton } from '@popup/components/CopyButton'
-import TransactionProgress from '@popup/components/TransactionProgress'
-import {
-    MultisigData,
-    MultisigForm,
-    PreparedMessage,
-} from '@popup/components/DeployWallet/components'
+import { PreparedMessage } from '@popup/components/DeployWallet/components'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { selectStyles } from '@popup/constants/selectStyle'
 import { prepareKey } from '@popup/utils'
+import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
 
 import './style.scss'
@@ -49,26 +45,24 @@ export function DeployWallet(): JSX.Element {
     const rpcState = useRpcState()
 
     const [inProcess, setInProcess] = React.useState(false)
-    const [multisigData, setMultisigData] = React.useState<MultisigData>()
     const [error, setError] = React.useState<string>()
     const [fees, setFees] = React.useState<string>()
-    const [pendingResponse, setPendingResponse] = React.useState<
-        Promise<nt.Transaction | undefined>
-    >()
     const [step, setStep] = React.useState(DeployWalletStep.SELECT_TYPE)
     const [walletType, setWalletType] = React.useState<OptionType | null>(walletTypesOptions[0])
 
+    const scrollWidth = React.useMemo(() => getScrollWidth(), [])
     const selectedDerivedKeyEntry = React.useMemo(() => {
         return accountability.selectedAccountPublicKey !== undefined
             ? rpcState.state?.storedKeys[accountability.selectedAccountPublicKey]
             : undefined
     }, [accountability.selectedAccountPublicKey])
 
-    const sendMessage = async (message: WalletMessageToSend): Promise<nt.Transaction> => {
+    const sendMessage = (message: WalletMessageToSend) => {
         if (accountability.selectedAccountAddress == null) {
-            return Promise.reject()
+             return
         }
-        return rpc.sendMessage(accountability.selectedAccountAddress, message)
+        rpc.sendMessage(accountability.selectedAccountAddress, message)
+        drawer.setPanel(undefined)
     }
 
     const onChangeWalletType = (value: OptionType | null) => {
@@ -81,14 +75,7 @@ export function DeployWallet(): JSX.Element {
         }
 
         const keyPassword = prepareKey(selectedDerivedKeyEntry, password)
-        const params: DeployMessageToPrepare =
-            walletType?.value === DeployWalletType.MULTISIG
-                ? {
-                      type: 'multiple_owners',
-                      custodians: multisigData?.custodians || [],
-                      reqConfirms: parseInt((multisigData?.reqConfirms as unknown) as string) || 0,
-                  }
-                : { type: 'single_owner' }
+        const params: DeployMessageToPrepare = { type: 'single_owner' }
 
         setError(undefined)
         setInProcess(true)
@@ -96,7 +83,7 @@ export function DeployWallet(): JSX.Element {
         await rpc
             .prepareDeploymentMessage(accountability.selectedAccountAddress, params, keyPassword)
             .then((signedMessage) => {
-                setPendingResponse(sendMessage({ signedMessage }))
+                sendMessage({ signedMessage })
                 setInProcess(false)
             })
             .catch((err) => {
@@ -105,7 +92,17 @@ export function DeployWallet(): JSX.Element {
             })
     }
 
-    const onNext = () => {
+    const onNext = async () => {
+        if (walletType?.value === DeployWalletType.MULTISIG) {
+            await rpc.openExtensionInExternalWindow({
+                group: 'deploy_multisig_wallet',
+                width: 360 + scrollWidth - 1,
+                height: 600 + scrollWidth - 1,
+            })
+            drawer.setPanel(undefined)
+            return
+        }
+
         switch (step) {
             case DeployWalletStep.SELECT_TYPE:
                 setStep(DeployWalletStep.DEPLOY_MESSAGE)
@@ -116,17 +113,8 @@ export function DeployWallet(): JSX.Element {
         }
     }
 
-    const onNextWhenMultisig = (data: MultisigData) => {
-        setMultisigData(data)
-        setStep(DeployWalletStep.DEPLOY_MESSAGE)
-    }
-
     const onBack = () => {
         setStep(DeployWalletStep.SELECT_TYPE)
-    }
-
-    const onClose = () => {
-        drawer.setPanel(undefined)
     }
 
     React.useEffect(() => {
@@ -145,99 +133,81 @@ export function DeployWallet(): JSX.Element {
             .catch(console.error)
     }, [accountability.selectedAccountAddress, accountability.tonWalletState])
 
-    if (pendingResponse == null) {
-        const balance = new Decimal(accountability.tonWalletState?.balance || '0')
-        const totalAmount = new Decimal('0.1').add(fees || '0')
+    const balance = new Decimal(accountability.tonWalletState?.balance || '0')
+    const totalAmount = new Decimal('0.1').add(fees || '0')
 
-        if (balance.greaterThanOrEqualTo(totalAmount)) {
-            return (
-                <div className="deploy-wallet__content">
-                    <h2 className="deploy-wallet__content-title">Deploy your wallet</h2>
-
-                    {(() => {
-                        switch (step) {
-                            case DeployWalletStep.DEPLOY_MESSAGE:
-                                return (
-                                    <PreparedMessage
-                                        balance={accountability.tonWalletState?.balance}
-                                        fees={fees}
-                                        custodians={multisigData?.custodians}
-                                        disabled={inProcess}
-                                        error={error}
-                                        onSubmit={onSubmit}
-                                        onBack={onBack}
-                                    />
-                                )
-
-                            case DeployWalletStep.SELECT_TYPE:
-                            default:
-                                return (
-                                    <>
-                                        <div className="deploy-wallet__content-wallet-type-select">
-                                            <Select
-                                                options={walletTypesOptions}
-                                                value={walletType}
-                                                styles={selectStyles}
-                                                onChange={onChangeWalletType}
-                                            />
-                                        </div>
-
-                                        {walletType?.value === DeployWalletType.STANDARD && (
-                                            <div
-                                                key="standard"
-                                                className="deploy-wallet__content-buttons"
-                                            >
-                                                <Button text="Next" onClick={onNext} />
-                                            </div>
-                                        )}
-
-                                        {walletType?.value === DeployWalletType.MULTISIG && (
-                                            <MultisigForm
-                                                key="multisig"
-                                                data={multisigData}
-                                                onSubmit={onNextWhenMultisig}
-                                            />
-                                        )}
-                                    </>
-                                )
-                        }
-                    })()}
-                </div>
-            )
-        }
-
+    if (balance.greaterThanOrEqualTo(totalAmount)) {
         return (
             <div className="deploy-wallet__content">
                 <h2 className="deploy-wallet__content-title">Deploy your wallet</h2>
 
-                <p className="deploy-wallet__comment noselect">
-                    You need to have at least 0.1 TON on your account balance to deploy.
-                </p>
-                <h3 className="deploy-wallet__content-header--lead noselect">
-                    Your address to receive TON
-                </h3>
-                <div className="deploy-wallet__qr-address-placeholder">
-                    <div className="deploy-wallet__qr-address-code">
-                        <QRCode
-                            value={`ton://chat/${accountability.selectedAccount?.tonWallet?.address}`}
-                            size={80}
-                        />
-                    </div>
-                    <div className="deploy-wallet__qr-address-address">
-                        {accountability.selectedAccount?.tonWallet.address}
-                    </div>
-                </div>
+                {(() => {
+                    switch (step) {
+                        case DeployWalletStep.DEPLOY_MESSAGE:
+                            return (
+                                <PreparedMessage
+                                    balance={accountability.tonWalletState?.balance}
+                                    fees={fees}
+                                    disabled={inProcess}
+                                    error={error}
+                                    onSubmit={onSubmit}
+                                    onBack={onBack}
+                                />
+                            )
 
-                {accountability.selectedAccount?.tonWallet.address !== undefined && (
-                    <div className="deploy-wallet__content-buttons">
-                        <CopyButton text={accountability.selectedAccount?.tonWallet.address}>
-                            <Button text="Copy address" />
-                        </CopyButton>
-                    </div>
-                )}
+                        case DeployWalletStep.SELECT_TYPE:
+                        default:
+                            return (
+                                <>
+                                    <div className="deploy-wallet__content-wallet-type-select">
+                                        <Select
+                                            options={walletTypesOptions}
+                                            value={walletType}
+                                            styles={selectStyles}
+                                            onChange={onChangeWalletType}
+                                        />
+                                    </div>
+
+                                    <div key="standard" className="deploy-wallet__content-buttons">
+                                        <Button text="Next" onClick={onNext} />
+                                    </div>
+                                </>
+                            )
+                    }
+                })()}
             </div>
         )
     }
 
-    return <TransactionProgress pendingResponse={pendingResponse} onBack={onClose} />
+    return (
+        <div className="deploy-wallet__content">
+            <h2 className="deploy-wallet__content-title">Deploy your wallet</h2>
+
+            <p className="deploy-wallet__comment noselect">
+                You need to have at least 0.1 TON on your account balance to deploy.
+            </p>
+            <h3 className="deploy-wallet__content-header--lead noselect">
+                Your address to receive TON
+            </h3>
+            <div className="deploy-wallet__qr-address-placeholder">
+                <div className="deploy-wallet__qr-address-code">
+                    <QRCode
+                        value={`ton://chat/${accountability.selectedAccount?.tonWallet?.address}`}
+                        size={80}
+                    />
+                </div>
+                <div className="deploy-wallet__qr-address-address">
+                    {accountability.selectedAccount?.tonWallet.address}
+                </div>
+            </div>
+
+            {accountability.selectedAccount?.tonWallet.address !== undefined && (
+                <div className="deploy-wallet__content-buttons">
+                    <CopyButton text={accountability.selectedAccount?.tonWallet.address}>
+                        <Button text="Copy address" />
+                    </CopyButton>
+                </div>
+            )}
+        </div>
+    )
 }

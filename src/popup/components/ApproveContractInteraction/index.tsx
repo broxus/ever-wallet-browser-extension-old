@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
-import EnterPassword from '@popup/components/EnterPassword'
+import { EnterPassword } from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import UserAvatar from '@popup/components/UserAvatar'
 import WebsiteIcon from '@popup/components/WebsiteIcon'

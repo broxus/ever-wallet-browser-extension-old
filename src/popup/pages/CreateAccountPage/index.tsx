@@ -13,7 +13,7 @@ import * as nt from '@nekoton'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import SelectContractType from '@popup/components/SelectContractType'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
-import EnterPassword from '@popup/components/EnterPassword'
+import { EnterPassword } from '@popup/components/EnterPassword'
 
 const options = [
     { value: '1', label: 'Key 1' },
