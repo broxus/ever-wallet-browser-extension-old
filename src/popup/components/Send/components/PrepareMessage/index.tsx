@@ -26,6 +26,8 @@ import {
     TokenWalletState,
 } from '@shared/utils'
 
+import './style.scss'
+
 enum PrepareStep {
     ENTER_ADDRESS,
     ENTER_PASSWORD,
@@ -222,28 +224,40 @@ export function PrepareMessage({
     }, [selectedKey])
 
     return (
-        <div className="send-screen__content">
-            <div className="send-screen__account_details">
-                <UserAvatar address={tonWalletAsset.address} small />{' '}
-                <span className="send-screen__account_details-title">{accountName}</span>
-            </div>
+        <div className="prepare-message">
+            <header className="prepare-message__header">
+                <div className="prepare-message__account_details">
+                    <UserAvatar address={tonWalletAsset.address} small />{' '}
+                    <span className="prepare-message__account_details-title">{accountName}</span>
+                </div>
+                {localStep === PrepareStep.ENTER_ADDRESS && (
+                    <h2 className="prepare-message__header-title noselect">
+                        Send message
+                    </h2>
+                )}
+                {localStep === PrepareStep.ENTER_PASSWORD && (
+                    <h2 className="prepare-message__header-title noselect">
+                        Confirm message
+                    </h2>
+                )}
+            </header>
+
             {localStep === PrepareStep.ENTER_ADDRESS && (
-                <div>
-                    <h2 className="send-screen__form-title noselect">Send message</h2>
+                <div className="prepare-message__wrapper">
                     <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
                         <Select
                             name="currency"
-                            className="send-screen__form-token-dropdown"
+                            className="prepare-message__field-select"
                             options={options as any}
                             defaultValue={defaultValue}
-                            placeholder={'Select currency'}
+                            placeholder="Select currency"
                             styles={selectStyles}
                             onChange={(asset) => {
                                 asset && setSelectedAsset(asset.value)
                             }}
                         />
                         {decimals != null && (
-                            <div className="send-screen__form-balance">
+                            <div className="prepare-message__balance">
                                 <span className="noselect">Your balance:&nbsp;</span>
                                 {convertCurrency(balance.toString(), decimals)}
                                 &nbsp;
@@ -253,8 +267,8 @@ export function PrepareMessage({
                         <Input
                             name="amount"
                             type="text"
-                            className="send-screen__form-input"
-                            label={'Amount...'}
+                            className="prepare-message__field-input"
+                            label="Amount..."
                             onChange={(value) => setValue('amount', value.trim())}
                             register={register({
                                 required: true,
@@ -296,19 +310,20 @@ export function PrepareMessage({
                                 },
                             })}
                         />
+
                         {errors.amount && (
-                            <div className="send-screen__form-error">
+                            <div className="prepare-message__error-message">
                                 {errors.amount.type == 'required' && 'This field is required'}
                                 {errors.amount.type == 'invalidAmount' && 'Invalid amount'}
-                                {errors.amount.type == 'insufficientBalance' &&
-                                    'Insufficient balance'}
+                                {errors.amount.type == 'insufficientBalance' && 'Insufficient balance'}
                                 {errors.amount.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
+
                         <Input
                             name="recipient"
-                            label={'Recipient address...'}
-                            className="send-screen__form-input"
+                            label="Recipient address..."
+                            className="prepare-message__field-input"
                             onChange={(value) => setValue('recipient', value)}
                             register={register({
                                 required: true,
@@ -317,44 +332,45 @@ export function PrepareMessage({
                             })}
                             type="text"
                         />
+
                         {errors.recipient && (
-                            <div className="send-screen__form-error">
+                            <div className="prepare-message__error-message">
                                 {errors.recipient.type == 'required' && 'This field is required'}
                                 {errors.recipient.type == 'validate' && 'Invalid recipient'}
                                 {errors.recipient.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
+
                         {selectedAsset.length == 0 && (
                             <Input
                                 name="comment"
-                                label={'Comment...'}
-                                className="send-screen__form-comment"
+                                label="Comment..."
+                                className="prepare-message__field-input"
                                 onChange={(value) => setValue('comment', value)}
                                 register={register()}
                                 type="text"
                             />
                         )}
+
                         {selectedAsset.length > 0 && (
-                            <div className="send-screen__form-checkbox">
+                            <div className="prepare-message__field-checkbox">
                                 <Checkbox checked={notifyReceiver} onChange={setNotifyReceiver} />
-                                <span className="send-screen__form-checkbox-label">
+                                <span className="prepare-message__field-checkbox-label">
                                     Notify receiver
                                 </span>
                             </div>
                         )}
                     </form>
-                    <div style={{ display: 'flex' }}>
-                        <div style={{ width: '50%', marginRight: '12px' }}>
-                            <Button text={'Back'} onClick={onBack} white />
+
+                    <footer className="prepare-message__footer">
+                        <div className="prepare-message__footer-button-back">
+                            <Button text="Back" white onClick={onBack} />
                         </div>
-                        <Button
-                            text={'Send'}
-                            onClick={handleSubmit(submitMessageParams)}
-                            form="send"
-                        />
-                    </div>
+                        <Button text="Send" form="send" onClick={handleSubmit(submitMessageParams)} />
+                    </footer>
                 </div>
             )}
+
             {localStep == PrepareStep.ENTER_PASSWORD && (
                 <EnterPassword
                     keyEntries={keyEntries}
@@ -364,6 +380,7 @@ export function PrepareMessage({
                     fees={fees}
                     error={error}
                     disabled={inProcess}
+                    showHeading={false}
                     onSubmit={submitPassword}
                     onBack={() => {
                         setLocalStep(PrepareStep.ENTER_ADDRESS)

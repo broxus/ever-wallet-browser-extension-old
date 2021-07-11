@@ -1,30 +1,30 @@
-import React, { useRef, useState } from 'react'
-import { createRipple, removeRipple } from '@popup/common'
-import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
-import * as nt from '@nekoton'
+import * as React from 'react'
 
+import * as nt from '@nekoton'
+import { createRipple, removeRipple } from '@popup/common'
 import { DeployWallet } from '@popup/components/DeployWallet'
 import { TransactionsList } from '@popup/components/TransactionsList'
 import Receive from '@popup/components/Receive'
 import { Send } from '@popup/components/Send'
 import { TransactionInfo } from '@popup/components/TransactionInfo'
 import SlidingPanel from '@popup/components/SlidingPanel'
-import AssetIcon from '@popup/components/AssetIcon'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { BriefMessageInfo } from '@shared/backgroundApi'
+import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
 
+import AssetIcon from '@popup/components/AssetIcon'
 import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
 import SendIcon from '@popup/img/send-dark-blue.svg'
 import DeployIcon from '@popup/img/deploy-dark-blue.svg'
 
 import './style.scss'
 
-type IAssetFull = {
-    account: nt.AssetsList
+type Props = {
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
     selectedKeys: nt.KeyStoreEntry[]
     selectedAsset: SelectedAsset
-    controllerState: ControllerState
-    controllerRpc: IControllerRpcClient
 }
 
 enum Panel {
@@ -34,69 +34,99 @@ enum Panel {
     TRANSACTION,
 }
 
-const AssetFull: React.FC<IAssetFull> = ({
-    account,
+export function AssetFull({
     tokenWalletStates,
     selectedAsset,
     selectedKeys,
-    controllerState,
-    controllerRpc,
-}) => {
-    const [openedPanel, setOpenedPanel] = useState<Panel>()
-    const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
-    const scrollArea = useRef<HTMLDivElement>(null)
+}: Props) {
+    const accountability = useAccountability()
+    const rpc = useRpc()
+    const rpcState = useRpcState()
 
-    const { knownTokens } = controllerState
+    const account = accountability.selectedAccount
+
+    if (account == null) {
+        return null
+    }
+
+    const [openedPanel, setOpenedPanel] = React.useState<Panel>()
+    const [selectedTransaction, setSelectedTransaction] = React.useState<nt.Transaction>()
+    const scrollArea = React.useRef<HTMLDivElement>(null)
 
     const accountName = account.name
     const accountAddress = account.tonWallet.address
     const tonWalletAsset = account.tonWallet
-    let tonWalletState = controllerState.accountContractStates[accountAddress] as
-        | nt.ContractState
-        | undefined
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
+    const tokenWalletAssets = account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
 
-    const tokenWalletAssets =
-        account.additionalAssets[controllerState.selectedConnection.group]?.tokenWallets || []
-
-    let shouldDeploy: boolean
-    let balance: string | undefined
-    let transactions: nt.Transaction[] | undefined
-    let symbol: nt.Symbol | undefined
-    let currencyName: string | undefined
-    let decimals: number | undefined
-    let preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
-
-    if (selectedAsset.type == 'ton_wallet') {
-        shouldDeploy =
-            tonWalletState == null ||
-            (!tonWalletState.isDeployed &&
-                nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
-        balance = tonWalletState?.balance
-        transactions = controllerState.accountTransactions[accountAddress]
-        currencyName = 'TON'
-        decimals = 9
-        preloadTransactions = ({ lt, hash }) =>
-            controllerRpc.preloadTransactions(accountAddress, lt, hash)
-    } else {
+    const shouldDeploy = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return (
+                tonWalletState == null
+                || (
+                    !tonWalletState.isDeployed
+                    && nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
+            )
+        }
+        return false
+    }, [selectedAsset, tonWalletState])
+    const balance = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return tonWalletState?.balance
+        }
         const rootTokenContract = selectedAsset.data.rootTokenContract
-
-        shouldDeploy = false
-        balance = controllerState.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
-        const tokenTransactions = (transactions =
-            controllerState.accountTokenTransactions[accountAddress]?.[
-                selectedAsset.data.rootTokenContract
-            ])
-        transactions = tokenTransactions?.filter((transaction: nt.Transaction) => {
+        return rpcState.state.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
+    }, [
+        selectedAsset,
+        rpcState.state.accountTokenStates,
+        tonWalletState
+    ])
+    const transactions = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return rpcState.state.accountTransactions[accountAddress]
+        }
+        const tokenTransactions = rpcState.state.accountTokenTransactions[accountAddress]?.[selectedAsset.data.rootTokenContract]
+        return tokenTransactions?.filter((transaction) => {
             const tokenTransaction = transaction as nt.TokenWalletTransaction
             return tokenTransaction.info != null
         })
 
-        symbol = controllerState.knownTokens[rootTokenContract]
-        currencyName = symbol.name
-        decimals = symbol.decimals
-        preloadTransactions = ({ lt, hash }) =>
-            controllerRpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
-    }
+    }, [
+        selectedAsset,
+        rpcState.state.accountTransactions,
+        rpcState.state.accountTokenTransactions,
+    ])
+    const symbol = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return undefined
+        }
+        const rootTokenContract = selectedAsset.data.rootTokenContract
+        return  rpcState.state.knownTokens[rootTokenContract]
+    }, [])
+    const pendingTransactions = React.useMemo(() => {
+        const values: BriefMessageInfo[] = [{
+            amount: "1000000000",
+            createdAt: 1625960072,
+            recipient: "0:bc2f191bc9423aeb50ebcd48a386a0961ad78046a1e168eb869cae71b67ced70",
+        }]
+        window.ObjectExt.values({
+            ...rpcState.state.accountPendingTransactions
+        }).forEach((entry) => {
+            values.push(...window.ObjectExt.values(entry))
+        })
+        return values.sort((a, b) => b.createdAt - a.createdAt)
+    }, [rpcState.state.accountPendingTransactions])
+
+    const currencyName = selectedAsset.type === 'ton_wallet' ? 'TON' : symbol?.name
+    const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
+
+    const preloadTransactions = React.useCallback(({ lt, hash }) => {
+        if (selectedAsset.type === 'ton_wallet') {
+             return rpc.preloadTransactions(accountAddress, lt, hash)
+        }
+        const rootTokenContract = selectedAsset.data.rootTokenContract
+        return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
+    }, [accountAddress, selectedAsset])
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
@@ -119,6 +149,16 @@ const AssetFull: React.FC<IAssetFull> = ({
     const onDeploy = () => {
         setOpenedPanel(Panel.DEPLOY)
     }
+
+    React.useEffect(() => {
+        // @ts-ignore
+        const transactionToUpdate = transactions.find((transaction) => {
+            return transaction.id === selectedTransaction?.id
+        })
+        if (transactionToUpdate !== undefined) {
+            setSelectedTransaction(transactionToUpdate)
+        }
+    }, [transactions])
 
     return (
         <>
@@ -202,6 +242,7 @@ const AssetFull: React.FC<IAssetFull> = ({
                         scrollArea={scrollArea}
                         symbol={symbol}
                         transactions={transactions || []}
+                        pendingTransactions={pendingTransactions}
                         onViewTransaction={showTransaction}
                         preloadTransactions={preloadTransactions}
                     />
@@ -225,23 +266,23 @@ const AssetFull: React.FC<IAssetFull> = ({
                             keyEntries={selectedKeys}
                             tonWalletState={tonWalletState}
                             tokenWalletStates={tokenWalletStates}
-                            knownTokens={knownTokens}
+                            knownTokens={rpcState.state.knownTokens}
                             onBack={closePanel}
                             estimateFees={async (params) =>
-                                await controllerRpc.estimateFees(accountAddress, params)
+                                await rpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
-                                controllerRpc.prepareTransferMessage(
+                                rpc.prepareTransferMessage(
                                     accountAddress,
                                     params,
                                     password
                                 )
                             }
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
-                                controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
+                                rpc.prepareTokenMessage(owner, rootTokenContract, params)
                             }
                             sendMessage={async (message) =>
-                                controllerRpc.sendMessage(accountAddress, message)
+                                rpc.sendMessage(accountAddress, message)
                             }
                         />
                     )}
@@ -254,5 +295,3 @@ const AssetFull: React.FC<IAssetFull> = ({
         </>
     )
 }
-
-export default AssetFull

@@ -19,8 +19,7 @@ a {
 
     &-tx-details {
         margin-bottom: 28px;
-        max-height: 410px;
-        overflow-y: auto;
+
         &-separator {
             background: #ebedee;
             height: 1px;
@@ -37,6 +36,9 @@ a {
             }
 
             &-desc {
+                align-items: center;
+                display: flex;
+                column-gap: 10px;
                 font-style: normal;
                 font-weight: normal;
                 font-size: 14px;
@@ -54,6 +56,24 @@ a {
                 line-height: 20px;
                 letter-spacing: 0.75px;
                 word-break: break-all;
+            }
+
+            &-initiator,
+            &-unsigned,
+            &-signed {
+                background-color: #00ac47;
+                font-size: 12px;
+                font-weight: normal;
+                border-radius: 4px;
+                padding: 4px;
+                line-height: 16px;
+                color: #fff;
+            }
+            &-unsigned {
+                background-color: rgba(125, 139, 146, 0.75);
+            }
+            &-initiator {
+                background-color: #E6AC00;
             }
         }
     }

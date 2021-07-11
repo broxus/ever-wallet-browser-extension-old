@@ -11,8 +11,6 @@ import {
 import { ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
 import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
-import './style.scss'
-
 type Props = {
     accountName: string
     tonWalletAsset: nt.TonWalletAsset
@@ -53,8 +51,8 @@ export function Send({
 }: Props): JSX.Element {
     const rpcState = useRpcState()
 
-    const trySendMessage = async (message: WalletMessageToSend) => {
-        await sendMessage(message)
+    const trySendMessage = (message: WalletMessageToSend) => {
+        sendMessage(message).then(() => {})
         if (rpcState.activeTab?.type === ENVIRONMENT_TYPE_NOTIFICATION) {
             closeCurrentWindow()
         }

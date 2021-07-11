@@ -107,6 +107,7 @@ export function AccountDetails(): JSX.Element {
         }
 
         slider.current?.setPosition(index >= 0 ? index : 0)
+        slider.current?.forceUpdate()
     }, [accountability.selectedAccountAddress])
 
     return (

@@ -1,0 +1,201 @@
+@import '../../../../styles/colors';
+
+.send-page {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 100%;
+
+    .prepare-message {
+        &__content {
+            padding: 20px;
+        }
+
+        &__content-title {
+            background-color: #fff;
+            box-shadow: 0 10px 15px 10px #fff;
+            padding: 20px 0 0;
+            margin: 0 0 30px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        &__content-buttons {
+            background-color: #fff;
+            box-shadow: 0 -10px 15px 10px #fff;
+            position: sticky;
+            margin: 30px 0 0;
+            padding: 0 0 30px;
+            bottom: 0;
+            z-index: 10;
+        }
+    }
+}
+
+.prepare-message {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 100%;
+
+    &__header {
+        align-items: center;
+        background: #fff;
+        box-shadow: 0 10px 15px 10px #fff;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 32px;
+        padding: 20px 20px 0;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+
+        &-title {
+            align-self: start;
+            color: $windowFg;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 32px;
+            margin: 0;
+        }
+    }
+
+    &__wrapper {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+        padding: 0 20px;
+    }
+
+    &__footer {
+        background: #fff;
+        bottom: 0;
+        box-shadow: 0 -10px 15px 10px #fff;
+        display: flex;
+        margin: 32px 0 0;
+        padding: 0 0 20px;
+        position: sticky;
+        z-index: 1;
+        column-gap: 12px;
+
+        > * { width: 100%; }
+
+        &-button-back {
+            width: 100px;
+            min-width: 100px;
+            margin-right: 12px;
+        }
+    }
+
+    &__account_details {
+        display: flex;
+        align-items: center;
+        margin-bottom: 28px;
+        width: 100%;
+
+        &-userpic {
+            margin-right: 16px;
+        }
+        &-title {
+            font-style: normal;
+            font-weight: 500;
+            font-size: 16px;
+            line-height: 20px;
+            letter-spacing: 0.25px;
+            color: #293166;
+            padding: 0 12px;
+        }
+    }
+
+
+    &__balance {
+        font-family: PT Root UI, serif;
+        font-style: normal;
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+        color: #96a1a7;
+        margin-bottom: 10px;
+    }
+
+    &__error-message {
+        display: block;
+        width: 100%;
+        font-size: 12px;
+        line-height: 16px;
+        letter-spacing: 0.4px;
+        margin-top: -26px;
+        margin-bottom: 10px;
+        color: darkred;
+    }
+
+
+    &__field {
+        &-title {
+            margin-bottom: 28px;
+        }
+
+        &-input {
+            margin-bottom: 28px;
+        }
+
+        &-password {
+            margin-bottom: 0;
+        }
+
+        &-select {
+            margin-bottom: 20px;
+        }
+
+        input {
+            cursor: text;
+        }
+
+        &-checkbox {
+            display: flex;
+            margin-bottom: 40px;
+
+            &-label {
+                font-family: PT Root UI, serif;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                color: #96a1a7;
+            }
+        }
+
+        &-field-hint {
+            margin-top: 5px;
+            font-size: 12px;
+            line-height: 18px;
+            color: $seedsHeader;
+            margin-bottom: 28px;
+        }
+    }
+
+    &__footer {
+        background: #fff;
+        bottom: 0;
+        box-shadow: 0 -10px 15px 10px #fff;
+        display: flex;
+        margin: 32px 0 0;
+        padding: 0 0 20px;
+        position: sticky;
+        z-index: 1;
+        column-gap: 12px;
+
+        > * { width: 100%; }
+
+        &-button-back {
+            width: 100px;
+            min-width: 100px;
+            margin-right: 12px;
+        }
+    }
+}

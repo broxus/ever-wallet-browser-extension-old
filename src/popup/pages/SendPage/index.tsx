@@ -44,7 +44,7 @@ export function SendPage(): JSX.Element | null {
 	}
 
 	return (
-		<div className="send-screen__page">
+		<div className="send-page">
 			<Send
 				accountName={accountName}
 				tonWalletAsset={tonWalletAsset}

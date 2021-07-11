@@ -33,10 +33,10 @@ export function ApproveContractInteraction({
 
     const [inProcess, setInProcess] = React.useState(false)
     const [error, setError] = React.useState<string>()
-    const [passwordModalVisible, setPasswordModalVisible] = React.useState<boolean>(false)
+    const [passwordModalVisible, setPasswordModalVisible] = React.useState(false)
 
     // TODO: somehow select proper account
-    let account = window.ObjectExt.values(accountEntries).find(
+    const account = window.ObjectExt.values(accountEntries).find(
         (account) => account.tonWallet.publicKey == publicKey
     )
     if (account == null) {

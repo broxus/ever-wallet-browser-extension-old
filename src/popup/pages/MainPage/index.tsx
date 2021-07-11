@@ -2,14 +2,13 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import { AccountDetails } from '@popup/components/AccountDetails'
-import { ManageSeeds } from '@popup/components/AccountsManagement'
+import { AssetFull } from '@popup/components/AssetFull'
 import { CreateAccount } from '@popup/components/AccountsManagement/components'
 import { DeployWallet } from '@popup/components/DeployWallet'
+import { ManageSeeds } from '@popup/components/AccountsManagement'
 import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
-// import { Send } from '@popup/components/Send'
 import { TransactionInfo } from '@popup/components/TransactionInfo'
 import { UserAssets } from '@popup/components/UserAssets'
-import AssetFull from '@popup/components/AssetFull'
 import Receive from '@popup/components/Receive'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
@@ -17,7 +16,6 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { SelectedAsset } from '@shared/utils'
-// import { WalletMessageToSend } from '@shared/backgroundApi'
 
 import './style.scss'
 
@@ -94,10 +92,6 @@ export function MainPage(): JSX.Element | null {
 
     const transactions = rpcState.state.accountTransactions[accountAddress] || []
 
-    // const sendMessage = async (message: WalletMessageToSend) => {
-    //     return rpc.sendMessage(accountAddress as string, message)
-    // }
-
     const showTransaction = (transaction: nt.Transaction) => {
         setSelectedTransaction(transaction)
         drawer.setPanel(Panel.TRANSACTION)
@@ -150,41 +144,14 @@ export function MainPage(): JSX.Element | null {
                     {drawer.currentPanel === Panel.RECEIVE && (
                         <Receive accountName={accountName} address={accountAddress} />
                     )}
-                    {/*
-                    {drawer.currentPanel === Panel.SEND && tonWalletState && (
-                        <Send
-                            accountName={accountName}
-                            tonWalletAsset={tonWalletAsset}
-                            tokenWalletAssets={tokenWalletAssets}
-                            keyEntries={selectedKeys}
-                            tonWalletState={tonWalletState}
-                            tokenWalletStates={tokenWalletStates}
-                            knownTokens={knownTokens}
-                            estimateFees={async (params) =>
-                                await rpc.estimateFees(accountAddress, params)
-                            }
-                            prepareMessage={async (params, password) =>
-                                rpc.prepareTransferMessage(accountAddress, params, password)
-                            }
-                            prepareTokenMessage={async (owner, rootTokenContract, params) =>
-                                rpc.prepareTokenMessage(owner, rootTokenContract, params)
-                            }
-                            sendMessage={sendMessage}
-                            onBack={closePanel}
-                        />
-                    )}
-                    */}
                     {drawer.currentPanel === Panel.MANAGE_SEEDS && <ManageSeeds />}
                     {drawer.currentPanel === Panel.DEPLOY && <DeployWallet />}
                     {drawer.currentPanel === Panel.CREATE_ACCOUNT && <CreateAccount />}
                     {drawer.currentPanel === Panel.ASSET && selectedAsset && (
                         <AssetFull
-                            account={accountability.selectedAccount}
                             tokenWalletStates={tokenWalletStates}
                             selectedKeys={selectedKeys}
                             selectedAsset={selectedAsset}
-                            controllerState={rpcState.state}
-                            controllerRpc={rpc}
                         />
                     )}
                     {drawer.currentPanel === Panel.TRANSACTION &&

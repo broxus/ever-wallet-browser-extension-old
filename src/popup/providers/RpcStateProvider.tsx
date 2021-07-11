@@ -82,17 +82,6 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
                     rpc.onNotification((data) => {
                         const stateToUpdate = data.params
 
-                        // if (
-                        //     activeTab.type === 'notification' &&
-                        //     Object.keys((stateToUpdate as any).pendingApprovals).length === 0
-                        // ) {
-                        //     closeCurrentWindow()
-                        // }
-                        // else {
-                        //     console.log('Got state', stateToUpdate)
-                        //     setState(stateToUpdate as any)
-                        // }
-
                         try {
                             console.log('Got state', stateToUpdate)
                             setState(stateToUpdate as ControllerState)

@@ -9,6 +9,8 @@ import { selectStyles } from '@popup/constants/selectStyle'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { convertPublicKey } from '@shared/utils'
 
+import './style.scss'
+
 export type Message = {
     amount: string
     comment?: string
@@ -24,6 +26,7 @@ type Props = {
     error?: string
     disabled: boolean
     showHeading?: boolean
+    transactionId?: string
     onSubmit(password: nt.KeyPassword): void
     onBack(): void
     onChangeKeyEntry(keyEntry: nt.KeyStoreEntry): void
@@ -38,6 +41,7 @@ export function EnterPassword({
     error,
     disabled,
     showHeading = true,
+    transactionId,
     onSubmit,
     onBack,
     onChangeKeyEntry,
@@ -59,77 +63,94 @@ export function EnterPassword({
     }
 
     return (
-        <>
-            <div>
-                {showHeading && (
-                    <h2 className="send-screen__form-title nos noselect">Confirm message</h2>
-                )}
-                <div className="send-screen__form-tx-details">
-                    <div className="send-screen__form-tx-details-param">
-                        <span className="send-screen__form-tx-details-param-desc">Recipient</span>
-                            <span className="send-screen__form-tx-details-param-value">
-                            {params?.recipient}
-                        </span>
+        <div className="enter-password">
+            {showHeading && (
+                <header className="enter-password__header">
+                    <h2 className="enter-password__header-title noselect">
+                        Confirm message
+                    </h2>
+                </header>
+            )}
+            <div className="enter-password__wrapper">
+                <div>
+                    <div className="enter-password__confirm-details">
+                        {params?.recipient !== undefined && (
+                            <div className="enter-password__confirm-details-param">
+                                <span className="enter-password__confirm-details-param-desc">Recipient</span>
+                                <span className="enter-password__confirm-details-param-value">
+                                {params?.recipient}
+                            </span>
+                            </div>
+                        )}
+                        {transactionId !== undefined && (
+                            <div className="enter-password__confirm-details-param">
+                                <span className="enter-password__confirm-details-param-desc">Transaction Id</span>
+                                <span className="enter-password__confirm-details-param-value">
+                                {transactionId}
+                            </span>
+                            </div>
+                        )}
+                        {params?.amount !== undefined && (
+                            <div className="enter-password__confirm-details-param">
+                                <span className="enter-password__confirm-details-param-desc">Amount</span>
+                                <span className="enter-password__confirm-details-param-value">
+                                {params?.amount} {currencyName}
+                            </span>
+                            </div>
+                        )}
+                        {convertedFees !== undefined && (
+                            <div className="enter-password__confirm-details-param">
+                                <span className="enter-password__confirm-details-param-desc">Blockchain fee</span>
+                                <span className="enter-password__confirm-details-param-value">
+                                {convertedFees.total !== undefined ? `~${convertedFees.total} TON` : 'calculating...'}
+                            </span>
+                            </div>
+                        )}
                     </div>
-                    <div className="send-screen__form-tx-details-param">
-                        <span className="send-screen__form-tx-details-param-desc">Amount</span>
-                            <span className="send-screen__form-tx-details-param-value">
-                            {params?.amount} {currencyName}
-                        </span>
-                    </div>
-                    <div className="send-screen__form-tx-details-param">
-                        <span className="send-screen__form-tx-details-param-desc">Blockchain fee</span>
-                            <span className="send-screen__form-tx-details-param-value">
-                            {convertedFees ? `~${convertedFees.total} TON` : 'calculating...'}
-                        </span>
-                    </div>
-                </div>
-                {keyEntries.length > 1 ? (
-                    <Select
-                        className="send-screen__form-input"
-                        styles={selectStyles}
-                        options={keyEntries}
-                        value={keyEntry}
-                        formatOptionLabel={(value) => value.name}
-                        onChange={changeKeyEntry}
-                    />
-                ) : null}
-                {keyEntry.signerName != 'ledger_key' ? (
-                    <>
-                        <Input
-                            className="send-screen__form-password"
-                            label={'Password...'}
-                            type="password"
-                            disabled={disabled}
-                            value={password}
-                            onChange={setPassword}
+                    {keyEntries.length > 1 ? (
+                        <Select
+                            className="enter-password__field-select"
+                            styles={selectStyles}
+                            options={keyEntries}
+                            value={keyEntry}
+                            formatOptionLabel={(value) => value.name}
+                            onChange={changeKeyEntry}
                         />
-                        <div className="send-screen__form-field-hint">
-                            Enter password from seed: {accountability.masterKeysNames[keyEntry.masterKey] || convertPublicKey(keyEntry.masterKey)}
+                    ) : null}
+                    {keyEntry.signerName != 'ledger_key' ? (
+                        <>
+                            <Input
+                                className="enter-password__field-password"
+                                label="Password..."
+                                type="password"
+                                disabled={disabled}
+                                value={password}
+                                onChange={setPassword}
+                            />
+                            <div className="enter-password__field-hint">
+                                Enter password from seed: {accountability.masterKeysNames[keyEntry.masterKey] || convertPublicKey(keyEntry.masterKey)}
+                            </div>
+                        </>
+                    ) : (
+                        <div className="enter-password__confirm-details-param-desc">
+                            Please confirm the transaction with your Ledger
                         </div>
-                    </>
-                ) : (
-                    <div
-                        className="send-screen__form-tx-details-param-desc"
-                        style={{ marginBottom: '24px' }}
-                    >
-                        Please confirm the transaction with your Ledger
-                    </div>
-                )}
-                {error && <div className="send-screen__form-error">{error}</div>}
-            </div>
-            <div className="send-screen__footer">
-                <div className="send-screen__footer-button-back">
-                    <Button text="Back" white onClick={onBack} />
+                    )}
+                    {error && <div className="enter-password__error-message">{error}</div>}
                 </div>
-                <Button
-                    text="Confirm transaction"
-                    onClick={trySubmit}
-                    disabled={
-                        disabled || (keyEntry.signerName != 'ledger_key' && password.length === 0)
-                    }
-                />
+                <div className="enter-password__footer">
+                    <div className="enter-password__footer-button-back">
+                        <Button text="Back" white onClick={onBack} />
+                    </div>
+                    <Button
+                        text="Confirm transaction"
+                        onClick={trySubmit}
+                        disabled={
+                            disabled || (keyEntry.signerName != 'ledger_key' && password.length === 0)
+                        }
+                    />
+                </div>
             </div>
-        </>
+        </div>
     )
 }

@@ -31,9 +31,7 @@ export function useSelectableKeys(selectedAccount?: nt.AssetsList) {
 		)
 
 		if (externals !== undefined) {
-			keys = keys.concat(externals.externalIn.map((key) => storedKeys[key])).filter(
-				(key) => key.publicKey != selectedAccount?.tonWallet.publicKey
-			)
+			keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
 		}
 
 		return keys.filter((key) => key)
