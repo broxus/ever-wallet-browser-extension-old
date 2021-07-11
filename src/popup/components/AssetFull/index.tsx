@@ -133,8 +133,10 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
     }
 
     React.useEffect(() => {
-        // @ts-ignore
-        const transactionToUpdate = transactions.find((transaction) => {
+        const transactionToUpdate = (transactions as (
+            | nt.TonWalletTransaction
+            | nt.TokenWalletTransaction
+        )[]).find((transaction) => {
             return transaction.id === selectedTransaction?.id
         })
         if (transactionToUpdate !== undefined) {
