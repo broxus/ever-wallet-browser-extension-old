@@ -17,7 +17,7 @@ type Props = {
     scrollArea: React.RefObject<HTMLDivElement>
     symbol?: nt.Symbol
     transactions: nt.Transaction[]
-    pendingTransactions: BriefMessageInfo[]
+    pendingTransactions?: BriefMessageInfo[]
     onViewTransaction: (transaction: nt.Transaction) => void
     preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 }
