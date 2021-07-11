@@ -12,7 +12,6 @@ import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import './style.scss'
 
-
 enum AssetsTab {
     ASSETS,
     TRANSACTIONS,
@@ -58,7 +57,7 @@ export function UserAssets({
         }
 
         window.ObjectExt.values({
-            ...rpcState.state.accountPendingTransactions[accountability.selectedAccountAddress]
+            ...rpcState.state.accountPendingTransactions[accountability.selectedAccountAddress],
         }).forEach((entry) => {
             values.push(entry)
         })
@@ -100,6 +99,7 @@ export function UserAssets({
                 )}
                 {activeTab == AssetsTab.TRANSACTIONS && (
                     <TransactionsList
+                        tonWalletAsset={tonWalletAsset}
                         topOffset={397 + 54}
                         fullHeight={600}
                         scrollArea={scrollArea}

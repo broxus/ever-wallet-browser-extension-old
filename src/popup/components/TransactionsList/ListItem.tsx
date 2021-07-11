@@ -15,6 +15,7 @@ import {
     trimTokenName,
     isSubmitTransaction,
     currentUtime,
+    isConfirmTransaction,
 } from '@shared/utils'
 
 import './style.scss'
@@ -40,6 +41,10 @@ type Props = {
 }
 
 export function ListItem({ symbol, transaction, style, onViewTransaction }: Props): JSX.Element {
+    if (isConfirmTransaction(transaction)) {
+        return <></>
+    }
+
     const accountability = useAccountability()
     const rpcState = useRpcState()
 
@@ -66,12 +71,17 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
         }
         return extractTokenTransactionAddress(transaction as nt.TokenWalletTransaction)
     }, [transaction])
-    const unconfirmedTransaction = React.useMemo(() => {
-        return transaction.inMessage.dst != null
-            ? rpcState.state.accountUnconfirmedTransactions[transaction.inMessage.dst]?.[
-                  transactionId
-              ]
-            : undefined
+    const { unconfirmedTransaction, multisigTransaction } = React.useMemo(() => {
+        const source = transaction.inMessage.dst
+
+        return source != null
+            ? {
+                  unconfirmedTransaction:
+                      rpcState.state.accountUnconfirmedTransactions[source]?.[transactionId],
+                  multisigTransaction:
+                      rpcState.state.accountMultisigTransactions[source]?.[transactionId],
+              }
+            : {}
     }, [transaction])
 
     const now = currentUtime()
@@ -79,13 +89,14 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
     const expiresAt =
         transaction.createdAt + (accountability.contractTypeDetails?.expirationTime || 3600)
 
-    const labelType = isSubmit
-        ? expiresAt > now
-            ? unconfirmedTransaction == null
+    const labelType =
+        isSubmit && multisigTransaction != null
+            ? multisigTransaction.finalTransactionHash != null
                 ? Label.SENT
-                : Label.UNCONFIRMED
-            : Label.EXPIRED
-        : Label.NONE
+                : expiresAt > now
+                ? Label.UNCONFIRMED
+                : Label.EXPIRED
+            : Label.NONE
 
     // wip to hide tooltip on click outside
 
@@ -147,24 +158,28 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                 </div>
 
                 {labelType === Label.UNCONFIRMED && (
-                    <div className="transactions-list-item__labels">
-                        <div className="transactions-list-item__label-waiting">
-                            Waiting for confirmation
+                    <>
+                        <div className="transactions-list-item__labels">
+                            <div className="transactions-list-item__label-waiting">
+                                Waiting for confirmation
+                            </div>
                         </div>
-                    </div>
-                )}
-
-                {unconfirmedTransaction != null && (
-                    <div className="transactions-list-item__signatures">
-                        {`${unconfirmedTransaction.signsReceived} of ${unconfirmedTransaction.signsRequired} signatures`}
-                        <br />
-                        {`Expires at ${new Date(expiresAt * 1000).toLocaleString('default', {
-                            month: 'long', // TODO: remove
-                            day: 'numeric', // TODO: remove
-                            hour: 'numeric',
-                            minute: 'numeric',
-                        })}`}
-                    </div>
+                        {unconfirmedTransaction != null && (
+                            <div className="transactions-list-item__signatures">
+                                {`${unconfirmedTransaction.signsReceived} of ${unconfirmedTransaction.signsRequired} signatures`}
+                                <br />
+                                {`Expires at ${new Date(expiresAt * 1000).toLocaleString(
+                                    'default',
+                                    {
+                                        month: 'long', // TODO: remove
+                                        day: 'numeric', // TODO: remove
+                                        hour: 'numeric',
+                                        minute: 'numeric',
+                                    }
+                                )}`}
+                            </div>
+                        )}
+                    </>
                 )}
 
                 {labelType === Label.EXPIRED && (

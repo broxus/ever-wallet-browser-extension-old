@@ -611,6 +611,30 @@ export const extractTransactionValue = (transaction: nt.Transaction): Decimal =>
 
 export type TransactionDirection = 'from' | 'to' | 'service'
 
+export function isConfirmTransaction(
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
+): transaction is nt.Transaction & {
+    info: {
+        type: 'wallet_interaction'
+        data: {
+            knownPayload: nt.KnownPayload | undefined
+            method: {
+                type: 'multisig'
+                data: {
+                    type: 'confirm'
+                    data: nt.MultisigConfirmTransactionInfo
+                }
+            }
+        }
+    }
+} {
+    return (
+        transaction.info?.type === 'wallet_interaction' &&
+        transaction.info.data.method.type === 'multisig' &&
+        transaction.info.data.method.data.type === 'confirm'
+    )
+}
+
 export function isSubmitTransaction(
     transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
 ): transaction is nt.Transaction & {

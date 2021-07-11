@@ -6,12 +6,16 @@ import { MessageItem } from '@popup/components/TransactionsList/MessageItem'
 import { BriefMessageInfo } from '@shared/backgroundApi'
 
 import './style.scss'
-
+import { AggregatedMultisigTransactions, currentUtime } from '@shared/utils'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 const TRANSACTION_HEIGHT = 109
+const TRANSACTION_WITH_LABEL_HEIGHT = 138
+const TRANSACTION_WITH_EXTENDED_LABEL_HEIGHT = 186
 const PRELOAD_HEIGHT = TRANSACTION_HEIGHT * 12
 
 type Props = {
+    tonWalletAsset: nt.TonWalletAsset
     topOffset: number
     fullHeight: number
     scrollArea: React.RefObject<HTMLDivElement>
@@ -23,6 +27,7 @@ type Props = {
 }
 
 export function TransactionsList({
+    tonWalletAsset,
     topOffset,
     fullHeight,
     scrollArea,
@@ -32,8 +37,20 @@ export function TransactionsList({
     onViewTransaction,
     preloadTransactions,
 }: Props) {
+    const rpcState = useRpcState()
+
     const [scroll, setScroll] = React.useState(scrollArea.current?.scrollTop || 0)
     const [latestContinuation, setLatestContinuation] = React.useState<nt.TransactionId>()
+
+    const multisigTransactions = rpcState.state.accountMultisigTransactions[
+        tonWalletAsset.address
+    ] as AggregatedMultisigTransactions | undefined
+
+    const contractType = tonWalletAsset.contractType
+
+    const tonWalletDetails = React.useMemo(() => {
+        return nt.getContractTypeDetails(contractType)
+    }, [contractType])
 
     React.useEffect(() => {
         setScroll(scrollArea.current?.scrollTop || 0)
@@ -84,26 +101,91 @@ export function TransactionsList({
         }
     }, [scrollArea, transactions, preloadTransactions])
 
+    const now = currentUtime()
+
     const detailsPart = Math.max(topOffset - scroll, 0)
     const visibleHeight = fullHeight - detailsPart
     const hiddenHeight = Math.max(scroll - topOffset, 0)
     const maxHeight = hiddenHeight + visibleHeight
 
+    let maxVisibleHeight = 0
     let totalHeight = 0
+    let offsetHeight = 0
     let startIndex: number | undefined = undefined
     let endIndex: number | undefined = undefined
+
+    let couldSkipHeightComputation = multisigTransactions == null
+
     for (let i = 0; i < transactions.length; ++i) {
-        if (totalHeight >= maxHeight) {
-            endIndex = i
-            break
+        const transaction = transactions[i] as nt.TonWalletTransaction | nt.TokenWalletTransaction
+
+        let transactionHeight = TRANSACTION_HEIGHT
+
+        if (!couldSkipHeightComputation) {
+            if (transaction.info?.type === 'wallet_interaction') {
+                if (transaction.info?.data.method.type !== 'multisig') {
+                    couldSkipHeightComputation = true
+                } else {
+                    switch (transaction.info.data.method.data.type) {
+                        case 'confirm': {
+                            transactionHeight = 0
+                            break
+                        }
+                        case 'submit': {
+                            const transactionId =
+                                transaction.info.data.method.data.data.transactionId
+                            if (transactionId == '0') {
+                                couldSkipHeightComputation = true
+                                break
+                            }
+
+                            const multisigTransaction = multisigTransactions?.[transactionId]
+
+                            if (
+                                multisigTransaction == null ||
+                                multisigTransaction.finalTransactionHash != null
+                            ) {
+                                break
+                            }
+
+                            if (transaction.createdAt + tonWalletDetails.expirationTime <= now) {
+                                transactionHeight = TRANSACTION_WITH_LABEL_HEIGHT
+                            } else {
+                                transactionHeight = TRANSACTION_WITH_EXTENDED_LABEL_HEIGHT
+                            }
+                            break
+                        }
+                        case 'send': {
+                            couldSkipHeightComputation = true
+                            break
+                        }
+                    }
+                }
+            }
         }
-        totalHeight += TRANSACTION_HEIGHT
-        if (startIndex == null && totalHeight >= hiddenHeight) {
+
+        totalHeight += transactionHeight
+
+        // Just skip transactions after visible area
+        if (endIndex !== undefined) {
+            continue
+        }
+
+        // Set index for last transaction in visible area
+        if (maxVisibleHeight >= maxHeight) {
+            endIndex = i
+            continue
+        }
+
+        // Set index for first transaction in visible area
+        if (startIndex === undefined && maxVisibleHeight + transactionHeight >= hiddenHeight) {
+            offsetHeight = maxVisibleHeight
             startIndex = i
         }
-    }
 
-    const offsetHeight = (startIndex || 0) * TRANSACTION_HEIGHT
+        // Increase visible area maximum height
+        maxVisibleHeight += transactionHeight
+    }
 
     const slice = transactions.slice(startIndex, endIndex)
 
@@ -131,9 +213,9 @@ export function TransactionsList({
                     />
                 )
             })}
-            <div
-                style={{ height: `${transactions.length * TRANSACTION_HEIGHT - totalHeight}px` }}
-            />
+            {endIndex != null && (
+                <div style={{ height: `${totalHeight - maxVisibleHeight - offsetHeight}px` }} />
+            )}
         </div>
     )
 }

@@ -13,6 +13,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     private readonly _handler: ITonWalletHandler
     private _lastTransactionLt?: string
     private _hasCustodians: boolean = false
+    private _hasUnconfirmedTransactions: boolean = false
 
     public static async subscribe(
         connectionController: ConnectionController,
@@ -79,12 +80,16 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
             }
 
             const state: nt.ContractState = this._contract.contractState()
-            if (state.lastTransactionId?.lt === this._lastTransactionLt) {
+            if (
+                state.lastTransactionId?.lt === this._lastTransactionLt &&
+                !this._hasUnconfirmedTransactions
+            ) {
                 return
             }
             this._lastTransactionLt = state.lastTransactionId?.lt
 
             const unconfirmedTransactions = this._contract.getMultisigPendingTransactions()
+            this._hasUnconfirmedTransactions = unconfirmedTransactions.length > 0
             this._handler.onUnconfirmedTransactionsChanged(unconfirmedTransactions)
         })
     }
