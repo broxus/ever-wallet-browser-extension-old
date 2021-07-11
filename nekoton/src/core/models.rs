@@ -530,8 +530,9 @@ pub fn parse_gen_timings(data: GenTimings) -> Result<models::GenTimings, JsValue
 #[wasm_bindgen(typescript_custom_section)]
 const PENDING_TRANSACTION: &str = r#"
 export type PendingTransaction = {
-    src?: string,
+    messageHash: string,
     bodyHash: string,
+    src?: string,
     expireAt: number,
 };
 "#;
@@ -544,8 +545,9 @@ extern "C" {
 
 pub fn make_pending_transaction(data: models::PendingTransaction) -> PendingTransaction {
     ObjectBuilder::new()
-        .set("src", data.src.as_ref().map(ToString::to_string))
+        .set("messageHash", data.message_hash.to_hex_string())
         .set("bodyHash", data.body_hash.to_hex_string())
+        .set("src", data.src.as_ref().map(ToString::to_string))
         .set("expireAt", data.expire_at)
         .build()
         .unchecked_into()
