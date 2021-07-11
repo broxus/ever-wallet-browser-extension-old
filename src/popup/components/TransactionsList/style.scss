@@ -62,6 +62,13 @@
         width: fit-content;
     }
 
+    &__signatures {
+        margin-top: 8px;
+        font-size: 14px;
+        line-height: 20px;
+        color: #96A1A7;
+    }
+
     &__label-in-progress {
         background-color: rgba(230, 172, 0, 0.1);
         border-radius: 2px;

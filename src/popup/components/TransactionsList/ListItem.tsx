@@ -155,7 +155,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                 )}
 
                 {unconfirmedTransaction != null && (
-                    <div className="">
+                    <div className="transactions-list-item__signatures">
                         {`${unconfirmedTransaction.signsReceived} of ${unconfirmedTransaction.signsRequired} signatures`}
                         <br />
                         {`Expires at ${new Date(expiresAt * 1000).toLocaleString('default', {

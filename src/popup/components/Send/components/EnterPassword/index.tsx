@@ -75,7 +75,7 @@ export function EnterPassword({
                 <div>
                     <div className="enter-password__confirm-details">
                         {params?.recipient !== undefined && (
-                            <div className="enter-password__confirm-details-param">
+                            <div key="recipient" className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">Recipient</span>
                                 <span className="enter-password__confirm-details-param-value">
                                 {params?.recipient}
@@ -83,7 +83,7 @@ export function EnterPassword({
                             </div>
                         )}
                         {transactionId !== undefined && (
-                            <div className="enter-password__confirm-details-param">
+                            <div key="transactionId" className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">Transaction Id</span>
                                 <span className="enter-password__confirm-details-param-value">
                                 {transactionId}
@@ -91,7 +91,7 @@ export function EnterPassword({
                             </div>
                         )}
                         {params?.amount !== undefined && (
-                            <div className="enter-password__confirm-details-param">
+                            <div key="amount" className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">Amount</span>
                                 <span className="enter-password__confirm-details-param-value">
                                 {params?.amount} {currencyName}
@@ -99,7 +99,7 @@ export function EnterPassword({
                             </div>
                         )}
                         {convertedFees !== undefined && (
-                            <div className="enter-password__confirm-details-param">
+                            <div key="convertedFees" className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">Blockchain fee</span>
                                 <span className="enter-password__confirm-details-param-value">
                                 {convertedFees.total !== undefined ? `~${convertedFees.total} TON` : 'calculating...'}
