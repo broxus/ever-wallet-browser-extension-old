@@ -12,11 +12,12 @@ import {
     extractTokenTransactionValue,
     extractTokenTransactionAddress,
     convertCurrency,
-    trimTokenName, isUnconfirmedTransaction, isExpiredTransaction,
+    trimTokenName,
+    isUnconfirmedTransaction,
+    isExpiredTransaction,
 } from '@shared/utils'
 
 import './style.scss'
-
 
 const splitAddress = (address: string | undefined) => {
     const half = address != null ? Math.ceil(address.length / 2) : 0
@@ -31,12 +32,7 @@ type Props = {
     onViewTransaction: (transaction: nt.Transaction) => void
 }
 
-export function ListItem({
-    symbol,
-    transaction,
-    style,
-    onViewTransaction,
-}: Props): JSX.Element {
+export function ListItem({ symbol, transaction, style, onViewTransaction }: Props): JSX.Element {
     const accountability = useAccountability()
     const rpcState = useRpcState()
 
@@ -44,28 +40,39 @@ export function ListItem({
     const currencyName = symbol == null ? 'TON' : symbol.name
     const transactionId = transaction.info?.data.method.data.data.transactionId as string
 
-    const isUnconfirmed = accountability.contractTypeDetails != null
-        ? isUnconfirmedTransaction(transaction, accountability.contractTypeDetails)
-        : false
-    const isExpired = accountability.contractTypeDetails != null
-        ? isExpiredTransaction(transaction, accountability.contractTypeDetails)
-        : false
+    const isUnconfirmed =
+        accountability.contractTypeDetails != null
+            ? isUnconfirmedTransaction(transaction, accountability.contractTypeDetails)
+            : false
+    const isExpired =
+        accountability.contractTypeDetails != null
+            ? isExpiredTransaction(transaction, accountability.contractTypeDetails)
+            : false
 
     const value = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionValue(transaction)
         }
-        return extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
+        return (
+            extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
+        )
     }, [transaction])
-    const txAddress = React.useMemo(() => {
+    const recipient = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionAddress(transaction)
         }
         return extractTokenTransactionAddress(transaction as nt.TokenWalletTransaction)
     }, [transaction])
-    const signatures = React.useMemo(() => {
-        return rpcState.state.accountUnconfirmedTransactions[txAddress!.address]?.[transactionId]
-    }, [transaction, txAddress])
+    const unconfirmedTransaction = React.useMemo(() => {
+        return transaction.inMessage.dst != null
+            ? rpcState.state.accountUnconfirmedTransactions[transaction.inMessage.dst]?.[
+                  transactionId
+              ]
+            : undefined
+    }, [transaction])
+
+    const expiresAt =
+        transaction.createdAt + (accountability.contractTypeDetails?.expirationTime || 3600)
 
     // wip to hide tooltip on click outside
 
@@ -108,20 +115,22 @@ export function ListItem({
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span
-                            className="transactions-list-item__description transactions-list-item__address"
-                            data-tooltip={txAddress ? splitAddress(txAddress.address) : 'Unknown'}
-                        >
-                            {txAddress ? txAddress.address && convertAddress(txAddress.address) : 'Unknown'}
-                        </span>
-                        <span className="transactions-list-item__description transactions-list-item__date">
-                            {new Date(transaction.createdAt * 1000).toLocaleString('default', {
-                                month: 'long',
-                                day: 'numeric',
-                                hour: 'numeric',
-                                minute: 'numeric',
-                            })}
-                        </span>
+                    <span
+                        className="transactions-list-item__description transactions-list-item__address"
+                        data-tooltip={recipient ? splitAddress(recipient.address) : 'Unknown'}
+                    >
+                        {recipient
+                            ? recipient.address && convertAddress(recipient.address)
+                            : 'Unknown'}
+                    </span>
+                    <span className="transactions-list-item__description transactions-list-item__date">
+                        {new Date(transaction.createdAt * 1000).toLocaleString('default', {
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                        })}
+                    </span>
                 </div>
 
                 {isUnconfirmed && (
@@ -132,11 +141,22 @@ export function ListItem({
                     </div>
                 )}
 
+                {unconfirmedTransaction != null && (
+                    <div className="">
+                        {`${unconfirmedTransaction.signsReceived} of ${unconfirmedTransaction.signsRequired} signatures`}
+                        <br />
+                        {`Expires at ${new Date(expiresAt * 1000).toLocaleString('default', {
+                            month: 'long', // TODO: remove
+                            day: 'numeric', // TODO: remove
+                            hour: 'numeric',
+                            minute: 'numeric',
+                        })}`}
+                    </div>
+                )}
+
                 {isExpired && (
                     <div className="transactions-list-item__labels">
-                        <div className="transactions-list-item__label-failed">
-                            Expired
-                        </div>
+                        <div className="transactions-list-item__label-failed">Expired</div>
                     </div>
                 )}
             </div>
