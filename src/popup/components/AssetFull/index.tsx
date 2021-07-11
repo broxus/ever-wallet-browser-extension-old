@@ -11,8 +11,14 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
-import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
+import {
+    convertCurrency,
+    isSubmitTransaction,
+    SelectedAsset,
+    TokenWalletState,
+} from '@shared/utils'
 
 import AssetIcon from '@popup/components/AssetIcon'
 import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
@@ -104,19 +110,22 @@ export function AssetFull({
             return undefined
         }
         const rootTokenContract = selectedAsset.data.rootTokenContract
-        return  rpcState.state.knownTokens[rootTokenContract]
+        return rpcState.state.knownTokens[rootTokenContract]
     }, [])
 
     const currencyName = selectedAsset.type === 'ton_wallet' ? 'TON' : symbol?.name
     const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
 
-    const preloadTransactions = React.useCallback(({ lt, hash }) => {
-        if (selectedAsset.type === 'ton_wallet') {
-             return rpc.preloadTransactions(accountAddress, lt, hash)
-        }
-        const rootTokenContract = selectedAsset.data.rootTokenContract
-        return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
-    }, [accountAddress, selectedAsset])
+    const preloadTransactions = React.useCallback(
+        ({ lt, hash }) => {
+            if (selectedAsset.type === 'ton_wallet') {
+                return rpc.preloadTransactions(accountAddress, lt, hash)
+            }
+            const rootTokenContract = selectedAsset.data.rootTokenContract
+            return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
+        },
+        [accountAddress, selectedAsset]
+    )
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
@@ -270,11 +279,7 @@ export function AssetFull({
                                 await rpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
-                                rpc.prepareTransferMessage(
-                                    accountAddress,
-                                    params,
-                                    password
-                                )
+                                rpc.prepareTransferMessage(accountAddress, params, password)
                             }
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
                                 rpc.prepareTokenMessage(owner, rootTokenContract, params)
@@ -285,9 +290,13 @@ export function AssetFull({
                         />
                     )}
                     {openedPanel == Panel.DEPLOY && <DeployWallet />}
-                    {openedPanel == Panel.TRANSACTION && selectedTransaction && (
-                        <TransactionInfo symbol={symbol} transaction={selectedTransaction} />
-                    )}
+                    {openedPanel == Panel.TRANSACTION &&
+                        selectedTransaction &&
+                        (isSubmitTransaction(selectedTransaction) ? (
+                            <MultisigTransactionSign transaction={selectedTransaction} />
+                        ) : (
+                            <TransactionInfo transaction={selectedTransaction} />
+                        ))}
                 </>
             </SlidingPanel>
         </>
