@@ -39,40 +39,43 @@ export function MessageItem({
             className="transactions-list-item"
             style={style}
         >
-            <div className="transactions-list-item__amount">
-                <div className="transactions-list-item__logo">
-                    <AssetIcon
-                        type={'ton_wallet'}
-                        address={recipient}
-                    />
-                </div>
-                <div>
-                    <div className="transactions-list-item__description">
-                        {convertCurrency(amount, 9)}{' '}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="transactions-list-item__description transactions-list-item__fees">
-                            {/*Fees: {convertTons(transaction.totalFees)} TON*/}
-                        </span>
-                    </div>
-                </div>
+            <div className="transactions-list-item__logo">
+                <AssetIcon address={recipient} type="ton_wallet" />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span
-                    className="transactions-list-item__description transactions-list-item__address"
-                    data-tooltip={recipient ? splitAddress(recipient) : 'Unknown'}
-                >
-                    {recipient ? recipient&& convertAddress(recipient) : 'Unknown'}
-                </span>
-                <span className="transactions-list-item__description transactions-list-item__date">
-                    {new Date(createdAt * 1000).toLocaleString('default', {
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                    })}
-                </span>
+            <div className="transactions-list-item__scope">
+                <div className="transactions-list-item__amount">
+                    <div>
+                        <div className="transactions-list-item__description transactions-list-item__expense">
+                            {'- '}
+                            {convertCurrency(amount, 9)}
+                            {' TON'}
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span
+                        className="transactions-list-item__description transactions-list-item__address"
+                        data-tooltip={recipient ? splitAddress(recipient) : 'Unknown'}
+                    >
+                        {recipient ? recipient&& convertAddress(recipient) : 'Unknown'}
+                    </span>
+                    <span className="transactions-list-item__description transactions-list-item__date">
+                        {new Date(createdAt * 1000).toLocaleString('default', {
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                        })}
+                    </span>
+                </div>
+
+                <div className="transactions-list-item__labels">
+                    <div className="transactions-list-item__label-in-progress">
+                        Transaction in progress
+                    </div>
+                </div>
             </div>
         </div>
     )

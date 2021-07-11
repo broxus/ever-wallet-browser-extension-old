@@ -1,6 +1,5 @@
 @import '../../styles/colors';
 
-
 .pending-approvals {
     &__counter {
         background: #f8f9f9;
@@ -44,12 +43,7 @@
 
 }
 
-
 .connect-wallet {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
     &__top-panel {
         align-items: center;
         display: flex;

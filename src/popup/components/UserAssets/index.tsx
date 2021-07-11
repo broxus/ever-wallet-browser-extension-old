@@ -2,11 +2,13 @@ import * as React from 'react'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
-import { TokenWalletsToUpdate } from '@shared/backgroundApi'
-import { SelectedAsset, TokenWalletState } from '@shared/utils'
-
 import { TransactionsList } from '@popup/components/TransactionsList'
 import { AssetsList } from '@popup/components/UserAssets/components'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
+
+import { BriefMessageInfo, TokenWalletsToUpdate } from '@shared/backgroundApi'
+import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import './style.scss'
 
@@ -43,7 +45,26 @@ export function UserAssets({
     onViewAsset,
     preloadTransactions,
 }: Props): JSX.Element {
+    const accountability = useAccountability()
+    const rpcState = useRpcState()
+
     const [activeTab, setActiveTab] = React.useState<AssetsTab>(AssetsTab.ASSETS)
+
+    const pendingTransactions = React.useMemo(() => {
+        const values: BriefMessageInfo[] = []
+
+        if (accountability.selectedAccountAddress == null) {
+            return values
+        }
+
+        window.ObjectExt.values({
+            ...rpcState.state.accountPendingTransactions[accountability.selectedAccountAddress]
+        }).forEach((entry) => {
+            values.push(entry)
+        })
+
+        return values.sort((a, b) => b.createdAt - a.createdAt)
+    }, [accountability.selectedAccountAddress, rpcState.state.accountPendingTransactions])
 
     return (
         <>
@@ -83,6 +104,7 @@ export function UserAssets({
                         fullHeight={600}
                         scrollArea={scrollArea}
                         transactions={transactions}
+                        pendingTransactions={pendingTransactions}
                         onViewTransaction={onViewTransaction}
                         preloadTransactions={preloadTransactions}
                     />

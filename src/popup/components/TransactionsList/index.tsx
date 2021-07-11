@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import { ListItem } from '@popup/components/TransactionsList/ListItem'
-// import { MessageItem } from '@popup/components/TransactionsList/MessageItem'
+import { MessageItem } from '@popup/components/TransactionsList/MessageItem'
 import { BriefMessageInfo } from '@shared/backgroundApi'
 
 import './style.scss'
@@ -28,7 +28,7 @@ export function TransactionsList({
     scrollArea,
     symbol,
     transactions,
-    // pendingTransactions,
+    pendingTransactions,
     onViewTransaction,
     preloadTransactions,
 }: Props) {
@@ -113,20 +113,18 @@ export function TransactionsList({
                 <p className="transactions-list-empty">History is empty</p>
             )}
             <div style={{ height: `${offsetHeight}px` }} />
-            {/*
             {pendingTransactions?.map((message) => (
                 <MessageItem
                     key={message.recipient}
-                    createdAt={message.createdAt}
                     amount={message.amount}
+                    createdAt={message.createdAt}
                     recipient={message.recipient}
                 />
             ))}
-            */}
             {slice.map((transaction) => {
                 return (
                     <ListItem
-                        key={`${transaction.id.lt}`}
+                        key={transaction.id.hash}
                         symbol={symbol}
                         transaction={transaction}
                         onViewTransaction={onViewTransaction}

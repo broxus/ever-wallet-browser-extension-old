@@ -67,45 +67,48 @@ export function ListItem({
                 onViewTransaction(transaction)
             }}
         >
-            <div className="transactions-list-item__amount">
-                <div className="transactions-list-item__logo">
-                    <AssetIcon
-                        type={symbol == null ? 'ton_wallet' : 'token_wallet'}
-                        address={symbol?.rootTokenContract || transaction.inMessage.dst!}
-                    />
-                </div>
-                <div>
-                    <div
-                        className={`transactions-list-item__description transactions-list-item__${
-                            value.lessThan(0) ? 'expense' : 'income'
-                        }`}
-                    >
-                        {convertCurrency(value.toString(), decimals)}{' '}
-                        {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span className="transactions-list-item__description transactions-list-item__fees">
-                            Fees: {convertTons(transaction.totalFees)} TON
-                        </span>
-                    </div>
-                </div>
+            <div className="transactions-list-item__logo">
+                <AssetIcon
+                    type={symbol == null ? 'ton_wallet' : 'token_wallet'}
+                    address={symbol?.rootTokenContract || transaction.inMessage.dst!}
+                />
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span
-                    className="transactions-list-item__description transactions-list-item__address"
-                    data-tooltip={txAddress ? splitAddress(txAddress.address) : 'Unknown'}
-                >
-                    {txAddress ? txAddress.address && convertAddress(txAddress.address) : 'Unknown'}
-                </span>
-                <span className="transactions-list-item__description transactions-list-item__date">
-                    {new Date(transaction.createdAt * 1000).toLocaleString('default', {
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: 'numeric',
-                    })}
-                </span>
+            <div className="transactions-list-item__scope">
+                <div className="transactions-list-item__amount">
+                    <div>
+                        <div
+                            className={`transactions-list-item__description transactions-list-item__${
+                                value.lessThan(0) ? 'expense' : 'income'
+                            }`}
+                        >
+                            {convertCurrency(value.toString(), decimals)}{' '}
+                            {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span className="transactions-list-item__description transactions-list-item__fees">
+                                Fees: {convertTons(transaction.totalFees)} TON
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span
+                        className="transactions-list-item__description transactions-list-item__address"
+                        data-tooltip={txAddress ? splitAddress(txAddress.address) : 'Unknown'}
+                    >
+                        {txAddress ? txAddress.address && convertAddress(txAddress.address) : 'Unknown'}
+                    </span>
+                    <span className="transactions-list-item__description transactions-list-item__date">
+                        {new Date(transaction.createdAt * 1000).toLocaleString('default', {
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                        })}
+                    </span>
+                </div>
             </div>
         </div>
     )

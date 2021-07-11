@@ -11,7 +11,6 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
-import { BriefMessageInfo } from '@shared/backgroundApi'
 import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import AssetIcon from '@popup/components/AssetIcon'
@@ -103,19 +102,6 @@ export function AssetFull({
         const rootTokenContract = selectedAsset.data.rootTokenContract
         return  rpcState.state.knownTokens[rootTokenContract]
     }, [])
-    const pendingTransactions = React.useMemo(() => {
-        const values: BriefMessageInfo[] = [{
-            amount: "1000000000",
-            createdAt: 1625960072,
-            recipient: "0:bc2f191bc9423aeb50ebcd48a386a0961ad78046a1e168eb869cae71b67ced70",
-        }]
-        window.ObjectExt.values({
-            ...rpcState.state.accountPendingTransactions
-        }).forEach((entry) => {
-            values.push(...window.ObjectExt.values(entry))
-        })
-        return values.sort((a, b) => b.createdAt - a.createdAt)
-    }, [rpcState.state.accountPendingTransactions])
 
     const currencyName = selectedAsset.type === 'ton_wallet' ? 'TON' : symbol?.name
     const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
@@ -242,7 +228,6 @@ export function AssetFull({
                         scrollArea={scrollArea}
                         symbol={symbol}
                         transactions={transactions || []}
-                        pendingTransactions={pendingTransactions}
                         onViewTransaction={showTransaction}
                         preloadTransactions={preloadTransactions}
                     />

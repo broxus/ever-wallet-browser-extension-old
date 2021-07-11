@@ -19,14 +19,13 @@
     border-bottom: 1px solid #ebedee;
     cursor: pointer;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    flex-direction: row;
     padding: 20px 0;
-    //position: relative;
 
-    &__amount {
+    &__scope {
+        flex: 1;
         display: flex;
-        width: 100%;
+        flex-direction: column;
     }
 
     &__logo {
@@ -39,6 +38,11 @@
         }
     }
 
+    &__amount {
+        display: flex;
+        width: 100%;
+    }
+
     &__description {
         display: flex;
         flex-direction: column;
@@ -48,6 +52,35 @@
         font-size: 14px;
         line-height: 20px;
         letter-spacing: 0.75px;
+    }
+
+    &__labels {
+        margin-top: 5px;
+        font-size: 14px;
+        letter-spacing: 0.75px;
+        line-height: 20px;
+        width: fit-content;
+    }
+
+    &__label-in-progress {
+        background-color: rgba(230, 172, 0, 0.1);
+        border-radius: 2px;
+        color: #e6ac00;
+        padding: 2px 8px;
+    }
+
+    &__label-waiting {
+        background-color: rgba(204, 68, 0, 0.1);
+        border-radius: 2px;
+        color: #cc4400;
+        padding: 2px 8px;
+    }
+
+    &__label-failed {
+        background-color: rgba(204, 0, 34, 0.1);
+        border-radius: 2px;
+        color: #cc0022;
+        padding: 2px 8px;
     }
 
     &__tooltip {
@@ -64,8 +97,6 @@
 
     &__address {
         color: #000000;
-        padding-left: 52px;
-
         position: relative;
 
         &::after {

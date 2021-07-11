@@ -101,6 +101,9 @@ export function ManageSeed(): JSX.Element {
 
                     <div className="accounts-management__content-header" style={{ marginTop: 16 }}>
                         Keys
+                        <a role="button" className="extra" onClick={addKey}>
+                            + Add new
+                        </a>
                     </div>
 
                     <div className="accounts-management__divider" />
@@ -139,13 +142,6 @@ export function ManageSeed(): JSX.Element {
                                     </li>
                                 )
                             })}
-                        <li>
-                            <div className="accounts-management__list-item">
-                                <a role="button" onClick={addKey}>
-                                    + Add new
-                                </a>
-                            </div>
-                        </li>
                     </ul>
 
                     <div className="accounts-management__content-buttons">
