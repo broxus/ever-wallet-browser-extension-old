@@ -10,9 +10,10 @@ use nt::transport::jrpc;
 use nt::transport::Transport;
 
 use super::{
-    make_ton_wallet_init_data, make_transactions_list, IntoHandle, PromiseGenericContract,
-    PromiseOptionFullContractState, PromiseTokenWallet, PromiseTonWallet, PromiseTonWalletInitData,
-    PromiseTransactionsList, TransportError, TransportHandle,
+    make_root_token_contract_details, make_ton_wallet_init_data, make_transactions_list,
+    IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
+    PromiseRootTokenContractDetails, PromiseTokenWallet, PromiseTonWallet,
+    PromiseTonWalletInitData, PromiseTransactionsList, TransportError, TransportHandle,
 };
 use crate::external::{JrpcConnector, JrpcSender};
 use crate::utils::*;
@@ -177,6 +178,26 @@ impl JrpcConnection {
                 }
             };
             Ok(make_ton_wallet_init_data(public_key, contract_type))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenRootDetailsFromTokenWallet")]
+    pub fn get_token_root_details_from_token_wallet(
+        &self,
+        token_wallet_address: &str,
+    ) -> Result<PromiseRootTokenContractDetails, JsValue> {
+        let token_wallet_address = parse_address(token_wallet_address)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let (address, details) =
+                nt::core::token_wallet::get_token_root_details_from_token_wallet(
+                    &transport,
+                    &token_wallet_address,
+                )
+                .await
+                .handle_error()?;
+            Ok(make_root_token_contract_details(address, details))
         })))
     }
 

@@ -62,6 +62,24 @@ export function ApproveSendMessage({
     const [fees, setFees] = React.useState<Fees>()
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(selectableKeys[0])
 
+    React.useEffect(() => {
+        if (
+            knownPayload?.type !== 'token_outgoing_transfer' &&
+            knownPayload?.type !== 'token_swap_back'
+        ) {
+            return
+        }
+
+        rpc.getTokenRootDetailsFromTokenWallet(recipient)
+            .then((details) => {
+                // TODO: set details
+                console.log(details)
+            })
+            .catch(() => {
+                /*do nothing*/
+            })
+    }, [recipient, knownPayload])
+
     const updateFees = async () => {
         let messageToPrepare: TransferMessageToPrepare = {
             publicKey: selectedKey.publicKey,
@@ -70,7 +88,8 @@ export function ApproveSendMessage({
             payload: undefined,
         }
 
-        await rpc.estimateFees(account.tonWallet.address, messageToPrepare)
+        await rpc
+            .estimateFees(account.tonWallet.address, messageToPrepare)
             .then((transactionFees) => {
                 setFees({
                     transactionFees,
@@ -109,9 +128,7 @@ export function ApproveSendMessage({
                 <div className="approve-send-message__meta">
                     <div className="approve-send-message__account">
                         <UserAvatar address={account.tonWallet.address} small />
-                        <div className="approve-send-message__account-name">
-                            {account?.name}
-                        </div>
+                        <div className="approve-send-message__account-name">{account?.name}</div>
                     </div>
                     <div className="approve-send-message__network">{networkName}</div>
                 </div>
@@ -125,9 +142,7 @@ export function ApproveSendMessage({
                     </h2>
                 )}
                 {localStep === ApproveStep.ENTER_PASSWORD && (
-                    <h2 className="approve-send-message__header-title noselect">
-                        Confirm message
-                    </h2>
+                    <h2 className="approve-send-message__header-title noselect">Confirm message</h2>
                 )}
             </header>
 
@@ -135,20 +150,20 @@ export function ApproveSendMessage({
                 <div className="approve-send-message__wrapper">
                     <div key="message" className="approve-send-message__spend-details">
                         <div className="approve-send-message__spend-details-param">
-                        <span className="approve-send-message__spend-details-param-desc">
-                            Recipient
-                        </span>
+                            <span className="approve-send-message__spend-details-param-desc">
+                                Recipient
+                            </span>
                             <span className="approve-send-message__spend-details-param-value">
-                            {recipient}
-                        </span>
+                                {recipient}
+                            </span>
                         </div>
                         <div className="approve-send-message__spend-details-param">
-                        <span className="approve-send-message__spend-details-param-desc">
-                            Amount
-                        </span>
+                            <span className="approve-send-message__spend-details-param-desc">
+                                Amount
+                            </span>
                             <span className="approve-send-message__spend-details-param-value">
-                            {convertTons(amount)} TON
-                        </span>
+                                {convertTons(amount)} TON
+                            </span>
                             {balance.lessThan(amount) && (
                                 <div
                                     className="check-seed__content-error"
@@ -170,9 +185,9 @@ export function ApproveSendMessage({
                         </div>
                         {payload && (
                             <div className="approve-send-message__spend-details-param">
-                            <span className="approve-send-message__spend-details-param-desc">
-                                Data
-                            </span>
+                                <span className="approve-send-message__spend-details-param-desc">
+                                    Data
+                                </span>
                                 <div className="approve-send-message__spend-details-param-data">
                                     <div className="approve-send-message__spend-details-param-data__method">
                                         <span>Method:</span>

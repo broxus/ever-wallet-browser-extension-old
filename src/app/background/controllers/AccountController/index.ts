@@ -7,7 +7,6 @@ import {
     convertAddress,
     convertCurrency,
     convertTons,
-    currentUtime,
     extractMultisigTransactionTime,
     extractTokenTransactionAddress,
     extractTokenTransactionValue,
@@ -44,7 +43,6 @@ import { NotificationController } from '../NotificationController'
 import { DEFAULT_POLLING_INTERVAL, BACKGROUND_POLLING_INTERVAL } from './constants'
 import { ITonWalletHandler, TonWalletSubscription } from './TonWalletSubscription'
 import { ITokenWalletHandler, TokenWalletSubscription } from './TokenWalletSubscription'
-import { IContractHandler } from '../../utils/ContractSubscription'
 
 import LedgerBridge from '../../ledger/LedgerBridge'
 
@@ -264,6 +262,18 @@ export class AccountController extends BaseController<
 
     public async getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
         return this._getTonWalletInitData(address)
+    }
+
+    public async getTokenRootDetailsFromTokenWallet(
+        tokenWalletAddress: string
+    ): Promise<nt.RootTokenContractDetails> {
+        return this.config.connectionController.use(async ({ data: { connection } }) => {
+            try {
+                return await connection.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
     }
 
     public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {

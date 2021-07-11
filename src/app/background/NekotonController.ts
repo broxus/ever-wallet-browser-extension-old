@@ -282,6 +282,10 @@ export class NekotonController extends EventEmitter {
                 'getMultisigPendingTransactions'
             ),
             getTonWalletInitData: nodeifyAsync(accountController, 'getTonWalletInitData'),
+            getTokenRootDetailsFromTokenWallet: nodeifyAsync(
+                accountController,
+                'getTokenRootDetailsFromTokenWallet'
+            ),
             updateTokenWallets: nodeifyAsync(accountController, 'updateTokenWallets'),
             logOut: nodeifyAsync(this, 'logOut'),
             estimateFees: nodeifyAsync(accountController, 'estimateFees'),

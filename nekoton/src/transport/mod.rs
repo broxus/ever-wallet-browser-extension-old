@@ -71,6 +71,34 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const ROOT_TOKEN_CONTRACT_DETAILS: &'static str = r#"
+export type RootTokenContractDetails = {
+    address: string,
+    name: string,
+    symbol: string,
+    decimals: number,
+};
+"#;
+
+fn make_root_token_contract_details(
+    address: ton_block::MsgAddressInt,
+    details: nt::core::models::RootTokenContractDetails,
+) -> JsValue {
+    ObjectBuilder::new()
+        .set("address", address.to_string())
+        .set("name", details.name)
+        .set("symbol", details.symbol)
+        .set("decimals", details.decimals)
+        .build()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<RootTokenContractDetails>")]
+    pub type PromiseRootTokenContractDetails;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const TRANSACTIONS_LIST: &'static str = r#"
 export type TransactionsList = {
     transactions: Transaction[];
