@@ -13,14 +13,14 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { debounce } from '@popup/utils/debounce'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
+import { ConnectionDataItem } from '@shared/backgroundApi'
+import { convertTons } from '@shared/utils'
+
 
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
 import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
-
-import { ConnectionDataItem } from '@shared/backgroundApi'
-import { convertTons } from '@shared/utils'
 
 import './style.scss'
 

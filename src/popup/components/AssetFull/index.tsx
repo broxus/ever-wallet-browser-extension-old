@@ -11,6 +11,7 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import AssetIcon from '@popup/components/AssetIcon'
@@ -33,7 +34,11 @@ enum Panel {
     TRANSACTION,
 }
 
-export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Props) {
+export function AssetFull({
+    tokenWalletStates,
+    selectedAsset,
+    selectedKeys,
+}: Props) {
     const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -51,19 +56,17 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
     const accountName = account.name
     const accountAddress = account.tonWallet.address
     const tonWalletAsset = account.tonWallet
-    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
-        | nt.ContractState
-        | undefined
-    const tokenWalletAssets =
-        account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
+    const tokenWalletAssets = account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
 
+    const scrollWidth = React.useMemo(() => getScrollWidth(), [])
     const shouldDeploy = React.useMemo(() => {
         if (selectedAsset.type == 'ton_wallet') {
             return (
-                tonWalletState == null ||
-                (!tonWalletState.isDeployed &&
-                    nt.getContractTypeDetails(account.tonWallet.contractType)
-                        .requiresSeparateDeploy)
+                tonWalletState == null
+                || (
+                    !tonWalletState.isDeployed
+                    && nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
             )
         }
         return false
@@ -74,41 +77,46 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
         }
         const rootTokenContract = selectedAsset.data.rootTokenContract
         return rpcState.state.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
-    }, [selectedAsset, rpcState.state.accountTokenStates, tonWalletState])
+    }, [
+        selectedAsset,
+        rpcState.state.accountTokenStates,
+        tonWalletState
+    ])
     const transactions = React.useMemo(() => {
         if (selectedAsset.type == 'ton_wallet') {
-            return rpcState.state.accountTransactions[accountAddress]
+            return rpcState.state.accountTransactions[accountAddress] || []
         }
-        const tokenTransactions =
-            rpcState.state.accountTokenTransactions[accountAddress]?.[
-                selectedAsset.data.rootTokenContract
-            ]
+        const tokenTransactions = rpcState.state.accountTokenTransactions[accountAddress]?.[
+            selectedAsset.data.rootTokenContract
+        ]
         return tokenTransactions?.filter((transaction) => {
             const tokenTransaction = transaction as nt.TokenWalletTransaction
             return tokenTransaction.info != null
-        })
-    }, [selectedAsset, rpcState.state.accountTransactions, rpcState.state.accountTokenTransactions])
+        }) || []
+
+    }, [
+        selectedAsset,
+        rpcState.state.accountTransactions,
+        rpcState.state.accountTokenTransactions,
+    ])
     const symbol = React.useMemo(() => {
         if (selectedAsset.type == 'ton_wallet') {
             return undefined
         }
         const rootTokenContract = selectedAsset.data.rootTokenContract
-        return rpcState.state.knownTokens[rootTokenContract]
+        return  rpcState.state.knownTokens[rootTokenContract]
     }, [])
 
     const currencyName = selectedAsset.type === 'ton_wallet' ? 'TON' : symbol?.name
     const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
 
-    const preloadTransactions = React.useCallback(
-        ({ lt, hash }) => {
-            if (selectedAsset.type === 'ton_wallet') {
-                return rpc.preloadTransactions(accountAddress, lt, hash)
-            }
-            const rootTokenContract = selectedAsset.data.rootTokenContract
-            return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
-        },
-        [accountAddress, selectedAsset]
-    )
+    const preloadTransactions = React.useCallback(({ lt, hash }) => {
+        if (selectedAsset.type === 'ton_wallet') {
+             return rpc.preloadTransactions(accountAddress, lt, hash)
+        }
+        const rootTokenContract = selectedAsset.data.rootTokenContract
+        return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
+    }, [accountAddress, selectedAsset])
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
@@ -124,8 +132,14 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
         setOpenedPanel(Panel.RECEIVE)
     }
 
-    const onSend = () => {
-        setOpenedPanel(Panel.SEND)
+    const onSend = async () => {
+        await rpc.tempStorageInsert('selected_asset', selectedAsset)
+        await rpc.openExtensionInExternalWindow({
+            group: 'send',
+            width: 360 + scrollWidth - 1,
+            height: 600 + scrollWidth - 1,
+        })
+        setOpenedPanel(undefined)
     }
 
     const onDeploy = () => {
@@ -226,7 +240,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                         fullHeight={380}
                         scrollArea={scrollArea}
                         symbol={symbol}
-                        transactions={transactions || []}
+                        transactions={transactions}
                         onViewTransaction={showTransaction}
                         preloadTransactions={preloadTransactions}
                     />
@@ -256,7 +270,11 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                                 await rpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
-                                rpc.prepareTransferMessage(accountAddress, params, password)
+                                rpc.prepareTransferMessage(
+                                    accountAddress,
+                                    params,
+                                    password
+                                )
                             }
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
                                 rpc.prepareTokenMessage(owner, rootTokenContract, params)

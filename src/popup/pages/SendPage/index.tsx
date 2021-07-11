@@ -7,6 +7,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import { WalletMessageToSend } from '@shared/backgroundApi'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
+import { SelectedAsset } from '@shared/utils'
 
 export function SendPage(): JSX.Element | null {
     const accountability = useAccountability()
@@ -14,6 +15,7 @@ export function SendPage(): JSX.Element | null {
     const rpcState = useRpcState()
 
     const selectedAccount = React.useMemo(() => accountability.selectedAccount, [])
+    const [initialSelectedAsset, sendSelectedAsset] = React.useState<SelectedAsset | undefined>()
 
     if (selectedAccount == null) {
         return null
@@ -29,17 +31,23 @@ export function SendPage(): JSX.Element | null {
     // }
 
     const tonWalletAsset = selectedAccount.tonWallet
-    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
-        | nt.ContractState
-        | undefined
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
 
     if (tonWalletState == null) {
         return null
     }
 
-    const tokenWalletAssets =
-        selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
+    const tokenWalletAssets = selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
     const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
+
+    React.useEffect(() => {
+        rpc.tempStorageGet('selected_asset').then((value: SelectedAsset) => {
+            console.log(value)
+            sendSelectedAsset(value)
+        }).catch(e => {
+            console.log(e)
+        })
+    }, [])
 
     const sendMessage = async (message: WalletMessageToSend) => {
         return rpc.sendMessage(accountAddress as string, message)
@@ -51,6 +59,7 @@ export function SendPage(): JSX.Element | null {
                 accountName={accountName}
                 tonWalletAsset={tonWalletAsset}
                 tokenWalletAssets={tokenWalletAssets}
+                defaultAsset={initialSelectedAsset}
                 keyEntries={keys}
                 tonWalletState={tonWalletState}
                 tokenWalletStates={tokenWalletStates}
