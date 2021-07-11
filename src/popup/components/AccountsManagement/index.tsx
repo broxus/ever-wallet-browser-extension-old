@@ -40,7 +40,12 @@ export function ManageSeeds(): JSX.Element {
 				<div key="manageSeeds" className="accounts-management__content">
 					<h2 className="accounts-management__content-title">Manage seeds & subscriptions</h2>
 
-					<div className="accounts-management__content-header">Seeds phrases</div>
+					<div className="accounts-management__content-header">
+						Seeds phrases
+						<a role="button" className="extra" onClick={addSeed}>
+							+ Add new
+						</a>
+					</div>
 
 					<div className="accounts-management__divider" />
 
@@ -66,11 +71,6 @@ export function ManageSeeds(): JSX.Element {
 								</li>
 							)
 						})}
-						<li>
-							<div className="accounts-management__list-item">
-								<a role="button" onClick={addSeed}>+ Add new</a>
-							</div>
-						</li>
 					</ul>
 				</div>
 			)}
