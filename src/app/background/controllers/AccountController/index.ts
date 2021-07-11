@@ -223,32 +223,6 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async startSubscription(
-        address: string,
-        publicKey: string,
-        contractType: nt.ContractType
-    ) {
-        console.debug('startSubscription')
-
-        await this._accountsMutex.use(async () => {
-            console.debug('startSubscription -> mutex gained')
-
-            await this._createTonWalletSubscription(address, publicKey, contractType)
-        })
-    }
-
-    public async stopSubscription(address: string) {
-        console.debug('stopSubscription')
-
-        await this._accountsMutex.use(async () => {
-            const subscription = this._tonWalletSubscriptions.get(address)
-            this._tonWalletSubscriptions.delete(address)
-            if (subscription != null) {
-                await subscription.stop()
-            }
-        })
-    }
-
     public async useTonWallet<T>(address: string, f: (wallet: nt.TonWallet) => Promise<T>) {
         const subscription = this._tonWalletSubscriptions.get(address)
         if (!subscription) {

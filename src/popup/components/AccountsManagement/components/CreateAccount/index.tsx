@@ -13,7 +13,6 @@ import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 
-
 export enum AddAccountFlow {
     CREATE,
     IMPORT,
@@ -27,7 +26,7 @@ enum FlowStep {
 }
 
 type Props = {
-    onBackFromIndex?(): void;
+    onBackFromIndex?(): void
 }
 
 export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
@@ -88,84 +87,93 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
 
         setInProcess(true)
 
-        await rpc.getTonWalletInitData(address).then(async ({ publicKey, contractType }) => {
-            await rpc.startSubscription(address, publicKey, contractType)
-            const custodians = await rpc.getCustodians(address)
-            // await rpc.stopSubscription(address)
+        await rpc
+            .getTonWalletInitData(address)
+            .then(async ({ publicKey, contractType, custodians }) => {
+                if (accountability.currentDerivedKey == null) {
+                    return
+                }
 
-            if (accountability.currentDerivedKey == null) {
-                return
-            }
+                const currentPublicKey = accountability.currentDerivedKey.publicKey
 
-            const currentPublicKey = accountability.currentDerivedKey.publicKey
+                switch (true) {
+                    // Is deployer
+                    case publicKey === currentPublicKey:
+                        {
+                            const hasAccount = accountability.currentDerivedKeyAccounts.some(
+                                (account) => account.tonWallet.address === address
+                            )
 
-            switch (true) {
-                // Is deployer
-                case publicKey === currentPublicKey: {
-                        const hasAccount = accountability.currentDerivedKeyAccounts.some(
-                            (account) => account.tonWallet.address === address
-                        )
-
-                        if (!hasAccount) {
-                            await rpc.createAccount({
-                                contractType,
-                                publicKey,
-                                name: `Account ${accountability.nextAccountId + 1}`,
-                            }).then((account) => {
-                                drawer.setPanel(Panel.MANAGE_SEEDS)
-                                accountability.onManageAccount(account)
-                                console.log('address not found in derived key -> create')
-                            })
-                        } else {
-                            setError('Account has already been added to the list')
+                            if (!hasAccount) {
+                                await rpc
+                                    .createAccount({
+                                        contractType,
+                                        publicKey,
+                                        name: `Account ${accountability.nextAccountId + 1}`,
+                                    })
+                                    .then((account) => {
+                                        drawer.setPanel(Panel.MANAGE_SEEDS)
+                                        accountability.onManageAccount(account)
+                                        console.log('address not found in derived key -> create')
+                                    })
+                            } else {
+                                setError('Account has already been added to the list')
+                            }
                         }
-                    }
-                    break
+                        break
 
-                case custodians.includes(currentPublicKey): {
-                        const hasAccount = rpcState.state.accountEntries[address]
+                    case custodians.includes(currentPublicKey):
+                        {
+                            const hasAccount = rpcState.state.accountEntries[address]
 
-                        if (!hasAccount) {
-                            await rpc.createAccount({
-                                contractType,
-                                publicKey,
-                                name: `Account ${accountability.nextAccountId + 1}`,
-                            }).then((account) => {
-                                if (currentPublicKey) {
-                                    rpc.addExternalAccount(
+                            if (!hasAccount) {
+                                await rpc
+                                    .createAccount({
+                                        contractType,
+                                        publicKey,
+                                        name: `Account ${accountability.nextAccountId + 1}`,
+                                    })
+                                    .then((account) => {
+                                        if (currentPublicKey) {
+                                            rpc.addExternalAccount(
+                                                address,
+                                                publicKey,
+                                                currentPublicKey
+                                            )
+                                        }
+                                        drawer.setPanel(Panel.MANAGE_SEEDS)
+                                        accountability.onManageAccount(account)
+                                        console.log('create and add account to externals')
+                                    })
+                            } else {
+                                const account = rpcState.state.accountEntries[address]
+                                if (account !== undefined) {
+                                    await rpc.updateAccountVisibility(address, true)
+                                    await rpc.addExternalAccount(
                                         address,
                                         publicKey,
                                         currentPublicKey
                                     )
+                                    drawer.setPanel(Panel.MANAGE_SEEDS)
+                                    accountability.onManageAccount(account)
+                                    console.log('add to externals')
                                 }
-                                drawer.setPanel(Panel.MANAGE_SEEDS)
-                                accountability.onManageAccount(account)
-                                console.log('create and add account to externals')
-                            })
-                        } else {
-                            const account = rpcState.state.accountEntries[address]
-                            if (account !== undefined) {
-                                await rpc.updateAccountVisibility(address, true)
-                                await rpc.addExternalAccount(address, publicKey, currentPublicKey)
-                                drawer.setPanel(Panel.MANAGE_SEEDS)
-                                accountability.onManageAccount(account)
-                                console.log('add to externals')
                             }
                         }
+                        break
+
+                    // Not custodian
+                    case !custodians.includes(currentPublicKey): {
+                        setError('You are not a custodian of this account')
                     }
-                    break
-
-                // Not custodian
-                case !custodians.includes(currentPublicKey): {
-                    setError('You are not a custodian of this account')
                 }
-            }
 
-            setInProcess(false)
-        }).catch((err: string) => {
-            setError(err?.toString?.().replace(/Error: /gi, ''))
-            setInProcess(false)
-        })
+                setInProcess(false)
+            })
+            .catch((err: string) => {
+                setError(err?.toString?.().replace(/Error: /gi, ''))
+                setInProcess(false)
+            })
     }
 
     const onNext = () => {
@@ -204,7 +212,10 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
     }
 
     React.useEffect(() => {
-        if (accountability.currentDerivedKey == null && accountability.derivedKeys[0] !== undefined) {
+        if (
+            accountability.currentDerivedKey == null &&
+            accountability.derivedKeys[0] !== undefined
+        ) {
             accountability.setCurrentDerivedKey(accountability.derivedKeys[0])
         }
         setContractType(DEFAULT_CONTRACT_TYPE)
@@ -274,9 +285,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                             <Button text="Back" white onClick={onBack} />
                         </div>
                         <Button
-                            text={
-                                step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Next'
-                            }
+                            text={step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Next'}
                             disabled={
                                 step === FlowStep.ENTER_ADDRESS ? address.length === 0 : false
                             }

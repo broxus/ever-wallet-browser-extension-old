@@ -164,19 +164,28 @@ impl GqlConnection {
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let (public_key, contract_type) = match transport
+            let contract = match transport
                 .get_contract_state(&address)
                 .await
                 .handle_error()?
             {
-                nt::transport::models::RawContractState::Exists(contract) => {
-                    nt::core::ton_wallet::extract_wallet_init_data(&contract).handle_error()?
-                }
+                nt::transport::models::RawContractState::Exists(contract) => contract,
                 nt::transport::models::RawContractState::NotExists => {
                     return Err(TransportError::WalletNotDeployed).handle_error()
                 }
             };
-            Ok(make_ton_wallet_init_data(public_key, contract_type))
+
+            let (public_key, wallet_type) =
+                nt::core::ton_wallet::extract_wallet_init_data(&contract).handle_error()?;
+            let custodians =
+                nt::core::ton_wallet::get_wallet_custodians(&contract, &public_key, wallet_type)
+                    .handle_error()?;
+
+            Ok(make_ton_wallet_init_data(
+                public_key,
+                wallet_type,
+                custodians,
+            ))
         })))
     }
 
