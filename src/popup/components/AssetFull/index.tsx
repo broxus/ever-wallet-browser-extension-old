@@ -11,7 +11,13 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
-import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
+import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
+import {
+    convertCurrency,
+    isSubmitTransaction,
+    SelectedAsset,
+    TokenWalletState,
+} from '@shared/utils'
 
 import AssetIcon from '@popup/components/AssetIcon'
 import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
@@ -267,9 +273,13 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                         />
                     )}
                     {openedPanel == Panel.DEPLOY && <DeployWallet />}
-                    {openedPanel == Panel.TRANSACTION && selectedTransaction && (
-                        <TransactionInfo symbol={symbol} transaction={selectedTransaction} />
-                    )}
+                    {openedPanel == Panel.TRANSACTION &&
+                        selectedTransaction &&
+                        (isSubmitTransaction(selectedTransaction) ? (
+                            <MultisigTransactionSign transaction={selectedTransaction} />
+                        ) : (
+                            <TransactionInfo transaction={selectedTransaction} />
+                        ))}
                 </>
             </SlidingPanel>
         </>
