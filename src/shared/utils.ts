@@ -593,7 +593,7 @@ export type AggregatedMultisigTransactions = {
 export const extractMultisigTransactionTime = (transactionId: string) =>
     parseInt(transactionId.slice(0, -8), 16)
 
-export const extractTransactionValue = (transaction: nt.Transaction) => {
+export const extractTransactionValue = (transaction: nt.Transaction): Decimal => {
     const transactionWithInfo = transaction as nt.TonWalletTransaction
     if (
         transactionWithInfo.info?.type === 'wallet_interaction' &&
@@ -601,7 +601,7 @@ export const extractTransactionValue = (transaction: nt.Transaction) => {
         transactionWithInfo.info.data.method.data.type === 'submit' &&
         transactionWithInfo.info.data.method.data.data.transactionId != '0'
     ) {
-        return transactionWithInfo.info.data.method.data.data.value
+        return new Decimal(transactionWithInfo.info.data.method.data.data.value)
     }
 
     const outgoing = transaction.outMessages.reduce(
