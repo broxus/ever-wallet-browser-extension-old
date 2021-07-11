@@ -38,20 +38,12 @@ export function ListItem({
     onViewTransaction,
 }: Props): JSX.Element {
     const accountability = useAccountability()
+    const rpcState = useRpcState()
 
-    const value = React.useMemo(() => {
-        if (symbol == null) {
-            return extractTransactionValue(transaction)
-        } else {
-            return extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
-        }
-    }, [transaction])
-    const txAddress = React.useMemo(() => {
-        if (symbol == null) {
-            return extractTransactionAddress(transaction)
-        }
-        return extractTokenTransactionAddress(transaction as nt.TokenWalletTransaction)
-    }, [transaction])
+    const decimals = symbol == null ? 9 : symbol.decimals
+    const currencyName = symbol == null ? 'TON' : symbol.name
+    const transactionId = transaction.info?.data.method.data.data.transactionId as string
+
     const isUnconfirmed = accountability.contractTypeDetails != null
         ? isUnconfirmedTransaction(transaction, accountability.contractTypeDetails)
         : false
@@ -59,8 +51,21 @@ export function ListItem({
         ? isExpiredTransaction(transaction, accountability.contractTypeDetails)
         : false
 
-    const decimals = symbol == null ? 9 : symbol.decimals
-    const currencyName = symbol == null ? 'TON' : symbol.name
+    const value = React.useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionValue(transaction)
+        }
+        return extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
+    }, [transaction])
+    const txAddress = React.useMemo(() => {
+        if (symbol == null) {
+            return extractTransactionAddress(transaction)
+        }
+        return extractTokenTransactionAddress(transaction as nt.TokenWalletTransaction)
+    }, [transaction])
+    const signatures = React.useMemo(() => {
+        return rpcState.state.accountUnconfirmedTransactions[txAddress!.address]?.[transactionId]
+    }, [transaction, txAddress])
 
     // wip to hide tooltip on click outside
 

@@ -89,7 +89,6 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
             ? rpcState.state.accountMultisigTransactions[source]?.[transactionId]
             : undefined
     }, [source, transactionId, rpcState.state.accountMultisigTransactions])
-    console.log(multisigTransaction, source, transactionId)
 
     const confirmations: string[] = multisigTransaction?.confirmations || []
 
@@ -123,10 +122,12 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
             keyPassword
         )
 
-        rpc.sendMessage(transaction.inMessage.dst, {
-            signedMessage,
-        })
-        drawer.setPanel(undefined)
+        try {
+            rpc.sendMessage(transaction.inMessage.dst, {
+                signedMessage,
+            })
+            drawer.setPanel(undefined)
+        } catch (e) {}
     }
 
     React.useEffect(() => {

@@ -66,7 +66,6 @@ export function AccountModal() {
             width: 360 + scrollWidth - 1,
             height: 600 + scrollWidth - 1,
         })
-        window.close()
     }
 
     hideModalOnClick(wrapperRef, hide)

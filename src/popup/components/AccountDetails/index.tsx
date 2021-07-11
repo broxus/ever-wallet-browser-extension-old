@@ -58,7 +58,6 @@ export function AccountDetails(): JSX.Element {
             width: 360 + scrollWidth - 1,
             height: 600 + scrollWidth - 1,
         })
-        window.close()
     }
 
     const onToggleNetwork = async () => {
