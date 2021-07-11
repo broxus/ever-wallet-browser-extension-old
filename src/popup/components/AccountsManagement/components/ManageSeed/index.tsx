@@ -13,10 +13,9 @@ import { ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
-
 enum ManageSeedStep {
     INDEX,
-	EXPORT_SEED,
+    EXPORT_SEED,
 }
 
 export function ManageSeed(): JSX.Element {
@@ -70,8 +69,8 @@ export function ManageSeed(): JSX.Element {
     }
 
     return (
-		<>
-			{step == ManageSeedStep.INDEX && (
+        <>
+            {step == ManageSeedStep.INDEX && (
                 <div key="index" className="accounts-management__content">
                     <h2 className="accounts-management__content-title">Manage seed phrase</h2>
 
@@ -84,11 +83,14 @@ export function ManageSeed(): JSX.Element {
                             value={name || ''}
                             onChange={setName}
                         />
-                        {(
-                            accountability.currentMasterKey !== undefined
-                            && (accountability.masterKeysNames[accountability.currentMasterKey.masterKey] !== undefined || name)
-                            && accountability.masterKeysNames[accountability.currentMasterKey.masterKey] !== name
-                        ) && (
+                        {accountability.currentMasterKey !== undefined &&
+                            (accountability.masterKeysNames[
+                                accountability.currentMasterKey.masterKey
+                            ] !== undefined ||
+                                name) &&
+                            accountability.masterKeysNames[
+                                accountability.currentMasterKey.masterKey
+                            ] !== name && (
                                 <a
                                     role="button"
                                     className="accounts-management__name-button"
@@ -101,9 +103,13 @@ export function ManageSeed(): JSX.Element {
 
                     <div className="accounts-management__content-header" style={{ marginTop: 16 }}>
                         Keys
-                        <a role="button" className="extra" onClick={addKey}>
-                            + Add new
-                        </a>
+                        {accountability.currentMasterKey?.signerName !== 'encrypted_key' ? (
+                            <a role="button" className="extra" onClick={addKey}>
+                                + Add new
+                            </a>
+                        ) : (
+                            <small>(only one is available for legacy seed)</small>
+                        )}
                     </div>
 
                     <div className="accounts-management__divider" />

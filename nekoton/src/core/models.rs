@@ -625,7 +625,7 @@ pub fn make_multisig_pending_transaction(
     data: models::MultisigPendingTransaction,
 ) -> MultisigPendingTransaction {
     ObjectBuilder::new()
-        .set("id", data.id.to_string())
+        .set("id", format!("{:x}", data.id))
         .set(
             "confirmations",
             data.confirmations
