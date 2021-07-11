@@ -13,7 +13,6 @@ import {
     extractTransactionAddress,
     extractTransactionValue,
     getOrInsertDefault,
-    MultisigTransactionStatus,
     NekotonRpcError,
     SendMessageCallback,
     TokenWalletState,
@@ -1473,7 +1472,6 @@ export class AccountController extends BaseController<
                             | undefined
                         if (multisigTransaction == null) {
                             multisigTransactions[transactionId] = {
-                                status: 'unconfirmed',
                                 confirmations: [method.data.custodian],
                                 createdAt: transaction.createdAt,
                             }
@@ -1494,20 +1492,22 @@ export class AccountController extends BaseController<
 
                         multisigTransactionsChanged = true
 
-                        const status: MultisigTransactionStatus =
-                            transaction.outMessages.length > 0 ? 'sent' : 'unconfirmed'
+                        const finalTransactionHash =
+                            transaction.outMessages.length > 0 ? transaction.id.hash : undefined
 
                         let multisigTransaction = multisigTransactions[transactionId] as
                             | AggregatedMultisigTransactionInfo
                             | undefined
                         if (multisigTransaction == null) {
                             multisigTransactions[transactionId] = {
-                                status,
+                                finalTransactionHash,
                                 confirmations: [method.data.custodian],
                                 createdAt: extractMultisigTransactionTime(transactionId),
                             }
                         } else {
-                            multisigTransaction.status = status
+                            if (finalTransactionHash != null) {
+                                multisigTransaction.finalTransactionHash = finalTransactionHash
+                            }
                             multisigTransaction.confirmations.push(method.data.custodian)
                         }
 

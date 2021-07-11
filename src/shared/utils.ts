@@ -578,10 +578,8 @@ export const shuffleArray = <T>(array: T[]) => {
     return array
 }
 
-export type MultisigTransactionStatus = 'unconfirmed' | 'sent'
-
 export type AggregatedMultisigTransactionInfo = {
-    status: MultisigTransactionStatus
+    finalTransactionHash?: string
     confirmations: string[]
     createdAt: number
 }
