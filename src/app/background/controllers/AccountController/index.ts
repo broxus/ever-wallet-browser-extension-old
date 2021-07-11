@@ -57,6 +57,7 @@ export interface AccountControllerConfig extends BaseConfig {
 export interface AccountControllerState extends BaseState {
     accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
+    accountCustodians: { [address: string]: string[] }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
     accountMultisigTransactions: { [address: string]: AggregatedMultisigTransactions }
@@ -80,6 +81,7 @@ export interface AccountControllerState extends BaseState {
 const defaultState: AccountControllerState = {
     accountEntries: {},
     accountContractStates: {},
+    accountCustodians: {},
     accountTokenStates: {},
     accountTransactions: {},
     accountMultisigTransactions: {},
@@ -795,19 +797,6 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async getCustodians(address: string) {
-        const subscription = await this._tonWalletSubscriptions.get(address)
-        requireTonWalletSubscription(address, subscription)
-
-        return subscription.use(async (wallet) => {
-            try {
-                return await wallet.getCustodians()
-            } catch (e) {
-                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
-            }
-        })
-    }
-
     public async getMultisigPendingTransactions(address: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
@@ -1171,6 +1160,10 @@ export class AccountController extends BaseController<
                     this._address,
                     unconfirmedTransactions
                 )
+            }
+
+            onCustodiansChanged(custodians: string[]) {
+                this._controller._updateCustodians(this._address, custodians)
             }
         }
 
@@ -1545,6 +1538,14 @@ export class AccountController extends BaseController<
 
         this.update({
             accountUnconfirmedTransactions,
+        })
+    }
+
+    private _updateCustodians(address: string, custodians: string[]) {
+        let { accountCustodians } = this.state
+        accountCustodians[address] = custodians
+        this.update({
+            accountCustodians,
         })
     }
 

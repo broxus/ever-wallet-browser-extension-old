@@ -42,18 +42,17 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
-    const selectableKeys = useSelectableKeys()
+    const { keys } = useSelectableKeys()
 
-    if ((
+    if (
         transaction.info?.type !== 'wallet_interaction' ||
         transaction.info.data.method.type !== 'multisig' ||
         transaction.info.data.method.data.type !== 'submit' ||
-        transaction.info.data.method.data.data.transactionId === '0')
+        transaction.info.data.method.data.data.transactionId === '0'
     ) {
         return null
     }
 
-    const [custodians, setCustodians] = React.useState<string[]>([])
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
 
@@ -62,15 +61,13 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         return transaction.info?.data.method.data.data.value
     }, [symbol, transaction])
 
-    let direction: string | undefined,
-        address: string | undefined
+    let direction: string | undefined, address: string | undefined
 
     if (symbol == null) {
         const txAddress = extractTransactionAddress(transaction)
         direction = TRANSACTION_NAMES[txAddress.direction]
         address = txAddress.address
-    }
-    else {
+    } else {
         const tokenTransaction = transaction as nt.TokenWalletTransaction
         const txAddress = extractTokenTransactionAddress(tokenTransaction)
         if (txAddress && tokenTransaction.info) {
@@ -92,11 +89,14 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
 
     const confirmations: string[] = multisigTransaction?.confirmations || []
 
+    const custodians = rpcState.state.accountCustodians[source] || []
     const filteredSelectableKeys = React.useMemo(
-        () => selectableKeys.filter((key) => !confirmations.includes(key.publicKey)),
-        [confirmations, selectableKeys]
+        () => keys.filter((key) => !confirmations.includes(key.publicKey)),
+        [confirmations, keys]
     )
-    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(filteredSelectableKeys[0])
+    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(
+        filteredSelectableKeys[0]
+    )
 
     const onConfirm = () => {
         setStep(LocalStep.ENTER_PASSWORD)
@@ -108,7 +108,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
 
     const onSubmit = async (keyPassword: nt.KeyPassword) => {
         let messageToPrepare: ConfirmMessageToPrepare = {
-            publicKey: selectedKey.publicKey,
+            publicKey: keyPassword.data.publicKey,
             transactionId: transactionId,
         }
 
@@ -130,42 +130,30 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         } catch (e) {}
     }
 
-    React.useEffect(() => {
-        if (source !== undefined) {
-            ;(async () => {
-                try {
-                    await rpc.getCustodians(source as string).then((res: string[]) => {
-                        setCustodians(res)
-                    })
-                } catch (e) {}
-            })()
-        }
-    }, [])
-
     if (step === LocalStep.ENTER_PASSWORD) {
         return (
             <div className="multisig-transaction">
                 <header className="multisig-transaction__header">
-                    <h2 className="multisig-transaction__header-title noselect">
-                        Confirm message
-                    </h2>
+                    <h2 className="multisig-transaction__header-title noselect">Confirm message</h2>
                 </header>
 
-                <EnterPassword
-                    showHeading={false}
-                    currencyName={currencyName}
-                    disabled={inProcess}
-                    transactionId={transactionId}
-                    keyEntries={filteredSelectableKeys}
-                    keyEntry={selectedKey}
-                    params={{
-                        recipient: address as string,
-                        amount: convertCurrency(value.toString(), decimals),
-                    }}
-                    onChangeKeyEntry={setKey}
-                    onSubmit={onSubmit}
-                    onBack={onBack}
-                />
+                {selectedKey != null && (
+                    <EnterPassword
+                        showHeading={false}
+                        currencyName={currencyName}
+                        disabled={inProcess}
+                        transactionId={transactionId}
+                        keyEntries={filteredSelectableKeys}
+                        keyEntry={selectedKey}
+                        params={{
+                            recipient: address as string,
+                            amount: convertCurrency(value.toString(), decimals),
+                        }}
+                        onChangeKeyEntry={setKey}
+                        onSubmit={onSubmit}
+                        onBack={onBack}
+                    />
+                )}
             </div>
         )
     }
@@ -174,22 +162,26 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         <div className="multisig-transaction">
             <header className="multisig-transaction__header">
                 <h2 className="multisig-transaction__header-title noselect">
-                    Multisignature transaction
+                    Multisig transaction
                 </h2>
             </header>
 
             <div className="multisig-transaction__wrapper">
                 <div className="transaction-info-tx-details">
                     <div className="transaction-info-tx-details-param">
-                        <span className="transaction-info-tx-details-param-desc">Date and time</span>
+                        <span className="transaction-info-tx-details-param-desc">
+                            Date and time
+                        </span>
                         <span className="transaction-info-tx-details-param-value">
-                        {new Date(transaction.createdAt * 1000).toLocaleString()}
-                    </span>
+                            {new Date(transaction.createdAt * 1000).toLocaleString()}
+                        </span>
                     </div>
 
                     {address !== undefined && (
                         <div className="transaction-info-tx-details-param">
-                            <span className="transaction-info-tx-details-param-desc">{direction}</span>
+                            <span className="transaction-info-tx-details-param-desc">
+                                {direction}
+                            </span>
                             <CopyText
                                 className="transaction-info-tx-details-param-value copy"
                                 id={`copy-${address}`}
@@ -200,12 +192,12 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
 
                     {transactionId !== undefined && (
                         <div className="transaction-info-tx-details-param">
-                        <span className="transaction-info-tx-details-param-desc">
-                            Transaction Id
-                        </span>
+                            <span className="transaction-info-tx-details-param-desc">
+                                Transaction Id
+                            </span>
                             <span className="transaction-info-tx-details-param-value">
-                            {transactionId}
-                        </span>
+                                {transactionId}
+                            </span>
                         </div>
                     )}
 
@@ -213,9 +205,9 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">Amount</span>
                         <span className="transaction-info-tx-details-param-value">
-                        {convertCurrency(value.toString(), decimals)}{' '}
+                            {convertCurrency(value.toString(), decimals)}{' '}
                             {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
-                    </span>
+                        </span>
                     </div>
 
                     {custodians.length > 1 && (
@@ -226,8 +218,8 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                     Signatures
                                 </span>
                                 <span className="transaction-info-tx-details-param-value">
-                                    {JSON.stringify(confirmations.length)} of{' '}
-                                        {custodians.length} signatures collected
+                                    {JSON.stringify(confirmations.length)} of {keys.length}{' '}
+                                    signatures collected
                                 </span>
                             </div>
 
@@ -236,23 +228,26 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                 const isInitiator = creator === custodian
 
                                 return (
-                                    <div key={custodian} className="transaction-info-tx-details-param">
+                                    <div
+                                        key={custodian}
+                                        className="transaction-info-tx-details-param"
+                                    >
                                         <div className="transaction-info-tx-details-param-desc">
                                             Custodian {idx + 1}
                                             {isSigned && (
                                                 <span className="transaction-info-tx-details-param-signed">
-                                                Signed
-                                            </span>
+                                                    Signed
+                                                </span>
                                             )}
                                             {isInitiator && (
                                                 <span className="transaction-info-tx-details-param-initiator">
-                                                Initiator
-                                            </span>
+                                                    Initiator
+                                                </span>
                                             )}
-                                            {(!isSigned) && (
+                                            {!isSigned && (
                                                 <span className="transaction-info-tx-details-param-unsigned">
-                                                Not signed
-                                            </span>
+                                                    Not signed
+                                                </span>
                                             )}
                                         </div>
                                         <CopyText
@@ -268,7 +263,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                 </div>
 
                 <footer className="multisig-transaction__footer">
-                    <Button text="Confirm" onClick={onConfirm} />
+                    <Button text="Confirm" onClick={onConfirm} disabled={selectedKey == null} />
                 </footer>
             </div>
         </div>

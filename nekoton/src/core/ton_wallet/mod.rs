@@ -170,21 +170,19 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "getCustodians")]
-    pub fn get_custodians(&self) -> Result<CustodiansList, JsValue> {
+    pub fn get_custodians(&self) -> Option<CustodiansList> {
         let inner = self.inner.clone();
 
         let wallet = inner.wallet.lock().trust_me();
-        let custodians = wallet
-            .get_custodians()
-            .as_ref()
-            .ok_or_else(|| TonWalletError::CustodiansNotFound)
-            .handle_error()?;
+        let custodians = wallet.get_custodians().as_ref()?;
 
-        Ok(custodians
-            .iter()
-            .map(|item| JsValue::from_str(&item.to_hex_string()))
-            .collect::<js_sys::Array>()
-            .unchecked_into())
+        Some(
+            custodians
+                .iter()
+                .map(|item| JsValue::from_str(&item.to_hex_string()))
+                .collect::<js_sys::Array>()
+                .unchecked_into(),
+        )
     }
 
     #[wasm_bindgen(js_name = "getMultisigPendingTransactions")]
@@ -551,6 +549,4 @@ enum TonWalletError {
     ExpectedArray,
     #[error("Expected public key string")]
     ExpectedPublicKeyString,
-    #[error("Custodians not found")]
-    CustodiansNotFound,
 }

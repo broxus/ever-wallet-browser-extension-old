@@ -87,7 +87,7 @@ export function PrepareMessage({
     const [selectedAsset, setSelectedAsset] = React.useState<string>(
         defaultAsset.type == 'ton_wallet' ? '' : defaultAsset.data.rootTokenContract
     )
-    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(keyEntries[0])
+    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(keyEntries[0])
 
     const { register, setValue, handleSubmit, errors } = useForm<MessageParams>()
 
@@ -119,8 +119,7 @@ export function PrepareMessage({
         balance = new Decimal(tonWalletState?.balance || '0')
         decimals = 9
         currencyName = 'TON'
-    }
-    else {
+    } else {
         balance = new Decimal(tokenWalletStates[selectedAsset]?.balance || '0')
 
         const symbol = knownTokens[selectedAsset] as nt.Symbol | undefined
@@ -131,6 +130,11 @@ export function PrepareMessage({
     const walletInfo = nt.getContractTypeDetails(tonWalletAsset.contractType)
 
     const submitMessageParams = async (data: MessageParams) => {
+        if (selectedKey == null) {
+            setError('Signer key not selected')
+            return
+        }
+
         let attachedAmount: string | undefined = undefined
 
         let messageToPrepare: TransferMessageToPrepare
@@ -141,8 +145,7 @@ export function PrepareMessage({
                 amount: parseTons(data.amount),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
             }
-        }
-        else {
+        } else {
             if (decimals == null) {
                 setError('Invalid decimals')
                 return
@@ -231,14 +234,10 @@ export function PrepareMessage({
                     <span className="prepare-message__account_details-title">{accountName}</span>
                 </div>
                 {localStep === PrepareStep.ENTER_ADDRESS && (
-                    <h2 className="prepare-message__header-title noselect">
-                        Send message
-                    </h2>
+                    <h2 className="prepare-message__header-title noselect">Send message</h2>
                 )}
                 {localStep === PrepareStep.ENTER_PASSWORD && (
-                    <h2 className="prepare-message__header-title noselect">
-                        Confirm message
-                    </h2>
+                    <h2 className="prepare-message__header-title noselect">Confirm message</h2>
                 )}
             </header>
 
@@ -315,7 +314,8 @@ export function PrepareMessage({
                             <div className="prepare-message__error-message">
                                 {errors.amount.type == 'required' && 'This field is required'}
                                 {errors.amount.type == 'invalidAmount' && 'Invalid amount'}
-                                {errors.amount.type == 'insufficientBalance' && 'Insufficient balance'}
+                                {errors.amount.type == 'insufficientBalance' &&
+                                    'Insufficient balance'}
                                 {errors.amount.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
@@ -366,12 +366,17 @@ export function PrepareMessage({
                         <div className="prepare-message__footer-button-back">
                             <Button text="Back" white onClick={onBack} />
                         </div>
-                        <Button text="Send" form="send" onClick={handleSubmit(submitMessageParams)} />
+                        <Button
+                            text="Send"
+                            form="send"
+                            onClick={handleSubmit(submitMessageParams)}
+                            disabled={selectedKey == null}
+                        />
                     </footer>
                 </div>
             )}
 
-            {localStep == PrepareStep.ENTER_PASSWORD && (
+            {localStep == PrepareStep.ENTER_PASSWORD && selectedKey != null && (
                 <EnterPassword
                     keyEntries={keyEntries}
                     keyEntry={selectedKey}

@@ -55,12 +55,12 @@ export function ApproveSendMessage({
         return null
     }
 
-    const selectableKeys = useSelectableKeys(account)
+    const { keys } = useSelectableKeys(account)
 
     const [localStep, setLocalStep] = React.useState(ApproveStep.MESSAGE_PREVIEW)
     const [error, setError] = React.useState<string>()
     const [fees, setFees] = React.useState<Fees>()
-    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry>(selectableKeys[0])
+    const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(keys[0])
 
     React.useEffect(() => {
         if (
@@ -81,6 +81,10 @@ export function ApproveSendMessage({
     }, [recipient, knownPayload])
 
     const updateFees = async () => {
+        if (selectedKey == null) {
+            return
+        }
+
         let messageToPrepare: TransferMessageToPrepare = {
             publicKey: selectedKey.publicKey,
             recipient: nt.repackAddress(recipient), //shouldn't throw exceptions due to higher level validation
@@ -225,7 +229,7 @@ export function ApproveSendMessage({
                             <Button
                                 type="submit"
                                 text="Send"
-                                disabled={balance.lessThan(amount)}
+                                disabled={balance.lessThan(amount) || selectedKey == null}
                                 onClick={() => {
                                     setLocalStep(ApproveStep.ENTER_PASSWORD)
                                 }}
@@ -235,9 +239,9 @@ export function ApproveSendMessage({
                 </div>
             )}
 
-            {localStep === ApproveStep.ENTER_PASSWORD && (
+            {localStep === ApproveStep.ENTER_PASSWORD && selectedKey != null && (
                 <EnterPassword
-                    keyEntries={selectableKeys}
+                    keyEntries={keys}
                     keyEntry={selectedKey}
                     currencyName="TON"
                     fees={fees}

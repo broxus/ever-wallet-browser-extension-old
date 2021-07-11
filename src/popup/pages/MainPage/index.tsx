@@ -15,7 +15,7 @@ import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { SelectedAsset, isUnconfirmedTransaction } from '@shared/utils'
+import { SelectedAsset, isSubmitTransaction } from '@shared/utils'
 
 import './style.scss'
 
@@ -141,13 +141,8 @@ export function MainPage(): JSX.Element | null {
                     )}
                     {drawer.currentPanel === Panel.TRANSACTION &&
                         selectedTransaction != null &&
-                        ((
-                            accountability.contractTypeDetails != null
-                            && isUnconfirmedTransaction(selectedTransaction, accountability.contractTypeDetails)
-                        ) ? (
-                            <MultisigTransactionSign
-                                transaction={selectedTransaction}
-                            />
+                        (isSubmitTransaction(selectedTransaction) ? (
+                            <MultisigTransactionSign transaction={selectedTransaction} />
                         ) : (
                             <TransactionInfo transaction={selectedTransaction} />
                         ))}

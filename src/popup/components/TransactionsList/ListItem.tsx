@@ -13,8 +13,8 @@ import {
     extractTokenTransactionAddress,
     convertCurrency,
     trimTokenName,
-    isUnconfirmedTransaction,
-    isExpiredTransaction,
+    isSubmitTransaction,
+    currentUtime,
 } from '@shared/utils'
 
 import './style.scss'
@@ -22,6 +22,13 @@ import './style.scss'
 const splitAddress = (address: string | undefined) => {
     const half = address != null ? Math.ceil(address.length / 2) : 0
     return half > 0 ? `${address!.slice(0, half)}\n${address!.slice(-half)}` : ''
+}
+
+enum Label {
+    NONE,
+    UNCONFIRMED,
+    SENT,
+    EXPIRED,
 }
 
 type Props = {
@@ -38,16 +45,12 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
 
     const decimals = symbol == null ? 9 : symbol.decimals
     const currencyName = symbol == null ? 'TON' : symbol.name
-    const transactionId = transaction.info?.data.method.data.data.transactionId as string
 
-    const isUnconfirmed =
-        accountability.contractTypeDetails != null
-            ? isUnconfirmedTransaction(transaction, accountability.contractTypeDetails)
-            : false
-    const isExpired =
-        accountability.contractTypeDetails != null
-            ? isExpiredTransaction(transaction, accountability.contractTypeDetails)
-            : false
+    const isSubmit = isSubmitTransaction(transaction)
+
+    const transactionId = isSubmit
+        ? transaction.info?.data.method.data.data.transactionId
+        : undefined
 
     const value = React.useMemo(() => {
         if (symbol == null) {
@@ -71,8 +74,18 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
             : undefined
     }, [transaction])
 
+    const now = currentUtime()
+
     const expiresAt =
         transaction.createdAt + (accountability.contractTypeDetails?.expirationTime || 3600)
+
+    const labelType = isSubmit
+        ? expiresAt > now
+            ? unconfirmedTransaction == null
+                ? Label.SENT
+                : Label.UNCONFIRMED
+            : Label.EXPIRED
+        : Label.NONE
 
     // wip to hide tooltip on click outside
 
@@ -133,7 +146,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                     </span>
                 </div>
 
-                {isUnconfirmed && (
+                {labelType === Label.UNCONFIRMED && (
                     <div className="transactions-list-item__labels">
                         <div className="transactions-list-item__label-waiting">
                             Waiting for confirmation
@@ -154,7 +167,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                     </div>
                 )}
 
-                {isExpired && (
+                {labelType === Label.EXPIRED && (
                     <div className="transactions-list-item__labels">
                         <div className="transactions-list-item__label-failed">Expired</div>
                     </div>
