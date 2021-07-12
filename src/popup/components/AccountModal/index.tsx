@@ -127,7 +127,7 @@ export function AccountModal() {
                 <div ref={wrapperRef} className="account-settings noselect">
                     <div className="account-settings-section">
                         <div className="account-settings-section-header">
-                            Current seed {selectedSeedName !== undefined && `(${selectedSeedName})`}
+                            Current: {selectedSeedName !== undefined && `${selectedSeedName}`}
                         </div>
                     </div>
 
@@ -137,20 +137,22 @@ export function AccountModal() {
                         <div className="account-settings-section-header">Recent seeds</div>
 
                         <ul className="account-settings__seeds-list">
-                            {accountability.recentMasterKeys.map((key) => (
-                                <li key={key.masterKey}>
-                                    <a
-                                        role="button"
-                                        className="account-settings__seeds-list-item"
-                                        onClick={onSelectMaster(key.masterKey)}
-                                    >
-                                        <div className="account-settings__seeds-list-item-title">
-                                            {accountability.masterKeysNames?.[key.masterKey] ||
-                                                convertAddress(key.masterKey)}
-                                        </div>
-                                    </a>
-                                </li>
-                            ))}
+                            {accountability.recentMasterKeys
+                                .filter((key) => key.masterKey != accountability.selectedMasterKey)
+                                .map((key) => (
+                                    <li key={key.masterKey}>
+                                        <a
+                                            role="button"
+                                            className="account-settings__seeds-list-item"
+                                            onClick={onSelectMaster(key.masterKey)}
+                                        >
+                                            <div className="account-settings__seeds-list-item-title">
+                                                {accountability.masterKeysNames?.[key.masterKey] ||
+                                                    convertAddress(key.masterKey)}
+                                            </div>
+                                        </a>
+                                    </li>
+                                ))}
                         </ul>
 
                         <div className="account-settings-section-item" onClick={onManageSeeds}>

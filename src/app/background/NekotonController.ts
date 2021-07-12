@@ -82,6 +82,14 @@ export class NekotonController extends EventEmitter {
     private readonly _options: NekotonControllerOptions
     private readonly _components: NekotonControllerComponents
 
+    private _updateDebounce: {
+        timer: number | undefined
+        shouldRepeat: boolean
+    } = {
+        timer: undefined,
+        shouldRepeat: false,
+    }
+
     public static async load(options: NekotonControllerOptions) {
         const storage = new nt.Storage(new StorageConnector())
         const accountsStorage = await nt.AccountsStorage.load(storage)
@@ -563,7 +571,23 @@ export class NekotonController extends EventEmitter {
         })
     }
 
-    private _debouncedSendUpdate = debounce(this._sendUpdate.bind(this), 200)
+    private _debouncedSendUpdate() {
+        if (this._updateDebounce.timer == null) {
+            this._sendUpdate()
+
+            this._updateDebounce.shouldRepeat = false
+
+            this._updateDebounce.timer = window.setTimeout(() => {
+                this._updateDebounce.timer = undefined
+
+                if (this._updateDebounce.shouldRepeat) {
+                    this._debouncedSendUpdate()
+                }
+            }, 200)
+        } else {
+            this._updateDebounce.shouldRepeat = true
+        }
+    }
 
     private _sendUpdate() {
         this.emit('update', this.getState())
