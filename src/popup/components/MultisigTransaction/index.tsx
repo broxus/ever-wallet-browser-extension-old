@@ -3,6 +3,7 @@ import * as React from 'react'
 import * as nt from '@nekoton'
 import {
     convertCurrency,
+    currentUtime,
     extractTokenTransactionAddress,
     extractTransactionAddress,
     trimTokenName,
@@ -95,6 +96,13 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
             : {}
     }, [source, transactionId, rpcState.state.accountMultisigTransactions])
 
+    const expirationTime = React.useMemo(() => {
+        const account = rpcState.state.accountEntries[source] as nt.AssetsList | undefined
+        return account != null
+            ? nt.getContractTypeDetails(account.tonWallet.contractType).expirationTime
+            : 3600
+    }, [rpcState, source])
+
     const confirmations: string[] = multisigTransaction?.confirmations || []
 
     const custodians = rpcState.state.accountCustodians[source] || []
@@ -105,6 +113,8 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(
         filteredSelectableKeys[0]
     )
+
+    const isExpired = transaction.createdAt + expirationTime <= currentUtime()
 
     const txHash = multisigTransaction?.finalTransactionHash
 
@@ -273,14 +283,16 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                     </span>
                                 </div>
                             ) : (
-                                <div className="transaction-info-tx-details-param">
-                                    <span className="transaction-info-tx-details-param-desc">
-                                        Status
-                                    </span>
-                                    <span className="transaction-info-tx-details-param-value">
-                                        {txHash != null ? 'Sent' : 'Expired'}
-                                    </span>
-                                </div>
+                                (txHash != null || isExpired) && (
+                                    <div className="transaction-info-tx-details-param">
+                                        <span className="transaction-info-tx-details-param-desc">
+                                            Status
+                                        </span>
+                                        <span className="transaction-info-tx-details-param-value">
+                                            {txHash != null ? 'Sent' : 'Expired'}
+                                        </span>
+                                    </div>
+                                )
                             )}
 
                             {custodians.map((custodian, idx) => {

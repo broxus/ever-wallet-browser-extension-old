@@ -52,7 +52,7 @@ export function Send({
     const rpcState = useRpcState()
 
     const trySendMessage = async (message: WalletMessageToSend) => {
-        await sendMessage(message)
+        sendMessage(message).then(() => {})
         if (rpcState.activeTab?.type === ENVIRONMENT_TYPE_NOTIFICATION) {
             closeCurrentWindow()
         }
