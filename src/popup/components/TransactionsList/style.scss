@@ -90,6 +90,13 @@
         padding: 2px 8px;
     }
 
+    &__label-expired {
+        background-color: rgba(21, 21, 21, 0.1);
+        border-radius: 2px;
+        color: #545151;
+        padding: 2px 8px;
+    }
+
     &__tooltip {
         max-width: 260px;
         word-break: break-all;

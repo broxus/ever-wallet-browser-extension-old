@@ -37,41 +37,49 @@ export function ManageSeeds(): JSX.Element {
 	return (
 		<>
 			{accountability.step == Step.MANAGE_SEEDS && (
-				<div key="manageSeeds" className="accounts-management__content">
-					<h2 className="accounts-management__content-title">Manage seeds & subscriptions</h2>
+				<div key="manageSeeds" className="accounts-management">
+					<header className="accounts-management__header">
+						<h2 className="accounts-management__header-title">
+							Manage seeds & subscriptions
+						</h2>
+					</header>
 
-					<div className="accounts-management__content-header">
-						Seeds phrases
-						<a role="button" className="extra" onClick={addSeed}>
-							+ Add new
-						</a>
+					<div className="accounts-management__wrapper">
+						<div className="accounts-management__content">
+							<div className="accounts-management__content-header">
+								Seeds phrases
+								<a role="button" className="extra" onClick={addSeed}>
+									+ Add new
+								</a>
+							</div>
+
+							<div className="accounts-management__divider" />
+
+							<ul className="accounts-management__list">
+								{accountability.masterKeys.map((key) => {
+									const isActive = accountability.selectedMasterKey === key.masterKey
+									return (
+										<li key={key.masterKey}>
+											<div
+												role="button"
+												className={classNames('accounts-management__list-item', {
+													'accounts-management__list-item--active': isActive
+												})}
+												onClick={onManageMasterKey(key)}
+											>
+												<img src={TonLogo} alt="" className="accounts-management__list-item-logo" />
+												<div className="accounts-management__list-item-title">
+													{accountability.masterKeysNames[key.masterKey] || convertAddress(key.masterKey)}
+													{isActive && ' (current)'}
+												</div>
+												<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
+											</div>
+										</li>
+									)
+								})}
+							</ul>
+						</div>
 					</div>
-
-					<div className="accounts-management__divider" />
-
-					<ul className="accounts-management__list">
-						{accountability.masterKeys.map((key) => {
-							const isActive = accountability.selectedMasterKey === key.masterKey
-							return (
-								<li key={key.masterKey}>
-									<div
-										role="button"
-										className={classNames('accounts-management__list-item', {
-											'accounts-management__list-item--active': isActive
-										})}
-										onClick={onManageMasterKey(key)}
-									>
-										<img src={TonLogo} alt="" className="accounts-management__list-item-logo" />
-										<div className="accounts-management__list-item-title">
-											{accountability.masterKeysNames[key.masterKey] || convertAddress(key.masterKey)}
-											{isActive && ' (current)'}
-										</div>
-										<img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
-									</div>
-								</li>
-							)
-						})}
-					</ul>
 				</div>
 			)}
 

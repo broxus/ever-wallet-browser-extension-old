@@ -80,51 +80,59 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
     }
 
 	return (
-		<div className="accounts-management__content">
-			<h2 className="accounts-management__content-title">Add account</h2>
+		<div className="accounts-management">
+			<header className="accounts-management__header">
+				<h2 className="accounts-management__header-title">
+					Add account
+				</h2>
+			</header>
 
-            <div className="accounts-management__content-form-rows">
-                <div className="accounts-management__content-form-row">
-                    <Select
-                        options={derivedKeysOptions}
-                        value={accountability.currentDerivedKey || accountability.derivedKeys[0]}
-                        formatOptionLabel={(value) => value.name}
-						styles={selectStyles}
-						onChange={onChangeDerivedKey}
-                    />
-                </div>
-            </div>
+			<div className="accounts-management__wrapper">
+				<div className="accounts-management__content">
+		            <div className="accounts-management__content-form-rows">
+		                <div className="accounts-management__content-form-row">
+		                    <Select
+		                        options={derivedKeysOptions}
+		                        value={accountability.currentDerivedKey || accountability.derivedKeys[0]}
+		                        formatOptionLabel={(value) => value.name}
+								styles={selectStyles}
+								onChange={onChangeDerivedKey}
+		                    />
+		                </div>
+		            </div>
 
-            <div className="accounts-management__add-options">
-                <div
-                    className={classNames('accounts-management__add-options-option', {
-                        'accounts-management__add-options-option-selected':
-                            flow === AddAccountFlow.CREATE,
-                    })}
-                    onClick={onChangeFlow(AddAccountFlow.CREATE)}
-                >
-                    <CreateAccountIcon className="accounts-management__add-options-icon" />
-                    Create new account
-                </div>
-                <div
-                    className={classNames('accounts-management__add-options-option', {
-                        'accounts-management__add-options-option-selected':
-                            flow === AddAccountFlow.IMPORT,
-                    })}
-                    onClick={onChangeFlow(AddAccountFlow.IMPORT)}
-                >
-                    <PlusIcon className="accounts-management__add-options-icon" />
-                    Add an existing account
-                </div>
-            </div>
+		            <div className="accounts-management__add-options">
+		                <div
+		                    className={classNames('accounts-management__add-options-option', {
+		                        'accounts-management__add-options-option-selected':
+		                            flow === AddAccountFlow.CREATE,
+		                    })}
+		                    onClick={onChangeFlow(AddAccountFlow.CREATE)}
+		                >
+		                    <CreateAccountIcon className="accounts-management__add-options-icon" />
+		                    Create new account
+		                </div>
+		                <div
+		                    className={classNames('accounts-management__add-options-option', {
+		                        'accounts-management__add-options-option-selected':
+		                            flow === AddAccountFlow.IMPORT,
+		                    })}
+		                    onClick={onChangeFlow(AddAccountFlow.IMPORT)}
+		                >
+		                    <PlusIcon className="accounts-management__add-options-icon" />
+		                    Add an existing account
+		                </div>
+		            </div>
+				</div>
 
-            <div className="accounts-management__content-buttons">
-                {typeof onBack === 'function' && (
-					<div className="accounts-management__content-buttons-back-btn">
-						<Button text="Back" white onClick={onBack} />
-					</div>
-				)}
-				<Button text="Next" onClick={onNext} />
+	            <footer className="accounts-management__footer">
+	                {typeof onBack === 'function' && (
+						<div className="accounts-management__footer-button-back">
+							<Button text="Back" white onClick={onBack} />
+						</div>
+					)}
+					<Button text="Next" onClick={onNext} />
+				</footer>
 			</div>
 		</div>
 	)

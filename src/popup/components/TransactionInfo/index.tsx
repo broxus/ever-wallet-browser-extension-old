@@ -78,7 +78,7 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
     }
 
     return (
-        <>
+        <div className="transaction-info">
             <h2 className="transaction-info-title noselect">Transaction information</h2>
             <div className="transaction-info-tx-details">
                 <div className="transaction-info-tx-details-param">
@@ -138,6 +138,6 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
                 }
                 text="Open in explorer"
             />
-        </>
+        </div>
     )
 }

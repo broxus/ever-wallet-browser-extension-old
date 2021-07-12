@@ -131,15 +131,22 @@ export function DeployWallet(): JSX.Element {
                 setFees(fees)
             })
             .catch(console.error)
-    }, [accountability.selectedAccountAddress, accountability.tonWalletState])
+    }, [
+        accountability.selectedAccountAddress,
+        accountability.tonWalletState
+    ])
 
     const balance = new Decimal(accountability.tonWalletState?.balance || '0')
     const totalAmount = new Decimal('0.1').add(fees || '0')
 
     if (balance.greaterThanOrEqualTo(totalAmount)) {
         return (
-            <div className="deploy-wallet__content">
-                <h2 className="deploy-wallet__content-title">Deploy your wallet</h2>
+            <div className="deploy-wallet">
+                <header className="deploy-wallet__header">
+                    <h2 className="deploy-wallet__header-title">
+                        Deploy your wallet
+                    </h2>
+                </header>
 
                 {(() => {
                     switch (step) {
@@ -158,7 +165,7 @@ export function DeployWallet(): JSX.Element {
                         case DeployWalletStep.SELECT_TYPE:
                         default:
                             return (
-                                <>
+                                <div className="deploy-wallet__wrapper">
                                     <div className="deploy-wallet__content-wallet-type-select">
                                         <Select
                                             options={walletTypesOptions}
@@ -168,10 +175,10 @@ export function DeployWallet(): JSX.Element {
                                         />
                                     </div>
 
-                                    <div key="standard" className="deploy-wallet__content-buttons">
+                                    <footer key="standard" className="deploy-wallet__footer">
                                         <Button text="Next" onClick={onNext} />
-                                    </div>
-                                </>
+                                    </footer>
+                                </div>
                             )
                     }
                 })()}
@@ -180,34 +187,42 @@ export function DeployWallet(): JSX.Element {
     }
 
     return (
-        <div className="deploy-wallet__content">
-            <h2 className="deploy-wallet__content-title">Deploy your wallet</h2>
+        <div className="deploy-wallet">
+            <header className="deploy-wallet__header">
+                <h2 className="deploy-wallet__header-title">
+                    Deploy your wallet
+                </h2>
+            </header>
 
-            <p className="deploy-wallet__comment noselect">
-                You need to have at least 0.1 TON on your account balance to deploy.
-            </p>
-            <h3 className="deploy-wallet__content-header--lead noselect">
-                Your address to receive TON
-            </h3>
-            <div className="deploy-wallet__qr-address-placeholder">
-                <div className="deploy-wallet__qr-address-code">
-                    <QRCode
-                        value={`ton://chat/${accountability.selectedAccount?.tonWallet?.address}`}
-                        size={80}
-                    />
+            <div className="deploy-wallet__wrapper">
+                <div className="deploy-wallet__content">
+                    <p className="deploy-wallet__comment noselect">
+                        You need to have at least 0.1 TON on your account balance to deploy.
+                    </p>
+                    <h3 className="deploy-wallet__content-header--lead noselect">
+                        Your address to receive TON
+                    </h3>
+                    <div className="deploy-wallet__qr-address-placeholder">
+                        <div className="deploy-wallet__qr-address-code">
+                            <QRCode
+                                value={`ton://chat/${accountability.selectedAccount?.tonWallet?.address}`}
+                                size={80}
+                            />
+                        </div>
+                        <div className="deploy-wallet__qr-address-address">
+                            {accountability.selectedAccount?.tonWallet.address}
+                        </div>
+                    </div>
                 </div>
-                <div className="deploy-wallet__qr-address-address">
-                    {accountability.selectedAccount?.tonWallet.address}
-                </div>
+
+                {accountability.selectedAccount?.tonWallet.address !== undefined && (
+                    <footer className="deploy-wallet__footer">
+                        <CopyButton text={accountability.selectedAccount?.tonWallet.address}>
+                            <Button text="Copy address" />
+                        </CopyButton>
+                    </footer>
+                )}
             </div>
-
-            {accountability.selectedAccount?.tonWallet.address !== undefined && (
-                <div className="deploy-wallet__content-buttons">
-                    <CopyButton text={accountability.selectedAccount?.tonWallet.address}>
-                        <Button text="Copy address" />
-                    </CopyButton>
-                </div>
-            )}
         </div>
     )
 }

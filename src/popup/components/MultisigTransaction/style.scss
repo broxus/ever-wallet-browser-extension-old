@@ -1,42 +1,8 @@
 @import '../../styles/colors';
 
-.sliding-panel {
-    &__content {
-        .multisig-transaction {
-            margin-top: -40px;
-
-            &__header {
-                padding: 20px 0 0 ;
-            }
-
-            &__wrapper { padding: 0; }
-
-            &__footer {
-                bottom: -20px;
-                margin-bottom: -20px !important;
-            }
-
-            .enter-password {
-                &__wrapper {
-                    padding: 0;
-                }
-
-                &__footer {
-                    bottom: -20px;
-                    margin-bottom: -20px !important;
-                }
-
-                &__confirm-details {
-                    background: none;
-                    padding: 0;
-                }
-            }
-        }
-    }
-}
-
 .multisig-transaction {
     display: flex;
+    flex: 1;
     flex-direction: column;
     min-height: 100%;
 

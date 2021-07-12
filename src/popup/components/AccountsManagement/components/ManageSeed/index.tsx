@@ -71,92 +71,100 @@ export function ManageSeed(): JSX.Element {
     return (
         <>
             {step == ManageSeedStep.INDEX && (
-                <div key="index" className="accounts-management__content">
-                    <h2 className="accounts-management__content-title">Manage seed phrase</h2>
+                <div key="index" className="accounts-management">
+                    <header className="accounts-management__header">
+                        <h2 className="accounts-management__header-title">
+                            Manage seed phrase
+                        </h2>
+                    </header>
 
-                    <div className="accounts-management__content-header">Seed name</div>
-                    <div className="accounts-management__name-field">
-                        <Input
-                            name="seed_name"
-                            label="Enter seed name"
-                            type="text"
-                            value={name || ''}
-                            onChange={setName}
-                        />
-                        {accountability.currentMasterKey !== undefined &&
-                            (accountability.masterKeysNames[
-                                accountability.currentMasterKey.masterKey
-                            ] !== undefined ||
-                                name) &&
-                            accountability.masterKeysNames[
-                                accountability.currentMasterKey.masterKey
-                            ] !== name && (
-                                <a
-                                    role="button"
-                                    className="accounts-management__name-button"
-                                    onMouseDown={saveName}
-                                >
-                                    Save
-                                </a>
-                            )}
-                    </div>
-
-                    <div className="accounts-management__content-header" style={{ marginTop: 16 }}>
-                        Keys
-                        {accountability.currentMasterKey?.signerName !== 'encrypted_key' ? (
-                            <a role="button" className="extra" onClick={addKey}>
-                                + Add new
-                            </a>
-                        ) : (
-                            <small>(only one is available for legacy seed)</small>
-                        )}
-                    </div>
-
-                    <div className="accounts-management__divider" />
-
-                    <ul className="accounts-management__list">
-                        {accountability.derivedKeys
-                            .sort((a, b) => a.accountId - b.accountId)
-                            .map((key) => {
-                                const isActive = currentDerivedKeyPubKey === key.publicKey
-                                return (
-                                    <li key={key.publicKey}>
-                                        <div
-                                            role="button"
-                                            className={classNames(
-                                                'accounts-management__list-item',
-                                                {
-                                                    'accounts-management__list-item--active': isActive,
-                                                }
-                                            )}
-                                            onClick={onManageDerivedKey(key)}
-                                        >
-                                            <img
-                                                src={TonKey}
-                                                alt=""
-                                                className="accounts-management__list-item-logo"
-                                            />
-                                            <div className="accounts-management__list-item-title">
-                                                {key.name}
-                                            </div>
-                                            <img
-                                                src={Arrow}
-                                                alt=""
-                                                style={{ height: 24, width: 24 }}
-                                            />
-                                        </div>
-                                    </li>
-                                )
-                            })}
-                    </ul>
-
-                    <div className="accounts-management__content-buttons">
-                        {rpcState.activeTab?.type != ENVIRONMENT_TYPE_POPUP && (
-                            <div className="accounts-management__content-buttons-back-btn">
-                                <Button text="Back" white onClick={onBack} />
+                    <div className="accounts-management__wrapper">
+                        <div className="accounts-management__content">
+                            <div className="accounts-management__content-header">Seed name</div>
+                            <div className="accounts-management__name-field">
+                                <Input
+                                    name="seed_name"
+                                    label="Enter seed name"
+                                    type="text"
+                                    value={name || ''}
+                                    onChange={setName}
+                                />
+                                {accountability.currentMasterKey !== undefined &&
+                                (accountability.masterKeysNames[
+                                        accountability.currentMasterKey.masterKey
+                                        ] !== undefined ||
+                                    name) &&
+                                accountability.masterKeysNames[
+                                    accountability.currentMasterKey.masterKey
+                                    ] !== name && (
+                                    <a
+                                        role="button"
+                                        className="accounts-management__name-button"
+                                        onMouseDown={saveName}
+                                    >
+                                        Save
+                                    </a>
+                                )}
                             </div>
-                        )}
-                        <Button text="Export seed" onClick={onExportSeed} />
+
+                            <div className="accounts-management__content-header" style={{ marginTop: 16 }}>
+                                Keys
+                                {accountability.currentMasterKey?.signerName !== 'encrypted_key' ? (
+                                    <a role="button" className="extra" onClick={addKey}>
+                                        + Add new
+                                    </a>
+                                ) : (
+                                    <small>(only one is available for legacy seed)</small>
+                                )}
+                            </div>
+
+                            <div className="accounts-management__divider" />
+
+                            <ul className="accounts-management__list">
+                                {accountability.derivedKeys
+                                    .sort((a, b) => a.accountId - b.accountId)
+                                    .map((key) => {
+                                        const isActive = currentDerivedKeyPubKey === key.publicKey
+                                        return (
+                                            <li key={key.publicKey}>
+                                                <div
+                                                    role="button"
+                                                    className={classNames(
+                                                        'accounts-management__list-item',
+                                                        {
+                                                            'accounts-management__list-item--active': isActive,
+                                                        }
+                                                    )}
+                                                    onClick={onManageDerivedKey(key)}
+                                                >
+                                                    <img
+                                                        src={TonKey}
+                                                        alt=""
+                                                        className="accounts-management__list-item-logo"
+                                                    />
+                                                    <div className="accounts-management__list-item-title">
+                                                        {key.name}
+                                                    </div>
+                                                    <img
+                                                        src={Arrow}
+                                                        alt=""
+                                                        style={{ height: 24, width: 24 }}
+                                                    />
+                                                </div>
+                                            </li>
+                                        )
+                                    })}
+                            </ul>
+                        </div>
+
+                        <footer className="accounts-management__footer">
+                            {rpcState.activeTab?.type != ENVIRONMENT_TYPE_POPUP && (
+                                <div className="accounts-management__footer-button-back">
+                                    <Button text="Back" white onClick={onBack} />
+                                </div>
+                            )}
+                            <Button text="Export seed" onClick={onExportSeed} />
+                        </footer>
                     </div>
                 </div>
             )}

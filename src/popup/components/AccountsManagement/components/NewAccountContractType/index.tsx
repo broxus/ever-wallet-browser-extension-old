@@ -62,47 +62,55 @@ export function NewAccountContractType({
 	}, [availableContracts, contractType])
 
 	return (
-		<div className="accounts-management__content">
-			<h2 className="accounts-management__content-title">Select wallet type</h2>
+		<div className="accounts-management">
+			<header className="accounts-management__header">
+				<h2 className="accounts-management__header-title">
+					Select wallet type
+				</h2>
+			</header>
 
-			{window.ObjectExt.keys(CONTRACT_TYPES).map((type) => {
-				if (excludedContracts?.includes(type)) {
-					return null
-				}
+			<div className="accounts-management__wrapper">
+				<div className="accounts-management__content">
+					{window.ObjectExt.keys(CONTRACT_TYPES).map((type) => {
+						if (excludedContracts?.includes(type)) {
+							return null
+						}
 
-				return (
-					<RadioButton<nt.ContractType>
-						onChange={onSelectContractType}
-						disabled={!availableContracts.includes(type)}
-						id={type}
-						key={type}
-						checked={type === contractType}
-						label={CONTRACT_TYPES[type] as string}
-						value={type}
-					/>
-				)
-			})}
+						return (
+							<RadioButton<nt.ContractType>
+								onChange={onSelectContractType}
+								disabled={!availableContracts.includes(type)}
+								id={type}
+								key={type}
+								checked={type === contractType}
+								label={CONTRACT_TYPES[type] as string}
+								value={type}
+							/>
+						)
+					})}
 
-			{error !== undefined && (
-				<div className="accounts-management__content-error">
-					{error}
+					{error !== undefined && (
+						<div className="accounts-management__content-error">
+							{error}
+						</div>
+					)}
 				</div>
-			)}
 
-			<div className="accounts-management__content-buttons">
-				<div className="accounts-management__content-buttons-back-btn">
+				<footer className="accounts-management__footer">
+					<div className="accounts-management__footer-button-back">
+						<Button
+							text="Back"
+							disabled={disabled}
+							white
+							onClick={onBack}
+						/>
+					</div>
 					<Button
-						text="Back"
+						text="Create account"
 						disabled={disabled}
-						white
-						onClick={onBack}
+						onClick={onSubmit}
 					/>
-				</div>
-				<Button
-					text="Create account"
-					disabled={disabled}
-					onClick={onSubmit}
-				/>
+				</footer>
 			</div>
 		</div>
 	)

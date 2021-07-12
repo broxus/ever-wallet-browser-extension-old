@@ -28,36 +28,42 @@ export function CheckNewSeedPhrase({ seedWords, onSubmit, onBack }: Props) {
 	}
 
 	return (
-		<div className="accounts-management__content">
-			<h2 className="accounts-management__content-title">Let’s check the seed phrase</h2>
+		<div className="accounts-management">
+			<header className="accounts-management__header">
+				<h2 className="accounts-management__header-title">
+					Let’s check the seed phrase
+				</h2>
+			</header>
 
-			<form
-				id="words"
-				onSubmit={handleSubmit(onSubmit)}
-				className="accounts-management__content-form"
-			>
-				{numbers.map((item, idx) => (
-					<CheckSeedInput
-						key={item}
-						number={item}
-						autoFocus={idx === 0}
-						name={`word${idx}`}
-						register={register({
-							required: true,
-							validate: (word: string) => validateWord(word, item),
-						})}
-					/>
-				))}
-				{(errors.word0 || errors.word1 || errors.word2 || errors.word3) && (
-					<div className="accounts-management__content-error">Your seed doesn't match</div>
-				)}
-			</form>
+			<div className="accounts-management__wrapper">
+				<form
+					id="words"
+					onSubmit={handleSubmit(onSubmit)}
+					className="accounts-management__content-form"
+				>
+					{numbers.map((item, idx) => (
+						<CheckSeedInput
+							key={item}
+							number={item}
+							autoFocus={idx === 0}
+							name={`word${idx}`}
+							register={register({
+								required: true,
+								validate: (word: string) => validateWord(word, item),
+							})}
+						/>
+					))}
+					{(errors.word0 || errors.word1 || errors.word2 || errors.word3) && (
+						<div className="accounts-management__content-error">Your seed doesn't match</div>
+					)}
+				</form>
 
-			<div className="accounts-management__content-buttons">
-				<div className="accounts-management__content-buttons-back-btn">
-					<Button text="Back" white onClick={onBack} />
-				</div>
-				<Button text="Confirm" form="words" onClick={handleSubmit(onSubmit)} />
+				<footer className="accounts-management__footer">
+					<div className="accounts-management__footer-button-back">
+						<Button text="Back" white onClick={onBack} />
+					</div>
+					<Button text="Confirm" form="words" onClick={handleSubmit(onSubmit)} />
+				</footer>
 			</div>
 		</div>
 	)

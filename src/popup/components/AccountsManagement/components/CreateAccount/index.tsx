@@ -234,63 +234,69 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
             )}
 
             {(step === FlowStep.ENTER_NAME || step === FlowStep.ENTER_ADDRESS) && (
-                <div key="enterName" className="accounts-management__content">
-                    <h2 className="accounts-management__content-title">
-                        {step === FlowStep.ENTER_ADDRESS
-                            ? 'Add an existing account'
-                            : 'Create new account'}
-                    </h2>
+                <div key="enterName" className="accounts-management">
+                    <header className="accounts-management__header">
+                        <h2 className="accounts-management__header-title">
+                            {step === FlowStep.ENTER_ADDRESS
+                                ? 'Add an existing account'
+                                : 'Create new account'}
+                        </h2>
+                    </header>
 
-                    <div className="accounts-management__content-form-rows">
-                        <div className="accounts-management__content-form-row">
-                            <Input
-                                name="name"
-                                label="Enter account name..."
-                                autoFocus
-                                type="text"
-                                value={name || ''}
-                                onChange={setName}
+                    <div className="accounts-management__wrapper">
+                        <div className="accounts-management__content">
+                            <div className="accounts-management__content-form-rows">
+                                <div className="accounts-management__content-form-row">
+                                    <Input
+                                        name="name"
+                                        label="Enter account name..."
+                                        autoFocus
+                                        type="text"
+                                        value={name || ''}
+                                        onChange={setName}
+                                    />
+                                </div>
+                                {step === FlowStep.ENTER_ADDRESS && (
+                                    <div className="accounts-management__content-form-row">
+                                        <Input
+                                            name="name"
+                                            label="Enter a multisig address..."
+                                            autoFocus
+                                            type="text"
+                                            value={address || ''}
+                                            onChange={setAddress}
+                                        />
+                                    </div>
+                                )}
+                                {step === FlowStep.ENTER_NAME && (
+                                    <div className="accounts-management__content-comment">
+                                        There will be created new public key. For creating new address
+                                        within an existing public key, please go to{' '}
+                                        <a role="button" onClick={onManageDerivedKey}>
+                                            Manage key
+                                        </a>
+                                        .
+                                    </div>
+                                )}
+                            </div>
+
+                            {error !== undefined && (
+                                <div className="accounts-management__content-error">{error}</div>
+                            )}
+                        </div>
+
+                        <footer className="accounts-management__footer">
+                            <div className="accounts-management__footer-button-back">
+                                <Button text="Back" white onClick={onBack} />
+                            </div>
+                            <Button
+                                text={step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Next'}
+                                disabled={
+                                    step === FlowStep.ENTER_ADDRESS ? address.length === 0 : false
+                                }
+                                onClick={step === FlowStep.ENTER_ADDRESS ? onAddExisting : onNext}
                             />
-                        </div>
-                        {step === FlowStep.ENTER_ADDRESS && (
-                            <div className="accounts-management__content-form-row">
-                                <Input
-                                    name="name"
-                                    label="Enter a multisig address..."
-                                    autoFocus
-                                    type="text"
-                                    value={address || ''}
-                                    onChange={setAddress}
-                                />
-                            </div>
-                        )}
-                        {step === FlowStep.ENTER_NAME && (
-                            <div className="accounts-management__content-comment">
-                                There will be created new public key. For creating new address
-                                within an existing public key, please go to{' '}
-                                <a role="button" onClick={onManageDerivedKey}>
-                                    Manage key
-                                </a>
-                                .
-                            </div>
-                        )}
-                    </div>
-
-                    {error !== undefined && (
-                        <div className="accounts-management__content-error">{error}</div>
-                    )}
-
-                    <div className="accounts-management__content-buttons">
-                        <div className="accounts-management__content-buttons-back-btn">
-                            <Button text="Back" white onClick={onBack} />
-                        </div>
-                        <Button
-                            text={step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Next'}
-                            disabled={
-                                step === FlowStep.ENTER_ADDRESS ? address.length === 0 : false
-                            }
-                            onClick={step === FlowStep.ENTER_ADDRESS ? onAddExisting : onNext}
-                        />
+                        </footer>
                     </div>
                 </div>
             )}

@@ -176,44 +176,50 @@ export function CreateSeed(): JSX.Element {
     return (
         <>
             {step === FlowStep.INDEX && (
-                <div key="index" className="accounts-management__content">
-                    <h2 className="accounts-management__content-title">Add seed phrase</h2>
+                <div key="index" className="accounts-management">
+                    <header className="accounts-management__header">
+                        <h2 className="accounts-management__header-title">
+                            Add seed phrase
+                        </h2>
+                    </header>
 
-                    <div className="accounts-management__content-form-rows">
-                        <div className="accounts-management__content-form-row">
-                            <Input
-                                label="Enter seed name..."
-                                autoFocus
-                                type="text"
-                                value={name || ''}
-                                onChange={setName}
-                            />
+                    <div className="accounts-management__wrapper">
+                        <div className="accounts-management__content-form-rows">
+                            <div className="accounts-management__content-form-row">
+                                <Input
+                                    label="Enter seed name..."
+                                    autoFocus
+                                    type="text"
+                                    value={name || ''}
+                                    onChange={setName}
+                                />
+                            </div>
+
+                            <div className="accounts-management__content-form-row">
+                                <Select
+                                    options={flowOptions}
+                                    value={flow}
+                                    styles={selectStyles}
+                                    onChange={onChangeFlow}
+                                />
+                            </div>
                         </div>
 
-                        <div className="accounts-management__content-form-row">
-                            <Select
-                                options={flowOptions}
-                                value={flow}
-                                styles={selectStyles}
-                                onChange={onChangeFlow}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="accounts-management__content-buttons">
-                        <div className="accounts-management__content-buttons-back-btn">
+                        <footer className="accounts-management__footer">
+                            <div className="accounts-management__footer-button-back">
+                                <Button
+                                    text="Back"
+                                    disabled={inProcess}
+                                    white
+                                    onClick={onBack}
+                                />
+                            </div>
                             <Button
-                                text="Back"
-                                disabled={inProcess}
-                                white
-                                onClick={onBack}
+                                text="Next"
+                                type="submit"
+                                onClick={onNext}
                             />
-                        </div>
-                        <Button
-                            text="Next"
-                            type="submit"
-                            onClick={onNext}
-                        />
+                        </footer>
                     </div>
                 </div>
             )}

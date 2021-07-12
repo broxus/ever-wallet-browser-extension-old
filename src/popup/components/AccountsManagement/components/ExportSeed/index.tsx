@@ -1,9 +1,9 @@
 import * as React from 'react'
-import * as nt from '@nekoton'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import { useForm } from 'react-hook-form'
 import ReactTooltip from 'react-tooltip'
 
+import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
@@ -87,75 +87,89 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
     return (
         <>
             {step === ExportSeedStep.PASSWORD_REQUEST && (
-                <div key="passwordRequest" className="accounts-management__content">
-                    <h2 className="accounts-management__content-title">Export a seed phrase</h2>
+                <div key="passwordRequest" className="accounts-management">
+                    <header className="accounts-management__header">
+                        <h2 className="accounts-management__header-title">
+                            Export a seed phrase
+                        </h2>
+                    </header>
 
-                    <form onSubmit={handleSubmit(onSubmit)}>
-                        <div className="accounts-management__content-form-rows">
-                            <div className="accounts-management__content-form-row">
-                                <Input
-                                    name="password"
-                                    register={register({
-                                        required: true,
-                                        minLength: 6,
-                                    })}
-                                    disabled={inProcess}
-                                    label="Enter seed password..."
-                                    type="password"
-                                />
+                    <div className="accounts-management__wrapper">
+                        <form onSubmit={handleSubmit(onSubmit)}>
+                            <div className="accounts-management__content-form-rows">
+                                <div className="accounts-management__content-form-row">
+                                    <Input
+                                        name="password"
+                                        register={register({
+                                            required: true,
+                                            minLength: 6,
+                                        })}
+                                        disabled={inProcess}
+                                        label="Enter seed password..."
+                                        type="password"
+                                    />
 
-                                {(errors.password || error) && (
-                                    <div className="accounts-management__content-error">
-                                        {errors.password && 'The password is required'}
-                                        {error}
-                                    </div>
-                                )}
+                                    {(errors.password || error) && (
+                                        <div className="accounts-management__content-error">
+                                            {errors.password && 'The password is required'}
+                                            {error}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    </form>
+                        </form>
 
-                    <div className="accounts-management__content-buttons">
-                        <div className="accounts-management__content-buttons-back-btn">
-                            <Button text="Back" white onClick={onBack} />
-                        </div>
-                        <Button text="Confirm" onClick={handleSubmit(onSubmit)} />
+                        <footer className="accounts-management__footer">
+                            <div className="accounts-management__footer-button-back">
+                                <Button text="Back" white onClick={onBack} />
+                            </div>
+                            <Button text="Confirm" onClick={handleSubmit(onSubmit)} />
+                        </footer>
                     </div>
                 </div>
             )}
 
-            {step !== null &&
-                [ExportSeedStep.COPY_SEED_PHRASE, ExportSeedStep.SEED_PHRASE_COPIED].includes(
-                    step
-                ) && (
-                    <div key="copySeedPhrase" className="accounts-management__content">
-                        <h2 className="accounts-management__content-title">Save the seed phrase</h2>
+            {(
+                step !== null
+                && [ExportSeedStep.COPY_SEED_PHRASE, ExportSeedStep.SEED_PHRASE_COPIED].includes(step)
+            ) && (
+                    <div key="copySeedPhrase" className="accounts-management">
+                        <header className="accounts-management__header">
+                            <h2 className="accounts-management__header-title">
+                                Save the seed phrase
+                            </h2>
+                        </header>
 
-                        <ol>
-                            {seedPhrase?.map((item) => (
-                                <li key={item} className="accounts-management__content-word">
-                                    {item.toLowerCase()}
-                                </li>
-                            ))}
-                        </ol>
+                        <div className="accounts-management__wrapper">
+                            <div className="accounts-management__content">
+                                <ol>
+                                    {seedPhrase?.map((item) => (
+                                        <li key={item} className="accounts-management__content-word">
+                                            {item.toLowerCase()}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
 
-                        <div className="accounts-management__content-buttons">
-                            <div className="accounts-management__content-buttons-back-btn">
-                                <Button text="Back" white onClick={onBack} />
-                            </div>
-                            <div data-tip="Copied!" data-event="click focus">
-                                {step === ExportSeedStep.COPY_SEED_PHRASE && (
-                                    <CopyToClipboard
-                                        text={seedPhrase?.length ? seedPhrase.join(' ') : ''}
-                                        onCopy={onCopy}
-                                    >
-                                        <Button text="Copy all words" />
-                                    </CopyToClipboard>
-                                )}
-                                {step === ExportSeedStep.SEED_PHRASE_COPIED && (
-                                    <Button text="I save it down" onClick={onBack} />
-                                )}
-                                <ReactTooltip type="dark" effect="solid" place="top" />
-                            </div>
+                            <footer className="accounts-management__footer">
+                                <div className="accounts-management__footer-button-back">
+                                    <Button text="Back" white onClick={onBack} />
+                                </div>
+                                <div data-tip="Copied!" data-event="click focus">
+                                    {step === ExportSeedStep.COPY_SEED_PHRASE && (
+                                        <CopyToClipboard
+                                            text={seedPhrase?.length ? seedPhrase.join(' ') : ''}
+                                            onCopy={onCopy}
+                                        >
+                                            <Button text="Copy all words" />
+                                        </CopyToClipboard>
+                                    )}
+                                    {step === ExportSeedStep.SEED_PHRASE_COPIED && (
+                                        <Button text="I save it down" onClick={onBack} />
+                                    )}
+                                    <ReactTooltip type="dark" effect="solid" place="top" />
+                                </div>
+                            </footer>
                         </div>
                     </div>
                 )}

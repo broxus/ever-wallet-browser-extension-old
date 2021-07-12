@@ -184,7 +184,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
 
                 {labelType === Label.EXPIRED && (
                     <div className="transactions-list-item__labels">
-                        <div className="transactions-list-item__label-failed">Expired</div>
+                        <div className="transactions-list-item__label-expired">Expired</div>
                     </div>
                 )}
             </div>

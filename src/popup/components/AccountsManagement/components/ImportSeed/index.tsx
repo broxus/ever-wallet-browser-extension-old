@@ -42,9 +42,14 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
 	}
 
 	return (
-		<>
-			<div className="accounts-management__content">
-				<h2 className="accounts-management__content-title">Let’s check the seed phrase</h2>
+		<div className="accounts-management">
+			<header className="accounts-management__header">
+				<h2 className="accounts-management__header-title">
+					Let’s check the seed phrase
+				</h2>
+			</header>
+
+			<div className="accounts-management__wrapper">
 				<form
 					id="words"
 					onSubmit={handleSubmit(onSubmit)}
@@ -96,13 +101,13 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
 					</div>
 				</form>
 
-				<div className="accounts-management__content-buttons">
-					<div className="accounts-management__content-buttons-back-btn">
+				<footer className="accounts-management__footer">
+					<div className="accounts-management__footer-button-back">
 						<Button text="Back" white onClick={onBack} />
 					</div>
 					<Button text="Confirm" form="words" onClick={handleSubmit(onSubmit)} />
-				</div>
+				</footer>
 			</div>
-		</>
+		</div>
 	)
 }

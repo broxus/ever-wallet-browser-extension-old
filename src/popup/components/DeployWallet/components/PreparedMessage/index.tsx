@@ -77,7 +77,6 @@ export function PreparedMessage({
 				/>
 			</footer>
 
-
 			<SlidingPanel
 				isOpen={passwordModalVisible}
 				onClose={() => setPasswordModalVisible(false)}

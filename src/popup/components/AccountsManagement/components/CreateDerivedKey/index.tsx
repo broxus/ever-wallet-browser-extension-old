@@ -54,52 +54,58 @@ export function CreateDerivedKey(): JSX.Element {
 	}
 
 	return (
-		<div className="accounts-management__content">
-			<h2 className="accounts-management__content-title">Create key</h2>
+		<div className="accounts-management">
+			<header className="accounts-management__header">
+				<h2 className="accounts-management__header-title">
+					Create key
+				</h2>
+			</header>
 
-			<form onSubmit={handleSubmit(onSubmit)}>
-				<div className="accounts-management__content-form-rows">
-					<div className="accounts-management__content-form-row">
-						<Input
-							name="name"
-							register={register()}
-							disabled={inProcess}
-							label="Enter key name..."
-							autoFocus
-							type="text"
-						/>
-						<div className="accounts-management__content-form-row-hint">
-							<sup>*</sup> Will be generated automatically
+			<div className="accounts-management__wrapper">
+				<form onSubmit={handleSubmit(onSubmit)}>
+					<div className="accounts-management__content-form-rows">
+						<div className="accounts-management__content-form-row">
+							<Input
+								name="name"
+								register={register()}
+								disabled={inProcess}
+								label="Enter key name..."
+								autoFocus
+								type="text"
+							/>
+							<div className="accounts-management__content-form-row-hint">
+								<sup>*</sup> Will be generated automatically
+							</div>
+						</div>
+
+						<div className="accounts-management__content-form-row">
+							<Input
+								name="password"
+								register={register({
+									required: true,
+									minLength: 6,
+								})}
+								disabled={inProcess}
+								label="Enter seed password..."
+								type="password"
+							/>
+							{(errors.password || error) && (
+								<div className="accounts-management__content-error">
+									{errors.password && 'The password is required'}
+									{error}
+								</div>
+							)}
 						</div>
 					</div>
+				</form>
 
-					<div className="accounts-management__content-form-row">
-						<Input
-							name="password"
-							register={register({
-								required: true,
-								minLength: 6,
-							})}
-							disabled={inProcess}
-							label="Enter seed password..."
-							type="password"
-						/>
-						{(errors.password || error) && (
-							<div className="accounts-management__content-error">
-								{errors.password && 'The password is required'}
-								{error}
-							</div>
-						)}
-					</div>
-				</div>
-
-				<div className="accounts-management__content-buttons">
-					<div className="accounts-management__content-buttons-back-btn">
+				<footer className="accounts-management__footer">
+					<div className="accounts-management__footer-button-back">
 						<Button text="Back" disabled={inProcess} white onClick={onBack} />
 					</div>
 					<Button text="Confirm" disabled={inProcess} onClick={handleSubmit(onSubmit)} />
-				</div>
-			</form>
+				</footer>
+			</div>
 		</div>
 	)
 }

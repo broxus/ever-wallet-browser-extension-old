@@ -249,7 +249,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
         <>
             {/*step === SelectTokenStep.SELECT && ( */}
             <>
-                <h2 className="noselect">Select assets</h2>
+                <h2 className="add-new-token__header noselect">Select assets</h2>
                 <div className="add-new-token">
                     <div className="add-new-token__panel noselect">
                         <div

@@ -102,92 +102,100 @@ export function ManageAccount(): JSX.Element {
     }
 
     return (
-        <div className="accounts-management__content">
-            <h2 className="accounts-management__content-title">Manage account</h2>
+        <div className="accounts-management">
+            <header className="accounts-management__header">
+                <h2 className="accounts-management__header-title">
+                    Manage account
+                </h2>
+            </header>
 
-            <div className="accounts-management__content-header">Account name</div>
-            <div className="accounts-management__name-field">
-                <Input
-                    name="seed_name"
-                    label="Enter key name"
-                    type="text"
-                    value={name || ''}
-                    onChange={setName}
-                />
-
-                {(
-                    accountability.currentAccount !== undefined
-                    && (accountability.currentAccount.name !== undefined || name)
-                    && accountability.currentAccount.name !== name
-                ) && (
-                        <a
-                            role="button"
-                            className="accounts-management__name-button"
-                            onClick={saveName}
-                        >
-                            Save
-                        </a>
-                    )}
-            </div>
-
-            <div
-                className={classNames('accounts-management__account-visibility', {
-                    'accounts-management__account-visibility-disabled': isActive,
-                })}
-            >
-                <Switcher id="visibility" checked={isVisible} onChange={onToggleVisibility} />
-                <label htmlFor="visibility">Display on the main screen</label>
-            </div>
-
-            {accountability.currentAccount !== undefined && (
-                <div className="accounts-management__address-placeholder">
-                    <div className="accounts-management__address-qr-code">
-                        <QRCode
-                            value={`ton://chat/${accountability.currentAccount.tonWallet.address}`}
-                            size={80}
+            <div className="accounts-management__wrapper">
+                <div className="accounts-management__content">
+                    <div className="accounts-management__content-header">Account name</div>
+                    <div className="accounts-management__name-field">
+                        <Input
+                            name="seed_name"
+                            label="Enter key name"
+                            type="text"
+                            value={name || ''}
+                            onChange={setName}
                         />
-                    </div>
-                    <div>
-                        <div className="accounts-management__address-text">
-                            <CopyText text={accountability.currentAccount.tonWallet.address} />
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {linkedKeys.length > 0 && (
-                <>
-                    <div className="accounts-management__content-header">Linked keys</div>
-                    <div className="accounts-management__divider" />
-                    <ul className="accounts-management__list">
-                        {linkedKeys.map((key) => (
-                            <li key={key.publicKey}>
-                                <div
+                        {(
+                            accountability.currentAccount !== undefined
+                            && (accountability.currentAccount.name !== undefined || name)
+                            && accountability.currentAccount.name !== name
+                        ) && (
+                                <a
                                     role="button"
-                                    className="accounts-management__list-item"
-                                    onClick={onManageDerivedKey(key)}
+                                    className="accounts-management__name-button"
+                                    onClick={saveName}
                                 >
-                                    <img
-                                        src={TonKey}
-                                        alt=""
-                                        className="accounts-management__list-item-logo"
-                                    />
-                                    <div className="accounts-management__list-item-title">
-                                        {key.name}
-                                    </div>
-                                    <img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </>
-            )}
+                                    Save
+                                </a>
+                            )}
+                    </div>
 
-            <div className="accounts-management__content-buttons">
-                <div className="accounts-management__content-buttons-back-btn">
-                    <Button text="Back" white onClick={onBack} />
+                    <div
+                        className={classNames('accounts-management__account-visibility', {
+                            'accounts-management__account-visibility-disabled': isActive,
+                        })}
+                    >
+                        <Switcher id="visibility" checked={isVisible} onChange={onToggleVisibility} />
+                        <label htmlFor="visibility">Display on the main screen</label>
+                    </div>
+
+                    {accountability.currentAccount !== undefined && (
+                        <div className="accounts-management__address-placeholder">
+                            <div className="accounts-management__address-qr-code">
+                                <QRCode
+                                    value={`ton://chat/${accountability.currentAccount.tonWallet.address}`}
+                                    size={80}
+                                />
+                            </div>
+                            <div>
+                                <div className="accounts-management__address-text">
+                                    <CopyText text={accountability.currentAccount.tonWallet.address} />
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {linkedKeys.length > 0 && (
+                        <>
+                            <div className="accounts-management__content-header">Linked keys</div>
+                            <div className="accounts-management__divider" />
+                            <ul className="accounts-management__list">
+                                {linkedKeys.map((key) => (
+                                    <li key={key.publicKey}>
+                                        <div
+                                            role="button"
+                                            className="accounts-management__list-item"
+                                            onClick={onManageDerivedKey(key)}
+                                        >
+                                            <img
+                                                src={TonKey}
+                                                alt=""
+                                                className="accounts-management__list-item-logo"
+                                            />
+                                            <div className="accounts-management__list-item-title">
+                                                {key.name}
+                                            </div>
+                                            <img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
                 </div>
-                <Button text="Go to account" onClick={onSelectAccount} />
+
+                <footer className="accounts-management__footer">
+                    <div className="accounts-management__footer-button-back">
+                        <Button text="Back" white onClick={onBack} />
+                    </div>
+                    <Button text="Go to account" onClick={onSelectAccount} />
+                </footer>
             </div>
         </div>
     )

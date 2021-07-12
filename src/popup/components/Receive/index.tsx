@@ -15,7 +15,7 @@ interface IReceive {
 }
 
 const Receive: React.FC<IReceive> = ({ accountName, address, currencyName }) => (
-    <>
+    <div className="receive-screen">
         <div className="receive-screen__account_details">
             <UserAvatar address={address} />
             <span className="receive-screen__account_details-title">{accountName || ''}</span>
@@ -36,7 +36,7 @@ const Receive: React.FC<IReceive> = ({ accountName, address, currencyName }) => 
         <CopyButton text={address}>
             <Button text={'Copy address'} />
         </CopyButton>
-    </>
+    </div>
 )
 
 export default Receive
