@@ -51,8 +51,8 @@ export function Send({
 }: Props): JSX.Element {
     const rpcState = useRpcState()
 
-    const trySendMessage = (message: WalletMessageToSend) => {
-        sendMessage(message).then(() => {})
+    const trySendMessage = async (message: WalletMessageToSend) => {
+        await sendMessage(message)
         if (rpcState.activeTab?.type === ENVIRONMENT_TYPE_NOTIFICATION) {
             closeCurrentWindow()
         }
@@ -79,7 +79,7 @@ export function Send({
             prepareTokenMessage={prepareTokenMessage}
             estimateFees={estimateFees}
             onBack={onBack}
-            onSubmit={(message) => trySendMessage(message)}
+            onSubmit={trySendMessage}
         />
     )
 }

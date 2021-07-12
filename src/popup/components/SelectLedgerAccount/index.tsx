@@ -15,6 +15,7 @@ import Modal from '@popup/components/Modal'
 import * as nt from '@nekoton'
 import './style.scss'
 import { getEnvironmentType } from '@popup/utils/platform'
+import { parseError } from '@popup/utils'
 
 interface ISelectLedgerAccount {
     controllerRpc: IControllerRpcClient
@@ -113,7 +114,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
             setAccounts(accountSlice)
             setCurrentPage(accountSlice?.[0]?.index / 5 + 1)
         } catch (e) {
-            setError(e.toString())
+            setError(parseError(e))
         }
         setLoading(false)
     }
@@ -142,7 +143,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                 })
             } catch (e) {
                 key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
-                setError(e.toString())
+                setError(parseError(e))
             }
         }
         const windowType = getEnvironmentType()

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import Select from 'react-select'
 
 import * as nt from '@nekoton'
-import { Fees } from '@popup/utils'
+import { Fees, parseError } from '@popup/utils'
 import { Checkbox } from '@popup/components/Checkbox'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
@@ -206,7 +206,7 @@ export function PrepareMessage({
                 },
             })
         } catch (e) {
-            setError(e.toString())
+            setError(parseError(e))
         } finally {
             setInProcess(false)
         }

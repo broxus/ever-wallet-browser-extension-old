@@ -7,6 +7,7 @@ import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
 import CheckLedgerConnection from '@popup/components/CheckLedgerConnection'
+import { parseError } from '@popup/utils'
 
 import './style.scss'
 import * as nt from '@nekoton'
@@ -271,7 +272,7 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
     const [accountName, setAccountName] = useState<string>('')
     const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
-    const masterKey = "54ceda1f7c147fc8f016c43244650b95871ac6b8c297178f52fb82c864b4ebed"
+    const masterKey = '54ceda1f7c147fc8f016c43244650b95871ac6b8c297178f52fb82c864b4ebed'
     const accountId = 1
 
     const onSubmit = async (password: string) => {
@@ -294,10 +295,9 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
                 contractType,
             })
         } catch (e) {
-            console.log('Exception: ', e)
             key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
-            setError(e.toString())
+            setError(parseError(e))
         }
         onClose()
     }
