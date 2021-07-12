@@ -207,10 +207,8 @@ export function PrepareMessage({
             })
         } catch (e) {
             setError(e.toString())
-            setInProcess(false)
         } finally {
-            setMessageParams(undefined)
-            setMessageToPrepare(undefined)
+            setInProcess(false)
         }
     }
 

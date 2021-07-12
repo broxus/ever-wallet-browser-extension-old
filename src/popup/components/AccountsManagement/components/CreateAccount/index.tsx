@@ -57,26 +57,18 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
         setInProcess(true)
 
         try {
-            await rpc
-                .createAccount({
-                    contractType,
-                    name,
-                    publicKey: accountability.currentDerivedKey.publicKey,
-                })
-                .then((account) => {
-                    setInProcess(false)
-
-                    if (account !== undefined) {
-                        drawer.setPanel(Panel.MANAGE_SEEDS)
-                        accountability.onManageAccount(account)
-                    }
-                })
-                .catch((e) => {
-                    setError(parseError(e))
-                    setInProcess(false)
-                })
+            const account = await rpc.createAccount({
+                contractType,
+                name,
+                publicKey: accountability.currentDerivedKey.publicKey,
+            })
+            if (account !== undefined) {
+                drawer.setPanel(Panel.MANAGE_SEEDS)
+                accountability.onManageAccount(account)
+            }
         } catch (e) {
             setError(parseError(e))
+        } finally {
             setInProcess(false)
         }
     }
@@ -134,9 +126,9 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         publicKey,
                                         name: `Account ${accountability.nextAccountId + 1}`,
                                     })
-                                    .then((account) => {
+                                    .then(async (account) => {
                                         if (currentPublicKey) {
-                                            rpc.addExternalAccount(
+                                            await rpc.addExternalAccount(
                                                 address,
                                                 publicKey,
                                                 currentPublicKey
