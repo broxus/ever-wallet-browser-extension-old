@@ -14,12 +14,12 @@ import { convertAddress } from '@shared/utils'
 
 import './style.scss'
 
-
 export function AccountModal() {
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
 
+    const iconRef = React.useRef(null)
     const wrapperRef = React.useRef(null)
 
     const [isActive, setActiveTo] = React.useState(false)
@@ -68,11 +68,11 @@ export function AccountModal() {
         })
     }
 
-    hideModalOnClick(wrapperRef, hide)
+    hideModalOnClick(wrapperRef, iconRef, hide)
 
     return (
         <>
-            <div className="account-details__profile-icon" onClick={toggle}>
+            <div className="account-details__profile-icon" onClick={toggle} ref={iconRef}>
                 <img src={Profile} alt="" />
             </div>
 
