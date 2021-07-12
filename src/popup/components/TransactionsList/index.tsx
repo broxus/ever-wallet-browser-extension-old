@@ -14,6 +14,9 @@ const TRANSACTION_WITH_LABEL_HEIGHT = 138
 const TRANSACTION_WITH_EXTENDED_LABEL_HEIGHT = 186
 const PRELOAD_HEIGHT = TRANSACTION_HEIGHT * 12
 
+const PENDING_SERVICE_MESSAGE_HEIGHT = 90
+const PENDING_TRANSFER_MESSAGE_HEIGHT = 110
+
 type Props = {
     tonWalletAsset: nt.TonWalletAsset
     topOffset: number
@@ -101,6 +104,22 @@ export function TransactionsList({
         }
     }, [scrollArea, transactions, preloadTransactions])
     const now = currentUtime()
+
+    if (pendingTransactions != null) {
+        for (let i = 0; i < pendingTransactions.length; ++i) {
+            switch (pendingTransactions[i].type) {
+                case 'transfer': {
+                    topOffset += PENDING_TRANSFER_MESSAGE_HEIGHT
+                    break
+                }
+                case 'deploy':
+                case 'confirm': {
+                    topOffset += PENDING_SERVICE_MESSAGE_HEIGHT
+                    break
+                }
+            }
+        }
+    }
 
     const detailsPart = Math.max(topOffset - scroll, 0)
     const visibleHeight = fullHeight - detailsPart
@@ -190,13 +209,17 @@ export function TransactionsList({
 
     return (
         <div className="user-assets__transactions-list noselect">
-            {!(transactions.length > 0) && (
+            {pendingTransactions?.map((message) => (
+                <MessageItem
+                    tonWalletAsset={tonWalletAsset}
+                    key={message.messageHash}
+                    message={message}
+                />
+            ))}
+            {transactions.length == 0 && (
                 <p className="transactions-list-empty">History is empty</p>
             )}
             <div style={{ height: `${offsetHeight}px` }} />
-            {pendingTransactions?.map((message) => (
-                <MessageItem key={message.messageHash} message={message} />
-            ))}
             {slice.map((transaction) => {
                 return (
                     <ListItem

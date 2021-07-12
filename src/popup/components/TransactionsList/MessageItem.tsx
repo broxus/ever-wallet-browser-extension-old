@@ -1,5 +1,6 @@
 import * as React from 'react'
 
+import * as nt from '@nekoton'
 import AssetIcon from '@popup/components/AssetIcon'
 import { StoredBriefMessageInfo } from '@shared/backgroundApi'
 import { convertAddress, convertCurrency } from '@shared/utils'
@@ -18,11 +19,12 @@ const OPERATION_NAME: { [k in StoredBriefMessageInfo['type']]: string } = {
 }
 
 type Props = {
+    tonWalletAsset: nt.TonWalletAsset
     message: StoredBriefMessageInfo
     style?: React.CSSProperties
 }
 
-export function MessageItem({ message, style }: Props): JSX.Element {
+export function MessageItem({ tonWalletAsset, message, style }: Props): JSX.Element {
     const amount = message.type == 'transfer' ? message.data.amount : undefined
     const recipient = message.type == 'transfer' ? message.data.recipient : undefined
 
@@ -47,9 +49,9 @@ export function MessageItem({ message, style }: Props): JSX.Element {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span
                         className="transactions-list-item__description transactions-list-item__address"
-                        data-tooltip={recipient ? splitAddress(recipient) : 'Unknown'}
+                        data-tooltip={splitAddress(recipient ? recipient : tonWalletAsset.address)}
                     >
-                        {recipient ? recipient && convertAddress(recipient) : 'Unknown'}
+                        {convertAddress(recipient ? recipient : tonWalletAsset.address)}
                     </span>
                     <span className="transactions-list-item__description transactions-list-item__date">
                         {new Date(message.createdAt * 1000).toLocaleString('default', {
