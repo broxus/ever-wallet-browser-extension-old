@@ -6,7 +6,7 @@ import { EnterPassword } from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import UserAvatar from '@popup/components/UserAvatar'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
-import { prepareKey } from '@popup/utils'
+import { parseError, prepareKey } from '@popup/utils'
 import { PendingApproval } from '@shared/backgroundApi'
 
 type Props = {
@@ -62,7 +62,7 @@ export function ApproveContractInteraction({
                 setError('Invalid password')
             }
         } catch (e) {
-            setError(e.toString())
+            setError(parseError(e))
         } finally {
             setInProcess(false)
         }
@@ -94,18 +94,18 @@ export function ApproveContractInteraction({
                 <div className="connect-wallet__spend-details">
                     <div className="connect-wallet__details__description">
                         <div className="connect-wallet__details__description-param">
-                        <span className="connect-wallet__details__description-param-desc">
-                            Contract
-                        </span>
+                            <span className="connect-wallet__details__description-param-desc">
+                                Contract
+                            </span>
                             <span className="connect-wallet__details__description-param-value">
-                            {recipient}
-                        </span>
+                                {recipient}
+                            </span>
                         </div>
                         {payload && (
                             <div className="connect-wallet__details__description-param">
-                            <span className="connect-wallet__details__description-param-desc">
-                                Data
-                            </span>
+                                <span className="connect-wallet__details__description-param-desc">
+                                    Data
+                                </span>
                                 <div className="connect-wallet__details__description-param-data">
                                     <div className="connect-wallet__details__description-param-data__method">
                                         <span>Method:</span>

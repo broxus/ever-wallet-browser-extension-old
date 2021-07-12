@@ -8,6 +8,7 @@ import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
+import { parseError } from '@popup/utils'
 
 type Props = {
     onBack(): void
@@ -71,14 +72,14 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                     setSeedPhrase(phrase.split(' '))
                     setStep(ExportSeedStep.COPY_SEED_PHRASE)
                 })
-                .catch((err: string) => {
-                    setError(err?.toString?.().replace(/Error: /gi, ''))
+                .catch((e: string) => {
+                    setError(parseError(e))
                 })
                 .finally(() => {
                     setInProcess(false)
                 })
         } catch (e) {
-            setError(e.toString?.().replace(/Error: /gi, ''))
+            setError(parseError(e))
         } finally {
             setInProcess(false)
         }
@@ -89,9 +90,7 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
             {step === ExportSeedStep.PASSWORD_REQUEST && (
                 <div key="passwordRequest" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">
-                            Export a seed phrase
-                        </h2>
+                        <h2 className="accounts-management__header-title">Export a seed phrase</h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
@@ -129,10 +128,10 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                 </div>
             )}
 
-            {(
-                step !== null
-                && [ExportSeedStep.COPY_SEED_PHRASE, ExportSeedStep.SEED_PHRASE_COPIED].includes(step)
-            ) && (
+            {step !== null &&
+                [ExportSeedStep.COPY_SEED_PHRASE, ExportSeedStep.SEED_PHRASE_COPIED].includes(
+                    step
+                ) && (
                     <div key="copySeedPhrase" className="accounts-management">
                         <header className="accounts-management__header">
                             <h2 className="accounts-management__header-title">
@@ -144,7 +143,10 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                             <div className="accounts-management__content">
                                 <ol>
                                     {seedPhrase?.map((item) => (
-                                        <li key={item} className="accounts-management__content-word">
+                                        <li
+                                            key={item}
+                                            className="accounts-management__content-word"
+                                        >
                                             {item.toLowerCase()}
                                         </li>
                                     ))}

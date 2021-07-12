@@ -15,6 +15,8 @@ export type FormattedFrees = {
     total: string
 }
 
+export const parseError = (error: any) => error?.toString?.().replace(/Error: /gi, '')
+
 export const convertFees = (fees: Fees): FormattedFrees => {
     const transactionFees = new Decimal(fees.transactionFees).div(ONE_TON)
     const attachedAmount =

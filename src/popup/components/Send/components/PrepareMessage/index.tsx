@@ -224,7 +224,7 @@ export function PrepareMessage({
 
     React.useEffect(() => {
         if (messageParams != null) {
-            submitMessageParams(messageParams)
+            submitMessageParams(messageParams).catch(() => {})
         }
     }, [selectedKey])
 

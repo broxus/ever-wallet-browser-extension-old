@@ -12,6 +12,7 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { parseError } from '@popup/utils'
 
 export enum AddAccountFlow {
     CREATE,
@@ -70,12 +71,12 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                         accountability.onManageAccount(account)
                     }
                 })
-                .catch((err: string) => {
-                    setError(err?.toString?.().replace(/Error: /gi, ''))
+                .catch((e) => {
+                    setError(parseError(e))
                     setInProcess(false)
                 })
         } catch (e) {
-            setError(e.toString().replace(/Error: /gi, ''))
+            setError(parseError(e))
             setInProcess(false)
         }
     }
@@ -170,8 +171,8 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
 
                 setInProcess(false)
             })
-            .catch((err: string) => {
-                setError(err?.toString?.().replace(/Error: /gi, ''))
+            .catch((e) => {
+                setError(parseError(e))
                 setInProcess(false)
             })
     }
@@ -270,8 +271,8 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                 )}
                                 {step === FlowStep.ENTER_NAME && (
                                     <div className="accounts-management__content-comment">
-                                        There will be created new public key. For creating new address
-                                        within an existing public key, please go to{' '}
+                                        There will be created new public key. For creating new
+                                        address within an existing public key, please go to{' '}
                                         <a role="button" onClick={onManageDerivedKey}>
                                             Manage key
                                         </a>

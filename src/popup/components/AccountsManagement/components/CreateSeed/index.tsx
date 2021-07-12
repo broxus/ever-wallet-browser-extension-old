@@ -16,7 +16,7 @@ import { selectStyles } from '@popup/constants/selectStyle'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { generateSeed, validateMnemonic } from '@popup/store/app/actions'
 import { useRpc } from '@popup/providers/RpcProvider'
-
+import { parseError } from '@popup/utils'
 
 enum AddSeedFlow {
     CREATE,
@@ -36,8 +36,8 @@ enum FlowStep {
 }
 
 type OptionType = {
-    value: AddSeedFlow;
-    label: string;
+    value: AddSeedFlow
+    label: string
 }
 
 const flowOptions: OptionType[] = [
@@ -69,36 +69,41 @@ export function CreateSeed(): JSX.Element {
         setInProcess(true)
 
         try {
-            await rpc.createMasterKey({
-                name,
-                password,
-                seed,
-            }).then(async (seed) => {
-                if (seed !== undefined) {
-                    accountability.onManageMasterKey(seed)
-                    accountability.onManageDerivedKey(seed)
-                    await rpc.createAccount({
-                        contractType,
-                        name: `Account ${accountability.nextAccountId + 1}`,
-                        publicKey: seed.publicKey,
-                    }).then((account) => {
-                        setInProcess(false)
+            await rpc
+                .createMasterKey({
+                    name,
+                    password,
+                    seed,
+                })
+                .then(async (seed) => {
+                    if (seed !== undefined) {
+                        accountability.onManageMasterKey(seed)
+                        accountability.onManageDerivedKey(seed)
+                        await rpc
+                            .createAccount({
+                                contractType,
+                                name: `Account ${accountability.nextAccountId + 1}`,
+                                publicKey: seed.publicKey,
+                            })
+                            .then((account) => {
+                                setInProcess(false)
 
-                        if (account !== undefined) {
-                            accountability.onManageAccount(account)
-                        }
-                    }).catch((err: string) => {
-                        setError(err?.toString?.().replace(/Error: /gi, ''))
-                        setInProcess(false)
-                    })
-                }
-            }).catch((err: string) => {
-                setError(err?.toString?.().replace(/Error: /gi, ''))
-                setInProcess(false)
-            })
-        }
-        catch (e) {
-            setError(e.toString().replace(/Error: /gi, ''))
+                                if (account !== undefined) {
+                                    accountability.onManageAccount(account)
+                                }
+                            })
+                            .catch((e) => {
+                                setError(parseError(e))
+                                setInProcess(false)
+                            })
+                    }
+                })
+                .catch((e) => {
+                    setError(parseError(e))
+                    setInProcess(false)
+                })
+        } catch (e) {
+            setError(parseError(e))
             setInProcess(false)
         }
     }
@@ -120,14 +125,12 @@ export function CreateSeed(): JSX.Element {
             default:
                 if (flow?.value === AddSeedFlow.CREATE) {
                     setStep(FlowStep.SHOW_PHRASE)
-                }
-                else if (
-                    flow?.value === AddSeedFlow.IMPORT
-                    || flow?.value === AddSeedFlow.IMPORT_LEGACY
+                } else if (
+                    flow?.value === AddSeedFlow.IMPORT ||
+                    flow?.value === AddSeedFlow.IMPORT_LEGACY
                 ) {
                     setStep(FlowStep.IMPORT_PHRASE)
-                }
-                else if (flow?.value === AddSeedFlow.CONNECT_LEDGER) {
+                } else if (flow?.value === AddSeedFlow.CONNECT_LEDGER) {
                     setStep(FlowStep.CONNECT_LEDGER)
                 }
         }
@@ -135,17 +138,17 @@ export function CreateSeed(): JSX.Element {
 
     const onNextWhenImport = (words: string[]) => {
         const phrase = words.join(' ')
-        const mnemonicType: nt.MnemonicType = flow?.value === AddSeedFlow.IMPORT_LEGACY
-            ? { type: 'legacy' }
-            : { type: 'labs', accountId: 0 }
+        const mnemonicType: nt.MnemonicType =
+            flow?.value === AddSeedFlow.IMPORT_LEGACY
+                ? { type: 'legacy' }
+                : { type: 'labs', accountId: 0 }
 
         try {
             validateMnemonic(phrase, mnemonicType)
             setSeed({ phrase, mnemonicType })
             setStep(FlowStep.SELECT_CONTRACT_TYPE)
-        }
-        catch (e) {
-            setError(e.toString())
+        } catch (e) {
+            setError(parseError(e))
         }
     }
 
@@ -178,9 +181,7 @@ export function CreateSeed(): JSX.Element {
             {step === FlowStep.INDEX && (
                 <div key="index" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">
-                            Add seed phrase
-                        </h2>
+                        <h2 className="accounts-management__header-title">Add seed phrase</h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
@@ -207,18 +208,9 @@ export function CreateSeed(): JSX.Element {
 
                         <footer className="accounts-management__footer">
                             <div className="accounts-management__footer-button-back">
-                                <Button
-                                    text="Back"
-                                    disabled={inProcess}
-                                    white
-                                    onClick={onBack}
-                                />
+                                <Button text="Back" disabled={inProcess} white onClick={onBack} />
                             </div>
-                            <Button
-                                text="Next"
-                                type="submit"
-                                onClick={onNext}
-                            />
+                            <Button text="Next" type="submit" onClick={onNext} />
                         </footer>
                     </div>
                 </div>

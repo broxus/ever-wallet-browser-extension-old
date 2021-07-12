@@ -7,12 +7,11 @@ import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import { CopyButton } from '@popup/components/CopyButton'
 import { PreparedMessage } from '@popup/components/DeployWallet/components'
-import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { selectStyles } from '@popup/constants/selectStyle'
-import { prepareKey } from '@popup/utils'
+import { parseError, prepareKey } from '@popup/utils'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
 
@@ -39,7 +38,6 @@ const walletTypesOptions: OptionType[] = [
 ]
 
 export function DeployWallet(): JSX.Element {
-    const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -50,18 +48,27 @@ export function DeployWallet(): JSX.Element {
     const [step, setStep] = React.useState(DeployWalletStep.SELECT_TYPE)
     const [walletType, setWalletType] = React.useState<OptionType | null>(walletTypesOptions[0])
 
+    const selectedAccount = React.useMemo(() => rpcState.state.selectedAccount?.tonWallet, [])
+    if (selectedAccount == null) {
+        return <></>
+    }
+
     const scrollWidth = React.useMemo(() => getScrollWidth(), [])
+
     const selectedDerivedKeyEntry = React.useMemo(() => {
-        return accountability.selectedAccountPublicKey !== undefined
-            ? rpcState.state?.storedKeys[accountability.selectedAccountPublicKey]
+        return selectedAccount.publicKey !== undefined
+            ? rpcState.state.storedKeys[selectedAccount.publicKey]
             : undefined
-    }, [accountability.selectedAccountPublicKey])
+    }, [rpcState, selectedAccount])
+
+    const tonWalletState = React.useMemo(() => {
+        return rpcState.state.accountContractStates[selectedAccount.address] as
+            | nt.ContractState
+            | undefined
+    }, [rpcState, selectedAccount])
 
     const sendMessage = (message: WalletMessageToSend) => {
-        if (accountability.selectedAccountAddress == null) {
-            return
-        }
-        rpc.sendMessage(accountability.selectedAccountAddress, message)
+        rpc.sendMessage(selectedAccount.address, message)
         drawer.setPanel(undefined)
     }
 
@@ -70,7 +77,7 @@ export function DeployWallet(): JSX.Element {
     }
 
     const onSubmit = async (password: string) => {
-        if (selectedDerivedKeyEntry == null || accountability.selectedAccountAddress == null) {
+        if (selectedDerivedKeyEntry == null) {
             return
         }
 
@@ -81,13 +88,14 @@ export function DeployWallet(): JSX.Element {
         setInProcess(true)
 
         await rpc
-            .prepareDeploymentMessage(accountability.selectedAccountAddress, params, keyPassword)
+            .prepareDeploymentMessage(selectedAccount.address, params, keyPassword)
             .then((signedMessage) => {
                 sendMessage({ signedMessage, info: { type: 'deploy', data: undefined } })
-                setInProcess(false)
             })
-            .catch((err) => {
-                setError(err.toString())
+            .catch((e) => {
+                setError(parseError(e))
+            })
+            .finally(() => {
                 setInProcess(false)
             })
     }
@@ -118,34 +126,25 @@ export function DeployWallet(): JSX.Element {
     }
 
     React.useEffect(() => {
-        if (
-            accountability.selectedAccountAddress == null ||
-            accountability.tonWalletState == null ||
-            accountability.tonWalletState?.isDeployed
-        ) {
+        if (tonWalletState == null || tonWalletState?.isDeployed) {
             return
         }
 
-        rpc.estimateDeploymentFees(accountability.selectedAccountAddress)
+        rpc.estimateDeploymentFees(selectedAccount.address)
             .then((fees) => {
                 setFees(fees)
             })
             .catch(console.error)
-    }, [
-        accountability.selectedAccountAddress,
-        accountability.tonWalletState
-    ])
+    }, [tonWalletState, selectedAccount])
 
-    const balance = new Decimal(accountability.tonWalletState?.balance || '0')
+    const balance = new Decimal(tonWalletState?.balance || '0')
     const totalAmount = new Decimal('0.1').add(fees || '0')
 
     if (balance.greaterThanOrEqualTo(totalAmount)) {
         return (
             <div className="deploy-wallet">
                 <header className="deploy-wallet__header">
-                    <h2 className="deploy-wallet__header-title">
-                        Deploy your wallet
-                    </h2>
+                    <h2 className="deploy-wallet__header-title">Deploy your wallet</h2>
                 </header>
 
                 {(() => {
@@ -153,7 +152,7 @@ export function DeployWallet(): JSX.Element {
                         case DeployWalletStep.DEPLOY_MESSAGE:
                             return (
                                 <PreparedMessage
-                                    balance={accountability.tonWalletState?.balance}
+                                    balance={tonWalletState?.balance}
                                     fees={fees}
                                     disabled={inProcess}
                                     error={error}
@@ -189,9 +188,7 @@ export function DeployWallet(): JSX.Element {
     return (
         <div className="deploy-wallet">
             <header className="deploy-wallet__header">
-                <h2 className="deploy-wallet__header-title">
-                    Deploy your wallet
-                </h2>
+                <h2 className="deploy-wallet__header-title">Deploy your wallet</h2>
             </header>
 
             <div className="deploy-wallet__wrapper">
@@ -204,24 +201,19 @@ export function DeployWallet(): JSX.Element {
                     </h3>
                     <div className="deploy-wallet__qr-address-placeholder">
                         <div className="deploy-wallet__qr-address-code">
-                            <QRCode
-                                value={`ton://chat/${accountability.selectedAccount?.tonWallet?.address}`}
-                                size={80}
-                            />
+                            <QRCode value={`ton://chat/${selectedAccount.address}`} size={80} />
                         </div>
                         <div className="deploy-wallet__qr-address-address">
-                            {accountability.selectedAccount?.tonWallet.address}
+                            {selectedAccount.address}
                         </div>
                     </div>
                 </div>
 
-                {accountability.selectedAccount?.tonWallet.address !== undefined && (
-                    <footer className="deploy-wallet__footer">
-                        <CopyButton text={accountability.selectedAccount?.tonWallet.address}>
-                            <Button text="Copy address" />
-                        </CopyButton>
-                    </footer>
-                )}
+                <footer className="deploy-wallet__footer">
+                    <CopyButton text={selectedAccount.address}>
+                        <Button text="Copy address" />
+                    </CopyButton>
+                </footer>
             </div>
         </div>
     )

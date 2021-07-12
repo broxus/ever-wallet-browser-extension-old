@@ -11,6 +11,7 @@ import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
 
 import './style.scss'
+import { parseError } from '@popup/utils'
 
 enum LocalStep {
     SIGN_POLICY,
@@ -55,7 +56,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
-            setError(e.toString())
+            setError(parseError(e))
         }
     }
 
@@ -91,7 +92,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
                             setSeed({ phrase, mnemonicType })
                             setLocalStep(LocalStep.ENTER_PASSWORD)
                         } catch (e) {
-                            setError(e.toString())
+                            setError(parseError(e))
                         }
                     }}
                     onBack={() => setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)}
