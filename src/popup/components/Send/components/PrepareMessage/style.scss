@@ -34,6 +34,12 @@
 }
 
 .prepare-message {
+    .enter-password {
+        padding: 0;
+    }
+}
+
+.prepare-message {
     display: flex;
     flex: 1;
     flex-direction: column;

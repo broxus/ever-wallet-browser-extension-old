@@ -112,6 +112,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     }
 
     const onBack = () => {
+        setError(undefined)
         setStep(LocalStep.PREVIEW)
     }
 
@@ -166,6 +167,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                             recipient: address as string,
                             amount: convertCurrency(value.toString(), decimals),
                         }}
+                        error={error}
                         onChangeKeyEntry={setKey}
                         onSubmit={onSubmit}
                         onBack={onBack}

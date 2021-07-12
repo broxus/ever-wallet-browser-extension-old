@@ -62,6 +62,12 @@ export function EnterPassword({
         onSubmit(prepareKey(keyEntry, password))
     }
 
+    const onKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.keyCode === 13) {
+            await trySubmit()
+        }
+    }
+
     return (
         <div className="enter-password">
             {showHeading && (
@@ -134,6 +140,7 @@ export function EnterPassword({
                                 type="password"
                                 disabled={disabled}
                                 value={password}
+                                onKeyDown={onKeyDown}
                                 onChange={setPassword}
                             />
                             <div className="enter-password__field-hint">

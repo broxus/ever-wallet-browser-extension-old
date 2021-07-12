@@ -38,6 +38,7 @@ interface ISimpleInput {
     readOnly?: boolean
     id?: string
     onChange?: (value: string) => void
+    onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
 const Input: React.FC<ISimpleInput> = ({
@@ -57,6 +58,7 @@ const Input: React.FC<ISimpleInput> = ({
     readOnly = false,
     id,
     onChange,
+    onKeyDown,
 }) => {
     return (
         <input
@@ -80,6 +82,7 @@ const Input: React.FC<ISimpleInput> = ({
             onChange={(e) => {
                 onChange?.(e.target.value)
             }}
+            onKeyDown={onKeyDown}
         />
     )
 }

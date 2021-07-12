@@ -55,7 +55,7 @@ export function CreateSeed(): JSX.Element {
     const [error, setError] = React.useState<string>()
     const [flow, setFlow] = React.useState<OptionType | null>(flowOptions[0])
     const [inProcess, setInProcess] = React.useState(false)
-    const [name, setName] = React.useState('')
+    const [name, setName] = React.useState<string>()
     const [seed, setSeed] = React.useState(generateSeed())
     const [step, setStep] = React.useState<FlowStep>(FlowStep.INDEX)
 
@@ -69,9 +69,13 @@ export function CreateSeed(): JSX.Element {
         setInProcess(true)
 
         try {
+            let nameToSave = name?.trim()
+            if (nameToSave?.length === 0) {
+                nameToSave = undefined
+            }
             await rpc
                 .createMasterKey({
-                    name,
+                    name: nameToSave,
                     password,
                     seed,
                 })
