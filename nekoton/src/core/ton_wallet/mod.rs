@@ -186,16 +186,16 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "getMultisigPendingTransactions")]
-    pub fn get_pending_transactions(&self) -> Result<MultisigPendingTransactionList, JsValue> {
+    pub fn get_pending_transactions(&self) -> MultisigPendingTransactionList {
         let inner = self.inner.clone();
 
         let wallet = inner.wallet.lock().trust_me();
-        let custodians = wallet.get_unconfirmed_transactions().to_vec();
-        Ok(custodians
+        let pending_transactions = wallet.get_unconfirmed_transactions().to_vec();
+        pending_transactions
             .into_iter()
             .map(make_multisig_pending_transaction)
             .collect::<js_sys::Array>()
-            .unchecked_into())
+            .unchecked_into()
     }
 
     #[wasm_bindgen(js_name = "getContractState")]
