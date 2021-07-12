@@ -778,6 +778,37 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async estimateConfirmationFees(address: string, params: ConfirmMessageToPrepare) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            const unsignedMessage = wallet.prepareConfirm(
+                contractState,
+                params.publicKey,
+                params.transactionId,
+                60
+            )
+
+            try {
+                const signedMessage = unsignedMessage.signFake()
+                return await wallet.estimateFees(signedMessage)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage.free()
+            }
+        })
+    }
+
     public async estimateDeploymentFees(address: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)

@@ -7,7 +7,7 @@ import {
     extractTransactionAddress,
     trimTokenName,
 } from '@shared/utils'
-import { parseError } from '@popup/utils'
+import { Fees, parseError } from '@popup/utils'
 
 import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
@@ -57,6 +57,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
     const [error, setError] = React.useState<string>()
+    const [fees, setFees] = React.useState<Fees>()
 
     const source = transaction.inMessage.dst!
     const value = React.useMemo(() => {
@@ -108,10 +109,25 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const txHash = multisigTransaction?.finalTransactionHash
 
     const onConfirm = () => {
+        setFees(undefined)
+        if (selectedKey != null) {
+            rpc.estimateConfirmationFees(source, {
+                publicKey: selectedKey.publicKey,
+                transactionId,
+            })
+                .then((transactionFees) =>
+                    setFees({
+                        transactionFees,
+                    })
+                )
+                .catch(console.error)
+        }
+
         setStep(LocalStep.ENTER_PASSWORD)
     }
 
     const onBack = () => {
+        setFees(undefined)
         setError(undefined)
         setStep(LocalStep.PREVIEW)
     }
@@ -122,24 +138,23 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
             transactionId: transactionId,
         }
 
-        if (transaction.inMessage.dst === undefined) return
-
         setInProcess(true)
 
-        const signedMessage = await rpc.prepareConfirmMessage(
-            transaction.inMessage.dst,
-            messageToPrepare,
-            keyPassword
-        )
-
         try {
-            await rpc.sendMessage(transaction.inMessage.dst, {
+            const signedMessage = await rpc.prepareConfirmMessage(
+                source,
+                messageToPrepare,
+                keyPassword
+            )
+
+            rpc.sendMessage(source, {
                 signedMessage,
                 info: {
                     type: 'confirm',
                     data: undefined,
                 },
-            })
+            }).catch(console.error)
+
             drawer.setPanel(undefined)
         } catch (e) {
             setError(parseError(e))
@@ -168,6 +183,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                             amount: convertCurrency(value.toString(), decimals),
                         }}
                         error={error}
+                        fees={fees}
                         onChangeKeyEntry={setKey}
                         onSubmit={onSubmit}
                         onBack={onBack}
