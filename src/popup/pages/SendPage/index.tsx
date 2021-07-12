@@ -1,13 +1,14 @@
 import * as React from 'react'
 
 import * as nt from '@nekoton'
-import { Send } from '@popup/components/Send'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import { WalletMessageToSend } from '@shared/backgroundApi'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { SelectedAsset } from '@shared/utils'
+import Loader from '@popup/components/Loader'
+import { Send } from '@popup/components/Send'
 
 export function SendPage(): JSX.Element | null {
     const accountability = useAccountability()
@@ -15,7 +16,7 @@ export function SendPage(): JSX.Element | null {
     const rpcState = useRpcState()
 
     const selectedAccount = React.useMemo(() => accountability.selectedAccount, [])
-    const [initialSelectedAsset, sendSelectedAsset] = React.useState<SelectedAsset | undefined>()
+    const [initialSelectedAsset, setSelectedAsset] = React.useState<SelectedAsset | undefined>()
 
     if (selectedAccount == null) {
         return null
@@ -31,23 +32,36 @@ export function SendPage(): JSX.Element | null {
     // }
 
     const tonWalletAsset = selectedAccount.tonWallet
-    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
+        | nt.ContractState
+        | undefined
 
     if (tonWalletState == null) {
         return null
     }
 
-    const tokenWalletAssets = selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
+    const tokenWalletAssets =
+        selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
     const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
 
+    const defaultAsset = {
+        type: 'ton_wallet',
+        data: { address: tonWalletAsset.address },
+    } as SelectedAsset
+
     React.useEffect(() => {
-        rpc.tempStorageGet('selected_asset').then((value: SelectedAsset) => {
-            console.log(value)
-            sendSelectedAsset(value)
-        }).catch(e => {
-            console.log(e)
-        })
+        rpc.tempStorageRemove('selected_asset')
+            .then((value: SelectedAsset) => {
+                setSelectedAsset(value || defaultAsset)
+            })
+            .catch((_) => {
+                setSelectedAsset(defaultAsset)
+            })
     }, [])
+
+    if (initialSelectedAsset == null) {
+        return <Loader />
+    }
 
     const sendMessage = async (message: WalletMessageToSend) => {
         return rpc.sendMessage(accountAddress as string, message)
