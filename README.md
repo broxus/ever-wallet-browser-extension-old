@@ -32,6 +32,21 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.0 (2021-07-13)
+
+Features
+
+* Reworked accounts flow
+* Added full multisig flow support
+* Show pending transactions in history
+* Rework network selection
+* Added missing seed exporting feature
+
+Bugfixes
+
+* Fixed annoying transaction popup
+* Fixed window closing on focus lost (by using separate windows for each complex form)
+
 ### 0.1.12 (2021-06-28)
 
 Features
