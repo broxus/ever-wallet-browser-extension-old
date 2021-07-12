@@ -71,10 +71,6 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
     const [state, setState] = React.useState<ControllerState>({} as ControllerState)
 
     React.useEffect(() => {
-        console.log(state, 'controllerState')
-    })
-
-    React.useEffect(() => {
         ;(async () => {
             const [, state] = await Promise.all([
                 init('index_bg.wasm'),

@@ -105,21 +105,16 @@ export function EnterPassword({
                                 </span>
                             </div>
                         )}
-                        {convertedFees !== undefined && (
-                            <div
-                                key="convertedFees"
-                                className="enter-password__confirm-details-param"
-                            >
-                                <span className="enter-password__confirm-details-param-desc">
-                                    Blockchain fee
-                                </span>
-                                <span className="enter-password__confirm-details-param-value">
-                                    {convertedFees.total !== undefined
-                                        ? `~${convertedFees.total} TON`
-                                        : 'calculating...'}
-                                </span>
-                            </div>
-                        )}
+                        <div key="convertedFees" className="enter-password__confirm-details-param">
+                            <span className="enter-password__confirm-details-param-desc">
+                                Blockchain fee
+                            </span>
+                            <span className="enter-password__confirm-details-param-value">
+                                {convertedFees?.total !== undefined
+                                    ? `~${convertedFees.total} TON`
+                                    : 'calculating...'}
+                            </span>
+                        </div>
                     </div>
                     {keyEntries.length > 1 ? (
                         <Select
