@@ -599,7 +599,7 @@ export const extractTransactionValue = (transaction: nt.Transaction): Decimal =>
         transactionWithInfo.info.data.method.data.type === 'submit' &&
         transactionWithInfo.info.data.method.data.data.transactionId != '0'
     ) {
-        return new Decimal(transactionWithInfo.info.data.method.data.data.value)
+        return new Decimal(transactionWithInfo.info.data.method.data.data.value).mul(-1)
     }
 
     const outgoing = transaction.outMessages.reduce(
