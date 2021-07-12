@@ -198,9 +198,11 @@ export function PrepareMessage({
             await onSubmit({
                 signedMessage,
                 info: {
-                    createdAt: currentUtime(),
-                    amount: messageToPrepare.amount,
-                    recipient: messageToPrepare.recipient,
+                    type: 'transfer',
+                    data: {
+                        amount: messageToPrepare.amount,
+                        recipient: messageToPrepare.recipient,
+                    },
                 },
             })
         } catch (e) {

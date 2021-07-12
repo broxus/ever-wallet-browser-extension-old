@@ -7,6 +7,7 @@ import {
     convertAddress,
     convertCurrency,
     convertTons,
+    currentUtime,
     extractMultisigTransactionTime,
     extractTokenTransactionAddress,
     extractTokenTransactionValue,
@@ -32,6 +33,7 @@ import {
     ConfirmMessageToPrepare,
     WalletMessageToSend,
     BriefMessageInfo,
+    StoredBriefMessageInfo,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
@@ -67,7 +69,10 @@ export interface AccountControllerState extends BaseState {
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
-    accountPendingTransactions: { [address: string]: { [bodyHash: string]: BriefMessageInfo } }
+    accountPendingTransactions: {
+        [address: string]: { [bodyHash: string]: StoredBriefMessageInfo }
+    }
+    accountFailedTransactions: { [address: string]: { [bodyHash: string]: StoredBriefMessageInfo } }
     accountsVisibility: { [address: string]: boolean }
     externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -88,6 +93,7 @@ const defaultState: AccountControllerState = {
     accountUnconfirmedTransactions: {},
     accountTokenTransactions: {},
     accountPendingTransactions: {},
+    accountFailedTransactions: {},
     accountsVisibility: {},
     externalAccounts: [],
     knownTokens: {},
@@ -1008,7 +1014,11 @@ export class AccountController extends BaseController<
                             accountPendingTransactions,
                             address
                         )
-                        pendingTransactions[pendingTransaction.bodyHash] = info
+                        pendingTransactions[pendingTransaction.bodyHash] = {
+                            ...info,
+                            createdAt: currentUtime(),
+                            messageHash: signedMessage.hash,
+                        } as StoredBriefMessageInfo
 
                         this.update({
                             accountPendingTransactions,
@@ -1346,16 +1356,28 @@ export class AccountController extends BaseController<
         }
     }
 
-    private _clearPendingTransaction(address: string, bodyHash: string, _sent: boolean) {
-        const accountPendingTransactions = {
-            ...this.state.accountPendingTransactions,
-        }
+    private _clearPendingTransaction(address: string, bodyHash: string, sent: boolean) {
+        const { accountPendingTransactions, accountFailedTransactions } = this.state
+
+        const update = {
+            accountPendingTransactions,
+        } as Partial<AccountControllerState>
+
         const pendingTransactions = getOrInsertDefault(accountPendingTransactions, address)
+        const info = pendingTransactions[bodyHash] as StoredBriefMessageInfo | undefined
+        if (info == null) {
+            return
+        }
+
         delete pendingTransactions[bodyHash]
 
-        this.update({
-            accountPendingTransactions,
-        })
+        if (!sent) {
+            const failedTransactions = getOrInsertDefault(accountFailedTransactions, address)
+            failedTransactions[bodyHash] = info
+            update.accountFailedTransactions = accountFailedTransactions
+        }
+
+        this.update(update)
     }
 
     private _updateTonWalletState(address: string, state: nt.ContractState) {

@@ -7,7 +7,7 @@ import { AssetsList } from '@popup/components/UserAssets/components'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 
-import { BriefMessageInfo, TokenWalletsToUpdate } from '@shared/backgroundApi'
+import { StoredBriefMessageInfo, TokenWalletsToUpdate } from '@shared/backgroundApi'
 import { SelectedAsset, TokenWalletState } from '@shared/utils'
 
 import './style.scss'
@@ -50,7 +50,7 @@ export function UserAssets({
     const [activeTab, setActiveTab] = React.useState<AssetsTab>(AssetsTab.ASSETS)
 
     const pendingTransactions = React.useMemo(() => {
-        const values: BriefMessageInfo[] = []
+        const values: StoredBriefMessageInfo[] = []
 
         if (accountability.selectedAccountAddress == null) {
             return values

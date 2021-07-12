@@ -81,10 +81,15 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const transactionId = transaction.info?.data.method.data.data.transactionId as string
     const creator = transaction.info.data.method.data.data.custodian
 
-    const multisigTransaction = React.useMemo(() => {
+    const { unconfirmedTransaction, multisigTransaction } = React.useMemo(() => {
         return source !== undefined
-            ? rpcState.state.accountMultisigTransactions[source]?.[transactionId]
-            : undefined
+            ? {
+                  unconfirmedTransaction:
+                      rpcState.state.accountUnconfirmedTransactions[source]?.[transactionId],
+                  multisigTransaction:
+                      rpcState.state.accountMultisigTransactions[source]?.[transactionId],
+              }
+            : {}
     }, [source, transactionId, rpcState.state.accountMultisigTransactions])
 
     const confirmations: string[] = multisigTransaction?.confirmations || []
@@ -97,6 +102,8 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(
         filteredSelectableKeys[0]
     )
+
+    const txHash = multisigTransaction?.finalTransactionHash
 
     const onConfirm = () => {
         setStep(LocalStep.ENTER_PASSWORD)
@@ -125,6 +132,10 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         try {
             rpc.sendMessage(transaction.inMessage.dst, {
                 signedMessage,
+                info: {
+                    type: 'confirm',
+                    data: undefined,
+                },
             })
             drawer.setPanel(undefined)
         } catch (e) {}
@@ -177,6 +188,19 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                         </span>
                     </div>
 
+                    {txHash != undefined && (
+                        <div className="transaction-info-tx-details-param">
+                            <span className="transaction-info-tx-details-param-desc">
+                                Hash (ID)
+                            </span>
+                            <CopyText
+                                className="transaction-info-tx-details-param-value copy"
+                                id={`copy-${txHash}`}
+                                text={txHash}
+                            />
+                        </div>
+                    )}
+
                     {address !== undefined && (
                         <div className="transaction-info-tx-details-param">
                             <span className="transaction-info-tx-details-param-desc">
@@ -213,15 +237,27 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     {custodians.length > 1 && (
                         <>
                             <div className="transaction-info-tx-details-separator" />
-                            <div className="transaction-info-tx-details-param">
-                                <span className="transaction-info-tx-details-param-desc">
-                                    Signatures
-                                </span>
-                                <span className="transaction-info-tx-details-param-value">
-                                    {JSON.stringify(confirmations.length)} of {keys.length}{' '}
-                                    signatures collected
-                                </span>
-                            </div>
+
+                            {unconfirmedTransaction != null ? (
+                                <div className="transaction-info-tx-details-param">
+                                    <span className="transaction-info-tx-details-param-desc">
+                                        Signatures
+                                    </span>
+                                    <span className="transaction-info-tx-details-param-value">
+                                        {confirmations.length} of{' '}
+                                        {unconfirmedTransaction.signsRequired} signatures collected
+                                    </span>
+                                </div>
+                            ) : (
+                                <div className="transaction-info-tx-details-param">
+                                    <span className="transaction-info-tx-details-param-desc">
+                                        Status
+                                    </span>
+                                    <span className="transaction-info-tx-details-param-value">
+                                        {txHash != null ? 'Sent' : 'Expired'}
+                                    </span>
+                                </div>
+                            )}
 
                             {custodians.map((custodian, idx) => {
                                 const isSigned = confirmations.includes(custodian)
@@ -262,9 +298,26 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     )}
                 </div>
 
-                <footer className="multisig-transaction__footer">
-                    <Button text="Confirm" onClick={onConfirm} disabled={selectedKey == null} />
-                </footer>
+                {txHash != null ? (
+                    <footer className="multisig-transaction__footer">
+                        <Button
+                            white
+                            onClick={() => {
+                                chrome.tabs.create({
+                                    url: `https://ton-explorer.com/transactions/${txHash}`,
+                                    active: false,
+                                })
+                            }}
+                            text="Open in explorer"
+                        />
+                    </footer>
+                ) : unconfirmedTransaction != null ? (
+                    <footer className="multisig-transaction__footer">
+                        <Button text="Confirm" onClick={onConfirm} disabled={selectedKey == null} />
+                    </footer>
+                ) : (
+                    <></>
+                )}
             </div>
         </div>
     )

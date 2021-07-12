@@ -3,7 +3,7 @@ import * as React from 'react'
 import * as nt from '@nekoton'
 import { ListItem } from '@popup/components/TransactionsList/ListItem'
 import { MessageItem } from '@popup/components/TransactionsList/MessageItem'
-import { BriefMessageInfo } from '@shared/backgroundApi'
+import { StoredBriefMessageInfo } from '@shared/backgroundApi'
 
 import './style.scss'
 import { AggregatedMultisigTransactions, currentUtime } from '@shared/utils'
@@ -21,7 +21,7 @@ type Props = {
     scrollArea: React.RefObject<HTMLDivElement>
     symbol?: nt.Symbol
     transactions: nt.Transaction[]
-    pendingTransactions?: BriefMessageInfo[]
+    pendingTransactions?: StoredBriefMessageInfo[]
     onViewTransaction: (transaction: nt.Transaction) => void
     preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
 }
@@ -195,12 +195,7 @@ export function TransactionsList({
             )}
             <div style={{ height: `${offsetHeight}px` }} />
             {pendingTransactions?.map((message) => (
-                <MessageItem
-                    key={message.recipient}
-                    amount={message.amount}
-                    createdAt={message.createdAt}
-                    recipient={message.recipient}
-                />
+                <MessageItem key={message.messageHash} message={message} />
             ))}
             {slice.map((transaction) => {
                 return (

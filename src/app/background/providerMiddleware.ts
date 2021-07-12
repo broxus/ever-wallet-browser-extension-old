@@ -804,9 +804,11 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     const transaction: nt.Transaction = await accountController.sendMessage(selectedAddress, {
         signedMessage,
         info: {
-            createdAt: currentUtime(),
-            amount,
-            recipient,
+            type: 'transfer',
+            data: {
+                amount,
+                recipient,
+            },
         },
     })
 

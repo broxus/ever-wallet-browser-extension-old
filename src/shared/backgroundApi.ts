@@ -77,14 +77,21 @@ export type SwapBackMessageToPrepare = {
 
 export type WalletMessageToSend = {
     signedMessage: nt.SignedMessage
-    info?: BriefMessageInfo
+    info: BriefMessageInfo
 }
 
-export type BriefMessageInfo = {
-    createdAt: number
-    amount: string
-    recipient: string
-}
+export type BriefMessageInfo =
+    | nt.EnumItem<'deploy', void>
+    | nt.EnumItem<'confirm', void>
+    | nt.EnumItem<
+          'transfer',
+          {
+              amount: string
+              recipient: string
+          }
+      >
+
+export type StoredBriefMessageInfo = BriefMessageInfo & { createdAt: number; messageHash: string }
 
 export interface Approval<T extends string, D> {
     id: string

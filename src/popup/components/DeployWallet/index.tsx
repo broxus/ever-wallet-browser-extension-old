@@ -59,7 +59,7 @@ export function DeployWallet(): JSX.Element {
 
     const sendMessage = (message: WalletMessageToSend) => {
         if (accountability.selectedAccountAddress == null) {
-             return
+            return
         }
         rpc.sendMessage(accountability.selectedAccountAddress, message)
         drawer.setPanel(undefined)
@@ -83,7 +83,7 @@ export function DeployWallet(): JSX.Element {
         await rpc
             .prepareDeploymentMessage(accountability.selectedAccountAddress, params, keyPassword)
             .then((signedMessage) => {
-                sendMessage({ signedMessage })
+                sendMessage({ signedMessage, info: { type: 'deploy', data: undefined } })
                 setInProcess(false)
             })
             .catch((err) => {
