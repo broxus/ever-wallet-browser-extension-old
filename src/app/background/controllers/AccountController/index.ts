@@ -635,15 +635,7 @@ export class AccountController extends BaseController<
         await this._saveExternalAccounts()
     }
 
-    public async selectAccount(address: string | undefined) {
-        if (address == null) {
-            console.debug('deselectAccount')
-            this.update({
-                selectedAccount: undefined,
-            })
-            return
-        }
-
+    public async selectAccount(address: string) {
         console.debug('selectAccount')
 
         await this._accountsMutex.use(async () => {

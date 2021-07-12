@@ -53,7 +53,7 @@ export function TransactionsList({
 
     const tonWalletDetails = React.useMemo(() => {
         return nt.getContractTypeDetails(contractType)
-    }, [contractType])
+    }, [rpcState, contractType])
 
     React.useEffect(() => {
         setScroll(scrollArea.current?.scrollTop || 0)

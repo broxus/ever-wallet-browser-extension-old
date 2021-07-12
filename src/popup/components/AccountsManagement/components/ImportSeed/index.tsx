@@ -20,7 +20,11 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
     const onPaste: React.ClipboardEventHandler<HTMLFormElement> = (event) => {
         try {
             const seedPhrase = event.clipboardData.getData('text/plain')
-            const words = seedPhrase.replace(/\s\s+/g, ' ').split(' ').slice(0, wordsCount)
+            const words = seedPhrase
+                .replace(/\r\n|\r|\n/g, ' ')
+                .replace(/\s\s+/g, ' ')
+                .split(' ')
+                .slice(0, wordsCount)
 
             if (words.length > 0 && words.length <= wordsCount) {
                 setTimeout(() => {
