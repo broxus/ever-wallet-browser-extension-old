@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
@@ -653,7 +653,7 @@ fn parse_token_value(
             }
             let value: js_sys::Array = value.unchecked_into();
 
-            let mut result = HashMap::with_capacity(value.length() as usize);
+            let mut result = BTreeMap::new();
 
             for value in value.iter() {
                 if !js_sys::Array::is_array(&value) {
