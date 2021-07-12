@@ -8,7 +8,7 @@ import WebsiteIcon from '@popup/components/WebsiteIcon'
 import { EnterPassword } from '@popup/components/Send/components'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { Fees } from '@popup/utils'
+import { Fees, parseError } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
 import { convertTons, parseTons } from '@shared/utils'
 
@@ -116,7 +116,7 @@ export function ApproveSendMessage({
                 setError('Invalid password')
             }
         } catch (e) {
-            setError(e.toString())
+            setError(parseError(e))
         } finally {
             setInProcess(false)
         }

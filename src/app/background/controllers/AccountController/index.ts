@@ -1294,6 +1294,10 @@ export class AccountController extends BaseController<
             accountTokenStates: {},
             accountTransactions: {},
             accountTokenTransactions: {},
+            accountMultisigTransactions: {},
+            accountUnconfirmedTransactions: {},
+            accountPendingTransactions: {},
+            accountFailedTransactions: {},
         })
     }
 

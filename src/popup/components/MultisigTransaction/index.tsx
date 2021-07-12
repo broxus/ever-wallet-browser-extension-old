@@ -7,6 +7,7 @@ import {
     extractTransactionAddress,
     trimTokenName,
 } from '@shared/utils'
+import { parseError } from '@popup/utils'
 
 import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
@@ -55,6 +56,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
 
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
+    const [error, setError] = React.useState<string>()
 
     const source = transaction.inMessage.dst!
     const value = React.useMemo(() => {
@@ -130,7 +132,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         )
 
         try {
-            rpc.sendMessage(transaction.inMessage.dst, {
+            await rpc.sendMessage(transaction.inMessage.dst, {
                 signedMessage,
                 info: {
                     type: 'confirm',
@@ -138,7 +140,11 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                 },
             })
             drawer.setPanel(undefined)
-        } catch (e) {}
+        } catch (e) {
+            setError(parseError(e))
+        } finally {
+            setInProcess(false)
+        }
     }
 
     if (step === LocalStep.ENTER_PASSWORD) {

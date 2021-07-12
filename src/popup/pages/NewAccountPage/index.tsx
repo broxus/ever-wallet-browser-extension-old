@@ -10,6 +10,7 @@ import ExportedSeed from '@popup/components/ExportedSeed'
 import { CheckSeedOnCreation } from '@popup/components/CheckSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
+import { parseError } from '@popup/utils'
 
 enum LocalStep {
     SIGN_POLICY,
@@ -55,7 +56,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
-            setError(e.toString())
+            setError(parseError(e))
         }
     }
 

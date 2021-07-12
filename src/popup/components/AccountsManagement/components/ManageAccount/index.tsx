@@ -15,7 +15,6 @@ import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvid
 import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
-
 export function ManageAccount(): JSX.Element {
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
@@ -35,8 +34,8 @@ export function ManageAccount(): JSX.Element {
 
     const isActive = React.useMemo(
         () =>
-            accountability.currentAccount?.tonWallet.address
-            === accountability.selectedAccount?.tonWallet.address,
+            accountability.currentAccount?.tonWallet.address ===
+            accountability.selectedAccount?.tonWallet.address,
         [
             accountability.currentAccount?.tonWallet.address,
             accountability.selectedAccount?.tonWallet.address,
@@ -52,13 +51,13 @@ export function ManageAccount(): JSX.Element {
             ({ address }) => address === accountability.currentAccount?.tonWallet.address
         )
 
-		if (externalAccount !== undefined) {
+        if (externalAccount !== undefined) {
             keys.push(
-                ...externalAccount.externalIn.map(
-                    (key) => rpcState.state.storedKeys[key]
-                ).filter((e) => e)
+                ...externalAccount.externalIn
+                    .map((key) => rpcState.state.storedKeys[key])
+                    .filter((e) => e)
             )
-		}
+        }
 
         return keys
     }, [rpcState.state.storedKeys])
@@ -71,11 +70,14 @@ export function ManageAccount(): JSX.Element {
     }
 
     const onSelectAccount = async () => {
-
-        if (accountability.currentMasterKey?.masterKey == null) { return }
+        if (accountability.currentMasterKey?.masterKey == null) {
+            return
+        }
 
         await rpc.selectMasterKey(accountability.currentMasterKey.masterKey)
-        if (accountability.currentAccount == null) { return }
+        if (accountability.currentAccount == null) {
+            return
+        }
 
         await rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, true)
         await rpc.selectAccount(accountability.currentAccount.tonWallet.address)
@@ -83,16 +85,21 @@ export function ManageAccount(): JSX.Element {
         drawer.setPanel(undefined)
         accountability.reset()
 
-        if (rpcState.activeTab?.type === 'notification') { closeCurrentWindow() }
+        if (rpcState.activeTab?.type === 'notification') {
+            closeCurrentWindow()
+        }
     }
 
     const onManageDerivedKey = (key: nt.KeyStoreEntry) => {
         return () => accountability.onManageDerivedKey(key)
     }
 
-    const onToggleVisibility = () => {
+    const onToggleVisibility = async () => {
         if (accountability.currentAccount && !isActive) {
-            rpc.updateAccountVisibility(accountability.currentAccount.tonWallet.address, !isVisible)
+            await rpc.updateAccountVisibility(
+                accountability.currentAccount.tonWallet.address,
+                !isVisible
+            )
         }
     }
 
@@ -104,9 +111,7 @@ export function ManageAccount(): JSX.Element {
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">
-                    Manage account
-                </h2>
+                <h2 className="accounts-management__header-title">Manage account</h2>
             </header>
 
             <div className="accounts-management__wrapper">
@@ -121,11 +126,9 @@ export function ManageAccount(): JSX.Element {
                             onChange={setName}
                         />
 
-                        {(
-                            accountability.currentAccount !== undefined
-                            && (accountability.currentAccount.name !== undefined || name)
-                            && accountability.currentAccount.name !== name
-                        ) && (
+                        {accountability.currentAccount !== undefined &&
+                            (accountability.currentAccount.name !== undefined || name) &&
+                            accountability.currentAccount.name !== name && (
                                 <a
                                     role="button"
                                     className="accounts-management__name-button"
@@ -141,7 +144,11 @@ export function ManageAccount(): JSX.Element {
                             'accounts-management__account-visibility-disabled': isActive,
                         })}
                     >
-                        <Switcher id="visibility" checked={isVisible} onChange={onToggleVisibility} />
+                        <Switcher
+                            id="visibility"
+                            checked={isVisible}
+                            onChange={onToggleVisibility}
+                        />
                         <label htmlFor="visibility">Display on the main screen</label>
                     </div>
 
@@ -155,7 +162,9 @@ export function ManageAccount(): JSX.Element {
                             </div>
                             <div>
                                 <div className="accounts-management__address-text">
-                                    <CopyText text={accountability.currentAccount.tonWallet.address} />
+                                    <CopyText
+                                        text={accountability.currentAccount.tonWallet.address}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -181,7 +190,11 @@ export function ManageAccount(): JSX.Element {
                                             <div className="accounts-management__list-item-title">
                                                 {key.name}
                                             </div>
-                                            <img src={Arrow} alt="" style={{ height: 24, width: 24 }} />
+                                            <img
+                                                src={Arrow}
+                                                alt=""
+                                                style={{ height: 24, width: 24 }}
+                                            />
                                         </div>
                                     </li>
                                 ))}

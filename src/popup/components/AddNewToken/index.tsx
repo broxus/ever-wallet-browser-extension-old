@@ -15,6 +15,7 @@ import AssetIcon from '@popup/components/AssetIcon'
 import Loader from '@popup/components/Loader'
 
 import './style.scss'
+import { parseError } from '@popup/utils'
 
 type NewToken = { rootTokenContract: string }
 
@@ -215,7 +216,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
             await onSubmit(params)
             onBack()
         } catch (e) {
-            setError(e.toString())
+            setError(parseError(e))
             setInProcess(false)
         }
     }

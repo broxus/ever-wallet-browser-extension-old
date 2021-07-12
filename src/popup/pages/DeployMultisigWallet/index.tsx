@@ -1,14 +1,14 @@
 import * as React from 'react'
 
+import * as nt from '@nekoton'
 import {
     MultisigData,
     MultisigForm,
     PreparedMessage,
 } from '@popup/components/DeployWallet/components'
-import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
-import { prepareKey } from '@popup/utils'
+import { parseError, prepareKey } from '@popup/utils'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
 
 enum Step {
@@ -17,7 +17,6 @@ enum Step {
 }
 
 export function DeployMultisigWallet(): JSX.Element {
-    const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
 
@@ -27,22 +26,30 @@ export function DeployMultisigWallet(): JSX.Element {
     const [fees, setFees] = React.useState<string>()
     const [step, setStep] = React.useState(Step.ENTER_DATA)
 
+    const selectedAccount = React.useMemo(() => rpcState.state.selectedAccount?.tonWallet, [])
+    if (selectedAccount == null) {
+        return <></>
+    }
+
     const selectedDerivedKeyEntry = React.useMemo(() => {
-        return accountability.selectedAccountPublicKey !== undefined
-            ? rpcState.state?.storedKeys[accountability.selectedAccountPublicKey]
+        return selectedAccount.publicKey !== undefined
+            ? rpcState.state.storedKeys[selectedAccount.publicKey]
             : undefined
-    }, [accountability.selectedAccountPublicKey])
+    }, [rpcState, selectedAccount])
+
+    const tonWalletState = React.useMemo(() => {
+        return rpcState.state.accountContractStates[selectedAccount.address] as
+            | nt.ContractState
+            | undefined
+    }, [rpcState, selectedAccount])
 
     const sendMessage = (message: WalletMessageToSend) => {
-        if (accountability.selectedAccountAddress == null) {
-            return
-        }
-        rpc.sendMessage(accountability.selectedAccountAddress, message)
+        rpc.sendMessage(selectedAccount.address, message)
         closeCurrentWindow()
     }
 
     const onSubmit = async (password: string) => {
-        if (selectedDerivedKeyEntry == null || accountability.selectedAccountAddress == null) {
+        if (selectedDerivedKeyEntry == null) {
             return
         }
 
@@ -57,13 +64,14 @@ export function DeployMultisigWallet(): JSX.Element {
         setInProcess(true)
 
         await rpc
-            .prepareDeploymentMessage(accountability.selectedAccountAddress, params, keyPassword)
+            .prepareDeploymentMessage(selectedAccount.address, params, keyPassword)
             .then((signedMessage) => {
                 sendMessage({ signedMessage, info: { type: 'deploy', data: undefined } })
-                setInProcess(false)
             })
-            .catch((err) => {
-                setError(err.toString())
+            .catch((e) => {
+                setError(parseError(e))
+            })
+            .finally(() => {
                 setInProcess(false)
             })
     }
@@ -78,20 +86,16 @@ export function DeployMultisigWallet(): JSX.Element {
     }
 
     React.useEffect(() => {
-        if (
-            accountability.selectedAccountAddress == null ||
-            accountability.tonWalletState == null ||
-            accountability.tonWalletState?.isDeployed
-        ) {
+        if (tonWalletState == null || tonWalletState?.isDeployed) {
             return
         }
 
-        rpc.estimateDeploymentFees(accountability.selectedAccountAddress)
+        rpc.estimateDeploymentFees(selectedAccount.address)
             .then((fees) => {
                 setFees(fees)
             })
             .catch(console.error)
-    }, [accountability.selectedAccountAddress, accountability.tonWalletState])
+    }, [tonWalletState, selectedAccount])
 
     return (
         <div className="deploy-wallet">
@@ -108,7 +112,7 @@ export function DeployMultisigWallet(): JSX.Element {
                     case Step.DEPLOY_MESSAGE:
                         return (
                             <PreparedMessage
-                                balance={accountability.tonWalletState?.balance}
+                                balance={tonWalletState?.balance}
                                 fees={fees}
                                 custodians={multisigData?.custodians}
                                 disabled={inProcess}

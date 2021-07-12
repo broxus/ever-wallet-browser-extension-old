@@ -6,6 +6,7 @@ import { hideModalOnClick } from '@popup/common'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 
 import Profile from '@popup/img/profile.svg'
@@ -13,9 +14,11 @@ import Profile from '@popup/img/profile.svg'
 import { convertAddress } from '@shared/utils'
 
 import './style.scss'
+import * as nt from '@nekoton'
 
 export function AccountModal() {
     const accountability = useAccountability()
+    const rpcState = useRpcState()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
 
@@ -44,19 +47,63 @@ export function AccountModal() {
         setActiveTo(!isActive)
     }
 
-    const onManageMasterKey = (masterKey: string) => {
-        return () => {
+    const onSelectMaster = (masterKey: string) => {
+        return async () => {
             const key = accountability.masterKeys.find((entry) => entry.masterKey === masterKey)
-
             if (key == null) {
                 return
             }
 
             hide()
 
-            accountability.setCurrentMasterKey(key)
-            accountability.setStep(Step.MANAGE_SEED)
-            drawer.setPanel(Panel.MANAGE_SEEDS)
+            if (key.masterKey === accountability.selectedMasterKey) {
+                return
+            }
+
+            const derivedKeys = window.ObjectExt.values(rpcState.state.storedKeys)
+                .filter((item) => item.masterKey === key.masterKey)
+                .map((item) => item.publicKey)
+
+            const availableAccounts: { [address: string]: nt.AssetsList } = {}
+
+            window.ObjectExt.values(rpcState.state.accountEntries).forEach((account) => {
+                const address = account.tonWallet.address
+                if (
+                    derivedKeys.includes(account.tonWallet.publicKey) &&
+                    rpcState.state.accountsVisibility[address]
+                ) {
+                    availableAccounts[address] = account
+                }
+            })
+
+            rpcState.state.externalAccounts.forEach(({ address, externalIn }) => {
+                derivedKeys.forEach((derivedKey) => {
+                    if (externalIn.includes(derivedKey)) {
+                        const account = rpcState.state.accountEntries[address] as
+                            | nt.AssetsList
+                            | undefined
+                        if (account != null && rpcState.state.accountsVisibility[address]) {
+                            availableAccounts[address] = account
+                        }
+                    }
+                })
+            })
+
+            const accounts = window.ObjectExt.values(availableAccounts).sort((a, b) => {
+                if (a.name < b.name) return -1
+                if (a.name > b.name) return 1
+                return 0
+            })
+
+            if (accounts.length == 0) {
+                accountability.setCurrentMasterKey(key)
+                accountability.setStep(Step.MANAGE_SEED)
+                drawer.setPanel(Panel.MANAGE_SEEDS)
+            } else {
+                await rpc.selectMasterKey(key.masterKey)
+                await rpc.selectAccount(accounts[0].tonWallet.address)
+                drawer.setPanel(undefined)
+            }
         }
     }
 
@@ -95,7 +142,7 @@ export function AccountModal() {
                                     <a
                                         role="button"
                                         className="account-settings__seeds-list-item"
-                                        onClick={onManageMasterKey(key.masterKey)}
+                                        onClick={onSelectMaster(key.masterKey)}
                                     >
                                         <div className="account-settings__seeds-list-item-title">
                                             {accountability.masterKeysNames?.[key.masterKey] ||

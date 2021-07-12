@@ -66,9 +66,7 @@ export function EnterPassword({
         <div className="enter-password">
             {showHeading && (
                 <header className="enter-password__header">
-                    <h2 className="enter-password__header-title noselect">
-                        Confirm message
-                    </h2>
+                    <h2 className="enter-password__header-title noselect">Confirm message</h2>
                 </header>
             )}
             <div className="enter-password__wrapper">
@@ -76,36 +74,47 @@ export function EnterPassword({
                     <div className="enter-password__confirm-details">
                         {params?.recipient !== undefined && (
                             <div key="recipient" className="enter-password__confirm-details-param">
-                                <span className="enter-password__confirm-details-param-desc">Recipient</span>
+                                <span className="enter-password__confirm-details-param-desc">
+                                    Recipient
+                                </span>
                                 <span className="enter-password__confirm-details-param-value">
-                                {params?.recipient}
-                            </span>
+                                    {params?.recipient}
+                                </span>
                             </div>
                         )}
                         {transactionId !== undefined && (
-                            <div key="transactionId" className="enter-password__confirm-details-param">
-                                <span className="enter-password__confirm-details-param-desc">Transaction Id</span>
+                            <div
+                                key="transactionId"
+                                className="enter-password__confirm-details-param"
+                            >
+                                <span className="enter-password__confirm-details-param-desc">
+                                    Transaction Id
+                                </span>
                                 <span className="enter-password__confirm-details-param-value">
-                                {transactionId}
-                            </span>
+                                    {transactionId}
+                                </span>
                             </div>
                         )}
                         {params?.amount !== undefined && (
                             <div key="amount" className="enter-password__confirm-details-param">
-                                <span className="enter-password__confirm-details-param-desc">Amount</span>
+                                <span className="enter-password__confirm-details-param-desc">
+                                    Amount
+                                </span>
                                 <span className="enter-password__confirm-details-param-value">
-                                {params?.amount} {currencyName}
-                            </span>
+                                    {params?.amount} {currencyName}
+                                </span>
                             </div>
                         )}
-                        {convertedFees !== undefined && (
-                            <div key="convertedFees" className="enter-password__confirm-details-param">
-                                <span className="enter-password__confirm-details-param-desc">Blockchain fee</span>
-                                <span className="enter-password__confirm-details-param-value">
-                                {convertedFees.total !== undefined ? `~${convertedFees.total} TON` : 'calculating...'}
+                        <div key="convertedFees" className="enter-password__confirm-details-param">
+                            <span className="enter-password__confirm-details-param-desc">
+                                Blockchain fee
                             </span>
-                            </div>
-                        )}
+                            <span className="enter-password__confirm-details-param-value">
+                                {convertedFees?.total !== undefined
+                                    ? `~${convertedFees.total} TON`
+                                    : 'calculating...'}
+                            </span>
+                        </div>
                     </div>
                     {keyEntries.length > 1 ? (
                         <Select
@@ -128,7 +137,9 @@ export function EnterPassword({
                                 onChange={setPassword}
                             />
                             <div className="enter-password__field-hint">
-                                Enter password from seed: {accountability.masterKeysNames[keyEntry.masterKey] || convertPublicKey(keyEntry.masterKey)}
+                                Enter password for seed:{' '}
+                                {accountability.masterKeysNames[keyEntry.masterKey] ||
+                                    convertPublicKey(keyEntry.masterKey)}
                             </div>
                         </>
                     ) : (
@@ -146,7 +157,8 @@ export function EnterPassword({
                         text="Confirm transaction"
                         onClick={trySubmit}
                         disabled={
-                            disabled || (keyEntry.signerName != 'ledger_key' && password.length === 0)
+                            disabled ||
+                            (keyEntry.signerName != 'ledger_key' && password.length === 0)
                         }
                     />
                 </div>
