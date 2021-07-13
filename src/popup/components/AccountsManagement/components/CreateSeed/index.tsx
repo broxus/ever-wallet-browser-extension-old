@@ -34,14 +34,19 @@ enum FlowStep {
 }
 
 type OptionType = {
+    key: AddSeedFlow
     value: AddSeedFlow
     label: string
 }
 
 const flowOptions: OptionType[] = [
-    { label: 'Create new seed', value: AddSeedFlow.CREATE },
-    { label: 'Import seed', value: AddSeedFlow.IMPORT },
-    { label: 'Import legacy seed', value: AddSeedFlow.IMPORT_LEGACY },
+    { key: AddSeedFlow.CREATE, label: 'Create new seed', value: AddSeedFlow.CREATE },
+    { key: AddSeedFlow.IMPORT, label: 'Import seed', value: AddSeedFlow.IMPORT },
+    {
+        key: AddSeedFlow.IMPORT_LEGACY,
+        label: 'Import legacy seed',
+        value: AddSeedFlow.IMPORT_LEGACY,
+    },
     // { label: 'Connect Ledger', value: AddSeedFlow.CONNECT_LEDGER },
 ]
 
@@ -50,7 +55,7 @@ export function CreateSeed(): JSX.Element {
     const rpc = useRpc()
 
     const [error, setError] = React.useState<string>()
-    const [flow, setFlow] = React.useState<OptionType | null>(flowOptions[0])
+    const [flow, setFlow] = React.useState<AddSeedFlow | undefined>(flowOptions[0].value)
     const [inProcess, setInProcess] = React.useState(false)
     const [name, setName] = React.useState<string>()
     const [seed, setSeed] = React.useState(generateSeed())
@@ -58,8 +63,8 @@ export function CreateSeed(): JSX.Element {
 
     const seedWords = React.useMemo(() => seed.phrase.split(' '), [seed])
 
-    const onChangeFlow = (_: AddSeedFlow, option: any) => {
-        setFlow(option)
+    const onChangeFlow = (value: AddSeedFlow | undefined) => {
+        setFlow(value)
     }
 
     const onSubmit = async (password: string) => {
@@ -101,14 +106,11 @@ export function CreateSeed(): JSX.Element {
                 break
 
             default:
-                if (flow?.value === AddSeedFlow.CREATE) {
+                if (flow === AddSeedFlow.CREATE) {
                     setStep(FlowStep.SHOW_PHRASE)
-                } else if (
-                    flow?.value === AddSeedFlow.IMPORT ||
-                    flow?.value === AddSeedFlow.IMPORT_LEGACY
-                ) {
+                } else if (flow === AddSeedFlow.IMPORT || flow === AddSeedFlow.IMPORT_LEGACY) {
                     setStep(FlowStep.IMPORT_PHRASE)
-                } else if (flow?.value === AddSeedFlow.CONNECT_LEDGER) {
+                } else if (flow === AddSeedFlow.CONNECT_LEDGER) {
                     setStep(FlowStep.CONNECT_LEDGER)
                 }
         }
@@ -117,9 +119,7 @@ export function CreateSeed(): JSX.Element {
     const onNextWhenImport = (words: string[]) => {
         const phrase = words.join(' ')
         const mnemonicType: nt.MnemonicType =
-            flow?.value === AddSeedFlow.IMPORT_LEGACY
-                ? { type: 'legacy' }
-                : { type: 'labs', accountId: 0 }
+            flow === AddSeedFlow.IMPORT_LEGACY ? { type: 'legacy' } : { type: 'labs', accountId: 0 }
 
         try {
             validateMnemonic(phrase, mnemonicType)
@@ -163,7 +163,6 @@ export function CreateSeed(): JSX.Element {
                             <div className="accounts-management__content-form-row">
                                 <Input
                                     label="Enter seed name..."
-                                    autoFocus
                                     type="text"
                                     value={name || ''}
                                     onChange={setName}
@@ -173,7 +172,7 @@ export function CreateSeed(): JSX.Element {
                             <div className="accounts-management__content-form-row">
                                 <Select<AddSeedFlow>
                                     options={flowOptions}
-                                    value={flow?.value}
+                                    value={flow}
                                     onChange={onChangeFlow}
                                 />
                             </div>
@@ -220,7 +219,7 @@ export function CreateSeed(): JSX.Element {
             {step === FlowStep.IMPORT_PHRASE && (
                 <ImportSeed
                     key="importSeed"
-                    wordsCount={flow?.value === AddSeedFlow.IMPORT_LEGACY ? 24 : 12}
+                    wordsCount={flow === AddSeedFlow.IMPORT_LEGACY ? 24 : 12}
                     onSubmit={onNextWhenImport}
                     onBack={onBack}
                 />

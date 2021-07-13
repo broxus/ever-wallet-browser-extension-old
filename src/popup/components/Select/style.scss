@@ -1,7 +1,7 @@
 @import '../../styles/colors';
 
 @mixin effect {
-	animation-duration: 0.1s;
+	animation-duration: 0.05s;
 	animation-fill-mode: both;
 	transform-origin: 0 0;
 }
@@ -114,8 +114,8 @@
 		position: absolute;
 		top: 0;
 		bottom: 0;
-		left: 10px;
-		right: 10px;
+		left: 16px;
+		right: 40px;
 
 		@include flex;
 		@include flex-center;
@@ -130,6 +130,7 @@
 	&-single &-selection-item,
 	&-single &-selection-placeholder {
 		padding: 0;
+		pointer-events: none;
 		transition: all 0.3s;
 	}
 	&-single &-selection-item {
@@ -176,18 +177,25 @@
 		border-radius: 2px;
 		box-shadow: 0 3px 9px rgb(43 51 56 / 30%);
 		box-sizing: border-box;
-		padding: 5px 0;
+		font-variant: initial;
+		left: -9999px;
 		overflow: hidden;
 		outline: none;
-		font-variant: initial;
+		padding: 5px 0;
 		position: absolute;
 		top: -9999px;
-		left: -9999px;
 		z-index: 5;
 
 		&-hidden { display: none; }
 
-		&-empty { color: $placeholderFg; }
+		&-empty {
+			color: $placeholderFg;
+			display: none;
+		}
+
+		.rc-virtual-list-scrollbar {
+			display: none !important;
+		}
 	}
 
 	&-item-empty {

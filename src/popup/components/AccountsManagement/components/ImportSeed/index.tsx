@@ -1,11 +1,12 @@
 import * as React from 'react'
-import Autocomplete from '@material-ui/lab/Autocomplete'
-import { TextField } from '@material-ui/core'
 import classNames from 'classnames'
+import { OptionsType } from 'rc-select/lib/interface'
+import { LabelValueType } from 'rc-select/lib/interface/generator'
 import { useForm, Controller } from 'react-hook-form'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
+import { Select } from '@popup/components/Select'
 
 type Props = {
     wordsCount: number
@@ -16,18 +17,22 @@ type Props = {
 export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.Element {
     const { control, handleSubmit, setValue } = useForm()
 
-    const [hints, setHints] = React.useState<string[]>([])
+    const [hints, setHints] = React.useState<LabelValueType[]>([])
     const numbers = React.useMemo(() => new Array(wordsCount).fill(1).map((_, i) => i + 1), [
         wordsCount,
     ])
 
-    const onInputChange = (event: React.ChangeEvent<{}>, value: string) => {
-        if (event == null || (event?.nativeEvent as InputEvent)?.inputType === 'insertFromPaste') {
+    const onInputChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event == null || event.type === 'paste') {
             return
         }
 
+        const { value } = event.target as HTMLInputElement
+
         if (value) {
-            setHints(nt.getBip39Hints(value))
+            setHints(
+                nt.getBip39Hints(value).map((word) => ({ key: word, label: word, value: word }))
+            )
         }
     }
 
@@ -57,8 +62,21 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
         }
     }
 
-    const onSubmit = (data: { [word: string]: string }) => {
-        props.onSubmit(window.ObjectExt.values(data))
+    const onChange = (cb: (...args: any[]) => void, number: number) => {
+        return (...args: any[]) => {
+            cb(args)
+            try {
+                const nextToFocus = document.getElementById(`select-index-${number + 1}`)
+                if (nextToFocus != null) {
+                    nextToFocus.focus?.()
+                    nextToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }
+            } catch (e) {}
+        }
+    }
+
+    const onSubmit = (data: { [key: string]: [word: string, option: object] }) => {
+        props.onSubmit(window.ObjectExt.values(data).map(([word]) => word))
     }
 
     return (
@@ -83,33 +101,30 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
                                         control={control}
                                         defaultValue=""
                                         name={`word${number}`}
-                                        render={({ ref, name, value }) => (
-                                            <Autocomplete
-                                                value={value}
-                                                id={`word${number}`}
-                                                autoComplete
-                                                fullWidth
-                                                freeSolo
-                                                options={hints}
-                                                innerRef={ref}
+                                        rules={{
+                                            required: true,
+                                        }}
+                                        render={(
+                                            { ref, onChange: onChangeControl },
+                                            { invalid }
+                                        ) => (
+                                            <Select
+                                                ref={ref}
+                                                className={classNames({
+                                                    invalid: invalid,
+                                                })}
+                                                id={`select-index-${number}`}
+                                                listHeight={120}
+                                                options={(hints as unknown) as OptionsType}
+                                                placeholder="Word..."
+                                                showArrow={false}
+                                                showSearch
                                                 onBlur={onBlur}
-                                                onInputChange={onInputChange}
-                                                getOptionSelected={() => false}
-                                                renderInput={(params) => (
-                                                    <TextField
-                                                        {...params}
-                                                        name={name}
-                                                        variant="outlined"
-                                                        inputProps={{
-                                                            ...params.inputProps,
-                                                            className: classNames(
-                                                                'simple-input',
-                                                                'accounts-management__seed-input-placeholder'
-                                                            ),
-                                                        }}
-                                                        placeholder="Word..."
-                                                    />
-                                                )}
+                                                getPopupContainer={(trigger) =>
+                                                    trigger.closest('.rc-select') || document.body
+                                                }
+                                                onChange={onChange(onChangeControl, number)}
+                                                onInputKeyDown={onInputChange}
                                             />
                                         )}
                                     />
@@ -124,33 +139,30 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
                                         control={control}
                                         defaultValue=""
                                         name={`word${number}`}
-                                        render={({ ref, name, value }) => (
-                                            <Autocomplete
-                                                value={value}
-                                                id={`word${number}`}
-                                                autoComplete
-                                                fullWidth
-                                                freeSolo
-                                                options={hints}
-                                                innerRef={ref}
+                                        rules={{
+                                            required: true,
+                                        }}
+                                        render={(
+                                            { ref, onChange: onChangeControl },
+                                            { invalid }
+                                        ) => (
+                                            <Select
+                                                ref={ref}
+                                                className={classNames({
+                                                    invalid: invalid,
+                                                })}
+                                                id={`select-index-${number}`}
+                                                listHeight={120}
+                                                options={(hints as unknown) as OptionsType}
+                                                placeholder="Word..."
+                                                showArrow={false}
+                                                showSearch
                                                 onBlur={onBlur}
-                                                onInputChange={onInputChange}
-                                                getOptionSelected={() => false}
-                                                renderInput={(params) => (
-                                                    <TextField
-                                                        {...params}
-                                                        name={name}
-                                                        variant="outlined"
-                                                        inputProps={{
-                                                            ...params.inputProps,
-                                                            className: classNames(
-                                                                'simple-input',
-                                                                'accounts-management__seed-input-placeholder'
-                                                            ),
-                                                        }}
-                                                        placeholder="Word..."
-                                                    />
-                                                )}
+                                                getPopupContainer={(trigger) =>
+                                                    trigger.closest('.rc-select') || document.body
+                                                }
+                                                onChange={onChange(onChangeControl, number)}
+                                                onInputKeyDown={onInputChange}
                                             />
                                         )}
                                     />

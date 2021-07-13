@@ -358,6 +358,7 @@
 		flex-direction: row;
 		column-gap: 12px;
 		row-gap: 12px;
+		margin-bottom: 30px;
 
 		> * { width: 100%; }
 	}
@@ -391,33 +392,17 @@
 			padding: 0 16px 0 48px !important;
 		}
 
-		.MuiInputBase-root {
-			width: 100%;
-			padding: 0 !important;
-			min-height: 0 !important;
+		.rc-select-selector {
+			padding-left: 48px;
 		}
 
-		fieldset.MuiOutlinedInput-notchedOutline {
-			border: 0 !important;
+		.rc-select-single .rc-select-selection-search,
+		.rc-select-single .rc-select-selection-placeholder {
+			left: 48px;
 		}
 
-		.MuiInputBase-input {
-			color: #000000;
-			font-family: "PT Root UI", sans-serif;
-			font-style: normal;
-			font-weight: normal;
-			font-size: 16px;
-			border: 1px solid #ebedee;
-			height: 48px;
-			box-sizing: border-box;
-
-			&:hover {
-				border: 1px solid #b3b3b3;
-			}
-
-			&:focus {
-				border-bottom: 1px solid #0088cc;
-			}
+		.rc-select-dropdown {
+			z-index: 110;
 		}
 	}
 
