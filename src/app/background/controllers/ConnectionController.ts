@@ -13,7 +13,7 @@ import { BaseController, BaseConfig, BaseState } from './BaseController'
 
 const NETWORK_PRESETS = {
     [0]: {
-        name: 'main.ton.dev (GQL 1)',
+        name: 'Mainnet (GQL 1)',
         group: 'mainnet',
         type: 'graphql',
         data: {
@@ -22,7 +22,7 @@ const NETWORK_PRESETS = {
         },
     } as ConnectionData,
     [1]: {
-        name: 'main.ton.dev (GQL 2)',
+        name: 'Mainnet (GQL 2)',
         group: 'mainnet',
         type: 'graphql',
         data: {
@@ -31,7 +31,7 @@ const NETWORK_PRESETS = {
         },
     } as ConnectionData,
     [2]: {
-        name: 'main.ton.dev (GQL 3)',
+        name: 'Mainnet (GQL 3)',
         group: 'mainnet',
         type: 'graphql',
         data: {
@@ -40,7 +40,7 @@ const NETWORK_PRESETS = {
         },
     } as ConnectionData,
     [3]: ({
-        name: 'main.ton.dev (ADNL)',
+        name: 'Mainnet (ADNL)',
         group: 'mainnet',
         type: 'jrpc',
         data: {
@@ -48,7 +48,7 @@ const NETWORK_PRESETS = {
         },
     } as unknown) as ConnectionData,
     [4]: {
-        name: 'net.ton.dev',
+        name: 'Testnet',
         group: 'testnet',
         type: 'graphql',
         data: {
