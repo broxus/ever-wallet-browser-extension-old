@@ -51,7 +51,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
                 throw Error('Seed must be specified')
             }
 
-            key = await createMasterKey({ seed, password })
+            key = await createMasterKey({ select: true, seed, password })
             await createAccount({ name, contractType, publicKey: key.publicKey })
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)

@@ -29,7 +29,6 @@ enum FlowStep {
     SHOW_PHRASE,
     CHECK_PHRASE,
     PASSWORD_REQUEST,
-    SELECT_CONTRACT_TYPE,
     IMPORT_PHRASE,
     CONNECT_LEDGER,
 }
@@ -50,7 +49,6 @@ export function CreateSeed(): JSX.Element {
     const accountability = useAccountability()
     const rpc = useRpc()
 
-    const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
     const [error, setError] = React.useState<string>()
     const [flow, setFlow] = React.useState<OptionType | null>(flowOptions[0])
     const [inProcess, setInProcess] = React.useState(false)
@@ -72,41 +70,22 @@ export function CreateSeed(): JSX.Element {
             if (nameToSave?.length === 0) {
                 nameToSave = undefined
             }
-            await rpc
-                .createMasterKey({
-                    name: nameToSave,
-                    password,
-                    seed,
-                })
-                .then(async (seed) => {
-                    if (seed !== undefined) {
-                        accountability.onManageMasterKey(seed)
-                        accountability.onManageDerivedKey(seed)
-                        await rpc
-                            .createAccount({
-                                contractType,
-                                name: `Account ${accountability.nextAccountId + 1}`,
-                                publicKey: seed.publicKey,
-                            })
-                            .then((account) => {
-                                setInProcess(false)
 
-                                if (account !== undefined) {
-                                    accountability.onManageAccount(account)
-                                }
-                            })
-                            .catch((e) => {
-                                setError(parseError(e))
-                                setInProcess(false)
-                            })
-                    }
-                })
-                .catch((e) => {
-                    setError(parseError(e))
-                    setInProcess(false)
-                })
+            const entry = await rpc.createMasterKey({
+                select: false,
+                name: nameToSave,
+                password,
+                seed,
+            })
+
+            if (entry != null) {
+                accountability.onManageMasterKey(entry)
+                accountability.onManageDerivedKey(entry)
+            }
         } catch (e) {
             setError(parseError(e))
+            setInProcess(false)
+        } finally {
             setInProcess(false)
         }
     }
@@ -118,10 +97,6 @@ export function CreateSeed(): JSX.Element {
                 break
 
             case FlowStep.CHECK_PHRASE:
-                setStep(FlowStep.SELECT_CONTRACT_TYPE)
-                break
-
-            case FlowStep.SELECT_CONTRACT_TYPE:
                 setStep(FlowStep.PASSWORD_REQUEST)
                 break
 
@@ -149,7 +124,7 @@ export function CreateSeed(): JSX.Element {
         try {
             validateMnemonic(phrase, mnemonicType)
             setSeed({ phrase, mnemonicType })
-            setStep(FlowStep.SELECT_CONTRACT_TYPE)
+            setStep(FlowStep.PASSWORD_REQUEST)
         } catch (e) {
             setError(parseError(e))
         }
@@ -166,12 +141,8 @@ export function CreateSeed(): JSX.Element {
                 setStep(FlowStep.SHOW_PHRASE)
                 break
 
-            case FlowStep.SELECT_CONTRACT_TYPE:
-                setStep(FlowStep.CHECK_PHRASE)
-                break
-
             case FlowStep.PASSWORD_REQUEST:
-                setStep(FlowStep.SELECT_CONTRACT_TYPE)
+                setStep(FlowStep.CHECK_PHRASE)
                 break
 
             default:
@@ -231,19 +202,6 @@ export function CreateSeed(): JSX.Element {
                 <CheckNewSeedPhrase
                     key="checkSeed"
                     seedWords={seedWords}
-                    onSubmit={onNext}
-                    onBack={onBack}
-                />
-            )}
-
-            {step === FlowStep.SELECT_CONTRACT_TYPE && (
-                <NewAccountContractType
-                    key="accountType"
-                    contractType={contractType}
-                    error={error}
-                    disabled={inProcess}
-                    mode="import"
-                    onSelectContractType={setContractType}
                     onSubmit={onNext}
                     onBack={onBack}
                 />

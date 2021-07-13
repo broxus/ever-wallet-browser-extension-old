@@ -352,6 +352,7 @@ export class AccountController extends BaseController<
         name,
         password,
         seed,
+        select,
     }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
@@ -391,7 +392,9 @@ export class AccountController extends BaseController<
                 },
             })
 
-            await this.selectMasterKey(entry.masterKey)
+            if (select) {
+                await this.selectMasterKey(entry.masterKey)
+            }
 
             return entry
         } catch (e) {

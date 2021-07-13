@@ -49,6 +49,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
             setInProcess(true)
 
             key = await createMasterKey({
+                select: true,
                 seed,
                 password,
             })

@@ -20,6 +20,7 @@ export type MasterKeyToCreate = {
     seed: nt.GeneratedMnemonic
     password: string
     name?: string
+    select: boolean
 }
 
 export type KeyToDerive = {
