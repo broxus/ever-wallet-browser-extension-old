@@ -188,6 +188,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
         switch (step) {
             case FlowStep.ENTER_NAME:
             case FlowStep.ENTER_ADDRESS:
+                setError(undefined)
                 setStep(FlowStep.INDEX)
                 break
 
