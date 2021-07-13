@@ -1,19 +1,22 @@
-import React, { useState } from 'react'
-import { convertTons } from '@shared/utils'
-import { ApprovalOutput, PendingApproval } from '@shared/approvalApi'
-import * as nt from '@nekoton'
+import * as React from 'react'
+import classNames from 'classnames'
 
+import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
-import Checkbox from '@popup/components/Checkbox'
+import { Checkbox } from '@popup/components/Checkbox'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
 import UserAvatar from '@popup/components/UserAvatar'
+import { ApprovalOutput, PendingApproval } from '@shared/backgroundApi'
+import { convertTons } from '@shared/utils'
 
 import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
 
-interface IApproveRequestPermissions {
+import './style.scss'
+
+type Props = {
     approval: PendingApproval<'requestPermissions'>
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
     accountContractStates: { [address: string]: nt.ContractState }
+    accountEntries: { [address: string]: nt.AssetsList }
     onSubmit: (data: ApprovalOutput<'requestPermissions'>) => void
     onReject: () => void
 }
@@ -24,123 +27,133 @@ enum LocalStep {
     CONNECTING,
 }
 
-const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
+export function ApproveRequestPermissions({
     approval,
-    accountEntries,
     accountContractStates,
+    accountEntries,
     onSubmit,
-}) => {
+}: Props): JSX.Element {
     const { origin } = approval
     const { permissions } = approval.requestData
 
     const shouldSelectAccount = permissions.includes('accountInteraction')
 
-    const [localStep, setLocalStep] = useState<LocalStep>(
+    const [localStep, setLocalStep] = React.useState<LocalStep>(
         shouldSelectAccount ? LocalStep.SELECT_ACCOUNT : LocalStep.CONFIRM
     )
 
-    const [selectedAccount, setSelectedAccount] = useState<nt.AssetsList>()
-    const [confirmChecked, setConfirmChecked] = useState(false)
+    const [selectedAccount, setSelectedAccount] = React.useState<nt.AssetsList>()
+    const [confirmChecked, setConfirmChecked] = React.useState(false)
 
     return (
-        <div className="connect-wallet-select-account">
-            {localStep === LocalStep.SELECT_ACCOUNT && (
-                <>
-                    <div>
-                        <div className="connect-wallet__spend-top-panel__site">
-                            <WebsiteIcon origin={origin} />
-                            <div className="connect-wallet-select-account-source">{origin}</div>
-                        </div>
-                        <h2 className="connect-wallet-select-account__title noselect">
+        <div
+            className={classNames('connect-wallet', {
+                'connect-wallet_connecting': localStep === LocalStep.CONNECTING,
+            })}
+        >
+            {[LocalStep.SELECT_ACCOUNT, LocalStep.CONFIRM].includes(localStep) && (
+                <header key="header" className="connect-wallet__header">
+                    <div className="connect-wallet__origin-source">
+                        <WebsiteIcon origin={origin} />
+                        <div className="connect-wallet__origin-source-value">{origin}</div>
+                    </div>
+                    {localStep === LocalStep.SELECT_ACCOUNT && (
+                        <h2 key="select-account-heading" className="connect-wallet__header-title noselect">
                             Select account to connect with Crystal wallet
                         </h2>
-
-                        {window.ObjectExt.values(accountEntries).map((items) =>
-                            items.map((item) => (
-                                <div
-                                    className="connect-wallet-select-account__item"
-                                    style={{ display: 'flex' }}
-                                >
-                                    <Checkbox
-                                        checked={
-                                            selectedAccount?.tonWallet.address ==
-                                            item.tonWallet.address
-                                        }
-                                        setChecked={(checked) => {
-                                            setSelectedAccount(checked ? item : undefined)
-                                        }}
-                                    />
-                                    <UserAvatar address={item.tonWallet.address} small />
-                                    <div style={{ padding: '0 12px' }}>
-                                        <div className="account-settings-section-account">
-                                            {item.name}
-                                        </div>
-                                        <div className="connect-wallet-select-account__item-value">
-                                            {`${convertTons(
-                                                accountContractStates[item.tonWallet.address]
-                                                    ?.balance || '0'
-                                            )} TON`}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        )}
-                    </div>
-                    <Button
-                        type="submit"
-                        text="Next"
-                        disabled={selectedAccount == null}
-                        onClick={() => setLocalStep(LocalStep.CONFIRM)}
-                    />
-                </>
-            )}
-            {localStep === LocalStep.CONFIRM && (
-                <>
-                    <div>
-                        <div className="connect-wallet__spend-top-panel__site">
-                            <WebsiteIcon origin={origin} />
-                            <div className="connect-wallet-select-account-source">{origin}</div>
-                        </div>
-                        <h2 className="noselect">{`Connected to ${selectedAccount?.name}`}</h2>
-                        <div
-                            className="connect-wallet-select-account__item-value"
-                            style={{ marginBottom: '32px' }}
-                        >
-                            {`${convertTons(
-                                (selectedAccount &&
-                                    accountContractStates[selectedAccount.tonWallet.address]
-                                        ?.balance) ||
+                    )}
+                    {localStep === LocalStep.CONFIRM && (
+                        <>
+                            <h2 key="confirm-heading" className="connect-wallet__header-title noselect">
+                                Connected to {selectedAccount?.name}
+                            </h2>
+                            <div className="connect-wallet__account-balance">
+                                {`${convertTons(
+                                    (selectedAccount &&
+                                        accountContractStates[selectedAccount.tonWallet.address]
+                                            ?.balance) ||
                                     '0'
-                            )} TON`}
-                        </div>
-                        <h3
-                            style={{ fontWeight: 'bold', marginBottom: '16px' }}
-                            className="noselect"
-                        >
+                                )} TON`}
+                            </div>
+                        </>
+                    )}
+                </header>
+            )}
+            {localStep === LocalStep.SELECT_ACCOUNT && (
+                <div className="connect-wallet__wrapper">
+                    <div className="connect-wallet__accounts-list">
+                        {window.ObjectExt.values(accountEntries).map((account) => (
+                            <div
+                                key={account.tonWallet.address}
+                                className="connect-wallet__accounts-list-item"
+                            >
+                                <Checkbox
+                                    checked={
+                                        selectedAccount?.tonWallet.address == account.tonWallet.address
+                                    }
+                                    id={`account-${account.tonWallet.address}`}
+                                    onChange={(checked) => {
+                                        setSelectedAccount(checked ? account : undefined)
+                                    }}
+                                />
+                                <UserAvatar address={account.tonWallet.address} small />
+                                <label
+                                    className="connect-wallet__account-scope"
+                                    htmlFor={`account-${account.tonWallet.address}`}
+                                >
+                                    <div className="connect-wallet__account-name">
+                                        {account.name}
+                                    </div>
+                                    <div className="connect-wallet__account-balance">
+                                        {`${convertTons(
+                                            accountContractStates[account.tonWallet.address]
+                                                ?.balance || '0'
+                                        )} TON`}
+                                    </div>
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+
+                    <footer className="connect-wallet__footer">
+                        <Button
+                            type="submit"
+                            text="Next"
+                            disabled={selectedAccount == null}
+                            onClick={() => setLocalStep(LocalStep.CONFIRM)}
+                        />
+                    </footer>
+                </div>
+            )}
+
+            {localStep === LocalStep.CONFIRM && (
+                <div className="connect-wallet__wrapper">
+                    <div className="connect-wallet__permissions">
+                        <h3 className="connect-wallet__permissions-heading noselect">
                             Allow this site to:
                         </h3>
-                        <div
-                            className="connect-wallet-select-account__item"
-                            style={{ paddingBottom: '16px' }}
-                        >
-                            <Checkbox checked={confirmChecked} setChecked={setConfirmChecked} />
-                            <span className="connect-wallet-select-account__item-select">
-                                {JSON.stringify(permissions, undefined, 4)}
-                            </span>
+                        <div className="connect-wallet__permissions-list">
+                            <div className="connect-wallet__permissions-list-item">
+                                <Checkbox checked={confirmChecked} onChange={setConfirmChecked} />
+                                <div className="connect-wallet__permissions-names-list">
+                                    {JSON.stringify(permissions, undefined, 4)}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div style={{ display: 'flex' }}>
+
+                    <footer className="connect-wallet__footer">
                         {shouldSelectAccount && (
-                            <div style={{ width: '50%', marginRight: '12px' }}>
+                            <div className="connect-wallet__footer-button-back">
                                 <Button
-                                    text={'Back'}
-                                    onClick={() => setLocalStep(LocalStep.SELECT_ACCOUNT)}
+                                    text="Back"
                                     white
+                                    onClick={() => setLocalStep(LocalStep.SELECT_ACCOUNT)}
                                 />
                             </div>
                         )}
                         <Button
-                            text={'Connect'}
+                            text="Connect"
                             disabled={!confirmChecked || (shouldSelectAccount && !selectedAccount)}
                             onClick={() => {
                                 setLocalStep(LocalStep.CONNECTING)
@@ -161,30 +174,18 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                                 onSubmit(originPermissions)
                             }}
                         />
-                    </div>
-                </>
+                    </footer>
+                </div>
             )}
+
             {localStep === LocalStep.CONNECTING && (
-                <div
-                    style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        height: '100%',
-                    }}
-                >
-                    <h2 style={{ marginBottom: '48px' }}>Connecting...</h2>
-                    <div
-                        style={{
-                            width: '100%',
-                            display: 'flex',
-                            justifyContent: 'space-around',
-                            alignItems: 'center',
-                        }}
-                    >
+                <div className="connect-wallet__connecting">
+                    <h2 className="connect-wallet__connecting-heading">
+                        Connecting...
+                    </h2>
+                    <div className="connect-wallet__connecting-process">
                         <WebsiteIcon origin={origin} />
-                        <p className="process">
+                        <p className="connecting-process">
                             <span>.</span>
                             <span>.</span>
                             <span>.</span>
@@ -192,7 +193,6 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
                             <span>.</span>
                             <span>.</span>
                         </p>
-
                         <img src={TonWalletLogo} alt="" />
                     </div>
                 </div>
@@ -200,5 +200,3 @@ const ApproveRequestPermissions: React.FC<IApproveRequestPermissions> = ({
         </div>
     )
 }
-
-export default ApproveRequestPermissions

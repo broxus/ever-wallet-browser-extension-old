@@ -3,7 +3,7 @@ import { connect } from 'react-redux'
 import { useForm } from 'react-hook-form'
 import cn from 'classnames'
 import { AppState, StoreAction, TokensManifest, TokensManifestItem } from '@popup/store/app/types'
-import { TokenWalletsToUpdate } from '@shared/approvalApi'
+import { TokenWalletsToUpdate } from '@shared/backgroundApi'
 import { fetchManifest } from '@popup/store/app/actions'
 import * as nt from '@nekoton'
 
@@ -15,6 +15,7 @@ import AssetIcon from '@popup/components/AssetIcon'
 import Loader from '@popup/components/Loader'
 
 import './style.scss'
+import { parseError } from '@popup/utils'
 
 type NewToken = { rootTokenContract: string }
 
@@ -215,7 +216,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
             await onSubmit(params)
             onBack()
         } catch (e) {
-            setError(e.toString())
+            setError(parseError(e))
             setInProcess(false)
         }
     }
@@ -249,7 +250,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
         <>
             {/*step === SelectTokenStep.SELECT && ( */}
             <>
-                <h2 className="noselect">Select assets</h2>
+                <h2 className="add-new-token__header noselect">Select assets</h2>
                 <div className="add-new-token">
                     <div className="add-new-token__panel noselect">
                         <div

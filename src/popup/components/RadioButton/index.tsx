@@ -1,4 +1,5 @@
 import React from 'react'
+import classNames from 'classnames'
 
 import './style.scss'
 
@@ -9,23 +10,31 @@ interface IRadioButton<T> {
     label: string
     onChange: (value: T) => void
     value: T
-    isSelected: boolean
+    disabled?: boolean
+    checked: boolean
 }
 
 export class RadioButton<T extends RadioButtonValue> extends React.Component<IRadioButton<T>, {}> {
     render() {
-        const { isSelected, id, label, onChange, value } = this.props
+        const { checked, disabled, id, label, onChange, value } = this.props
 
         return (
-            <div className={`radio-button ${isSelected ? 'radio-button-selected' : ''}`}>
+            <div
+                className={classNames('radio-button', {
+                    'radio-button-checked': checked,
+                    'radio-button-disabled': disabled,
+                })}
+            >
                 <input
                     id={id}
                     onChange={(e) => {
-                        onChange(e.target.value as any)
+                        if (!disabled) {
+                            onChange(e.target.value as any)
+                        }
                     }}
                     value={value}
                     type="radio"
-                    checked={isSelected}
+                    checked={checked}
                 />
                 <label htmlFor={id}>{label}</label>
             </div>

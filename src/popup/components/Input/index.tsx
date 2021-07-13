@@ -33,10 +33,12 @@ interface ISimpleInput {
         | 'search'
         | undefined
     min?: string
+    max?: string
     value?: string
     readOnly?: boolean
     id?: string
     onChange?: (value: string) => void
+    onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
 const Input: React.FC<ISimpleInput> = ({
@@ -51,10 +53,12 @@ const Input: React.FC<ISimpleInput> = ({
     pattern = undefined,
     inputMode = undefined,
     min = undefined,
+    max,
     value = undefined,
     readOnly = false,
     id,
     onChange,
+    onKeyDown,
 }) => {
     return (
         <input
@@ -72,12 +76,15 @@ const Input: React.FC<ISimpleInput> = ({
             pattern={pattern}
             inputMode={inputMode}
             min={min}
+            max={max}
             step={0.000000000000000001}
             value={value}
             onChange={(e) => {
                 onChange?.(e.target.value)
             }}
+            onKeyDown={onKeyDown}
         />
     )
 }
+
 export default Input

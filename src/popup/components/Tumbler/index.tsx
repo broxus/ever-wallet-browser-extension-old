@@ -14,6 +14,7 @@ const Tumbler: React.FC<ITumbler> = ({ checked, onChange, id }) => (
             type="checkbox"
             id={`${id}-toggle`}
             checked={checked}
+            style={{ display: 'none' }}
             onChange={() => {
                 onChange(!checked)
             }}

@@ -11,7 +11,7 @@ const CONTRACT_TYPES: { [K in nt.ContractType]: string } = {
     SafeMultisigWallet24h: 'SafeMultisig24',
     SetcodeMultisigWallet: 'SetcodeMultisigWallet',
     SurfWallet: 'Surf',
-    WalletV3: 'WalletV3 (legacy)',
+    WalletV3: 'WalletV3',
 }
 
 interface ISelectWallet {
@@ -45,7 +45,7 @@ const SelectContractType: React.FC<ISelectWallet> = ({
                                 onChange={updateWalletType}
                                 id={contractType}
                                 key={contractType}
-                                isSelected={walletType === contractType}
+                                checked={walletType === contractType}
                                 label={CONTRACT_TYPES[contractType]}
                                 value={contractType}
                             />

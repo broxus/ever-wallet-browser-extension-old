@@ -1,0 +1,456 @@
+@import '../../styles/colors';
+
+.accounts-management {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 100%;
+	position: relative;
+	z-index: 1;
+
+	&__page {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		min-height: 100%;
+	}
+
+	&__header {
+		align-items: center;
+		background: #fff;
+		box-shadow: 0 10px 15px 10px #fff;
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 32px;
+		padding: 20px 20px 0;
+		position: sticky;
+		top: 0;
+		z-index: 100;
+
+		&-title {
+			align-self: start;
+			color: $windowFg;
+			font-size: 24px;
+			font-weight: bold;
+			line-height: 32px;
+			margin: 0;
+		}
+	}
+
+	&__wrapper {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: space-between;
+		min-height: 100%;
+		padding: 0 20px;
+	}
+
+	&__footer {
+		background: #fff;
+		bottom: 0;
+		box-shadow: 0 -10px 15px 10px #fff;
+		display: flex;
+		margin: 32px 0 0;
+		padding: 0 0 20px;
+		position: sticky;
+		z-index: 100;
+		column-gap: 12px;
+
+		> * { width: 100%; }
+
+		&-button-back {
+			width: 100px;
+			min-width: 100px;
+		}
+	}
+
+	&__content {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		width: 100%;
+
+		&-title {
+			margin-bottom: 20px;
+		}
+
+		&-header {
+			font-family: 'PT Root UI', sans-serif;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: 0.75px;
+			color: $seedsHeader;
+			margin-bottom: 8px;
+
+			&--lead {
+				font-size: 18px;
+				line-height: 24px;
+				font-weight: bold;
+				letter-spacing: 0.75px;
+				color: #000;
+				margin-top: 20px;
+				margin-bottom: 8px;
+			}
+
+			a.extra {
+				cursor: pointer;
+				font-weight: 700;
+				float: right;
+			}
+
+			small {
+				font-size: 12px;
+				float: right;
+			}
+		}
+
+		&-form-rows {
+			display: flex;
+			flex-direction: column;
+			row-gap: 20px;
+
+			.simple-input {
+				margin-bottom: 0;
+			}
+		}
+
+		&-form-row-hint {
+			margin-top: 5px;
+			font-size: 12px;
+			line-height: 18px;
+			color: $seedsHeader;
+		}
+
+		&-buttons {
+			margin-top: 40px;
+			display: flex;
+			position: relative;
+
+			> * { width: 100%; }
+
+			&-back-btn {
+				width: 100px;
+				min-width: 100px;
+				margin-right: 12px;
+			}
+		}
+
+		&-error {
+			display: block;
+			width: 100%;
+			font-size: 12px;
+			line-height: 16px;
+			letter-spacing: 0.4px;
+			color: darkred;
+			margin-top: 10px;
+		}
+
+		&-error + &-error {
+			margin-top: 10px;
+		}
+
+		& ol {
+			counter-reset: my-counter;
+			list-style: none outside none;
+			column-count: 2;
+			margin-top: 20px;
+			margin-bottom: 20px;
+
+			& li {
+				counter-increment: my-counter;
+
+				&::before {
+					content: counter(my-counter) '. ';
+					font-style: normal;
+					font-weight: normal;
+					font-size: 16px;
+					line-height: 20px;
+					letter-spacing: 0.25px;
+					color: #96a1a7;
+					flex: none;
+					order: 0;
+					flex-grow: 0;
+					margin: 0 0;
+					width: 3em;
+					box-sizing: border-box;
+					display: inline-block;
+					padding: 0 4px;
+				}
+			}
+		}
+
+		&-word {
+			font-style: normal;
+			font-weight: normal;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			margin-bottom: 12px;
+			white-space: nowrap;
+		}
+
+		&-comment {
+			font-family: 'PT Root UI', sans-serif;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 14px;
+			line-height: 20px;
+			letter-spacing: 0.75px;
+			color: #7D8B92;
+			a {
+				cursor: pointer;
+			}
+		}
+	}
+
+	&__name-field {
+		position: relative;
+
+		.simple-input {
+			margin-bottom: 0;
+		}
+	}
+
+	&__name-button {
+		font-weight: bold;
+		font-size: 16px;
+		cursor: pointer;
+		position: absolute;
+		top: 14px;
+		right: 16px;
+	}
+
+	&__create-account {
+		cursor: pointer;
+		float: right;
+		font-size: 16px;
+		line-height: 20px;
+	}
+
+	&__public-key-placeholder {
+		cursor: copy;
+		background: #f8f9f9;
+		border: 1px solid #dde1e2;
+		box-sizing: border-box;
+		padding: 16px 20px;
+		font-size: 16px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+		word-break: break-all;
+		margin-bottom: 12px;
+	}
+
+	&__account-visibility {
+		font-size: 16px;
+		line-height: 20px;
+		margin: 16px 16px 16px 0;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+
+		&-disabled {
+			opacity: 0.5;
+			pointer-events: none;
+		}
+
+		.switcher {
+			margin-right: 16px;
+		}
+	}
+
+	&__address-placeholder {
+		background: #f8f9f9;
+		border: 1px solid #dde1e2;
+		box-sizing: border-box;
+		padding: 10px;
+		font-size: 16px;
+		line-height: 20px;
+		letter-spacing: 0.25px;
+		word-break: break-all;
+		margin-bottom: 12px;
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	&__address-qr-code {
+		background: #fff;
+		padding: 10px;
+		height: 100px;
+		width: 100px;
+	}
+
+	&__address-text {
+		cursor: copy;
+		margin-left: 10px;
+	}
+
+	&__list {
+		margin: 0;
+
+		&-item {
+			cursor: pointer;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px 0;
+			font-family: 'PT Root UI', sans-serif;
+			font-size: 16px;
+			font-style: normal;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+
+			&-icon {
+				min-width: 24px;
+			}
+
+			&-title {
+				color: $seedsListItem;
+				margin: 0 16px;
+				width: 100%;
+			}
+
+			&-visibility {
+				font-weight: normal;
+				color: #96A1A7;
+				margin-right: 10px;
+			}
+
+			&--active {
+				font-weight: bold;
+			}
+
+			&-logo {
+				height: 24px;
+				width: 24px;
+			}
+
+			> a {
+				cursor: pointer;
+				font-weight: bold;
+			}
+		}
+
+		li + li {
+			border-top: 1px solid $seedsListBorder;
+		}
+
+		&--empty {
+			font-size: 14px;
+			padding: 24px 16px 16px;
+			text-align: center;
+			color: $seedsHeader;
+		}
+	}
+
+	&__divider {
+		margin: 0 -20px;
+		border-top: 1px solid $seedsDividerBorder;
+		height: 0;
+	}
+
+	&__seed-columns {
+		display: flex;
+		flex-direction: row;
+		column-gap: 12px;
+		row-gap: 12px;
+		margin-bottom: 30px;
+
+		> * { width: 100%; }
+	}
+
+	&__seed-column {
+		display: flex;
+		flex-direction: column;
+		> * { width: 100%; }
+	}
+
+	&__seed-input {
+		display: flex;
+		align-items: center;
+		position: relative;
+		margin-bottom: 20px;
+		cursor: text;
+
+		&-number {
+			font-style: normal;
+			font-weight: bold;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			color: $windowFg;
+			position: absolute;
+			left: 20px;
+		}
+
+		&-placeholder {
+			margin: 0;
+			padding: 0 16px 0 48px !important;
+		}
+
+		.rc-select-selector {
+			padding-left: 48px;
+		}
+
+		.rc-select-single .rc-select-selection-search,
+		.rc-select-single .rc-select-selection-placeholder {
+			left: 48px;
+		}
+
+		.rc-select-dropdown {
+			z-index: 110;
+		}
+	}
+
+	&__add-options {
+		display: flex;
+		flex-direction: row;
+		flex-wrap: nowrap;
+		column-gap: 12px;
+		row-gap: 12px;
+		margin-top: 20px;
+
+		&-icon {
+			margin-bottom: 28px;
+		}
+
+		&-option {
+			cursor: pointer;
+			padding: 16px;
+			display: flex;
+			flex-direction: column;
+			border: 1px solid #dde1e2;
+			font-style: normal;
+			font-weight: bold;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			color: #5e6e77;
+			width: 100%;
+
+			&:first-child {
+				margin-right: 12px;
+			}
+
+			&:hover,
+			&-selected {
+				border: 1px solid rgba(0, 136, 204, 0.3);
+				color: #0088cc;
+
+				svg {
+					path,
+					rect {
+						fill: rgba(0, 136, 204, 1);
+					}
+				}
+			}
+			&-selected {
+				background-color: rgba(0, 136, 204, 0.04);
+			}
+		}
+	}
+}

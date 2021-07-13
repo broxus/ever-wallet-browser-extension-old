@@ -8,14 +8,24 @@ type IButton = {
     text: string | JSX.Element
     type?: 'button' | 'submit' | 'reset' | undefined
     form?: string
+    className?: string
     white?: boolean
     onClick?: () => void
     disabled?: boolean
     noBorder?: boolean
 }
 
-const Button: React.FC<IButton> = ({ text, white, disabled, noBorder, onClick, type, form }) => {
-    let className = cn('button', {
+const Button: React.FC<IButton> = ({
+    text,
+    white,
+    disabled,
+    noBorder,
+    onClick,
+    type = 'button',
+    form,
+    className = '',
+}) => {
+    let styles = cn('button', className, {
         noselect: true,
         _white: white,
         _blue: !white,
@@ -29,7 +39,7 @@ const Button: React.FC<IButton> = ({ text, white, disabled, noBorder, onClick, t
                 type={type}
                 form={form}
                 disabled={disabled}
-                className={className}
+                className={styles}
                 onClick={() => {}}
                 onMouseDown={(e) => {
                     createRipple(e)

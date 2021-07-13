@@ -33,23 +33,15 @@ $md-radio-ripple-size: 15px;
     border: 1px solid #dde1e2;
     margin-bottom: 10px;
 
-    &-selected {
-        background: #f9f9f9;
-        border: 1px solid #f9f9f9;
-    }
-    &:hover {
-        border: 1px solid #abb4b8;
-    }
-
     input[type='radio'] {
         display: none;
 
-        &:checked + label:before {
+        &:checked + label::before {
             border-color: $md-radio-checked-color;
             animation: ripple 0.2s linear forwards;
         }
 
-        &:checked + label:after {
+        &:checked + label::after {
             transform: scale(1);
         }
     }
@@ -61,7 +53,7 @@ $md-radio-ripple-size: 15px;
         padding: 20px ($md-radio-size + 20px) 0;
         margin-bottom: 0;
         cursor: pointer;
-        vertical-align: center;
+        vertical-align: middle;
         font-style: normal;
         font-weight: 500;
         font-size: 16px;
@@ -71,8 +63,8 @@ $md-radio-ripple-size: 15px;
         height: 60px;
         width: 100%;
 
-        &:before,
-        &:after {
+        &::before,
+        &::after {
             position: absolute;
             top: 20px;
             content: '';
@@ -81,7 +73,7 @@ $md-radio-ripple-size: 15px;
             transition-property: transform, border-color;
         }
 
-        &:before {
+        &::before {
             left: 0;
             top: 20px;
             width: $md-radio-size;
@@ -89,13 +81,36 @@ $md-radio-ripple-size: 15px;
             border: 1px solid $md-radio-border-color;
         }
 
-        &:after {
+        &::after {
             top: $md-radio-size / 2 - $md-radio-checked-size / 2 + 20;
             left: $md-radio-size / 2 - $md-radio-checked-size / 2;
             width: $md-radio-checked-size;
             height: $md-radio-checked-size;
             transform: scale(0);
             background: $md-radio-checked-color;
+        }
+    }
+
+    &-checked {
+        background: #f9f9f9;
+        border: 1px solid $md-radio-checked-color;
+    }
+
+    &:hover:not(&-checked):not(&-disabled) {
+        border: 1px solid #abb4b8;
+    }
+
+    &-disabled {
+        border-color: #dde1e2;
+        cursor: not-allowed;
+        opacity: 0.6;
+
+        label {
+            cursor: not-allowed;
+
+            &::before {
+                border-color: #dde1e2;
+            }
         }
     }
 }

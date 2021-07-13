@@ -24,7 +24,7 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import { NEKOTON_PROVIDER } from '@shared/constants'
-import { ConnectionDataItem } from '@shared/approvalApi'
+import { ConnectionDataItem, ExternalWindowParams, WindowInfo } from '@shared/backgroundApi'
 
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
@@ -33,14 +33,20 @@ import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
-import { focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
+import { focusTab, focusWindow, WindowManager, openExtensionInBrowser } from '@popup/utils/platform'
 
-import TransportWebHID from '@ledgerhq/hw-transport-webhid'
-import Transport from '@ledgerhq/hw-transport'
-import LedgerApp from './ledger/LedgerApp'
+import LedgerBridge from './ledger/LedgerBridge'
 
-interface NekotonControllerOptions {
-    openExternalWindow: (force: boolean) => void
+export interface TriggerUiParams {
+    group: string
+    force: boolean
+    width?: number
+    height?: number
+}
+
+export interface NekotonControllerOptions {
+    windowManager: WindowManager
+    openExternalWindow: (params: TriggerUiParams) => void
     getOpenNekotonTabIds: () => { [id: number]: true }
 }
 
@@ -48,6 +54,7 @@ interface NekotonControllerComponents {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
+    windowManager: WindowManager
     accountController: AccountController
     approvalController: ApprovalController
     connectionController: ConnectionController
@@ -75,10 +82,21 @@ export class NekotonController extends EventEmitter {
     private readonly _options: NekotonControllerOptions
     private readonly _components: NekotonControllerComponents
 
+    private _updateDebounce: {
+        timer: number | undefined
+        shouldRepeat: boolean
+    } = {
+        timer: undefined,
+        shouldRepeat: false,
+    }
+
     public static async load(options: NekotonControllerOptions) {
         const storage = new nt.Storage(new StorageConnector())
-        const ledgerConnection = new nt.LedgerConnection(new LedgerConnection())
         const accountsStorage = await nt.AccountsStorage.load(storage)
+
+        const ledgerBridge = new LedgerBridge()
+        const ledgerConnection = new nt.LedgerConnection(new LedgerConnection(ledgerBridge))
+
         const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
 
         const connectionController = new ConnectionController({})
@@ -93,9 +111,14 @@ export class NekotonController extends EventEmitter {
             keyStore,
             connectionController,
             notificationController,
+            ledgerBridge,
         })
         const approvalController = new ApprovalController({
-            showApprovalRequest: () => options.openExternalWindow(false),
+            showApprovalRequest: () =>
+                options.openExternalWindow({
+                    group: 'approval',
+                    force: false,
+                }),
         })
         const permissionsController = new PermissionsController({
             approvalController,
@@ -115,6 +138,7 @@ export class NekotonController extends EventEmitter {
             storage,
             accountsStorage,
             keyStore,
+            windowManager: options.windowManager,
             accountController,
             approvalController,
             connectionController,
@@ -181,18 +205,31 @@ export class NekotonController extends EventEmitter {
     public getApi() {
         type ApiCallback<T> = (error: Error | null, result?: T) => void
 
-        const { approvalController, accountController, connectionController } = this._components
+        const {
+            windowManager,
+            approvalController,
+            accountController,
+            connectionController,
+        } = this._components
 
         return {
-            ping: (cb: ApiCallback<void>) => cb(null),
+            initialize: (windowId: number | undefined, cb: ApiCallback<WindowInfo>) => {
+                const group = windowId != null ? windowManager.getGroup(windowId) : undefined
+                cb(null, {
+                    group,
+                })
+            },
             getState: (cb: ApiCallback<ReturnType<typeof NekotonController.prototype.getState>>) =>
                 cb(null, this.getState()),
             getAvailableNetworks: (cb: ApiCallback<ConnectionDataItem[]>) =>
                 cb(null, connectionController.getAvailableNetworks()),
-            openExtensionInBrowser: (cb: ApiCallback<undefined>) => {
+            openExtensionInBrowser: (
+                params: { route?: string; query?: string },
+                cb: ApiCallback<undefined>
+            ) => {
                 const existingTabs = window.ObjectExt.keys(this._options.getOpenNekotonTabIds())
                 if (existingTabs.length == 0) {
-                    openExtensionInBrowser().then(() => cb(null))
+                    openExtensionInBrowser(params.route, params.query).then(() => cb(null))
                 } else {
                     focusTab(existingTabs[0]).then(async (tab) => {
                         tab && (await focusWindow(tab.windowId))
@@ -213,25 +250,54 @@ export class NekotonController extends EventEmitter {
                 delete this._tempStorage[key]
                 cb(null, oldValue)
             },
-            openExtensionInExternalWindow: (cb: ApiCallback<undefined>) => {
-                this._options.openExternalWindow(true)
+            openExtensionInExternalWindow: (
+                { group, width, height }: ExternalWindowParams,
+                cb: ApiCallback<undefined>
+            ) => {
+                this._options.openExternalWindow({
+                    group,
+                    width,
+                    height,
+                    force: true,
+                })
                 cb(null)
             },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
+            selectMasterKey: nodeifyAsync(accountController, 'selectMasterKey'),
+            exportMasterKey: nodeifyAsync(accountController, 'exportMasterKey'),
+            updateMasterKeyName: nodeifyAsync(accountController, 'updateMasterKeyName'),
+            updateRecentMasterKey: nodeifyAsync(accountController, 'updateRecentMasterKey'),
             createDerivedKey: nodeifyAsync(accountController, 'createDerivedKey'),
+            createLedgerKey: nodeifyAsync(accountController, 'createLedgerKey'),
             removeKey: nodeifyAsync(accountController, 'removeKey'),
+            getLedgerFirstPage: nodeifyAsync(accountController, 'getLedgerFirstPage'),
+            getLedgerNextPage: nodeifyAsync(accountController, 'getLedgerNextPage'),
+            getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
+            addExternalAccount: nodeifyAsync(accountController, 'addExternalAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
-            getCustodians: nodeifyAsync(accountController, 'getCustodians'),
-            getMultisigPendingTransactions: nodeifyAsync(accountController, 'getMultisigPendingTransactions'),
+            renameAccount: nodeifyAsync(accountController, 'renameAccount'),
+            updateAccountVisibility: nodeifyAsync(accountController, 'updateAccountVisibility'),
+            updateDerivedKeyName: nodeifyAsync(accountController, 'updateDerivedKeyName'),
+            getMultisigPendingTransactions: nodeifyAsync(
+                accountController,
+                'getMultisigPendingTransactions'
+            ),
+            getTonWalletInitData: nodeifyAsync(accountController, 'getTonWalletInitData'),
+            getTokenRootDetailsFromTokenWallet: nodeifyAsync(
+                accountController,
+                'getTokenRootDetailsFromTokenWallet'
+            ),
             updateTokenWallets: nodeifyAsync(accountController, 'updateTokenWallets'),
             logOut: nodeifyAsync(this, 'logOut'),
             estimateFees: nodeifyAsync(accountController, 'estimateFees'),
+            estimateConfirmationFees: nodeifyAsync(accountController, 'estimateConfirmationFees'),
             estimateDeploymentFees: nodeifyAsync(accountController, 'estimateDeploymentFees'),
-            prepareMessage: nodeifyAsync(accountController, 'prepareMessage'),
+            prepareTransferMessage: nodeifyAsync(accountController, 'prepareTransferMessage'),
+            prepareConfirmMessage: nodeifyAsync(accountController, 'prepareConfirmMessage'),
             prepareDeploymentMessage: nodeifyAsync(accountController, 'prepareDeploymentMessage'),
             prepareTokenMessage: nodeifyAsync(accountController, 'prepareTokenMessage'),
             prepareSwapBackMessage: nodeifyAsync(accountController, 'prepareSwapBackMessage'),
@@ -505,7 +571,23 @@ export class NekotonController extends EventEmitter {
         })
     }
 
-    private _debouncedSendUpdate = debounce(this._sendUpdate.bind(this), 200)
+    private _debouncedSendUpdate() {
+        if (this._updateDebounce.timer == null) {
+            this._sendUpdate()
+
+            this._updateDebounce.shouldRepeat = false
+
+            this._updateDebounce.timer = window.setTimeout(() => {
+                this._updateDebounce.timer = undefined
+
+                if (this._updateDebounce.shouldRepeat) {
+                    this._debouncedSendUpdate()
+                }
+            }, 200)
+        } else {
+            this._updateDebounce.shouldRepeat = true
+        }
+    }
 
     private _sendUpdate() {
         this.emit('update', this.getState())
@@ -541,36 +623,28 @@ export class StorageConnector {
 }
 
 export class LedgerConnection {
+    constructor(private readonly bridge: LedgerBridge) {}
+
     async getPublicKey(account: number, handler: nt.LedgerQueryResultHandler) {
-        let transport: Transport<string> | undefined
-        try {
-            transport = await TransportWebHID.create()
-            const ledger = new LedgerApp(transport)
-            const { publicKey } = await ledger.getPublicKey(account)
-            handler.onResult(publicKey)
-        } catch (error) {
-            handler.onError(error)
-        } finally {
-            if (transport != undefined) {
-                await transport.close()
-            }
-        }
+        await this.bridge
+            .getPublicKey(account)
+            .then((publicKey) => {
+                handler.onResult(publicKey)
+            })
+            .catch((err) => {
+                handler.onError(err.message)
+            })
     }
 
     async sign(account: number, message: Buffer, handler: nt.LedgerQueryResultHandler) {
-        let transport: Transport<string> | undefined
-        try {
-            transport = await TransportWebHID.create()
-            const ledger = new LedgerApp(transport)
-            const { signature } = await ledger.signHash(account, message)
-            handler.onResult(signature)
-        } catch (error) {
-            handler.onError(error)
-        } finally {
-            if (transport != undefined) {
-                await transport.close()
-            }
-        }
+        await this.bridge
+            .signHash(account, new Uint8Array(message))
+            .then((signature) => {
+                handler.onResult(signature)
+            })
+            .catch((err) => {
+                handler.onError(err.message)
+            })
     }
 }
 

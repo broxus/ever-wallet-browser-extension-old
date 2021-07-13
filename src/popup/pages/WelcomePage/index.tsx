@@ -1,39 +1,35 @@
-import React, { useState } from 'react'
-import { AccountToCreate, KeyToDerive, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
-import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
+import * as React from 'react'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
 import RestoreAccountPage from '@popup/pages/RestoreAccountPage'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 
 import SittingMan from '@popup/img/welcome.svg'
 
 import './style.scss'
 
-enum LocalStep {
+enum Step {
     WELCOME,
     CREATE_ACCOUNT,
     RESTORE_ACCOUNT,
 }
 
-interface IWelcomePage {
-    controllerState: ControllerState
-    controllerRpc: IControllerRpcClient
-}
+const FIRST_ACCOUNT_NAME = 'Account 1'
 
-const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.WELCOME)
+export function WelcomePage(): JSX.Element {
+    const rpc = useRpc()
 
-    const FIRST_ACCOUNT_NAME = 'Account 1'
+    const [localStep, setStep] = React.useState(Step.WELCOME)
 
-    const createAccount = async (params: AccountToCreate) => controllerRpc.createAccount(params)
-    const createMasterKey = async (params: MasterKeyToCreate) =>
-        controllerRpc.createMasterKey(params)
-    const removeKey = async (params: KeyToRemove) => controllerRpc.removeKey(params)
+    const createAccount = (params: AccountToCreate) => rpc.createAccount(params)
+    const createMasterKey = (params: MasterKeyToCreate) => rpc.createMasterKey(params)
+    const removeKey = (params: KeyToRemove) => rpc.removeKey(params)
 
     return (
         <>
-            {localStep == LocalStep.WELCOME && (
+            {localStep == Step.WELCOME && (
                 <div className="welcome-page">
                     <div className="welcome-page__bg" />
                     <div className="welcome-page__content">
@@ -51,7 +47,7 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
                                 <Button
                                     text="Create a new wallet"
                                     onClick={() => {
-                                        setLocalStep(LocalStep.CREATE_ACCOUNT)
+                                        setStep(Step.CREATE_ACCOUNT)
                                     }}
                                 />
                             </div>
@@ -59,37 +55,37 @@ const WelcomePage: React.FC<IWelcomePage> = ({ controllerRpc }) => {
                                 text="Sign in with seed phrase"
                                 white
                                 onClick={() => {
-                                    setLocalStep(LocalStep.RESTORE_ACCOUNT)
+                                    setStep(Step.RESTORE_ACCOUNT)
                                 }}
                             />
                         </div>
                     </div>
                 </div>
             )}
-            {localStep == LocalStep.CREATE_ACCOUNT && (
+
+            {localStep == Step.CREATE_ACCOUNT && (
                 <NewAccountPage
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
                     createMasterKey={createMasterKey}
                     removeKey={removeKey}
                     onBack={() => {
-                        setLocalStep(LocalStep.WELCOME)
+                        setStep(Step.WELCOME)
                     }}
                 />
             )}
-            {localStep == LocalStep.RESTORE_ACCOUNT && (
+
+            {localStep == Step.RESTORE_ACCOUNT && (
                 <RestoreAccountPage
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
                     createMasterKey={createMasterKey}
                     removeKey={removeKey}
                     onBack={() => {
-                        setLocalStep(LocalStep.WELCOME)
+                        setStep(Step.WELCOME)
                     }}
                 />
             )}
         </>
     )
 }
-
-export default WelcomePage

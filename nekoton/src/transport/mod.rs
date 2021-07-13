@@ -44,6 +44,70 @@ impl TransportHandle {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const TON_WALLET_INIT_DATA: &'static str = r#"
+export type TonWalletInitData = {
+    publicKey: string,
+    contractType: ContractType,
+    custodians: string[],
+}; 
+"#;
+
+fn make_ton_wallet_init_data(
+    public_key: ed25519_dalek::PublicKey,
+    contract_type: nt::core::ton_wallet::WalletType,
+    custodians: Vec<ton_types::UInt256>,
+) -> JsValue {
+    ObjectBuilder::new()
+        .set("publicKey", hex::encode(public_key.as_bytes()))
+        .set(
+            "contractType",
+            crate::core::ton_wallet::ContractType::from(contract_type),
+        )
+        .set(
+            "custodians",
+            custodians
+                .into_iter()
+                .map(|custodian| JsValue::from(custodian.to_hex_string()))
+                .collect::<js_sys::Array>(),
+        )
+        .build()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<TonWalletInitData>")]
+    pub type PromiseTonWalletInitData;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const ROOT_TOKEN_CONTRACT_DETAILS: &'static str = r#"
+export type RootTokenContractDetails = {
+    address: string,
+    name: string,
+    symbol: string,
+    decimals: number,
+};
+"#;
+
+fn make_root_token_contract_details(
+    address: ton_block::MsgAddressInt,
+    details: nt::core::models::RootTokenContractDetails,
+) -> JsValue {
+    ObjectBuilder::new()
+        .set("address", address.to_string())
+        .set("name", details.name)
+        .set("symbol", details.symbol)
+        .set("decimals", details.decimals)
+        .build()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<RootTokenContractDetails>")]
+    pub type PromiseRootTokenContractDetails;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const TRANSACTIONS_LIST: &'static str = r#"
 export type TransactionsList = {
     transactions: Transaction[];
@@ -164,6 +228,8 @@ pub fn make_full_contract_state(
 enum TransportError {
     #[error("Method not supported")]
     MethodNotSupported,
+    #[error("Wallet not deployed")]
+    WalletNotDeployed,
 }
 
 #[wasm_bindgen]

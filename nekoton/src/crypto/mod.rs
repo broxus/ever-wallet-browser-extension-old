@@ -1,5 +1,3 @@
-mod encrypted_key;
-
 use serde::Deserialize;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
@@ -44,6 +42,7 @@ impl UnsignedMessage {
 #[wasm_bindgen(typescript_custom_section)]
 const SIGNED_MESSAGE: &str = r#"
 export type SignedMessage = {
+    hash: string,
     bodyHash: string,
     expireAt: number,
     boc: string,
@@ -57,12 +56,16 @@ extern "C" {
 }
 
 pub fn make_signed_message(data: nt::crypto::SignedMessage) -> Result<JsSignedMessage, JsValue> {
-    let boc = {
+    let (boc, hash) = {
         let cell = data.message.write_to_new_cell().handle_error()?.into();
-        base64::encode(ton_types::serialize_toc(&cell).handle_error()?)
+        (
+            base64::encode(ton_types::serialize_toc(&cell).handle_error()?),
+            cell.repr_hash(),
+        )
     };
 
     Ok(ObjectBuilder::new()
+        .set("hash", hash.to_hex_string())
         .set(
             "bodyHash",
             data.message

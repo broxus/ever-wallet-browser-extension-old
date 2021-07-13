@@ -78,6 +78,19 @@ export const openWindow = (
     })
 }
 
+export const getCurrentWindow = (): Promise<chrome.windows.Window> => {
+    return new Promise<chrome.windows.Window>((resolve, reject) => {
+        chrome.windows.getCurrent((windowDetails) => {
+            const error = checkForError()
+            if (error) {
+                reject(error)
+            } else {
+                resolve(windowDetails)
+            }
+        })
+    })
+}
+
 export const updateWindowPosition = (id: number, left: number, top: number): Promise<void> => {
     return new Promise<void>((resolve, reject) => {
         chrome.windows.update(id, { left, top }, () => {
@@ -128,35 +141,49 @@ const getEnvironmentTypeCached = memoize(
 
 export const getEnvironmentType = (url = window.location.href) => getEnvironmentTypeCached(url)
 
-export class NotificationManager {
-    private _popupId?: number
+interface ShowPopupParams {
+    group: string
+    width?: number
+    height?: number
+}
+
+export class WindowManager {
+    private _groups: { [group: string]: number } = {}
+    private _popups: { [popup: number]: string } = {}
 
     constructor() {}
 
-    async showPopup() {
-        const popup = await this._getPopup()
+    public getGroup(windowId: number): string | undefined {
+        return this._popups[windowId] as string | undefined
+    }
 
-        if (popup) {
+    public async showPopup(params: ShowPopupParams) {
+        const popup = await this._getPopup(params.group)
+
+        if (popup != null) {
             await focusWindow(popup.id)
             return
         } else {
             let left = 0
             let top = 0
+            const width = params.width || NOTIFICATION_WIDTH
+            const height = params.height || NOTIFICATION_HEIGHT
+
             try {
                 const lastFocused = await getLastFocused()
-                top = lastFocused.top || top
-                left = (lastFocused.left || left) + ((lastFocused.width || 0) - NOTIFICATION_WIDTH)
+                top = ((lastFocused.top || top) + ((lastFocused.height || 0) - height) / 2) | 0
+                left = ((lastFocused.left || left) + ((lastFocused.width || 0) - width) / 2) | 0
             } catch (_) {
                 const { screenX, screenY, outerWidth } = window
                 top = Math.max(screenY, 0)
-                left = Math.max(screenX + (outerWidth - NOTIFICATION_WIDTH), 0)
+                left = Math.max(screenX + (outerWidth - width), 0)
             }
 
             const popupWindow = await openWindow({
                 url: 'notification.html',
                 type: 'popup',
-                width: NOTIFICATION_WIDTH,
-                height: NOTIFICATION_HEIGHT,
+                width,
+                height,
                 left,
                 top,
             })
@@ -168,18 +195,39 @@ export class NotificationManager {
             if (popupWindow.left !== left && popupWindow.state !== 'fullscreen') {
                 await updateWindowPosition(popupWindow.id, left, top)
             }
-            this._popupId = popupWindow.id
+
+            this._groups[params.group] = popupWindow.id
+            this._popups[popupWindow.id] = params.group
         }
     }
 
-    private async _getPopup() {
-        const windows = await getAllWindows()
-        return this._getPopupIn(windows)
-    }
+    private async _getPopup(group: string) {
+        const popupId = this._groups[group] as number | undefined
+        let result: chrome.windows.Window | undefined = undefined
 
-    private _getPopupIn(windows: chrome.windows.Window[]) {
-        return windows.find((window) => {
-            return window.type === 'popup' && window.id === this._popupId
-        })
+        let newGroups: { [group: string]: number } = {}
+        let newPopups: { [popup: number]: string } = {}
+
+        const windows = await getAllWindows()
+        for (const window of windows) {
+            if (window.type !== 'popup') {
+                continue
+            }
+
+            const existingGroup = this._popups[window.id] as string | undefined
+            if (existingGroup != null) {
+                newGroups[existingGroup] = window.id
+                newPopups[window.id] = existingGroup
+            }
+
+            if (window.id === popupId) {
+                result = window
+            }
+        }
+
+        this._groups = newGroups
+        this._popups = newPopups
+
+        return result
     }
 }

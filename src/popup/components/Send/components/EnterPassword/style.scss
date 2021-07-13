@@ -1,0 +1,172 @@
+@import '../../../../styles/colors';
+
+.enter-password {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 100%;
+
+	&__header {
+		align-items: center;
+		background: #fff;
+		box-shadow: 0 10px 15px 10px #fff;
+		display: flex;
+		flex-direction: column;
+		margin-bottom: 32px;
+		padding: 20px 20px 0;
+		position: sticky;
+		top: 0;
+		z-index: 100;
+
+		&-title {
+			align-self: start;
+			color: $windowFg;
+			font-size: 24px;
+			font-weight: bold;
+			line-height: 32px;
+			margin: 0;
+		}
+	}
+
+	&__wrapper {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: space-between;
+		min-height: 100%;
+		padding: 0 20px;
+	}
+
+	&__footer {
+		background: #fff;
+		bottom: 0;
+		box-shadow: 0 -10px 15px 10px #fff;
+		display: flex;
+		margin: 32px 0 0;
+		padding: 0 0 20px;
+		position: sticky;
+		z-index: 100;
+		column-gap: 12px;
+
+		> * { width: 100%; }
+
+		&-button-back {
+			width: 100px;
+			min-width: 100px;
+		}
+	}
+
+	&__confirm-details {
+		background: $lightGreyBg;
+		padding: 20px;
+
+		&-param {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+
+			&:not(:last-child) {
+				margin-bottom: 16px;
+				border-bottom: 1px solid #ebedee;
+			}
+
+			&:last-child {
+				> *:last-child {
+					margin-bottom: 0;
+				}
+			}
+
+			&-desc {
+				font-style: normal;
+				font-weight: normal;
+				font-size: 14px;
+				line-height: 20px;
+				letter-spacing: 0.75px;
+				margin-bottom: 4px;
+				color: #7d8b92;
+			}
+
+			&-value {
+				color: $windowFg;
+				font-style: normal;
+				font-weight: normal;
+				font-size: 14px;
+				line-height: 20px;
+				letter-spacing: 0.75px;
+				margin-bottom: 16px;
+				word-break: break-all;
+			}
+
+			&-data {
+				font-family: PT Mono, sans-serif;
+				font-style: normal;
+				font-weight: normal;
+				font-size: 12px;
+				line-height: 20px;
+				letter-spacing: 0.75px;
+				color: $windowFg;
+
+				&__method {
+					display: flex;
+					flex-direction: column;
+					margin-bottom: 8px;
+				}
+
+				&__block {
+					background: #e9e9e9;
+					display: flex;
+					flex-direction: column;
+					margin-bottom: 8px;
+					padding: 12px;
+
+					&--param-name {
+						font-weight: bold;
+					}
+
+					&--value {
+						word-break: break-all;
+					}
+				}
+			}
+		}
+	}
+
+	&__field {
+		&-select {
+			margin-bottom: 28px;
+		}
+
+		&-password {
+			margin: 28px 0 0;
+		}
+
+		&-select {
+			margin-top: 20px;
+		}
+
+		input {
+			cursor: text;
+		}
+
+		&-hint {
+			margin-top: 5px;
+			font-size: 12px;
+			line-height: 18px;
+			color: $seedsHeader;
+			margin-bottom: 28px;
+		}
+
+	}
+
+	&__error-message {
+		display: block;
+		width: 100%;
+		font-size: 12px;
+		line-height: 16px;
+		letter-spacing: 0.4px;
+		margin-top: -26px;
+		margin-bottom: 10px;
+		color: darkred;
+	}
+
+}

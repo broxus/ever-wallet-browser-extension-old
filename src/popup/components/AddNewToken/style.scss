@@ -1,6 +1,12 @@
 @import '../../styles/colors';
 
 .add-new-token {
+    padding: 20px;
+
+    &__header {
+        padding: 20px 20px 0;
+    }
+
     &__panel {
         display: flex;
         border-bottom: 1px solid #ebedee;

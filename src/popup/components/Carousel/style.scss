@@ -1,162 +1,118 @@
-@import '../../styles/colors';
+//@import '~react-responsive-carousel/lib/styles/carousel.min.css';
 
-$duration: 450ms;
-$tileWidth: 300px;
-$tileHeight: ($tileWidth / (16/9));
-$iconSize: 0px;
-$growFactor: 1.1; // 1.2 times the original size
 
-// / 2
-$moveLeft: -($tileWidth * ($growFactor - 1));
-//$moveLeft: -320px;
-
-$moveRight: $tileWidth * ($growFactor - 1);
-
-// $moveRight : 500px
-
-.contain {
-    width: 100%;
+.carousel-root {
+    margin: 0 -20px 20px;
+    max-width: 360px;
+    overflow: hidden;
+    padding: 0 20px;
 }
 
-.row {
-    overflow: scroll;
-    width: 100%;
-}
-
-.row__inner {
-    transition: $duration transform;
-    font-size: 0;
-    white-space: nowrap;
-    height: 188px;
-    //margin: ($tileHeight / 2) 0;
-    padding-bottom: 10px; // Account for OS X scroll bar
-}
-
-.tile {
+.carousel.carousel-slider {
+    height: 236px;
+    overflow: visible;
     position: relative;
-    display: inline-block;
-    width: $tileWidth;
-    //height: $tileHeight;
-    margin-right: 10px;
-    font-size: 20px;
-    top: -30px;
-    cursor: pointer;
-    transition: $duration all;
-    transform-origin: center left;
-}
 
-.tile:hover {
-    opacity: 1;
-}
-
-// We assume when you hover .row, you're also hovering a .tile
-// First, move the whole row towards the left
-.row__inner:hover {
-    transform: translate3d($moveLeft, 0, 0);
-}
-
-.row__inner:hover .tile {
-    // Fade out every tile
-    opacity: 0.3;
-    // And then grow the current tile and make it opaque again
-    &:not(.-active) {
-        &:hover {
-            transform: scale($growFactor);
-            opacity: 1;
-        }
-    }
-}
-
-// And finally move all tiles right of the current tile to the right,
-// so its flush against the hovered tile
-.tile:hover ~ .tile {
-    transform: translate3d($moveRight, 0, 0);
-}
-
-.carousel {
-    &__content {
-        position: relative;
-        overflow: hidden;
-        height: 188px;
-        width: 320px;
-
-        &__slide {
-            position: absolute;
-            right: -320px;
-            height: 188px;
-            width: 320px;
-            -webkit-animation: slide 0.2s forwards;
-            -webkit-animation-delay: 0.2s;
-            animation: slide 0.2s forwards;
-            animation-delay: 0.2s;
-        }
+    .slider-wrapper {
+        display: block;
+        margin: 0 -4px;
+        overflow: visible;
     }
 
-    &__navigation {
-        align-items: center;
+    .slider {
+        border-radius: unset;
+        background: unset;
         display: flex;
-        justify-content: space-between;
+        flex-wrap: nowrap;
+        vertical-align: top;
+        min-width: 100%;
+        height: 188px;
+        margin: 0;
+        width: unset;
+
+        &:after,
+        &:before {
+            display: none;
+        }
+    }
+
+    .slide {
+        box-sizing: border-box;
+        cursor: pointer;
+        display: block;
+        flex-wrap: wrap;
+        padding: 0 4px;
+        margin: 0;
         width: 100%;
-        padding: 12px 0;
+        max-width: 336px;
+        min-width: 100% !important;
 
-        &-dots {
-            display: flex;
-            align-items: center;
-
-            &-elem {
-                width: 6px;
-                height: 6px;
-                background: $accountNavElem;
-                opacity: 0.32;
-                border-radius: 50%;
-                margin-right: 6px;
-
-                &--active {
-                    background: $accountNavElem;
-                    width: 8px;
-                    height: 8px;
-                    opacity: 1;
-                    border-radius: 50%;
-                    margin-right: 6px;
-                }
-            }
-        }
-
-        &-arrows {
-            display: flex;
-            align-items: center;
-
-            &-elem {
-                align-items: center;
-                cursor: pointer;
-                display: flex;
-                justify-content: center;
-                width: 32px;
-                height: 32px;
-                //border: 1px solid rgba(255, 255, 255, 0.2);
-                box-sizing: border-box;
-                border-radius: 50%;
-
-                &:not(:last-child) {
-                    margin-right: 12px;
-                }
-
-                &:hover {
-                    background-color: rgba(255, 255, 255, 0.1);
-                }
-            }
+        > * {
+            box-sizing: border-box;
+            width: 100%;
+            flex: auto;
         }
     }
-}
 
-@-webkit-keyframes slide {
-    100% {
-        right: 0;
+    .control-arrow {
+        font-size: 0;
+        line-height: 0;
+        position: absolute;
+        z-index: 10;
+        top: unset;
+        left: unset;
+        right: unset;
+        bottom: 0;
+        margin-top: -16px;
+        padding: 0;
+        cursor: pointer;
+        outline: none;
+        width: 32px;
+        height: 32px;
+        min-height: 32px;
+        opacity: unset;
+        user-select: none;
+
+        &::before {
+            display: none;
+        }
+
+        &.control-disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+            display: block;
+        }
     }
-}
+    .control-next { right: 0; }
+    .control-prev { right: 44px; }
 
-@keyframes slide {
-    100% {
-        right: 0;
+    .control-dots {
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        flex-direction: row;
+        column-gap: 6px;
+        line-height: 0;
+        margin-top: 24px;
+        width: unset;
+        position: absolute;
+        bottom: 12px;
+
+        .dot {
+            background-color: rgba(255, 255, 255, 0.32);
+            border: none;
+            border-radius: 50%;
+            height: 6px;
+            width: 6px;
+            padding: 0;
+            font-size: 0.0001px;
+            margin: 0;
+
+            &.selected {
+                background-color: #fff;
+                height: 8px;
+                width: 8px;
+            }
+        }
     }
 }

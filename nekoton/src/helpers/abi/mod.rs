@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
@@ -124,6 +124,12 @@ pub fn create_external_message(
         )
         .handle_error()?,
     })
+}
+
+#[wasm_bindgen(js_name = "parseKnownPayload")]
+pub fn parse_known_payload(payload: &str) -> Option<crate::core::models::KnownPayload> {
+    let payload = parse_slice(payload).ok()?;
+    crate::core::models::make_known_payload(nt::core::parsing::parse_payload(payload))
 }
 
 #[wasm_bindgen(js_name = "decodeInput")]
@@ -647,7 +653,7 @@ fn parse_token_value(
             }
             let value: js_sys::Array = value.unchecked_into();
 
-            let mut result = HashMap::with_capacity(value.length() as usize);
+            let mut result = BTreeMap::new();
 
             for value in value.iter() {
                 if !js_sys::Array::is_array(&value) {

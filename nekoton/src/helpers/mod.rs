@@ -19,7 +19,7 @@ pub fn compute_ton_wallet_address(
 
     let public_key = ed25519_dalek::PublicKey::from_bytes(&hex::decode(public_key).handle_error()?)
         .handle_error()?;
-    let wallet_type = ton_wallet::ContractType::try_from(wallet_type)?;
+    let wallet_type = ton_wallet::WalletType::try_from(wallet_type)?;
 
     let address = ton_wallet::compute_address(&public_key, wallet_type, workchain);
 

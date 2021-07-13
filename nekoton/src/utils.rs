@@ -120,9 +120,9 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "Array<string>")]
     pub type StringArray;
 
-    #[wasm_bindgen(typescript_type = "Promise<Array<string>>")]
-    pub type PromiseCustodiansList;
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type CustodiansList;
 
-    #[wasm_bindgen(typescript_type = "Promise<Array<MultisigPendingTransaction>>")]
-    pub type PromiseMultisigPendingTransactionList;
+    #[wasm_bindgen(typescript_type = "Array<MultisigPendingTransaction>")]
+    pub type MultisigPendingTransactionList;
 }

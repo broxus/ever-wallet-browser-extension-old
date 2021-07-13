@@ -9,8 +9,10 @@ use wasm_bindgen_futures::*;
 use nt::transport::{gql, Transport};
 
 use super::{
-    make_transactions_list, IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
-    PromiseTokenWallet, PromiseTonWallet, PromiseTransactionsList, TransportHandle,
+    make_root_token_contract_details, make_ton_wallet_init_data, make_transactions_list,
+    IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
+    PromiseRootTokenContractDetails, PromiseTokenWallet, PromiseTonWallet,
+    PromiseTonWalletInitData, PromiseTransactionsList, TransportError, TransportHandle,
 };
 use crate::external::{GqlConnectionImpl, GqlSender};
 use crate::utils::*;
@@ -150,6 +152,60 @@ impl GqlConnection {
                 transport.into_handle(),
                 wallet,
             )))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTonWalletInitData")]
+    pub fn get_ton_wallet_init_data(
+        &self,
+        address: &str,
+    ) -> Result<PromiseTonWalletInitData, JsValue> {
+        let address = parse_address(address)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let contract = match transport
+                .get_contract_state(&address)
+                .await
+                .handle_error()?
+            {
+                nt::transport::models::RawContractState::Exists(contract) => contract,
+                nt::transport::models::RawContractState::NotExists => {
+                    return Err(TransportError::WalletNotDeployed).handle_error()
+                }
+            };
+
+            let (public_key, wallet_type) =
+                nt::core::ton_wallet::extract_wallet_init_data(&contract).handle_error()?;
+            let custodians =
+                nt::core::ton_wallet::get_wallet_custodians(&contract, &public_key, wallet_type)
+                    .handle_error()?;
+
+            Ok(make_ton_wallet_init_data(
+                public_key,
+                wallet_type,
+                custodians,
+            ))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenRootDetailsFromTokenWallet")]
+    pub fn get_token_root_details_from_token_wallet(
+        &self,
+        token_wallet_address: &str,
+    ) -> Result<PromiseRootTokenContractDetails, JsValue> {
+        let token_wallet_address = parse_address(token_wallet_address)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let (address, details) =
+                nt::core::token_wallet::get_token_root_details_from_token_wallet(
+                    &transport,
+                    &token_wallet_address,
+                )
+                .await
+                .handle_error()?;
+            Ok(make_root_token_contract_details(address, details))
         })))
     }
 

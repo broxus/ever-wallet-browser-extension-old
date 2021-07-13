@@ -1,0 +1,121 @@
+@import '../../styles/colors';
+
+.multisig-transaction {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 100%;
+
+    &__header {
+        align-items: center;
+        background: #fff;
+        box-shadow: 0 10px 15px 10px #fff;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 32px;
+        padding: 20px 20px 0;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+
+        &-title {
+            align-self: start;
+            color: $windowFg;
+            font-size: 24px;
+            font-weight: bold;
+            line-height: 32px;
+            margin: 0;
+        }
+    }
+
+    &__wrapper {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 100%;
+        padding: 0 20px;
+    }
+
+    &__footer {
+        background: #fff;
+        bottom: 0;
+        box-shadow: 0 -10px 15px 10px #fff;
+        display: flex;
+        margin: 32px 0 0;
+        padding: 0 0 20px;
+        position: sticky;
+        z-index: 100;
+        column-gap: 12px;
+
+        > * { width: 100%; }
+
+        &-button-back {
+            width: 100px;
+            min-width: 100px;
+        }
+    }
+
+    &-tx-details {
+        margin-bottom: 28px;
+        max-height: 410px;
+
+        &-separator {
+            background: #ebedee;
+            height: 1px;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        &-param {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            &:not(:last-child) {
+                margin-bottom: 16px;
+            }
+
+            &-desc {
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                margin-bottom: 4px;
+                color: #7d8b92;
+            }
+
+            &-value {
+                color: #000000;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                word-break: break-all;
+            }
+        }
+    }
+
+
+    &-buttons {
+        margin-top: 40px;
+        display: flex;
+        position: relative;
+
+        > * { width: 100%; }
+
+        &-back-btn {
+            width: 100px;
+            min-width: 100px;
+            margin-right: 12px;
+        }
+    }
+
+}
+
+.multisig-transaction {
+    .enter-password {
+        padding: 0;
+    }
+}

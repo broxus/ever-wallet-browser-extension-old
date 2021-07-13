@@ -1,6 +1,7 @@
 @import '../../styles/colors';
 
 .enter-password {
+    padding: 20px;
     &__content {
         width: 100%;
         height: 100%;
@@ -23,10 +24,21 @@
         }
     }
     &__buttons {
+        background: #fff;
+        bottom: 0;
+        box-shadow: 0 -10px 15px 10px #fff;
         display: flex;
+        margin: 32px 0 0;
+        padding: 0;
+        position: sticky;
+        z-index: 1;
+        column-gap: 12px;
 
-        & > button:not(:last-child) {
-            margin-right: 12px;
+        > * { width: 100%; }
+
+        &-button-back {
+            width: 100px;
+            min-width: 100px;
         }
     }
 }
