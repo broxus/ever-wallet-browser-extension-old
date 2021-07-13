@@ -2,16 +2,21 @@ import React from 'react'
 
 import './style.scss'
 
-interface ICheckbox {
+type Props = {
     checked: boolean
-    setChecked: (arg0: boolean) => void
+    id?: string
+    onChange: (value: boolean) => void
 }
 
-const Checkbox: React.FC<ICheckbox> = ({ checked, setChecked }) => (
-    <label className="container">
-        <input type="checkbox" checked={checked} onChange={() => setChecked(!checked)} />
-        <span className="checkmark" />
-    </label>
-)
+export function Checkbox({ checked, id, onChange }: Props): JSX.Element {
+    const onToggle = () => {
+        onChange?.(!checked)
+    }
 
-export default Checkbox
+    return (
+        <label className="checkbox-container" htmlFor={id}>
+            <input id={id} type="checkbox" checked={checked} onChange={onToggle} />
+            <span className="checkbox-checkmark" />
+        </label>
+    )
+}

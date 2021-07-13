@@ -64,6 +64,21 @@ function arrayClone<T>(arr: T[]): T[] {
     return copy
 }
 
+type ObjectValueOfMap<M extends {}, K extends keyof M> = M[K] extends {} ? M[K] : never
+export const getOrInsertDefault = <M extends {}, K extends keyof M>(
+    map: M,
+    key: K
+): ObjectValueOfMap<M, K> => {
+    let result = map[key] as M[K] | undefined
+    if (result == null) {
+        result = {} as M[K]
+        map[key] = result
+    }
+    return result
+}
+
+export const currentUtime = () => (new Date().getTime() / 1000) | 0
+
 export class SafeEventEmitter extends EventEmitter {
     emit(type: string, ...args: any[]): boolean {
         let doError = type === 'error'
@@ -563,7 +578,30 @@ export const shuffleArray = <T>(array: T[]) => {
     return array
 }
 
-export const extractTransactionValue = (transaction: nt.Transaction) => {
+export type AggregatedMultisigTransactionInfo = {
+    finalTransactionHash?: string
+    confirmations: string[]
+    createdAt: number
+}
+
+export type AggregatedMultisigTransactions = {
+    [transactionId: string]: AggregatedMultisigTransactionInfo
+}
+
+export const extractMultisigTransactionTime = (transactionId: string) =>
+    parseInt(transactionId.slice(0, -8), 16)
+
+export const extractTransactionValue = (transaction: nt.Transaction): Decimal => {
+    const transactionWithInfo = transaction as nt.TonWalletTransaction
+    if (
+        transactionWithInfo.info?.type === 'wallet_interaction' &&
+        transactionWithInfo.info.data.method.type === 'multisig' &&
+        transactionWithInfo.info.data.method.data.type === 'submit' &&
+        transactionWithInfo.info.data.method.data.data.transactionId != '0'
+    ) {
+        return new Decimal(transactionWithInfo.info.data.method.data.data.value).mul(-1)
+    }
+
     const outgoing = transaction.outMessages.reduce(
         (total, msg) => total.add(msg.value),
         new Decimal(0)
@@ -573,9 +611,82 @@ export const extractTransactionValue = (transaction: nt.Transaction) => {
 
 export type TransactionDirection = 'from' | 'to' | 'service'
 
+export function isConfirmTransaction(
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
+): transaction is nt.Transaction & {
+    info: {
+        type: 'wallet_interaction'
+        data: {
+            knownPayload: nt.KnownPayload | undefined
+            method: {
+                type: 'multisig'
+                data: {
+                    type: 'confirm'
+                    data: nt.MultisigConfirmTransactionInfo
+                }
+            }
+        }
+    }
+} {
+    return (
+        transaction.info?.type === 'wallet_interaction' &&
+        transaction.info.data.method.type === 'multisig' &&
+        transaction.info.data.method.data.type === 'confirm'
+    )
+}
+
+export function isSubmitTransaction(
+    transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
+): transaction is nt.Transaction & {
+    info: {
+        type: 'wallet_interaction'
+        data: {
+            knownPayload: nt.KnownPayload | undefined
+            method: {
+                type: 'multisig'
+                data: {
+                    type: 'submit'
+                    data: nt.MultisigSubmitTransactionInfo
+                }
+            }
+        }
+    }
+} {
+    return (
+        transaction.info?.type === 'wallet_interaction' &&
+        transaction.info.data.method.type === 'multisig' &&
+        transaction.info.data.method.data.type === 'submit' &&
+        transaction.info.data.method.data.data.transactionId != '0'
+    )
+}
+
 export const extractTransactionAddress = (
     transaction: nt.Transaction
 ): { direction: TransactionDirection; address: string } => {
+    const transactionWithInfo = transaction as nt.TonWalletTransaction
+    if (
+        transactionWithInfo.info?.type === 'wallet_interaction' &&
+        transactionWithInfo.info.data.method.type === 'multisig'
+    ) {
+        switch (transactionWithInfo.info.data.method.data.type) {
+            case 'submit':
+                return {
+                    direction: 'to',
+                    address: transactionWithInfo.info.data.method.data.data.dest,
+                }
+            case 'send':
+                return {
+                    direction: 'to',
+                    address: transactionWithInfo.info.data.method.data.data.dest,
+                }
+            case 'confirm':
+                return {
+                    direction: 'service',
+                    address: '',
+                }
+        }
+    }
+
     for (const item of transaction.outMessages) {
         if (item.dst != null) {
             return { direction: 'to', address: item.dst }
@@ -650,33 +761,10 @@ export const convertTons = (amount?: string) => convertCurrency(amount, 9)
 export const convertCurrency = (amount: string | undefined, decimals: number) =>
     new Decimal(amount || '0').div(multiplier(decimals)).toFixed()
 
-export const estimateUsd = (amount: string) => {
-    return `${new Decimal(amount || '0').div(multiplier(9)).mul('0.6').toFixed(2).toString()}`
-}
-
 export const parseTons = (amount: string) => parseCurrency(amount, 9)
 
 export const parseCurrency = (amount: string, decimals: number) => {
     return new Decimal(amount).mul(multiplier(decimals)).ceil().toFixed(0)
-}
-
-export function findAccountByAddress(
-    accountEntries: { [publicKey: string]: nt.AssetsList[] },
-    address: string
-): nt.AssetsList | undefined {
-    for (const accounts of window.ObjectExt.values(accountEntries)) {
-        for (const account of accounts) {
-            if (account.tonWallet.address == address) {
-                return account
-            }
-        }
-    }
-    return undefined
-}
-
-export interface SendMessageRequest {
-    expireAt: number
-    boc: string
 }
 
 export interface SendMessageCallback {

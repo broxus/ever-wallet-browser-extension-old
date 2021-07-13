@@ -1,0 +1,349 @@
+@import '../../styles/colors';
+
+@mixin effect {
+	animation-duration: 0.05s;
+	animation-fill-mode: both;
+	transform-origin: 0 0;
+}
+
+@mixin flex {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+@mixin flex-center {
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+}
+
+@mixin select-item {
+	color: $windowFg;
+	display: block;
+	font-size: 16px;
+	font-weight: normal;
+	line-height: 30px;
+	padding: 5px 20px;
+	position: relative;
+}
+
+.rc-select {
+	cursor: pointer;
+	font-size: 16px;
+	line-height: normal;
+	min-height: 48px;
+	padding: 0;
+	position: relative;
+	width: 100%;
+
+	@include flex;
+
+	&-selector {
+		border: 1px solid #dde1e2;
+		padding: 0 40px 0 16px;
+		position: relative;
+		width: 100%;
+		flex-wrap: wrap;
+
+		@include flex;
+		@include flex-center;
+
+		&:hover { border-color: #b3b3b3; }
+
+		input {
+			cursor: inherit;
+			font: inherit;
+		}
+
+		&.rc-select-disabled {
+			cursor: not-allowed;
+
+			input { cursor: not-allowed; }
+		}
+
+		.rc-select-selection-search-input {
+			-webkit-appearance: none;
+			appearance: none;
+			background: transparent;
+			border: none;
+			color: $windowFg;
+			margin: 0;
+			outline: none;
+			padding: 0;
+
+			&::-webkit-search-cancel-button {
+				-webkit-appearance: none;
+				appearance: none;
+				display: none;
+			}
+		}
+	}
+
+	&-selection-item {
+		flex: 1;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		// IE11 css hack. `*::-ms-backdrop,` is a must have
+		@media all and (-ms-high-contrast: none) {
+			*::-ms-backdrop,
+			& { flex: auto; }
+		}
+	}
+
+	&-selection-placeholder {
+		color: $placeholderFg;
+		overflow: hidden;
+		pointer-events: none;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+
+		// IE11 css hack. `*::-ms-backdrop,` is a must have
+		@media all and (-ms-high-contrast: none) {
+			*::-ms-backdrop,
+			& { flex: auto; }
+		}
+	}
+
+	&-single &-selector {
+		overflow: hidden;
+	}
+	&-single &-selection-search {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 16px;
+		right: 40px;
+
+		@include flex;
+		@include flex-center;
+
+		&-input {
+			line-height: initial;
+			height: 100%;
+			width: 100%;
+		}
+	}
+
+	&-single &-selection-item,
+	&-single &-selection-placeholder {
+		padding: 0;
+		pointer-events: none;
+		transition: all 0.3s;
+	}
+	&-single &-selection-item {
+		position: relative;
+		user-select: none;
+	}
+	&-single.rc-select-open &-selector {
+		border-color: #b3b3b3;
+	}
+
+	&-single.rc-select-open &-selection-item {
+		color: $placeholderFg;
+	}
+
+	&-arrow,
+	&-clear {
+		color: $windowFg;
+		cursor: pointer;
+		padding: 0 16px;
+		transition: color 0.3s ease-in-out;
+
+		@include flex;
+		@include flex-center;
+
+		.rc-select-disabled & {
+			color: $placeholderFg;
+			cursor: not-allowed;
+		}
+
+		.rc-select:not(.rc-select-disabled) &:hover {
+			color: $windowFg;
+		}
+	}
+
+	&-arrow {
+		height: 100%;
+		position: absolute;
+		right: 0;
+		pointer-events: none;
+	}
+
+	&-dropdown {
+		background-color: #fff;
+		border-radius: 2px;
+		box-shadow: 0 3px 9px rgb(43 51 56 / 30%);
+		box-sizing: border-box;
+		font-variant: initial;
+		left: -9999px;
+		overflow: hidden;
+		outline: none;
+		padding: 5px 0;
+		position: absolute;
+		top: -9999px;
+		z-index: 5;
+
+		&-hidden { display: none; }
+
+		&-empty {
+			color: $placeholderFg;
+			display: none;
+		}
+
+		.rc-virtual-list-scrollbar {
+			display: none !important;
+		}
+	}
+
+	&-item-empty {
+		@include select-item;
+
+		color: $placeholderFg;
+		text-align: center;
+
+		.uk-empty {
+			margin: 15px 0;
+		}
+	}
+
+	&-item {
+		@include select-item;
+
+		cursor: pointer;
+		transition: background 0.3s ease;
+
+		&-option {
+			@include flex;
+			@include flex-center;
+
+			&-content {
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				width: 100%;
+
+				@include flex;
+			}
+
+			&-state { display: none; }
+
+			&-active:not(&-disabled) {
+				background-color: #efefef;
+			}
+
+			&-selected:not(&-disabled) {
+				background-color: #cecece;
+				color: #3c3c3c;
+			}
+
+			&-disabled {
+				color: #96a1a7;
+				cursor: not-allowed;
+			}
+		}
+	}
+}
+
+.rc {
+	&-slide-up-enter,
+	&-slide-up-appear {
+		@include effect;
+		opacity: 0;
+		animation-timing-function: cubic-bezier(0.08, 0.82, 0.17, 1);
+		animation-play-state: paused;
+	}
+
+	&-slide-up-leave {
+		@include effect;
+		opacity: 1;
+		animation-timing-function: cubic-bezier(0.6, 0.04, 0.98, 0.34);
+		animation-play-state: paused;
+	}
+
+	&-slide-up-enter.rc-slide-up-enter-active.rc-select-dropdown-placement-bottomLeft,
+	&-slide-up-appear.rc-slide-up-appear-active.rc-select-dropdown-placement-bottomLeft {
+		animation-name: rcSlideUpIn;
+		animation-play-state: running;
+	}
+
+	&-slide-up-leave.rc-slide-up-leave-active.rc-select-dropdown-placement-bottomLeft {
+		animation-name: rcSlideUpOut;
+		animation-play-state: running;
+	}
+
+	&-slide-up-enter.rc-slide-up-enter-active.rc-select-dropdown-placement-topLeft,
+	&-slide-up-appear.rc-slide-up-appear-active.rc-select-dropdown-placement-topLeft {
+		animation-name: rcSlideDownIn;
+		animation-play-state: running;
+	}
+
+	&-slide-up-leave.rc-slide-up-leave-active.rc-select-dropdown-placement-topLeft {
+		animation-name: rcSlideDownOut;
+		animation-play-state: running;
+	}
+}
+
+@keyframes rcSlideUpIn {
+	0% {
+		opacity: 0;
+		transform-origin: 0 0;
+		transform: scaleY(0);
+	}
+	100% {
+		opacity: 1;
+		transform-origin: 0 0;
+		transform: scaleY(1);
+	}
+}
+
+@keyframes rcSlideUpOut {
+	0% {
+		opacity: 1;
+		transform-origin: 0 0;
+		transform: scaleY(1);
+	}
+	100% {
+		opacity: 0;
+		transform-origin: 0 0;
+		transform: scaleY(0);
+	}
+}
+
+@keyframes rcSlideDownIn {
+	0% {
+		opacity: 0;
+		-webkit-transform: scaleY(0.8);
+		transform: scaleY(0.8);
+		-webkit-transform-origin: 100% 100%;
+		transform-origin: 100% 100%;
+	}
+
+	100% {
+		opacity: 1;
+		-webkit-transform: scaleY(1);
+		transform: scaleY(1);
+		-webkit-transform-origin: 100% 100%;
+		transform-origin: 100% 100%;
+	}
+}
+
+@keyframes rcSlideDownOut {
+	0% {
+		opacity: 1;
+		-webkit-transform: scaleY(1);
+		transform: scaleY(1);
+		-webkit-transform-origin: 100% 100%;
+		transform-origin: 100% 100%;
+	}
+
+	100% {
+		opacity: 0;
+		-webkit-transform: scaleY(0.8);
+		transform: scaleY(0.8);
+		-webkit-transform-origin: 100% 100%;
+		transform-origin: 100% 100%;
+	}
+}

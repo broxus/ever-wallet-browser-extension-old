@@ -11,10 +11,10 @@ import {
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
 
-import { NotificationManager, openExtensionInBrowser } from '@popup/utils/platform'
-import { NekotonController } from './NekotonController'
+import { WindowManager, openExtensionInBrowser } from '@popup/utils/platform'
+import { NekotonController, TriggerUiParams } from './NekotonController'
 
-const notificationManager = new NotificationManager()
+const windowManager = new WindowManager()
 
 let popupIsOpen: boolean = false
 let notificationIsOpen: boolean = false
@@ -30,6 +30,7 @@ const setupController = async () => {
     console.log('Setup controller')
 
     const controller = await NekotonController.load({
+        windowManager,
         openExternalWindow: triggerUi,
         getOpenNekotonTabIds: () => {
             return openNekotonTabsIDs
@@ -84,7 +85,7 @@ const setupController = async () => {
     }
 }
 
-const triggerUi = async (force: boolean) => {
+const triggerUi = async (params: TriggerUiParams) => {
     const tabs = await new Promise<chrome.tabs.Tab[]>((resolve, reject) =>
         chrome.tabs.query({ active: true }, (tabs) => {
             const error = checkForError()
@@ -100,26 +101,18 @@ const triggerUi = async (force: boolean) => {
         tabs.find((tab) => tab.id != null && openNekotonTabsIDs[tab.id])
     )
 
-    if (!uiIsTriggering && (force || !popupIsOpen) && !currentlyActiveNekotonTab) {
+    if (!uiIsTriggering && (params.force || !popupIsOpen) && !currentlyActiveNekotonTab) {
         uiIsTriggering = true
         try {
-            await notificationManager.showPopup()
+            await windowManager.showPopup({
+                group: params.group,
+                width: params.width,
+                height: params.height,
+            })
         } finally {
             uiIsTriggering = false
         }
     }
-}
-
-const openPopup = async (force: boolean) => {
-    await triggerUi(force)
-    await new Promise<void>((resolve) => {
-        const interval = setInterval(() => {
-            if (!notificationIsOpen) {
-                clearInterval(interval)
-                resolve()
-            }
-        }, 1000)
-    })
 }
 
 const ensureInitialized = initialize().catch(console.error)

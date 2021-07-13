@@ -2,9 +2,10 @@
 
 .account-details {
     background-color: $mainDarkBg;
+    box-sizing: border-box;
     //padding: 16px 20px 28px; // TODO: use with navigation
     padding: 16px 20px 24px;
-    height: 365px; // temp
+    height: 397px;
 
     &__top-panel {
         display: flex;
@@ -12,20 +13,13 @@
         margin-bottom: 30px;
     }
 
-    &__network {
-        background: rgba(255, 255, 255, 0.16);
-        border-radius: 91px;
-        color: $windowBg;
-        //cursor: pointer;
-        display: flex;
-        justify-content: center;
-        height: 30px;
-        font-style: normal;
-        font-weight: 500;
-        font-size: 14px;
-        letter-spacing: 0.75px;
-        line-height: 20px;
-        padding: 5px 10px;
+    &__notification-bell {
+        cursor: pointer;
+    }
+
+    &__profile-icon {
+        cursor: pointer;
+        position: relative;
     }
 
     &__controls {
@@ -73,39 +67,5 @@
                 padding: 0 8px;
             }
         }
-    }
-}
-
-.new-account {
-    display: flex;
-    background: #c5e4f3;
-
-    backdrop-filter: blur(80px);
-    background: linear-gradient(239.75deg, rgba(197, 228, 243, 1) 26.52%, rgba(197, 228, 243, 1)) 100%;
-    border-radius: 6px;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.24);
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 24px;
-    width: 320px;
-    height: 188px;
-
-    &-icon {
-        cursor: pointer;
-    }
-
-    &-title {
-        font-weight: bold;
-        font-size: 24px;
-        line-height: 32px;
-        color: #293166;
-    }
-
-    &-comment {
-        font-weight: normal;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0.75px;
-        color: #293166;
     }
 }

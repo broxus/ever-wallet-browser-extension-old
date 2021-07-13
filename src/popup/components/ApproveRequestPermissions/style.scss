@@ -1,0 +1,220 @@
+@import '../../styles/colors';
+
+.connect-wallet {
+	display: flex;
+	flex-direction: column;
+	min-height: 100%;
+
+	&__header {
+		background: #fff;
+		box-shadow: 0 10px 15px 10px #fff;
+		margin-bottom: 32px;
+		padding: 32px 20px 0;
+		position: sticky;
+		top: 0;
+		z-index: 100;
+
+		&-title { margin: 0; }
+	}
+
+	&__wrapper {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		justify-content: space-between;
+		min-height: 100%;
+		padding: 0 20px;
+	}
+
+	&__footer {
+		background: #fff;
+		bottom: 0;
+		box-shadow: 0 -10px 15px 10px #fff;
+		display: flex;
+		margin: 32px 0 0;
+		padding: 0 0 32px;
+		position: sticky;
+		z-index: 100;
+		column-gap: 12px;
+
+		> * { width: 100%; }
+
+		&-button-back {
+			width: 100px;
+			min-width: 100px;
+		}
+	}
+
+	&__origin-source {
+        align-items: center;
+        display: flex;
+        margin-bottom: 20px;
+        width: 100%;
+
+		&-value {
+			color: #7d8b92;
+			font-size: 16px;
+			font-weight: normal;
+			line-height: 20px;
+			padding: 0 16px;
+		}
+	}
+
+	&__accounts-list-item {
+		align-items: center;
+		border-bottom: 1px solid #ebedee;
+		color: $windowFg;
+		cursor: pointer;
+		display: flex;
+		font-size: 16px;
+		line-height: 20px;
+		margin-bottom: 16px;
+		padding-bottom: 16px;
+
+		&:hover { color: $activeButtonBg; }
+	}
+
+	&__account {
+		&-scope {
+			cursor: pointer;
+			padding: 0 12px;
+		}
+
+		&-name {
+			font-weight: 700;
+			font-size: 16px;
+			line-height: 20px;
+			color: $windowFg;
+		}
+
+		&-balance {
+			font-size: 12px;
+			line-height: 16px;
+			color: #96a1a7;
+		}
+	}
+
+	&__permissions {
+		&-heading {
+			font-weight: 700;
+			margin-bottom: 16px;
+		}
+
+		&-list {
+			display: flex;
+
+			&-item {
+				align-items: center;
+				border-bottom: 1px solid #ebedee;
+				color: #96a1a7;
+				cursor: pointer;
+				display: flex;
+				font-size: 16px;
+				line-height: 20px;
+				margin-bottom: 16px;
+				padding-bottom: 16px;
+
+				&:hover { color: $activeButtonBg; }
+			}
+		}
+
+		&-names-list {
+			font-size: 16px;
+			line-height: 20px;
+			color: #96a1a7;
+		}
+	}
+
+	&_connecting {
+		display: flex;
+		height: 100%;
+	}
+
+	&__connecting {
+		align-items: center;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+		justify-content: center;
+
+		&-heading { margin-bottom: 48px; }
+
+		&-process {
+			align-items: center;
+			display: flex;
+			justify-content: space-around;
+			width: 100%;
+		}
+	}
+}
+
+.pending-approvals__counter + .connect-wallet .connect-wallet__header {
+	top: 48px;
+}
+
+@keyframes blink {
+	/**
+	 * At the start of the animation the dot
+	 * has an opacity of .2
+	 */
+	0% {
+		opacity: 0.2;
+	}
+	/**
+	 * At 20% the dot is fully visible and
+	 * then fades out slowly
+	 */
+	20% {
+		opacity: 1;
+	}
+	/**
+	 * Until it reaches an opacity of .2 and
+	 * the animation can start again
+	 */
+	100% {
+		opacity: 0.2;
+	}
+}
+
+.connecting-process span {
+	/**
+	 * Use the blink animation, which is defined above
+	 */
+	animation-name: blink;
+	/**
+	 * The animation should take 1.4 seconds
+	 */
+	animation-duration: 1.4s;
+	/**
+	 * It will repeat itself forever
+	 */
+	animation-iteration-count: infinite;
+	/**
+	 * This makes sure that the starting style (opacity: .2)
+	 * of the animation is applied before the animation starts.
+	 * Otherwise we would see a short flash or would have
+	 * to set the default styling of the dots to the same
+	 * as the animation. Same applies for the ending styles.
+	 */
+	animation-fill-mode: both;
+}
+.connecting-process span:nth-child(2) {
+	/**
+	 * Starts the animation of the third dot
+	 * with a delay of .2s, otherwise all dots
+	 * would animate at the same time
+	 */
+	animation-delay: 0.2s;
+}
+.connecting-process span:nth-child(3) {
+	animation-delay: 0.4s;
+}
+.connecting-process span:nth-child(4) {
+	animation-delay: 0.6s;
+}
+.connecting-process span:nth-child(5) {
+	animation-delay: 0.8s;
+}
+.connecting-process span:nth-child(6) {
+	animation-delay: 1s;
+}

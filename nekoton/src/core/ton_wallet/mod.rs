@@ -21,7 +21,7 @@ pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub public_key: String,
     #[wasm_bindgen(skip)]
-    pub contract_type: ton_wallet::ContractType,
+    pub contract_type: ton_wallet::WalletType,
     #[wasm_bindgen(skip)]
     pub details: ton_wallet::TonWalletDetails,
     #[wasm_bindgen(skip)]
@@ -33,7 +33,7 @@ impl TonWallet {
         Self {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
-            contract_type: wallet.contract_type(),
+            contract_type: wallet.wallet_type(),
             details: wallet.details(),
             inner: Arc::new(TonWalletImpl {
                 transport,
@@ -85,30 +85,45 @@ impl TonWallet {
     pub fn prepare_deploy_with_multiple_owners(
         &self,
         timeout: u32,
-        custodians: &JsValue,
+        custodians: CustodiansList,
         req_confirms: u8,
     ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
 
-        let custodians = custodians
-            .into_serde::<Vec<String>>()
-            .map_err(|_| JsValue::from_str("Failed to parse a list of custodians"))?
-            .into_iter()
-            .map(|custodian| {
-                let custodian = parse_public_key(&custodian)
-                    .map_err(|_| JsValue::from_str("Failed to parse a public key"))?;
-                Ok(custodian)
-            })
-            .collect::<Result<Vec<ed25519_dalek::PublicKey>, JsValue>>();
+        let custodians = parse_custodians_list(custodians)?;
 
         let inner = wallet
             .prepare_deploy_with_multiple_owners(
                 core_models::Expiration::Timeout(timeout),
-                &custodians?,
+                &custodians,
                 req_confirms,
             )
             .handle_error()?;
         Ok(crate::crypto::UnsignedMessage { inner })
+    }
+
+    #[wasm_bindgen(js_name = "prepareConfirm")]
+    pub fn prepare_confirm(
+        &self,
+        raw_current_state: &RawContractState,
+        public_key: &str,
+        transaction_id: &str,
+        timeout: u32,
+    ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
+        let public_key = parse_public_key(public_key)?;
+        let transaction_id = u64::from_str_radix(transaction_id, 16).handle_error()?;
+
+        let wallet = self.inner.wallet.lock().unwrap();
+        let message = wallet
+            .prepare_confirm_transaction(
+                &raw_current_state.inner,
+                &public_key,
+                transaction_id,
+                core_models::Expiration::Timeout(timeout),
+            )
+            .handle_error()?;
+
+        Ok(crate::crypto::UnsignedMessage { inner: message })
     }
 
     #[wasm_bindgen(js_name = "prepareTransfer")]
@@ -155,35 +170,32 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "getCustodians")]
-    pub fn get_custodians(&self) -> Result<PromiseCustodiansList, JsValue> {
+    pub fn get_custodians(&self) -> Option<CustodiansList> {
         let inner = self.inner.clone();
 
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.get_custodians().await.handle_error()?;
-            Ok(custodians
-                .into_iter()
+        let wallet = inner.wallet.lock().trust_me();
+        let custodians = wallet.get_custodians().as_ref()?;
+
+        Some(
+            custodians
+                .iter()
                 .map(|item| JsValue::from_str(&item.to_hex_string()))
                 .collect::<js_sys::Array>()
-                .unchecked_into())
-        })))
+                .unchecked_into(),
+        )
     }
 
     #[wasm_bindgen(js_name = "getMultisigPendingTransactions")]
-    pub fn get_pending_transactions(
-        &self,
-    ) -> Result<PromiseMultisigPendingTransactionList, JsValue> {
+    pub fn get_pending_transactions(&self) -> MultisigPendingTransactionList {
         let inner = self.inner.clone();
 
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().trust_me();
-            let custodians = wallet.get_pending_transactions().await.handle_error()?;
-            Ok(custodians
-                .into_iter()
-                .map(make_multisig_pending_transaction)
-                .collect::<js_sys::Array>()
-                .unchecked_into())
-        })))
+        let wallet = inner.wallet.lock().trust_me();
+        let pending_transactions = wallet.get_unconfirmed_transactions().to_vec();
+        pending_transactions
+            .into_iter()
+            .map(make_multisig_pending_transaction)
+            .collect::<js_sys::Array>()
+            .unchecked_into()
     }
 
     #[wasm_bindgen(js_name = "getContractState")]
@@ -379,6 +391,7 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
         batch_info: core_models::TransactionsBatchInfo,
     ) {
         use crate::core::models::*;
+
         self.inner.on_transactions_found(
             transactions
                 .into_iter()
@@ -398,6 +411,7 @@ export type TonWalletDetails = {
     minAmount: string,
     supportsPayload: boolean,
     supportsMultipleOwners: boolean,
+    expirationTime: number,
 };
 "#;
 
@@ -413,8 +427,32 @@ fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonW
         .set("minAmount", data.min_amount.to_string())
         .set("supportsPayload", data.supports_payload)
         .set("supportsMultipleOwners", data.supports_multiple_owners)
+        .set("expirationTime", data.expiration_time)
         .build()
         .unchecked_into()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type CustodiansList;
+}
+
+fn parse_custodians_list(
+    custodians: CustodiansList,
+) -> Result<Vec<ed25519_dalek::PublicKey>, JsValue> {
+    if !js_sys::Array::is_array(&custodians) {
+        return Err(TonWalletError::ExpectedArray).handle_error();
+    }
+
+    custodians
+        .unchecked_into::<js_sys::Array>()
+        .iter()
+        .map(|public_key| match public_key.as_string() {
+            Some(public_key) => parse_public_key(&public_key),
+            None => Err(TonWalletError::ExpectedPublicKeyString).handle_error(),
+        })
+        .collect::<Result<Vec<_>, JsValue>>()
 }
 
 #[wasm_bindgen]
@@ -441,7 +479,7 @@ export type ContractType =
     | 'WalletV3';
 "#;
 
-impl TryFrom<ContractType> for nt::core::ton_wallet::ContractType {
+impl TryFrom<ContractType> for nt::core::ton_wallet::WalletType {
     type Error = JsValue;
 
     fn try_from(value: ContractType) -> Result<Self, Self::Error> {
@@ -449,19 +487,19 @@ impl TryFrom<ContractType> for nt::core::ton_wallet::ContractType {
             .as_string()
             .ok_or_else(|| JsValue::from_str("String with contract type name expected"))?;
 
-        ton_wallet::ContractType::from_str(&contract_type).handle_error()
+        ton_wallet::WalletType::from_str(&contract_type).handle_error()
     }
 }
 
-impl From<nt::core::ton_wallet::ContractType> for ContractType {
-    fn from(c: nt::core::ton_wallet::ContractType) -> Self {
+impl From<nt::core::ton_wallet::WalletType> for ContractType {
+    fn from(c: nt::core::ton_wallet::WalletType) -> Self {
         JsValue::from(c.to_string()).unchecked_into()
     }
 }
 
 #[wasm_bindgen(js_name = "getContractTypeDetails")]
 pub fn get_contract_type_details(contract_type: ContractType) -> Result<TonWalletDetails, JsValue> {
-    let contract_type: nt::core::ton_wallet::ContractType = contract_type.try_into()?;
+    let contract_type: nt::core::ton_wallet::WalletType = contract_type.try_into()?;
     Ok(make_ton_wallet_details(contract_type.details()))
 }
 
@@ -503,4 +541,12 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Array<TonWalletTransaction>")]
     pub type TonWalletTransactionsList;
+}
+
+#[derive(thiserror::Error, Debug)]
+enum TonWalletError {
+    #[error("Expected array")]
+    ExpectedArray,
+    #[error("Expected public key string")]
+    ExpectedPublicKeyString,
 }

@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::sync::Arc;
 
-use anyhow::Result;
+use anyhow::{Result, Error};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use wasm_bindgen::prelude::*;
@@ -252,14 +252,17 @@ pub struct LedgerQueryResultHandler {
 #[wasm_bindgen]
 impl LedgerQueryResultHandler {
     #[wasm_bindgen(js_name = "onResult")]
-    pub fn on_result(self, data: Vec<u8>) {
-        self.inner.send(Ok(data))
+    pub fn on_result(self, data: &[u8]) {
+        self.inner.send(Ok(data.to_vec()))
     }
 
     #[wasm_bindgen(js_name = "onError")]
-    pub fn on_error(self, _: JsValue) {
-        self.inner
-            .send(Err(LedgerConnectionError::QueryFailed.into()))
+    pub fn on_error(self, err: JsValue) {
+        let error = match err.as_string() {
+            Some(v) => Error::msg(v),
+            None => LedgerConnectionError::QueryFailed.into(),
+        };
+        self.inner.send(Err(error))
     }
 }
 

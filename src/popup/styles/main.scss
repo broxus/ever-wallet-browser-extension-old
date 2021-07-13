@@ -12,10 +12,14 @@ html {
     box-sizing: border-box;
 
     font-family: $font-family;
+    overflow: hidden;
+    overflow-y: auto;
 }
 
-* {
-    box-sizing: border-box;
+* { box-sizing: border-box; }
+
+*:not(.initial-scroll)::-webkit-scrollbar {
+    width: 0;
 }
 
 body {
@@ -32,11 +36,13 @@ body {
 }
 
 #root {
-    width: 100%;
-    height: 100%;
+    min-height: 100%;
     min-width: 360px;
+    width: 100%;
+}
+
+.popup-view #root {
     min-height: 600px;
-    overflow-y: auto;
 }
 
 body.fullscreen {
@@ -45,8 +51,11 @@ body.fullscreen {
     align-items: center;
 
     #root {
-        max-width: min(90vw, 600px);
-        max-height: min(60vh, 600px);
+        width: min(90vw, 600px);
+        height: min(60vh, 600px);
+        min-height: auto;
+        display: flex;
+        align-items: center;
     }
 }
 
@@ -80,11 +89,6 @@ h3 {
     user-select: none;
 }
 
-::-webkit-scrollbar {
-    //display: none;
-    width: 0;
-}
-
 .page {
     height: 100%;
     width: 100%;
@@ -106,4 +110,16 @@ h3 {
         width: 100px;
         height: 100px;
     }
+}
+
+.copy {
+    cursor: copy;
+}
+
+img {
+    -webkit-user-drag: none;
+}
+
+.__react_component_tooltip {
+    white-space: nowrap !important;
 }

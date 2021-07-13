@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { validateMnemonic } from '@popup/store/app/actions'
-import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
+import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'
@@ -11,6 +11,7 @@ import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
 
 import './style.scss'
+import { parseError } from '@popup/utils'
 
 enum LocalStep {
     SIGN_POLICY,
@@ -50,12 +51,12 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
                 throw Error('Seed must be specified')
             }
 
-            key = await createMasterKey({ seed, password })
+            key = await createMasterKey({ select: true, seed, password })
             await createAccount({ name, contractType, publicKey: key.publicKey })
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
-            setError(e.toString())
+            setError(parseError(e))
         }
     }
 
@@ -91,7 +92,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
                             setSeed({ phrase, mnemonicType })
                             setLocalStep(LocalStep.ENTER_PASSWORD)
                         } catch (e) {
-                            setError(e.toString())
+                            setError(parseError(e))
                         }
                     }}
                     onBack={() => setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)}

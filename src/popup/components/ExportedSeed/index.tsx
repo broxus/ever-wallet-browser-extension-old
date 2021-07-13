@@ -1,7 +1,7 @@
 import React from 'react'
 
 import Button from '@popup/components/Button'
-import CopyButton from '@popup/components/CopyButton'
+import { CopyButton } from '@popup/components/CopyButton'
 
 import './style.scss'
 

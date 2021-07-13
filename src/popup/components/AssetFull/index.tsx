@@ -1,30 +1,36 @@
-import React, { useRef, useState } from 'react'
-import { createRipple, removeRipple } from '@popup/common'
-import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import { convertCurrency, SelectedAsset, TokenWalletState } from '@shared/utils'
+import * as React from 'react'
+
 import * as nt from '@nekoton'
-
-import TransactionsList from '@popup/components/TransactionsList'
+import { createRipple, removeRipple } from '@popup/common'
+import { DeployWallet } from '@popup/components/DeployWallet'
+import { TransactionsList } from '@popup/components/TransactionsList'
 import Receive from '@popup/components/Receive'
-import Send from '@popup/components/Send'
-import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
-import TransactionInfo from '@popup/components/TransactionInfo'
+import { Send } from '@popup/components/Send'
+import { TransactionInfo } from '@popup/components/TransactionInfo'
 import SlidingPanel from '@popup/components/SlidingPanel'
-import AssetIcon from '@popup/components/AssetIcon'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
+import { getScrollWidth } from '@popup/utils/getScrollWidth'
+import {
+    convertCurrency,
+    isSubmitTransaction,
+    SelectedAsset,
+    TokenWalletState,
+} from '@shared/utils'
 
+import AssetIcon from '@popup/components/AssetIcon'
 import ReceiveIcon from '@popup/img/receive-dark-blue.svg'
 import SendIcon from '@popup/img/send-dark-blue.svg'
 import DeployIcon from '@popup/img/deploy-dark-blue.svg'
 
 import './style.scss'
 
-type IAssetFull = {
-    account: nt.AssetsList
+type Props = {
     tokenWalletStates: { [rootTokenContract: string]: TokenWalletState }
-    selectedKey: nt.KeyStoreEntry
+    selectedKeys: nt.KeyStoreEntry[]
     selectedAsset: SelectedAsset
-    controllerState: ControllerState
-    controllerRpc: IControllerRpcClient
 }
 
 enum Panel {
@@ -34,69 +40,92 @@ enum Panel {
     TRANSACTION,
 }
 
-const AssetFull: React.FC<IAssetFull> = ({
-    account,
+export function AssetFull({
     tokenWalletStates,
     selectedAsset,
-    selectedKey,
-    controllerState,
-    controllerRpc,
-}) => {
-    const [openedPanel, setOpenedPanel] = useState<Panel>()
-    const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
-    const scrollArea = useRef<HTMLDivElement>(null)
+    selectedKeys,
+}: Props) {
+    const accountability = useAccountability()
+    const rpc = useRpc()
+    const rpcState = useRpcState()
 
-    const { knownTokens } = controllerState
+    const account = accountability.selectedAccount
+
+    if (account == null) {
+        return null
+    }
+
+    const [openedPanel, setOpenedPanel] = React.useState<Panel>()
+    const [selectedTransaction, setSelectedTransaction] = React.useState<nt.Transaction>()
+    const scrollArea = React.useRef<HTMLDivElement>(null)
 
     const accountName = account.name
     const accountAddress = account.tonWallet.address
     const tonWalletAsset = account.tonWallet
-    let tonWalletState = controllerState.accountContractStates[accountAddress] as
-        | nt.ContractState
-        | undefined
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
+    const tokenWalletAssets = account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
 
-    const tokenWalletAssets =
-        account.additionalAssets[controllerState.selectedConnection.group]?.tokenWallets || []
-
-    let shouldDeploy: boolean
-    let balance: string | undefined
-    let transactions: nt.Transaction[] | undefined
-    let symbol: nt.Symbol | undefined
-    let currencyName: string | undefined
-    let decimals: number | undefined
-    let preloadTransactions: (continuation: nt.TransactionId) => Promise<void>
-
-    if (selectedAsset.type == 'ton_wallet') {
-        shouldDeploy =
-            tonWalletState == null ||
-            (!tonWalletState.isDeployed &&
-                nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
-        balance = tonWalletState?.balance
-        transactions = controllerState.accountTransactions[accountAddress]
-        currencyName = 'TON'
-        decimals = 9
-        preloadTransactions = ({ lt, hash }) =>
-            controllerRpc.preloadTransactions(accountAddress, lt, hash)
-    } else {
+    const scrollWidth = React.useMemo(() => getScrollWidth(), [])
+    const shouldDeploy = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return (
+                tonWalletState == null
+                || (
+                    !tonWalletState.isDeployed
+                    && nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
+            )
+        }
+        return false
+    }, [selectedAsset, tonWalletState])
+    const balance = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return tonWalletState?.balance
+        }
         const rootTokenContract = selectedAsset.data.rootTokenContract
-
-        shouldDeploy = false
-        balance = controllerState.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
-        const tokenTransactions = (transactions =
-            controllerState.accountTokenTransactions[accountAddress]?.[
-                selectedAsset.data.rootTokenContract
-            ])
-        transactions = tokenTransactions?.filter((transaction: nt.Transaction) => {
+        return rpcState.state.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
+    }, [
+        selectedAsset,
+        rpcState.state.accountTokenStates,
+        tonWalletState
+    ])
+    const transactions = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return rpcState.state.accountTransactions[accountAddress] || []
+        }
+        const tokenTransactions = rpcState.state.accountTokenTransactions[accountAddress]?.[
+            selectedAsset.data.rootTokenContract
+        ]
+        return tokenTransactions?.filter((transaction) => {
             const tokenTransaction = transaction as nt.TokenWalletTransaction
             return tokenTransaction.info != null
-        })
+        }) || []
 
-        symbol = controllerState.knownTokens[rootTokenContract]
-        currencyName = symbol.name
-        decimals = symbol.decimals
-        preloadTransactions = ({ lt, hash }) =>
-            controllerRpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
-    }
+    }, [
+        selectedAsset,
+        rpcState.state.accountTransactions,
+        rpcState.state.accountTokenTransactions,
+    ])
+    const symbol = React.useMemo(() => {
+        if (selectedAsset.type == 'ton_wallet') {
+            return undefined
+        }
+        const rootTokenContract = selectedAsset.data.rootTokenContract
+        return rpcState.state.knownTokens[rootTokenContract]
+    }, [])
+
+    const currencyName = selectedAsset.type === 'ton_wallet' ? 'TON' : symbol?.name
+    const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
+
+    const preloadTransactions = React.useCallback(
+        ({ lt, hash }) => {
+            if (selectedAsset.type === 'ton_wallet') {
+                return rpc.preloadTransactions(accountAddress, lt, hash)
+            }
+            const rootTokenContract = selectedAsset.data.rootTokenContract
+            return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
+        },
+        [accountAddress, selectedAsset]
+    )
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
@@ -112,13 +141,31 @@ const AssetFull: React.FC<IAssetFull> = ({
         setOpenedPanel(Panel.RECEIVE)
     }
 
-    const onSend = () => {
-        setOpenedPanel(Panel.SEND)
+    const onSend = async () => {
+        await rpc.tempStorageInsert('selected_asset', selectedAsset)
+        await rpc.openExtensionInExternalWindow({
+            group: 'send',
+            width: 360 + scrollWidth - 1,
+            height: 600 + scrollWidth - 1,
+        })
+        setOpenedPanel(undefined)
     }
 
     const onDeploy = () => {
         setOpenedPanel(Panel.DEPLOY)
     }
+
+    React.useEffect(() => {
+        const transactionToUpdate = (transactions as (
+            | nt.TonWalletTransaction
+            | nt.TokenWalletTransaction
+        )[]).find((transaction) => {
+            return transaction.id === selectedTransaction?.id
+        })
+        if (transactionToUpdate !== undefined) {
+            setSelectedTransaction(transactionToUpdate)
+        }
+    }, [transactions])
 
     return (
         <>
@@ -197,11 +244,12 @@ const AssetFull: React.FC<IAssetFull> = ({
 
                 <div className="asset-full__history" ref={scrollArea}>
                     <TransactionsList
+                        tonWalletAsset={tonWalletAsset}
                         topOffset={0}
                         fullHeight={380}
                         scrollArea={scrollArea}
                         symbol={symbol}
-                        transactions={transactions || []}
+                        transactions={transactions}
                         onViewTransaction={showTransaction}
                         preloadTransactions={preloadTransactions}
                     />
@@ -222,49 +270,35 @@ const AssetFull: React.FC<IAssetFull> = ({
                             tonWalletAsset={tonWalletAsset}
                             tokenWalletAssets={tokenWalletAssets}
                             defaultAsset={selectedAsset}
-                            keyEntry={selectedKey}
+                            keyEntries={selectedKeys}
                             tonWalletState={tonWalletState}
                             tokenWalletStates={tokenWalletStates}
-                            knownTokens={knownTokens}
+                            knownTokens={rpcState.state.knownTokens}
                             onBack={closePanel}
                             estimateFees={async (params) =>
-                                await controllerRpc.estimateFees(accountAddress, params)
+                                await rpc.estimateFees(accountAddress, params)
                             }
                             prepareMessage={async (params, password) =>
-                                controllerRpc.prepareMessage(accountAddress, params, password)
+                                rpc.prepareTransferMessage(accountAddress, params, password)
                             }
                             prepareTokenMessage={async (owner, rootTokenContract, params) =>
-                                controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
+                                rpc.prepareTokenMessage(owner, rootTokenContract, params)
                             }
                             sendMessage={async (message) =>
-                                controllerRpc.sendMessage(accountAddress, message)
+                                rpc.sendMessage(accountAddress, message)
                             }
                         />
                     )}
-                    {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet
-                            account={account}
-                            keyEntry={selectedKey}
-                            tonWalletState={tonWalletState}
-                            onBack={closePanel}
-                            estimateFees={async () =>
-                                controllerRpc.estimateDeploymentFees(accountAddress)
-                            }
-                            prepareDeployMessage={async (password) =>
-                                controllerRpc.prepareDeploymentMessage(accountAddress, password)
-                            }
-                            sendMessage={async (message) =>
-                                controllerRpc.sendMessage(accountAddress, message)
-                            }
-                        />
-                    )}
-                    {openedPanel == Panel.TRANSACTION && selectedTransaction && (
-                        <TransactionInfo symbol={symbol} transaction={selectedTransaction} />
-                    )}
+                    {openedPanel == Panel.DEPLOY && <DeployWallet />}
+                    {openedPanel == Panel.TRANSACTION &&
+                        selectedTransaction &&
+                        (isSubmitTransaction(selectedTransaction) ? (
+                            <MultisigTransactionSign transaction={selectedTransaction} />
+                        ) : (
+                            <TransactionInfo transaction={selectedTransaction} />
+                        ))}
                 </>
             </SlidingPanel>
         </>
     )
 }
-
-export default AssetFull

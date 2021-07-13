@@ -2,29 +2,39 @@ import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
 import { mergeTransactions } from 'ton-inpage-provider'
 import {
+    AggregatedMultisigTransactionInfo,
+    AggregatedMultisigTransactions,
     convertAddress,
     convertCurrency,
     convertTons,
+    currentUtime,
+    extractMultisigTransactionTime,
     extractTokenTransactionAddress,
     extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
+    getOrInsertDefault,
     NekotonRpcError,
     SendMessageCallback,
-    SendMessageRequest,
     TokenWalletState,
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
     AccountToCreate,
+    DeployMessageToPrepare,
     KeyToDerive,
     KeyToRemove,
+    LedgerKeyToCreate,
     MasterKeyToCreate,
-    MessageToPrepare,
+    TransferMessageToPrepare,
     SwapBackMessageToPrepare,
     TokenMessageToPrepare,
     TokenWalletsToUpdate,
-} from '@shared/approvalApi'
+    ConfirmMessageToPrepare,
+    WalletMessageToSend,
+    BriefMessageInfo,
+    StoredBriefMessageInfo,
+} from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
@@ -32,9 +42,10 @@ import { ConnectionController } from '../ConnectionController'
 import { NotificationController } from '../NotificationController'
 
 import { DEFAULT_POLLING_INTERVAL, BACKGROUND_POLLING_INTERVAL } from './constants'
-import { TonWalletSubscription } from './TonWalletSubscription'
+import { ITonWalletHandler, TonWalletSubscription } from './TonWalletSubscription'
 import { ITokenWalletHandler, TokenWalletSubscription } from './TokenWalletSubscription'
-import { IContractHandler } from '../../utils/ContractSubscription'
+
+import LedgerBridge from '../../ledger/LedgerBridge'
 
 export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
@@ -42,31 +53,54 @@ export interface AccountControllerConfig extends BaseConfig {
     keyStore: nt.KeyStore
     connectionController: ConnectionController
     notificationController: NotificationController
+    ledgerBridge: LedgerBridge
 }
 
 export interface AccountControllerState extends BaseState {
-    selectedAccount: nt.AssetsList | undefined
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
+    accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
+    accountCustodians: { [address: string]: string[] }
     accountTokenStates: { [address: string]: { [rootTokenContract: string]: TokenWalletState } }
     accountTransactions: { [address: string]: nt.TonWalletTransaction[] }
+    accountMultisigTransactions: { [address: string]: AggregatedMultisigTransactions }
+    accountUnconfirmedTransactions: {
+        [address: string]: { [transactionId: string]: nt.MultisigPendingTransaction }
+    }
     accountTokenTransactions: {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
-    accountPendingMessages: { [address: string]: { [id: string]: SendMessageRequest } }
+    accountPendingTransactions: {
+        [address: string]: { [bodyHash: string]: StoredBriefMessageInfo }
+    }
+    accountFailedTransactions: { [address: string]: { [bodyHash: string]: StoredBriefMessageInfo } }
+    accountsVisibility: { [address: string]: boolean }
+    externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
+    recentMasterKeys: nt.KeyStoreEntry[]
+    selectedAccount: nt.AssetsList | undefined
+    selectedMasterKey: string | undefined
+    masterKeysNames: { [masterKey: string]: string }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
 }
 
 const defaultState: AccountControllerState = {
-    selectedAccount: undefined,
     accountEntries: {},
     accountContractStates: {},
+    accountCustodians: {},
     accountTokenStates: {},
     accountTransactions: {},
+    accountMultisigTransactions: {},
+    accountUnconfirmedTransactions: {},
     accountTokenTransactions: {},
-    accountPendingMessages: {},
+    accountPendingTransactions: {},
+    accountFailedTransactions: {},
+    accountsVisibility: {},
+    externalAccounts: [],
     knownTokens: {},
+    masterKeysNames: {},
+    recentMasterKeys: [],
+    selectedAccount: undefined,
+    selectedMasterKey: undefined,
     storedKeys: {},
 }
 
@@ -98,12 +132,7 @@ export class AccountController extends BaseController<
         const accountEntries: AccountControllerState['accountEntries'] = {}
         const entries = await this.config.accountsStorage.getStoredAccounts()
         for (const entry of entries) {
-            let item = accountEntries[entry.tonWallet.publicKey]
-            if (item == null) {
-                item = []
-                accountEntries[entry.tonWallet.publicKey] = item
-            }
-            item.push(entry)
+            accountEntries[entry.tonWallet.address] = entry
         }
 
         const selectedAccountAddress = await this._loadSelectedAccountAddress()
@@ -115,9 +144,39 @@ export class AccountController extends BaseController<
             selectedAccount = entries[0]
         }
 
+        let selectedMasterKey = await this._loadSelectedMasterKey()
+        if (selectedMasterKey == null && selectedAccount !== undefined) {
+            selectedMasterKey = storedKeys[selectedAccount.tonWallet.publicKey]?.masterKey
+        }
+
+        let accountsVisibility = await this._loadAccountsVisibility()
+        if (accountsVisibility == null) {
+            accountsVisibility = {}
+        }
+
+        let masterKeysNames = await this._loadMasterKeysNames()
+        if (masterKeysNames == null) {
+            masterKeysNames = {}
+        }
+
+        let recentMasterKeys = await this._loadRecentMasterKeys()
+        if (recentMasterKeys == null) {
+            recentMasterKeys = []
+        }
+
+        let externalAccounts = await this._loadExternalAccounts()
+        if (externalAccounts == null) {
+            externalAccounts = []
+        }
+
         this.update({
+            accountsVisibility,
             selectedAccount,
             accountEntries,
+            externalAccounts,
+            masterKeysNames,
+            recentMasterKeys,
+            selectedMasterKey,
             storedKeys,
         })
     }
@@ -132,11 +191,7 @@ export class AccountController extends BaseController<
 
             const accountEntries = this.state.accountEntries
             const iterateEntries = async (f: (entry: nt.AssetsList) => void) =>
-                Promise.all(
-                    window.ObjectExt.values(accountEntries).map((entries) =>
-                        Promise.all(entries.map(f))
-                    )
-                )
+                Promise.all(window.ObjectExt.values(accountEntries).map(f))
 
             await iterateEntries(async ({ tonWallet, additionalAssets }) => {
                 await this._createTonWalletSubscription(
@@ -186,230 +241,19 @@ export class AccountController extends BaseController<
         return subscription.use(f)
     }
 
-    public async useTokenWallet<T>(
-        owner: string,
-        rootTokenContract: string,
-        f: (wallet: nt.TokenWallet) => Promise<T>
-    ) {
-        const subscription = this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
-        if (!subscription) {
-            throw new NekotonRpcError(
-                RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `There is no token wallet subscription for address ${owner} for root ${rootTokenContract}`
-            )
-        }
-        return subscription.use(f)
+    public async getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
+        return this._getTonWalletInitData(address)
     }
 
-    public async logOut() {
-        console.debug('logOut')
-        await this._accountsMutex.use(async () => {
-            console.debug('logOut -> mutex gained')
-
-            await this._stopSubscriptions()
-            await this.config.accountsStorage.clear()
-            await this.config.keyStore.clear()
-            await this._removeSelectedAccountAddress()
-            this.update(_.cloneDeep(defaultState), true)
-
-            console.debug('logOut -> mutex released')
-        })
-    }
-
-    public async createMasterKey({ seed, password }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
-        const { keyStore } = this.config
-
-        try {
-            const newKey: nt.NewKey =
-                seed.mnemonicType.type == 'labs'
-                    ? {
-                          type: 'master_key',
-                          data: {
-                              password,
-                              params: {
-                                  phrase: seed.phrase,
-                              },
-                          },
-                      }
-                    : {
-                          type: 'encrypted_key',
-                          data: {
-                              password,
-                              phrase: seed.phrase,
-                              mnemonicType: seed.mnemonicType,
-                          },
-                      }
-
-            const entry = await keyStore.addKey(newKey)
-
-            this.update({
-                storedKeys: {
-                    ...this.state.storedKeys,
-                    [entry.publicKey]: entry,
-                },
-            })
-
-            return entry
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
-    }
-
-    public async createDerivedKey({ accountId, password }: KeyToDerive): Promise<nt.KeyStoreEntry> {
-        const { keyStore } = this.config
-
-        try {
-            const entry = await keyStore.addKey({
-                type: 'master_key',
-                data: {
-                    password,
-                    params: { accountId },
-                },
-            })
-
-            this.update({
-                storedKeys: {
-                    ...this.state.storedKeys,
-                    [entry.publicKey]: entry,
-                },
-            })
-
-            return entry
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
-    }
-
-    public async removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
-        const { keyStore } = this.config
-
-        try {
-            const entry = await keyStore.removeKey(publicKey)
-
-            const storedKeys = { ...this.state.storedKeys }
-            delete storedKeys[publicKey]
-
-            this.update({
-                storedKeys,
-            })
-
-            return entry
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
-    }
-
-    public async createAccount({
-        name,
-        publicKey,
-        contractType,
-    }: AccountToCreate): Promise<nt.AssetsList> {
-        const { accountsStorage } = this.config
-
-        try {
-            const storedKeys = this.state.storedKeys
-            if (storedKeys[publicKey] == null) {
-                throw new Error('Requested key not found')
+    public async getTokenRootDetailsFromTokenWallet(
+        tokenWalletAddress: string
+    ): Promise<nt.RootTokenContractDetails> {
+        return this.config.connectionController.use(async ({ data: { connection } }) => {
+            try {
+                return await connection.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
-
-            const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
-
-            const accountEntries = this.state.accountEntries
-            let entries = accountEntries[publicKey]
-            if (entries == null) {
-                entries = []
-                accountEntries[publicKey] = entries
-            }
-            entries.push(selectedAccount)
-
-            this.update({
-                selectedAccount,
-                accountEntries,
-            })
-
-            await this._saveSelectedAccountAddress()
-
-            await this.startSubscriptions()
-            return selectedAccount
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
-    }
-
-    public async selectAccount(address: string) {
-        console.debug('selectAccount')
-
-        await this._accountsMutex.use(async () => {
-            console.debug('selectAccount -> mutex gained')
-
-            let selectedAccount: nt.AssetsList | undefined = undefined
-            for (const entries of Object.values(this.state.accountEntries)) {
-                selectedAccount = entries.find((item) => item.tonWallet.address == address)
-                if (selectedAccount != null) {
-                    break
-                }
-            }
-
-            if (selectedAccount != null) {
-                this.update({
-                    selectedAccount,
-                })
-
-                await this._saveSelectedAccountAddress()
-            }
-
-            console.debug('selectAccount -> mutex released')
-        })
-    }
-
-    public async removeAccount(address: string) {
-        await this._accountsMutex.use(async () => {
-            const assetsList = await this.config.accountsStorage.removeAccount(address)
-
-            const subscription = this._tonWalletSubscriptions.get(address)
-            this._tonWalletSubscriptions.delete(address)
-            if (subscription != null) {
-                await subscription.stop()
-            }
-
-            const tokenSubscriptions = this._tokenWalletSubscriptions.get(address)
-            this._tokenWalletSubscriptions.delete(address)
-            if (tokenSubscriptions != null) {
-                await Promise.all(
-                    Array.from(tokenSubscriptions.values()).map(async (item) => await item.stop())
-                )
-            }
-
-            const accountEntries = { ...this.state.accountEntries }
-            if (assetsList != null) {
-                const publicKey = assetsList.tonWallet.publicKey
-
-                let entries = [...(accountEntries[publicKey] || [])]
-                const index = entries.findIndex((item) => item.tonWallet.address == address)
-                entries.splice(index, 1)
-
-                if (entries.length === 0) {
-                    delete accountEntries[publicKey]
-                }
-            }
-
-            const accountContractStates = { ...this.state.accountContractStates }
-            delete accountContractStates[address]
-
-            const accountTransactions = { ...this.state.accountTransactions }
-            delete accountTransactions[address]
-
-            const accountTokenTransactions = { ...this.state.accountTokenTransactions }
-            delete accountTokenTransactions[address]
-
-            // TODO: select current account
-
-            this.update({
-                accountEntries,
-                accountContractStates,
-                accountTransactions,
-                accountTokenTransactions,
-            })
         })
     }
 
@@ -484,11 +328,412 @@ export class AccountController extends BaseController<
         }
     }
 
+    public async logOut() {
+        console.debug('logOut')
+        await this._accountsMutex.use(async () => {
+            console.debug('logOut -> mutex gained')
+
+            await this._stopSubscriptions()
+            await this.config.accountsStorage.clear()
+            await this.config.keyStore.clear()
+            await this._removeSelectedAccountAddress()
+            await this._removeSelectedMasterKey()
+            await this._clearMasterKeysNames()
+            await this._clearAccountsVisibility()
+            await this._clearRecentMasterKeys()
+            await this._clearExternalAccounts()
+            this.update(_.cloneDeep(defaultState), true)
+
+            console.debug('logOut -> mutex released')
+        })
+    }
+
+    public async createMasterKey({
+        name,
+        password,
+        seed,
+        select,
+    }: MasterKeyToCreate): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
+
+        try {
+            const newKey: nt.NewKey =
+                seed.mnemonicType.type == 'labs'
+                    ? {
+                          type: 'master_key',
+                          data: {
+                              name,
+                              password,
+                              params: {
+                                  phrase: seed.phrase,
+                              },
+                          },
+                      }
+                    : {
+                          type: 'encrypted_key',
+                          data: {
+                              name,
+                              password,
+                              phrase: seed.phrase,
+                              mnemonicType: seed.mnemonicType,
+                          },
+                      }
+
+            const entry = await keyStore.addKey(newKey)
+
+            if (name !== undefined) {
+                await this.updateMasterKeyName(entry.masterKey, name)
+            }
+
+            this.update({
+                storedKeys: {
+                    ...this.state.storedKeys,
+                    [entry.publicKey]: entry,
+                },
+            })
+
+            if (select) {
+                await this.selectMasterKey(entry.masterKey)
+            }
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async selectMasterKey(masterKey: string | undefined) {
+        this.update({
+            selectedMasterKey: masterKey,
+        })
+
+        await this._saveSelectedMasterKey()
+    }
+
+    public async exportMasterKey(exportKey: nt.ExportKey): Promise<nt.ExportedKey> {
+        return this.config.keyStore.exportKey(exportKey)
+    }
+
+    public async updateMasterKeyName(masterKey: string, name: string): Promise<void> {
+        this.update({
+            masterKeysNames: {
+                ...this.state.masterKeysNames,
+                [masterKey]: name,
+            },
+        })
+
+        await this._saveMasterKeysNames()
+    }
+
+    public async updateRecentMasterKey(masterKey: nt.KeyStoreEntry): Promise<void> {
+        let recentMasterKeys = this.state.recentMasterKeys.slice()
+
+        recentMasterKeys = recentMasterKeys.filter((key) => key.masterKey !== masterKey.masterKey)
+        recentMasterKeys.unshift(masterKey)
+        recentMasterKeys = recentMasterKeys.slice(0, 5)
+
+        this.update({
+            recentMasterKeys,
+        })
+
+        await this._saveRecentMasterKeys()
+    }
+
+    public async createDerivedKey({
+        accountId,
+        masterKey,
+        name,
+        password,
+    }: KeyToDerive): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
+
+        try {
+            const entry = await keyStore.addKey({
+                type: 'master_key',
+                data: {
+                    name,
+                    password,
+                    params: { masterKey, accountId },
+                },
+            })
+
+            this.update({
+                storedKeys: {
+                    ...this.state.storedKeys,
+                    [entry.publicKey]: entry,
+                },
+            })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async updateDerivedKeyName(entry: nt.KeyStoreEntry): Promise<void> {
+        const { signerName, masterKey, publicKey, name } = entry
+
+        let params: nt.RenameKey
+        switch (signerName) {
+            case 'master_key': {
+                params = {
+                    type: 'master_key',
+                    data: {
+                        masterKey,
+                        publicKey,
+                        name,
+                    },
+                }
+                break
+            }
+            case 'encrypted_key': {
+                params = {
+                    type: 'encrypted_key',
+                    data: {
+                        publicKey,
+                        name,
+                    },
+                }
+                break
+            }
+            case 'ledger_key': {
+                params = {
+                    type: 'ledger_key',
+                    data: {
+                        publicKey,
+                        name,
+                    },
+                }
+                break
+            }
+            default:
+                return
+        }
+
+        const newEntry = await this.config.keyStore.renameKey(params)
+
+        this.update({
+            storedKeys: {
+                ...this.state.storedKeys,
+                [publicKey]: newEntry,
+            },
+        })
+    }
+
+    public async createLedgerKey({ accountId }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
+
+        try {
+            const entry = await keyStore.addKey({
+                type: 'ledger_key',
+                data: {
+                    accountId,
+                },
+            })
+
+            this.update({
+                storedKeys: {
+                    ...this.state.storedKeys,
+                    [entry.publicKey]: entry,
+                },
+            })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
+        const { keyStore } = this.config
+
+        try {
+            const entry = await keyStore.removeKey(publicKey)
+
+            const storedKeys = { ...this.state.storedKeys }
+            delete storedKeys[publicKey]
+
+            this.update({
+                storedKeys,
+            })
+
+            return entry
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async getLedgerFirstPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getFirstPage()
+    }
+
+    public async getLedgerNextPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getNextPage()
+    }
+
+    public async getLedgerPreviousPage() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getPreviousPage()
+    }
+
+    public async createAccount({
+        name,
+        publicKey,
+        contractType,
+    }: AccountToCreate): Promise<nt.AssetsList> {
+        const { accountsStorage } = this.config
+
+        try {
+            const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
+
+            const accountEntries = { ...this.state.accountEntries }
+            accountEntries[selectedAccount.tonWallet.address] = selectedAccount
+
+            await this.updateAccountVisibility(selectedAccount.tonWallet.address, true)
+
+            this.update({
+                selectedAccount,
+                accountEntries,
+            })
+
+            await this._saveSelectedAccountAddress()
+
+            await this.startSubscriptions()
+            return selectedAccount
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async addExternalAccount(
+        address: string,
+        publicKey: string,
+        externalPublicKey: string
+    ): Promise<void> {
+        let { externalAccounts } = this.state
+        let entry = externalAccounts.find((account) => account.address === address)
+
+        if (entry == null) {
+            externalAccounts.unshift({ address, publicKey, externalIn: [externalPublicKey] })
+            this.update({
+                externalAccounts,
+            })
+            await this._saveExternalAccounts()
+            return
+        }
+
+        if (!entry.externalIn.includes(externalPublicKey)) {
+            entry.externalIn.push(externalPublicKey)
+        }
+
+        externalAccounts = externalAccounts.filter((account) => account.address != address)
+        externalAccounts.unshift(entry)
+
+        this.update({
+            externalAccounts,
+        })
+
+        await this._saveExternalAccounts()
+    }
+
+    public async selectAccount(address: string) {
+        console.debug('selectAccount')
+
+        await this._accountsMutex.use(async () => {
+            console.debug('selectAccount -> mutex gained')
+
+            let selectedAccount = Object.values(this.state.accountEntries).find(
+                (entry) => entry.tonWallet.address == address
+            )
+
+            if (selectedAccount != null) {
+                this.update({
+                    selectedAccount,
+                })
+
+                await this._saveSelectedAccountAddress()
+            }
+
+            console.debug('selectAccount -> mutex released')
+        })
+    }
+
+    public async removeAccount(address: string) {
+        await this._accountsMutex.use(async () => {
+            await this.config.accountsStorage.removeAccount(address)
+
+            const subscription = this._tonWalletSubscriptions.get(address)
+            this._tonWalletSubscriptions.delete(address)
+            if (subscription != null) {
+                await subscription.stop()
+            }
+
+            const tokenSubscriptions = this._tokenWalletSubscriptions.get(address)
+            this._tokenWalletSubscriptions.delete(address)
+            if (tokenSubscriptions != null) {
+                await Promise.all(
+                    Array.from(tokenSubscriptions.values()).map(async (item) => await item.stop())
+                )
+            }
+
+            const accountEntries = { ...this.state.accountEntries }
+            delete accountEntries[address]
+
+            const accountContractStates = { ...this.state.accountContractStates }
+            delete accountContractStates[address]
+
+            const accountTransactions = { ...this.state.accountTransactions }
+            delete accountTransactions[address]
+
+            const accountTokenTransactions = { ...this.state.accountTokenTransactions }
+            delete accountTokenTransactions[address]
+
+            // TODO: select current account
+
+            this.update({
+                accountEntries,
+                accountContractStates,
+                accountTransactions,
+                accountTokenTransactions,
+            })
+        })
+    }
+
+    public async renameAccount(address: string, name: string): Promise<void> {
+        await this._accountsMutex.use(async () => {
+            const accountEntry = await this.config.accountsStorage.renameAccount(address, name)
+
+            this.update({
+                accountEntries: {
+                    ...this.state.accountEntries,
+                    [address]: accountEntry,
+                },
+            })
+        })
+    }
+
+    public async updateAccountVisibility(address: string, value: boolean): Promise<void> {
+        this.update({
+            accountsVisibility: {
+                ...this.state.accountsVisibility,
+                [address]: value,
+            },
+        })
+
+        await this._saveAccountsVisibility()
+    }
+
     public async checkPassword(password: nt.KeyPassword) {
+        if (password.type == 'ledger_key') {
+            return Promise.resolve(true)
+        }
+
         return this.config.keyStore.check_password(password)
     }
 
-    public async estimateFees(address: string, params: MessageToPrepare) {
+    public async estimateFees(address: string, params: TransferMessageToPrepare) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -503,7 +748,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
-                wallet.publicKey,
+                params.publicKey,
                 params.recipient,
                 params.amount,
                 false,
@@ -516,6 +761,37 @@ export class AccountController extends BaseController<
                     'Contract must be deployed first'
                 )
             }
+
+            try {
+                const signedMessage = unsignedMessage.signFake()
+                return await wallet.estimateFees(signedMessage)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage.free()
+            }
+        })
+    }
+
+    public async estimateConfirmationFees(address: string, params: ConfirmMessageToPrepare) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            const unsignedMessage = wallet.prepareConfirm(
+                contractState,
+                params.publicKey,
+                params.transactionId,
+                60
+            )
 
             try {
                 const signedMessage = unsignedMessage.signFake()
@@ -553,19 +829,6 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async getCustodians(address: string) {
-        const subscription = await this._tonWalletSubscriptions.get(address)
-        requireTonWalletSubscription(address, subscription)
-
-        return subscription.use(async (wallet) => {
-            try {
-                return await wallet.getCustodians()
-            } catch (e) {
-                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
-            }
-        })
-    }
-
     public async getMultisigPendingTransactions(address: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
@@ -579,9 +842,9 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async prepareMessage(
+    public async prepareTransferMessage(
         address: string,
-        params: MessageToPrepare,
+        params: TransferMessageToPrepare,
         password: nt.KeyPassword
     ) {
         const subscription = await this._tonWalletSubscriptions.get(address)
@@ -598,7 +861,7 @@ export class AccountController extends BaseController<
 
             const unsignedMessage = wallet.prepareTransfer(
                 contractState,
-                wallet.publicKey,
+                params.publicKey,
                 params.recipient,
                 params.amount,
                 false,
@@ -622,7 +885,11 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async prepareDeploymentMessage(address: string, password: nt.KeyPassword) {
+    public async prepareConfirmMessage(
+        address: string,
+        params: ConfirmMessageToPrepare,
+        password: nt.KeyPassword
+    ) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -635,7 +902,52 @@ export class AccountController extends BaseController<
                 )
             }
 
-            const unsignedMessage = wallet.prepareDeploy(60)
+            let unsignedMessage: nt.UnsignedMessage | undefined
+            try {
+                unsignedMessage = wallet.prepareConfirm(
+                    contractState,
+                    params.publicKey,
+                    params.transactionId,
+                    60
+                )
+
+                return await this.config.keyStore.sign(unsignedMessage, password)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            } finally {
+                unsignedMessage?.free()
+            }
+        })
+    }
+
+    public async prepareDeploymentMessage(
+        address: string,
+        params: DeployMessageToPrepare,
+        password: nt.KeyPassword
+    ) {
+        const subscription = await this._tonWalletSubscriptions.get(address)
+        requireTonWalletSubscription(address, subscription)
+
+        return subscription.use(async (wallet) => {
+            const contractState = await wallet.getContractState()
+            if (contractState == null) {
+                throw new NekotonRpcError(
+                    RpcErrorCode.RESOURCE_UNAVAILABLE,
+                    `Failed to get contract state for ${address}`
+                )
+            }
+
+            let unsignedMessage: nt.UnsignedMessage
+            if (params.type === 'single_owner') {
+                unsignedMessage = wallet.prepareDeploy(60)
+            } else {
+                unsignedMessage = wallet.prepareDeployWithMultipleOwners(
+                    60,
+                    params.custodians,
+                    params.reqConfirms
+                )
+            }
+
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
             } catch (e) {
@@ -701,7 +1013,7 @@ export class AccountController extends BaseController<
         return this.config.keyStore.sign(unsignedMessage, password)
     }
 
-    public async sendMessage(address: string, signedMessage: nt.SignedMessage) {
+    public async sendMessage(address: string, { signedMessage, info }: WalletMessageToSend) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -718,7 +1030,27 @@ export class AccountController extends BaseController<
             await subscription.prepareReliablePolling()
             await this.useTonWallet(address, async (wallet) => {
                 try {
-                    await wallet.sendMessage(signedMessage)
+                    const pendingTransaction = await wallet.sendMessage(signedMessage)
+
+                    if (info != null) {
+                        const accountPendingTransactions = {
+                            ...this.state.accountPendingTransactions,
+                        }
+                        const pendingTransactions = getOrInsertDefault(
+                            accountPendingTransactions,
+                            address
+                        )
+                        pendingTransactions[pendingTransaction.bodyHash] = {
+                            ...info,
+                            createdAt: currentUtime(),
+                            messageHash: signedMessage.hash,
+                        } as StoredBriefMessageInfo
+
+                        this.update({
+                            accountPendingTransactions,
+                        })
+                    }
+
                     subscription.skipRefreshTimer()
                 } catch (e) {
                     throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
@@ -800,16 +1132,27 @@ export class AccountController extends BaseController<
             return
         }
 
-        class TonWalletHandler implements IContractHandler<nt.TonWalletTransaction> {
+        class TonWalletHandler implements ITonWalletHandler {
             private readonly _address: string
+            private readonly _walletDetails: nt.TonWalletDetails
             private readonly _controller: AccountController
 
-            constructor(address: string, controller: AccountController) {
+            constructor(
+                address: string,
+                contractType: nt.ContractType,
+                controller: AccountController
+            ) {
                 this._address = address
+                this._walletDetails = nt.getContractTypeDetails(contractType)
                 this._controller = controller
             }
 
             onMessageExpired(pendingTransaction: nt.PendingTransaction) {
+                this._controller._clearPendingTransaction(
+                    this._address,
+                    pendingTransaction.bodyHash,
+                    false
+                )
                 this._controller._rejectMessageRequest(
                     this._address,
                     pendingTransaction.bodyHash,
@@ -818,6 +1161,11 @@ export class AccountController extends BaseController<
             }
 
             onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
+                this._controller._clearPendingTransaction(
+                    this._address,
+                    pendingTransaction.bodyHash,
+                    true
+                )
                 this._controller._resolveMessageRequest(
                     this._address,
                     pendingTransaction.bodyHash,
@@ -833,7 +1181,25 @@ export class AccountController extends BaseController<
                 transactions: Array<nt.TonWalletTransaction>,
                 info: nt.TransactionsBatchInfo
             ) {
-                this._controller._updateTransactions(this._address, transactions, info)
+                this._controller._updateTransactions(
+                    this._address,
+                    this._walletDetails,
+                    transactions,
+                    info
+                )
+            }
+
+            onUnconfirmedTransactionsChanged(
+                unconfirmedTransactions: nt.MultisigPendingTransaction[]
+            ) {
+                this._controller._updateUnconfirmedTransactions(
+                    this._address,
+                    unconfirmedTransactions
+                )
+            }
+
+            onCustodiansChanged(custodians: string[]) {
+                this._controller._updateCustodians(this._address, custodians)
             }
         }
 
@@ -842,7 +1208,7 @@ export class AccountController extends BaseController<
             this.config.connectionController,
             publicKey,
             contractType,
-            new TonWalletHandler(address, this)
+            new TonWalletHandler(address, contractType, this)
         )
         console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
 
@@ -850,6 +1216,12 @@ export class AccountController extends BaseController<
         subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
 
         await subscription?.start()
+    }
+
+    private async _getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
+        return this.config.connectionController.use(({ data: { connection } }) =>
+            connection.getTonWalletInitData(address)
+        )
     }
 
     private async _createTokenWalletSubscription(owner: string, rootTokenContract: string) {
@@ -948,27 +1320,16 @@ export class AccountController extends BaseController<
             accountTokenStates: {},
             accountTransactions: {},
             accountTokenTransactions: {},
-            accountPendingMessages: {},
+            accountMultisigTransactions: {},
+            accountUnconfirmedTransactions: {},
+            accountPendingTransactions: {},
+            accountFailedTransactions: {},
         })
     }
 
     private _updateAssetsList(assetsList: nt.AssetsList) {
-        const accountEntries = this.state.accountEntries
-        let pubkeyEntries = accountEntries[assetsList.tonWallet.publicKey]
-        if (pubkeyEntries == null) {
-            pubkeyEntries = []
-            accountEntries[assetsList.tonWallet.publicKey] = pubkeyEntries
-        }
-
-        const entryIndex = pubkeyEntries.findIndex(
-            (item) => item.tonWallet.address == assetsList.tonWallet.address
-        )
-        if (entryIndex < 0) {
-            pubkeyEntries.push(assetsList)
-        } else {
-            pubkeyEntries[entryIndex] = assetsList
-        }
-
+        const { accountEntries } = this.state
+        accountEntries[assetsList.tonWallet.address] = assetsList
         const selectedAccount =
             this.state.selectedAccount?.tonWallet.address == assetsList.tonWallet.address
                 ? assetsList
@@ -1023,26 +1384,44 @@ export class AccountController extends BaseController<
         if (accountMessageRequests.size === 0) {
             this._sendMessageRequests.delete(address)
         }
+    }
 
-        const currentPendingMessages = this.state.accountPendingMessages
+    private _clearPendingTransaction(address: string, bodyHash: string, sent: boolean) {
+        const { accountPendingTransactions, accountFailedTransactions } = this.state
 
-        const newAccountPendingMessages = { ...currentPendingMessages[address] }
-        delete newAccountPendingMessages[id]
+        const update = {
+            accountPendingTransactions,
+        } as Partial<AccountControllerState>
 
-        const newPendingMessages = { ...currentPendingMessages }
-        if (accountMessageRequests.size > 0) {
-            newPendingMessages[address] = newAccountPendingMessages
-        } else {
-            delete newPendingMessages[address]
+        const pendingTransactions = getOrInsertDefault(accountPendingTransactions, address)
+        const info = pendingTransactions[bodyHash] as StoredBriefMessageInfo | undefined
+        if (info == null) {
+            return
         }
 
-        this.update({
-            accountPendingMessages: newPendingMessages,
-        })
+        delete pendingTransactions[bodyHash]
+
+        if (!sent) {
+            const failedTransactions = getOrInsertDefault(accountFailedTransactions, address)
+            failedTransactions[bodyHash] = info
+            update.accountFailedTransactions = accountFailedTransactions
+        }
+
+        this.update(update)
     }
 
     private _updateTonWalletState(address: string, state: nt.ContractState) {
         const currentStates = this.state.accountContractStates
+
+        const currentState = currentStates[address] as nt.ContractState | undefined
+        if (
+            currentState?.balance === state.balance &&
+            currentState?.isDeployed === state.isDeployed &&
+            currentState?.lastTransactionId?.lt === state.lastTransactionId?.lt
+        ) {
+            return
+        }
+
         const newStates = {
             ...currentStates,
             [address]: state,
@@ -1071,6 +1450,7 @@ export class AccountController extends BaseController<
 
     private _updateTransactions(
         address: string,
+        walletDetails: nt.TonWalletDetails,
         transactions: nt.TonWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
@@ -1096,8 +1476,128 @@ export class AccountController extends BaseController<
             ...currentTransactions,
             [address]: mergeTransactions(currentTransactions[address] || [], transactions, info),
         }
-        this.update({
+
+        const update = {
             accountTransactions: newTransactions,
+        } as Partial<AccountControllerState>
+
+        let multisigTransactions = this.state.accountMultisigTransactions[address] as
+            | AggregatedMultisigTransactions
+            | undefined
+        let multisigTransactionsChanged = false
+
+        if (walletDetails.supportsMultipleOwners) {
+            outer: for (const transaction of transactions) {
+                if (transaction.info?.type !== 'wallet_interaction') {
+                    continue
+                }
+
+                if (transaction.info.data.method.type !== 'multisig') {
+                    break
+                }
+
+                const method = transaction.info.data.method.data
+
+                switch (method.type) {
+                    case 'submit': {
+                        const transactionId = method.data.transactionId
+                        if (transactionId == '0') {
+                            break outer
+                        }
+
+                        if (multisigTransactions == null) {
+                            multisigTransactions = {}
+                            this.state.accountMultisigTransactions[address] = multisigTransactions
+                        }
+
+                        multisigTransactionsChanged = true
+
+                        let multisigTransaction = multisigTransactions[transactionId] as
+                            | AggregatedMultisigTransactionInfo
+                            | undefined
+                        if (multisigTransaction == null) {
+                            multisigTransactions[transactionId] = {
+                                confirmations: [method.data.custodian],
+                                createdAt: transaction.createdAt,
+                            }
+                        } else {
+                            multisigTransaction.createdAt = transaction.createdAt
+                            multisigTransaction.confirmations.push(method.data.custodian)
+                        }
+
+                        break
+                    }
+                    case 'confirm': {
+                        const transactionId = method.data.transactionId
+
+                        if (multisigTransactions == null) {
+                            multisigTransactions = {}
+                            this.state.accountMultisigTransactions[address] = multisigTransactions
+                        }
+
+                        multisigTransactionsChanged = true
+
+                        const finalTransactionHash =
+                            transaction.outMessages.length > 0 ? transaction.id.hash : undefined
+
+                        let multisigTransaction = multisigTransactions[transactionId] as
+                            | AggregatedMultisigTransactionInfo
+                            | undefined
+                        if (multisigTransaction == null) {
+                            multisigTransactions[transactionId] = {
+                                finalTransactionHash,
+                                confirmations: [method.data.custodian],
+                                createdAt: extractMultisigTransactionTime(transactionId),
+                            }
+                        } else {
+                            if (finalTransactionHash != null) {
+                                multisigTransaction.finalTransactionHash = finalTransactionHash
+                            }
+                            multisigTransaction.confirmations.push(method.data.custodian)
+                        }
+
+                        break
+                    }
+                    default:
+                        break
+                }
+            }
+        }
+
+        if (multisigTransactionsChanged) {
+            update.accountMultisigTransactions = this.state.accountMultisigTransactions
+        }
+
+        this.update(update)
+    }
+
+    private _updateUnconfirmedTransactions(
+        address: string,
+        unconfirmedTransactions: nt.MultisigPendingTransaction[]
+    ) {
+        let { accountUnconfirmedTransactions } = this.state
+
+        const entries: { [transitionId: string]: nt.MultisigPendingTransaction } = {}
+
+        unconfirmedTransactions.forEach((transaction) => {
+            entries[transaction.id] = transaction
+        })
+
+        accountUnconfirmedTransactions = {
+            ...accountUnconfirmedTransactions,
+            [address]: entries,
+        }
+
+        this.update({
+            accountUnconfirmedTransactions,
+        })
+    }
+
+    private _updateCustodians(address: string, custodians: string[]) {
+        let { accountCustodians } = this.state
+        accountCustodians[address] = custodians
+        this.update({
+            accountCustodians,
         })
     }
 
@@ -1176,6 +1676,139 @@ export class AccountController extends BaseController<
     private async _removeSelectedAccountAddress(): Promise<void> {
         return new Promise<void>((resolve) => {
             chrome.storage.local.remove('selectedAccountAddress', () => resolve())
+        })
+    }
+
+    private async _loadSelectedMasterKey(): Promise<string | undefined> {
+        return new Promise<string | undefined>((resolve) => {
+            chrome.storage.local.get(['selectedMasterKey'], ({ selectedMasterKey }) => {
+                if (typeof selectedMasterKey !== 'string') {
+                    return resolve(undefined)
+                }
+                resolve(selectedMasterKey)
+            })
+        })
+    }
+
+    private async _saveSelectedMasterKey(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey }, () =>
+                resolve()
+            )
+        })
+    }
+
+    private async _removeSelectedMasterKey(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('selectedMasterKey', () => resolve())
+        })
+    }
+
+    private async _loadMasterKeysNames(): Promise<
+        AccountControllerState['masterKeysNames'] | undefined
+    > {
+        return new Promise<AccountControllerState['masterKeysNames'] | undefined>((resolve) => {
+            chrome.storage.local.get(['masterKeysNames'], ({ masterKeysNames }) => {
+                if (typeof masterKeysNames !== 'object') {
+                    return resolve(undefined)
+                }
+                resolve(masterKeysNames)
+            })
+        })
+    }
+
+    private async _clearMasterKeysNames(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('masterKeysNames', () => resolve())
+        })
+    }
+
+    private async _saveMasterKeysNames(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ masterKeysNames: this.state.masterKeysNames }, () =>
+                resolve()
+            )
+        })
+    }
+
+    private async _loadRecentMasterKeys(): Promise<
+        AccountControllerState['recentMasterKeys'] | undefined
+    > {
+        return new Promise<AccountControllerState['recentMasterKeys'] | undefined>((resolve) => {
+            chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
+                if (!Array.isArray(recentMasterKeys)) {
+                    return resolve(undefined)
+                }
+                resolve(recentMasterKeys)
+            })
+        })
+    }
+
+    private async _clearRecentMasterKeys(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('recentMasterKeys', () => resolve())
+        })
+    }
+
+    private async _saveRecentMasterKeys(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () =>
+                resolve()
+            )
+        })
+    }
+
+    private async _loadAccountsVisibility(): Promise<
+        AccountControllerState['accountsVisibility'] | undefined
+    > {
+        return new Promise<AccountControllerState['accountsVisibility'] | undefined>((resolve) => {
+            chrome.storage.local.get(['accountsVisibility'], ({ accountsVisibility }) => {
+                if (typeof accountsVisibility !== 'object') {
+                    return resolve(undefined)
+                }
+                resolve(accountsVisibility)
+            })
+        })
+    }
+
+    private async _clearAccountsVisibility(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('accountsVisibility', () => resolve())
+        })
+    }
+
+    private async _saveAccountsVisibility(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () =>
+                resolve()
+            )
+        })
+    }
+
+    private async _loadExternalAccounts(): Promise<
+        AccountControllerState['externalAccounts'] | undefined
+    > {
+        return new Promise<AccountControllerState['externalAccounts'] | undefined>((resolve) => {
+            chrome.storage.local.get(['externalAccounts'], ({ externalAccounts }) => {
+                if (!Array.isArray(externalAccounts)) {
+                    return resolve(undefined)
+                }
+                resolve(externalAccounts)
+            })
+        })
+    }
+
+    private async _clearExternalAccounts(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.remove('externalAccounts', () => resolve())
+        })
+    }
+
+    private async _saveExternalAccounts(): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ externalAccounts: this.state.externalAccounts }, () =>
+                resolve()
+            )
         })
     }
 }

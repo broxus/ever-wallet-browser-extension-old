@@ -1,69 +1,74 @@
-import React from 'react'
-import { useState } from 'react'
+import * as React from 'react'
+import classNames from 'classnames'
+import { Carousel as ReactCarousel } from 'react-responsive-carousel'
+
 
 import RightArrow from '@popup/img/right-arrow.svg'
 import LeftArrow from '@popup/img/left-arrow.svg'
 
 import './style.scss'
 
-interface ICarousel {
-    content: JSX.Element[]
+
+type Props = {
+    centerMode?: boolean;
+    children: React.ReactNode;
+    selectedItem?: number;
+    transitionTime?: number;
+    onChange?(index: number): void;
 }
 
-const Carousel: React.FC<ICarousel> = ({ content }) => {
-    const [active, setActive] = useState(0)
-
-    const decrementIndex = () => {
-        setActive((active + content.length - 1) % content.length)
-    }
-
-    const incrementIndex = () => {
-        setActive((active + 1) % content.length)
-    }
-
+export const Carousel = React.forwardRef<ReactCarousel, Props>(({
+    centerMode= true,
+    children,
+    selectedItem = 0,
+    transitionTime = 200,
+    onChange
+}, ref) => {
     return (
-        <>
-            <div className="carousel__content">
-                {/*    <div className="row">*/}
-                {/*        <div className="row__inner">*/}
-                {/*            {content.map((el, i) => (*/}
-                {/*                <div className={`tile${i === active ? ' -active' : ''} `}>*/}
-                {/*                    <div className="tile__media">{el}</div>*/}
-                {/*                </div>*/}
-                {/*            ))}*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-                <div className="carousel__content__slide">{content[active]}</div>
-            </div>
-            <div className="carousel__navigation">
-                {/*<div className="carousel__navigation-dots">*/}
-                {/*    {content.map((_el, i) => (*/}
-                {/*        <div*/}
-                {/*            key={i}*/}
-                {/*            className={`carousel__navigation-dots-elem${*/}
-                {/*                active === i ? '--active' : ''*/}
-                {/*            }`}*/}
-                {/*        />*/}
-                {/*    ))}*/}
-                {/*</div>*/}
-                {/*<div className="carousel__navigation-arrows">*/}
-                {/*    <div*/}
-                {/*        className="carousel__navigation-arrows-elem"*/}
-                {/*        onClick={() => decrementIndex()}*/}
-                {/*    >*/}
-                {/*        <img src={LeftArrow} alt="" />*/}
-                {/*    </div>*/}
-                {/*    <div*/}
-                {/*        className="carousel__navigation-arrows-elem"*/}
-                {/*        onClick={() => incrementIndex()}*/}
-                {/*    >*/}
-                {/*        <img src={RightArrow} alt="" />*/}
-                {/*    </div>*/}
-                {/*</div>*/}
-            </div>
-        </>
+        <ReactCarousel
+            ref={ref}
+            autoPlay={false}
+            centerMode={centerMode}
+            centerSlidePercentage={100}
+            infiniteLoop={false}
+            renderArrowNext={(clickHandler, hasNext, label )  => (
+                <a
+                    role="button"
+                    aria-label={label}
+                    className={classNames([
+                        'control-arrow',
+                        'control-next',
+                    ], {
+                        'control-disabled': !hasNext
+                    })}
+                    onClick={clickHandler}
+                >
+                    <img src={RightArrow} alt="" />
+                </a>
+            )}
+            renderArrowPrev={(clickHandler, hasPrev, label) => (
+                <a
+                    role="button"
+                    aria-label={label}
+                    className={classNames([
+                        'control-arrow',
+                        'control-prev',
+                    ], {
+                        'control-disabled': !hasPrev
+                    })}
+                    onClick={clickHandler}
+                >
+                    <img src={LeftArrow} alt="" />
+                </a>
+            )}
+            selectedItem={selectedItem}
+            showThumbs={false}
+            showStatus={false}
+            swipeable={false}
+            transitionTime={transitionTime}
+            onChange={onChange}
+        >
+            {children as React.ReactChild[]}
+        </ReactCarousel>
     )
-}
-
-export default Carousel
+})

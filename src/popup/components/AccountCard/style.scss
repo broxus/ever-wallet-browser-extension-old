@@ -8,13 +8,14 @@
         rgba(255, 255, 255, 0) 26.52%,
         rgba(255, 255, 255, 0.12) 100%
     );
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.24);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
     border-left: 1px solid rgba(255, 255, 255, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 
     border-radius: 6px;
     height: 188px;
     max-width: 320px;
+
     &__info {
         display: flex;
         flex-direction: column;
@@ -37,11 +38,11 @@
                 display: flex;
                 font-style: normal;
                 font-weight: normal;
-                justify-content: space-between;
                 font-size: 14px;
                 line-height: 20px;
                 letter-spacing: 0.75px;
                 margin-bottom: 4px;
+
                 &-value {
                     cursor: pointer;
                     opacity: 0.64;
@@ -49,19 +50,15 @@
                 }
             }
         }
+
         &-balance {
             font-style: normal;
             font-weight: bold;
-            font-size: 24px;
-            line-height: 32px;
+            font-size: 20px;
+            line-height: 24px;
             color: $accountBalance;
             white-space: nowrap;
-            &-decimals {
-                font-weight: normal;
-                font-size: 18px;
-                line-height: 24px;
-                letter-spacing: 0.5px;
-            }
+
             &--resized {
                 font-size: 22px;
                 & > span {
@@ -70,11 +67,14 @@
             }
         }
     }
+
     &__pattern {
         border-top-right-radius: 6px;
         border-bottom-right-radius: 6px;
         overflow: hidden;
         position: relative;
+        width: 130px;
+
         &-ellipsis {
             cursor: pointer;
             position: absolute;

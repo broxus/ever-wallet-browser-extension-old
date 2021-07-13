@@ -78,7 +78,7 @@ const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
 }
 
 export type ITransactionProgress = {
-    pendingResponse: Promise<nt.Transaction>
+    pendingResponse: Promise<nt.Transaction | undefined>
     onBack: () => void
 }
 

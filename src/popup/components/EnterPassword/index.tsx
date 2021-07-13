@@ -6,21 +6,21 @@ import Button from '@popup/components/Button'
 
 import './style.scss'
 
-interface IEnterPassword {
+type Props = {
     minHeight?: string
     disabled?: boolean
     error?: string
-    handleNext: (password: string) => void
-    handleBack: () => void
+    handleNext(password: string): void
+    handleBack(): void
 }
 
-const EnterPassword: React.FC<IEnterPassword> = ({
+export function EnterPassword({
     minHeight,
     disabled,
     error,
     handleNext,
     handleBack,
-}) => {
+}: Props): JSX.Element {
     const { register, handleSubmit, errors } = useForm<{ password: string }>()
 
     const onSubmit = ({ password }: { password: string }) => {
@@ -54,11 +54,11 @@ const EnterPassword: React.FC<IEnterPassword> = ({
                 </div>
             </div>
             <div className="enter-password__buttons">
-                <Button text={'Back'} disabled={disabled} onClick={() => handleBack()} white />
+                <div className="enter-password__buttons-button-back">
+                    <Button text={'Back'} disabled={disabled} onClick={() => handleBack()} white />
+                </div>
                 <Button text={'Next'} disabled={disabled} onClick={handleSubmit(onSubmit)} />
             </div>
         </div>
     )
 }
-
-export default EnterPassword

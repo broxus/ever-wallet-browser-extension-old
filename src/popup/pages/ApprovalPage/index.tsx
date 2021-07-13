@@ -1,12 +1,14 @@
-import React, { useState } from 'react'
-import { ApprovalApi, PendingApproval } from '@shared/approvalApi'
-import { JsonRpcError, NekotonRpcError, serializeError } from '@shared/utils'
-import { RpcErrorCode } from '@shared/errors'
-import * as nt from '@nekoton'
+import * as React from 'react'
 
-import ApproveContractInteraction from '@popup/components/ApproveContractInteraction'
-import ApproveRequestPermissions from '@popup/components/ApproveRequestPermissions'
-import ApproveSendMessage from '@popup/components/ApproveSendMessage'
+import { ApproveContractInteraction } from '@popup/components/ApproveContractInteraction'
+import { ApproveRequestPermissions } from '@popup/components/ApproveRequestPermissions'
+import { ApproveSendMessage } from '@popup/components/ApproveSendMessage'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
+
+import { ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
+import { RpcErrorCode } from '@shared/errors'
+import { NekotonRpcError, serializeError } from '@shared/utils'
 
 import Right from '@popup/img/right-arrow-blue.svg'
 import Left from '@popup/img/left-arrow-blue.svg'
@@ -17,34 +19,22 @@ const rejectedByUser = serializeError(
     new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, 'Rejected by user')
 )
 
-interface IApprovalPage {
-    pendingApprovals: PendingApproval<keyof ApprovalApi>[]
-    networkName: string
-    accountEntries: { [publicKey: string]: nt.AssetsList[] }
-    storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
-    accountContractStates: { [address: string]: nt.ContractState }
-    checkPassword: (password: nt.KeyPassword) => Promise<boolean>
-    resolvePendingApproval: (id: string, params: any) => Promise<void>
-    rejectPendingApproval: (id: string, params: JsonRpcError) => Promise<void>
-}
+export function ApprovalPage(): JSX.Element | null {
+    const rpc = useRpc()
+    const rpcState = useRpcState()
 
-const ApprovalPage: React.FC<IApprovalPage> = ({
-    pendingApprovals,
-    networkName,
-    accountEntries,
-    storedKeys,
-    accountContractStates,
-    checkPassword,
-    resolvePendingApproval,
-    rejectPendingApproval,
-}) => {
-    const [approvalIndex, setApprovalIndex] = useState(0)
+    const [approvalIndex, setApprovalIndex] = React.useState(0)
+
+    const pendingApprovals = React.useMemo<any[]>(
+        () => window.ObjectExt.values({ ...rpcState.state.pendingApprovals }),
+        [rpcState.state.pendingApprovals]
+    )
+
+    if (pendingApprovals.length === 0) {
+        return null
+    }
 
     const selectNextApproval = () => {
-        if (pendingApprovals.length === 0) {
-            return null
-        }
-
         const normalizedApprovalIndex = Math.min(pendingApprovals.length - 1, approvalIndex)
         if (approvalIndex != normalizedApprovalIndex) {
             setApprovalIndex(normalizedApprovalIndex)
@@ -66,72 +56,75 @@ const ApprovalPage: React.FC<IApprovalPage> = ({
         setApprovalIndex((approvalIndex + 1) % pendingApprovals.length)
     }
 
+    const resolvePendingApproval = async (value: unknown) => {
+        await rpc.resolvePendingApproval(approval.id, value)
+    }
+
+    const rejectPendingApproval = async () => {
+        await rpc.rejectPendingApproval(approval.id, rejectedByUser as any)
+    }
+
     return (
         <>
             {pendingApprovals.length !== 1 && (
-                <div className="connect-wallet__slider">
+                <div className="pending-approvals__counter">
                     <div>
                         Pending approval{' '}
-                        <span className="connect-wallet__slider__counter">{`${
+                        <span className="pending-approvals__counter-counts">{`${
                             approvalIndex + 1
                         } of ${pendingApprovals.length}`}</span>
                     </div>
-                    <div className="connect-wallet__slider__nav">
-                        <div className="connect-wallet__slider__button" onClick={decrementIndex}>
+                    <div className="pending-approvals__counter-nav">
+                        <div
+                            className="pending-approvals__counter-nav-button"
+                            onClick={decrementIndex}
+                        >
                             <img src={Left} alt="" />
                         </div>
-                        <div className="connect-wallet__slider__button" onClick={incrementIndex}>
+                        <div
+                            className="pending-approvals__counter-nav-button"
+                            onClick={incrementIndex}
+                        >
                             <img src={Right} alt="" />
                         </div>
                     </div>
                 </div>
             )}
+
             {approval.type === 'requestPermissions' && (
                 <ApproveRequestPermissions
                     approval={approval}
-                    accountEntries={accountEntries}
-                    accountContractStates={accountContractStates}
-                    onSubmit={(params) => {
-                        resolvePendingApproval(approval.id, params).then(() => {})
-                    }}
-                    onReject={() => {
-                        rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
-                    }}
+                    accountEntries={rpcState.state.accountEntries}
+                    accountContractStates={rpcState.state.accountContractStates}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
                 />
             )}
+
             {approval.type === 'sendMessage' && (
                 <ApproveSendMessage
                     approval={approval}
-                    networkName={networkName}
-                    accountEntries={accountEntries}
-                    accountContractStates={accountContractStates}
-                    storedKeys={storedKeys}
-                    checkPassword={checkPassword}
-                    onSubmit={(password) => {
-                        resolvePendingApproval(approval.id, password).then(() => {})
-                    }}
-                    onReject={() => {
-                        rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
-                    }}
+                    networkName={rpcState.state.selectedConnection.name}
+                    accountEntries={rpcState.state.accountEntries}
+                    accountContractStates={rpcState.state.accountContractStates}
+                    storedKeys={rpcState.state.storedKeys}
+                    checkPassword={rpc.checkPassword}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
                 />
             )}
+
             {approval.type === 'callContractMethod' && (
                 <ApproveContractInteraction
                     approval={approval}
-                    networkName={networkName}
-                    accountEntries={accountEntries}
-                    storedKeys={storedKeys}
-                    checkPassword={checkPassword}
-                    onSubmit={(password) => {
-                        resolvePendingApproval(approval.id, password).then(() => {})
-                    }}
-                    onReject={() => {
-                        rejectPendingApproval(approval.id, rejectedByUser).then(() => {})
-                    }}
+                    networkName={rpcState.state.selectedConnection.name}
+                    accountEntries={rpcState.state.accountEntries}
+                    storedKeys={rpcState.state.storedKeys}
+                    checkPassword={rpc.checkPassword}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
                 />
             )}
         </>
     )
 }
-
-export default ApprovalPage

@@ -16,7 +16,8 @@ export type TransactionAdditionalInfo =
     | EnumItem<'depool_receive_answer', DePoolReceiveAnswerNotification>
     | EnumItem<'token_wallet_deployed', TokenWalletDeployedNotification>
     | EnumItem<'eth_event_status_changed', EthEventStatusChanged>
-    | EnumItem<'ton_event_status_changed', TonEventStatusChanged>;
+    | EnumItem<'ton_event_status_changed', TonEventStatusChanged>
+    | EnumItem<'wallet_interaction', WalletInteractionInfo>;
 "#;
 
 #[wasm_bindgen]
@@ -49,6 +50,10 @@ pub fn make_transaction_additional_info(
         models::TransactionAdditionalInfo::TonEventStatusChanged(status) => (
             "ton_event_status_changed",
             JsValue::from(status.to_string()),
+        ),
+        models::TransactionAdditionalInfo::WalletInteraction(data) => (
+            "wallet_interaction",
+            make_wallet_interaction_info(data).unchecked_into(),
         ),
         _ => return None,
     };
@@ -161,6 +166,269 @@ export type TonEventStatus =
 "#;
 
 #[wasm_bindgen(typescript_custom_section)]
+const WALLET_INTERACTION_INFO: &str = r#"
+export type WalletInteractionInfo = {
+    knownPayload: KnownPayload | undefined,
+    method: WalletInteractionMethod
+}
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "WalletInteractionInfo")]
+    pub type WalletInteractionInfo;
+}
+
+pub fn make_wallet_interaction_info(data: models::WalletInteractionInfo) -> WalletInteractionInfo {
+    ObjectBuilder::new()
+        .set("knownPayload", make_known_payload(data.known_payload))
+        .set("method", make_wallet_interaction_method(data.method))
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const WALLET_INTERACTION_METHOD: &str = r#"
+export type WalletInteractionMethod =
+    | EnumItem<'wallet_v3_transfer', undefined>
+    | EnumItem<'multisig', MultisigTransactionInfo>
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "WalletInteractionMethod")]
+    pub type WalletInteractionMethod;
+}
+
+pub fn make_wallet_interaction_method(
+    data: models::WalletInteractionMethod,
+) -> WalletInteractionMethod {
+    let (ty, data) = match data {
+        models::WalletInteractionMethod::WalletV3Transfer => {
+            ("wallet_v3_transfer", JsValue::undefined())
+        }
+        models::WalletInteractionMethod::Multisig(data) => (
+            "multisig",
+            make_multisig_transaction_info(*data).unchecked_into(),
+        ),
+    };
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("data", data)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const KNOWN_PAYLOAD: &str = r#"
+export type KnownPayload =
+    | EnumItem<'comment', string>
+    | EnumItem<'token_outgoing_transfer', { to: TransferRecipient, tokens: string }>
+    | EnumItem<'token_swap_back', { tokens: string, to: string }>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "KnownPayload")]
+    pub type KnownPayload;
+}
+
+pub fn make_known_payload(data: Option<models::KnownPayload>) -> Option<KnownPayload> {
+    let (ty, data) = match data? {
+        models::KnownPayload::Comment(comment) => ("comment", JsValue::from(comment)),
+        models::KnownPayload::TokenOutgoingTransfer(transfer) => (
+            "token_outgoing_transfer",
+            ObjectBuilder::new()
+                .set("to", make_transfer_recipient(transfer.to))
+                .set("tokens", transfer.tokens.to_string())
+                .build(),
+        ),
+        models::KnownPayload::TokenSwapBack(swap_back) => (
+            "token_swap_back",
+            ObjectBuilder::new()
+                .set("tokens", swap_back.tokens.to_string())
+                .set("to", swap_back.to)
+                .build(),
+        ),
+        _ => return None,
+    };
+
+    Some(
+        ObjectBuilder::new()
+            .set("type", ty)
+            .set("data", data)
+            .build()
+            .unchecked_into(),
+    )
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_TRANSACTION_INFO: &str = r#"
+export type MultisigTransactionInfo =
+    | EnumItem<'send', MultisigSendTransactionInfo>
+    | EnumItem<'submit', MultisigSubmitTransactionInfo>
+    | EnumItem<'confirm', MultisigConfirmTransactionInfo>;
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigTransactionInfo")]
+    pub type MultisigTransactionInfo;
+}
+
+pub fn make_multisig_transaction_info(
+    data: models::MultisigTransaction,
+) -> MultisigTransactionInfo {
+    let (ty, data): (_, JsValue) = match data {
+        models::MultisigTransaction::Send(send) => (
+            "send",
+            make_multisig_send_transaction_info(send).unchecked_into(),
+        ),
+        models::MultisigTransaction::Submit(submit) => (
+            "submit",
+            make_multisig_submit_transaction_info(submit).unchecked_into(),
+        ),
+        models::MultisigTransaction::Confirm(confirm) => (
+            "confirm",
+            make_multisig_confirm_transaction_info(confirm).unchecked_into(),
+        ),
+    };
+
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("data", data)
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_SEND_TRANSACTION_INFO: &str = r#"
+export type MultisigSendTransactionInfo = {
+    dest: string,
+    value: string,
+    bounce: boolean,
+    flags: number,
+    payload: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigSendTransactionInfo")]
+    pub type MultisigSendTransactionInfo;
+}
+
+pub fn make_multisig_send_transaction_info(
+    data: models::MultisigSendTransaction,
+) -> MultisigSendTransactionInfo {
+    ObjectBuilder::new()
+        .set("dest", data.dest.to_string())
+        .set("value", data.value.to_string())
+        .set("bounce", data.bounce)
+        .set("flags", data.flags)
+        .set(
+            "payload",
+            ton_types::serialize_toc(&data.payload)
+                .map(|data| base64::encode(&data))
+                .ok()
+                .unwrap_or_default(),
+        )
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_SUBMIT_TRANSACTION_INFO: &str = r#"
+export type MultisigSubmitTransactionInfo = {
+    custodian: string,
+    dest: string,
+    value: string,
+    bounce: boolean,
+    allBalance: boolean,
+    payload: string,
+    transactionId: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigSubmitTransactionInfo")]
+    pub type MultisigSubmitTransactionInfo;
+}
+
+pub fn make_multisig_submit_transaction_info(
+    data: models::MultisigSubmitTransaction,
+) -> MultisigSubmitTransactionInfo {
+    ObjectBuilder::new()
+        .set("custodian", data.custodian.to_hex_string())
+        .set("dest", data.dest.to_string())
+        .set("value", data.value.to_string())
+        .set("bounce", data.bounce)
+        .set("allBalance", data.all_balance)
+        .set(
+            "payload",
+            ton_types::serialize_toc(&data.payload)
+                .map(|data| base64::encode(&data))
+                .ok()
+                .unwrap_or_default(),
+        )
+        .set("transactionId", format!("{:x}", data.trans_id))
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const MULTISIG_CONFIRM_TRANSACTION_INFO: &str = r#"
+export type MultisigConfirmTransactionInfo = {
+    custodian: string, 
+    transactionId: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "MultisigConfirmTransactionInfo")]
+    pub type MultisigConfirmTransactionInfo;
+}
+
+pub fn make_multisig_confirm_transaction_info(
+    data: models::MultisigConfirmTransaction,
+) -> MultisigConfirmTransactionInfo {
+    ObjectBuilder::new()
+        .set("custodian", data.custodian.to_hex_string())
+        .set("transactionId", format!("{:x}", data.transaction_id))
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const TRANSFER_RECIPIENT: &str = r#"
+export type TransferRecipient = {
+    type: 'owner_wallet' | 'token_wallet',
+    address: string,
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TransferRecipient")]
+    pub type TransferRecipient;
+}
+
+pub fn make_transfer_recipient(data: models::TransferRecipient) -> TransferRecipient {
+    let (ty, address) = match data {
+        models::TransferRecipient::OwnerWallet(address) => ("owner_wallet", address),
+        models::TransferRecipient::TokenWallet(address) => ("token_wallet", address),
+    };
+
+    ObjectBuilder::new()
+        .set("type", ty)
+        .set("address", address.to_string())
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const SYMBOL: &str = r#"
 export type Symbol = {
     name: string,
@@ -262,8 +530,9 @@ pub fn parse_gen_timings(data: GenTimings) -> Result<models::GenTimings, JsValue
 #[wasm_bindgen(typescript_custom_section)]
 const PENDING_TRANSACTION: &str = r#"
 export type PendingTransaction = {
-    src?: string,
+    messageHash: string,
     bodyHash: string,
+    src?: string,
     expireAt: number,
 };
 "#;
@@ -276,8 +545,9 @@ extern "C" {
 
 pub fn make_pending_transaction(data: models::PendingTransaction) -> PendingTransaction {
     ObjectBuilder::new()
-        .set("src", data.src.as_ref().map(ToString::to_string))
+        .set("messageHash", data.message_hash.to_hex_string())
         .set("bodyHash", data.body_hash.to_hex_string())
+        .set("src", data.src.as_ref().map(ToString::to_string))
         .set("expireAt", data.expire_at)
         .build()
         .unchecked_into()
@@ -355,7 +625,7 @@ pub fn make_multisig_pending_transaction(
     data: models::MultisigPendingTransaction,
 ) -> MultisigPendingTransaction {
     ObjectBuilder::new()
-        .set("id", data.id.to_string())
+        .set("id", format!("{:x}", data.id))
         .set(
             "confirmations",
             data.confirmations

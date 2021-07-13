@@ -54,6 +54,20 @@ impl AccountsStorage {
         })))
     }
 
+    #[wasm_bindgen(js_name = "renameAccount")]
+    pub fn rename_account(
+        &self,
+        account: String,
+        name: String,
+    ) -> Result<PromiseAssetsList, JsValue> {
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let assets_list = inner.rename_account(&account, name).await.handle_error()?;
+            Ok(JsValue::from(make_assets_list(assets_list)))
+        })))
+    }
+
     #[wasm_bindgen(js_name = "addTokenWallet")]
     pub fn add_token_wallet(
         &self,

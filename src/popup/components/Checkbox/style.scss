@@ -1,11 +1,12 @@
 @import '../../styles/colors';
 
 /* Customize the label (the container) */
-.container {
+.checkbox-container {
     display: block;
     position: relative;
-    padding-left: 35px;
-    margin-bottom: 12px;
+    margin-right: 16px;
+    width: 19px;
+    height: 19px;
     cursor: pointer;
     font-size: 22px;
     -webkit-user-select: none;
@@ -15,7 +16,7 @@
 }
 
 /* Hide the browser's default checkbox */
-.container input {
+.checkbox-container input {
     position: absolute;
     opacity: 0;
     cursor: pointer;
@@ -24,48 +25,48 @@
 }
 
 /* Create a custom checkbox */
-.checkmark {
+.checkbox-checkmark {
     position: absolute;
     box-sizing: border-box;
     top: 0;
     left: 0;
-    height: 18px;
-    width: 18px;
+    height: 19px;
+    width: 19px;
     border: 1px solid rgba(0, 0, 0, 0.4);
 }
 
 /* On mouse-over, add a grey background color */
-.container:hover input ~ .checkmark {
+.checkbox-container:hover input ~ .checkbox-checkmark {
     background-color: $whiteButtonBorder;
 }
 
 /* When the checkbox is checked, add a blue background */
-.container input:checked ~ .checkmark {
+.checkbox-container input:checked ~ .checkbox-checkmark {
     background-color: $windowBgActive;
     border: none;
     animation: wave 0.4s ease;
 }
 
 /* Create the checkmark/indicator (hidden when not checked) */
-.checkmark:after {
+.checkbox-checkmark:after {
     content: '';
     position: absolute;
     display: none;
 }
 
 /* Show the checkmark when checked */
-.container input:checked ~ .checkmark:after {
+.checkbox-container input:checked ~ .checkbox-checkmark:after {
     display: block;
 }
 
 /* Style the checkmark/indicator */
-.container .checkmark:after {
-    left: 6px;
-    top: 1px;
-    width: 5px;
+.checkbox-container .checkbox-checkmark:after {
+    left: 7px;
+    top: 2px;
+    width: 4px;
     height: 9px;
     border: solid white;
-    border-width: 0 3px 3px 0;
+    border-width: 0 2px 2px 0;
     -webkit-transform: rotate(45deg);
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { generateSeed } from '@popup/store/app/actions'
-import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/approvalApi'
+import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'
@@ -10,6 +10,7 @@ import ExportedSeed from '@popup/components/ExportedSeed'
 import { CheckSeedOnCreation } from '@popup/components/CheckSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
+import { parseError } from '@popup/utils'
 
 enum LocalStep {
     SIGN_POLICY,
@@ -48,6 +49,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
             setInProcess(true)
 
             key = await createMasterKey({
+                select: true,
                 seed,
                 password,
             })
@@ -55,7 +57,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
-            setError(e.toString())
+            setError(parseError(e))
         }
     }
 
@@ -78,7 +80,6 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
                         setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
                     onBack={onBack}
-                    excludedContracts={['WalletV3']}
                 />
             )}
             {localStep == LocalStep.SHOW_PHRASE && (

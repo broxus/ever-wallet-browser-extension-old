@@ -1,22 +1,21 @@
-import React from 'react'
+import * as React from 'react'
+
+import { CopyText } from '@popup/components/CopyText'
 import { convertAddress, convertPublicKey } from '@shared/utils'
 
-import ReactTooltip from 'react-tooltip'
-import CopyToClipboard from 'react-copy-to-clipboard'
-
 import Pattern from '@popup/img/ton-pattern.svg'
-import Ellipsis from '@popup/img/ellipsis.svg'
 
 import './style.scss'
 
-interface IAccountCard {
+
+type Props = {
     accountName: string
-    publicKey: string
-    address: string
+    address?: string
     balance: string
+    publicKey: string
 }
 
-const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, balance }) => {
+export function AccountCard({ accountName, address, balance, publicKey }: Props): JSX.Element {
     const wholePart = balance.split('.')?.[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     const decimals = balance.split('.')?.[1]
 
@@ -27,53 +26,39 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
                     <div className="account-card__info-details-name">{accountName}</div>
                     <div className="account-card__info-details-public-key noselect">
                         Public key
-                        <CopyToClipboard
+                        <CopyText
+                            className="account-card__info-details-public-key-value"
+                            id={`copy-${publicKey}-${address}`}
+                            place="top"
                             text={publicKey}
-                            onCopy={() => {
-                                ReactTooltip.hide()
-                            }}
                         >
-                            <span
-                                className="account-card__info-details-public-key-value"
-                                data-tip="Click to copy"
-                            >
-                                {convertPublicKey(publicKey)}
-                            </span>
-                        </CopyToClipboard>
-                        <ReactTooltip type="dark" effect="solid" place="bottom" />
+                            {convertPublicKey(publicKey)}
+                        </CopyText>
                     </div>
                     <div className="account-card__info-details-public-key noselect">
                         Address
-                        <CopyToClipboard
-                            text={address}
-                            onCopy={() => {
-                                ReactTooltip.hide()
-                            }}
-                        >
-                            <span
+                        {address !== undefined ? (
+                            <CopyText
                                 className="account-card__info-details-public-key-value"
-                                data-tip="Click to copy"
+                                id={`copy-${address}`}
+                                place="top"
+                                text={address}
                             >
-                                {convertAddress(address) || 'Not created'}
+                                {convertAddress(address)}
+                            </CopyText>
+                        ) : (
+                            <span className="account-card__info-details-public-key-value">
+                                Not created
                             </span>
-                        </CopyToClipboard>
-                        <ReactTooltip type="dark" effect="solid" place="bottom" />
+                        )}
                     </div>
                 </div>
-
-                <div
-                    className={`account-card__info-balance ${
-                        wholePart?.length + decimals?.length > 10
-                            ? 'account-card__info-balance--resized'
-                            : ''
-                    }`}
-                >
+                <div className="account-card__info-balance">
                     {wholePart}
-                    <span className="account-card__info-balance-decimals">
-                        {`.${decimals || '00'} TON`}
-                    </span>
+                    {`.${decimals || '00'} TON`}
                 </div>
             </div>
+
             <div className="account-card__pattern">
                 <img src={Pattern} alt="" />
                 {/*<div className="account-card__pattern-ellipsis">*/}
@@ -83,4 +68,3 @@ const AccountCard: React.FC<IAccountCard> = ({ accountName, publicKey, address, 
         </div>
     )
 }
-export default AccountCard

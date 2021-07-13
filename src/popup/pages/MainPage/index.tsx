@@ -1,136 +1,110 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
-import { SelectedAsset } from '@shared/utils'
-import { ConnectionDataItem } from '@shared/approvalApi'
-import { Environment, ENVIRONMENT_TYPE_NOTIFICATION } from '@shared/constants'
+import * as React from 'react'
+
 import * as nt from '@nekoton'
-
-import AccountDetails from '@popup/components/AccountDetails'
-import UserAssets from '@popup/components/UserAssets'
-
-import SlidingPanel from '@popup/components/SlidingPanel'
+import { AccountDetails } from '@popup/components/AccountDetails'
+import { AssetFull } from '@popup/components/AssetFull'
+import { CreateAccount } from '@popup/components/AccountsManagement/components'
+import { DeployWallet } from '@popup/components/DeployWallet'
+import { ManageSeeds } from '@popup/components/AccountsManagement'
+import { MultisigTransactionSign } from '@popup/components/MultisigTransaction'
+import { TransactionInfo } from '@popup/components/TransactionInfo'
+import { UserAssets } from '@popup/components/UserAssets'
 import Receive from '@popup/components/Receive'
-import Send from '@popup/components/Send'
-import KeyStorage from '@popup/components/KeyStorage'
-import DeployWallet from '@popup/components/DeployWallet/DeployWallet'
-import TransactionInfo from '@popup/components/TransactionInfo'
-import AssetFull from '@popup/components/AssetFull'
-import CollectTokens from '@popup/components/CollectTokens'
-
-import CreateAccountPage from '@popup/pages/CreateAccountPage'
+import SlidingPanel from '@popup/components/SlidingPanel'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { SelectedAsset, isSubmitTransaction } from '@shared/utils'
 
 import './style.scss'
 
 const INITIAL_DATA_KEY = 'initial_data'
 
-interface IMainPage {
-    environment: Environment
-    controllerState: ControllerState
-    controllerRpc: IControllerRpcClient
-}
+export function MainPage(): JSX.Element | null {
+    const accountability = useAccountability()
+    const drawer = useDrawerPanel()
+    const rpc = useRpc()
+    const rpcState = useRpcState()
 
-enum Panel {
-    RECEIVE,
-    SEND,
-    DEPLOY,
-    COLLECT_TOKENS,
-    KEY_STORAGE,
-    CREATE_ACCOUNT,
-    ASSET,
-    TRANSACTION,
-}
+    const [selectedTransaction, setSelectedTransaction] = React.useState<
+        nt.TonWalletTransaction | nt.TokenWalletTransaction
+    >()
+    const [selectedAsset, setSelectedAsset] = React.useState<SelectedAsset>()
+    const scrollArea = React.useRef<HTMLDivElement>(null)
 
-const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
-    const [openedPanel, setOpenedPanel] = useState<Panel>()
-    const [selectedTransaction, setSelectedTransaction] = useState<nt.Transaction>()
-    const [selectedAsset, setSelectedAsset] = useState<SelectedAsset>()
-    const [ethEventContract, setEthEventContract] = useState<string>()
-    const scrollArea = useRef<HTMLDivElement>(null)
+    React.useEffect(() => {
+        ;(async () => {
+            const initialData = await rpc.tempStorageRemove(INITIAL_DATA_KEY)
+            if (typeof initialData === 'number') {
+                drawer.setPanel(initialData)
+            }
+        })()
+    }, [])
 
-    if (controllerState.selectedAccount == null) {
+    if (accountability.selectedAccount == null) {
         return null
     }
 
     const closePanel = () => {
         setSelectedTransaction(undefined)
         setSelectedAsset(undefined)
-        setEthEventContract(undefined)
-        setOpenedPanel(undefined)
+        drawer.setPanel(undefined)
+        accountability.reset()
     }
 
-    const { selectedAccount, selectedConnection, storedKeys, knownTokens } = controllerState
+    const {
+        externalAccounts,
+        knownTokens,
+        selectedAccount,
+        selectedConnection,
+        storedKeys,
+    } = rpcState.state
 
-    const selectedKey = storedKeys[selectedAccount.tonWallet.publicKey]
-    if (selectedKey == null) {
+    const accountName = selectedAccount?.name as string
+    const accountAddress = selectedAccount?.tonWallet.address as string
+    const accountPublicKey = selectedAccount?.tonWallet.publicKey as string
+
+    const selectedKeys = React.useMemo(() => {
+        let keys: nt.KeyStoreEntry[] = [storedKeys[accountPublicKey]]
+        const externals = externalAccounts.find((account) => account.address === accountAddress)
+
+        if (externals !== undefined) {
+            keys = keys.concat(externals.externalIn.map((key) => storedKeys[key]))
+        }
+
+        return keys.filter((e) => e)
+    }, [accountability.selectedAccount, externalAccounts, storedKeys])
+
+    if (selectedKeys[0] === undefined) {
         return null
     }
 
-    const accountName = selectedAccount.name
-    const accountAddress = selectedAccount.tonWallet.address
-
-    const tonWalletAsset = selectedAccount.tonWallet
+    const tonWalletAsset = accountability.selectedAccount.tonWallet
     const tokenWalletAssets =
-        selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets || []
-
-    const tonWalletState = controllerState.accountContractStates[accountAddress] as
+        accountability.selectedAccount.additionalAssets[selectedConnection.group]?.tokenWallets ||
+        []
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
         | nt.ContractState
         | undefined
-    const tokenWalletStates = controllerState.accountTokenStates[accountAddress] || {}
+    const tokenWalletStates = rpcState.state.accountTokenStates[accountAddress] || {}
 
-    const transactions = controllerState.accountTransactions[accountAddress] || []
-    const networkId = selectedConnection.id
-
-    const toggleNetwork = async () => {
-        const networks = await controllerRpc.getAvailableNetworks()
-
-        let nextNetwork: ConnectionDataItem | undefined
-        for (let i = 0; i < networks.length; ++i) {
-            const item = networks[i]
-            if (item.id == networkId) {
-                nextNetwork = networks[(i + 1) % networks.length]
-            }
-        }
-
-        console.log('Next network:', nextNetwork)
-        nextNetwork && (await controllerRpc.changeNetwork(nextNetwork))
-    }
-
-    const logOut = async () => {
-        await controllerRpc.logOut()
-        window.close()
-    }
-
-    const sendMessage = async (message: nt.SignedMessage) => {
-        return controllerRpc.sendMessage(accountAddress, message)
-    }
+    const transactions = rpcState.state.accountTransactions[accountAddress] || []
 
     const showTransaction = (transaction: nt.Transaction) => {
         setSelectedTransaction(transaction)
-        setOpenedPanel(Panel.TRANSACTION)
+        drawer.setPanel(Panel.TRANSACTION)
     }
 
     const showAsset = (selectedAsset: SelectedAsset) => {
         setSelectedAsset(selectedAsset)
-        setOpenedPanel(Panel.ASSET)
+        drawer.setPanel(Panel.ASSET)
     }
 
     return (
         <>
             <div className="main-page__content" ref={scrollArea}>
-                <AccountDetails
-                    account={selectedAccount}
-                    tonWalletState={tonWalletState}
-                    network={selectedConnection.name}
-                    onToggleNetwork={toggleNetwork}
-                    onLogOut={async () => {
-                        await logOut()
-                    }}
-                    onReceive={() => setOpenedPanel(Panel.RECEIVE)}
-                    onSend={() => setOpenedPanel(Panel.SEND)}
-                    onDeploy={() => setOpenedPanel(Panel.DEPLOY)}
-                    onCreateAccount={() => setOpenedPanel(Panel.CREATE_ACCOUNT)}
-                    onOpenKeyStore={() => setOpenedPanel(Panel.KEY_STORAGE)}
-                />
+                <AccountDetails />
                 <UserAssets
                     tonWalletAsset={tonWalletAsset}
                     tokenWalletAssets={tokenWalletAssets}
@@ -140,92 +114,40 @@ const MainPage: React.FC<IMainPage> = ({ controllerRpc, controllerState }) => {
                     transactions={transactions}
                     scrollArea={scrollArea}
                     updateTokenWallets={async (params) =>
-                        await controllerRpc.updateTokenWallets(accountAddress, params)
+                        await rpc.updateTokenWallets(accountAddress, params)
                     }
                     onViewTransaction={showTransaction}
                     onViewAsset={showAsset}
                     preloadTransactions={({ lt, hash }) =>
-                        controllerRpc.preloadTransactions(accountAddress, lt, hash)
+                        rpc.preloadTransactions(accountAddress, lt, hash)
                     }
                 />
             </div>
-            <SlidingPanel isOpen={openedPanel != null} onClose={closePanel}>
+
+            <SlidingPanel isOpen={drawer.currentPanel != null} onClose={closePanel}>
                 <>
-                    {openedPanel == Panel.RECEIVE && (
+                    {drawer.currentPanel === Panel.RECEIVE && (
                         <Receive accountName={accountName} address={accountAddress} />
                     )}
-                    {openedPanel == Panel.SEND && tonWalletState && (
-                        <Send
-                            accountName={accountName}
-                            tonWalletAsset={tonWalletAsset}
-                            tokenWalletAssets={tokenWalletAssets}
-                            keyEntry={selectedKey}
-                            tonWalletState={tonWalletState}
-                            tokenWalletStates={tokenWalletStates}
-                            knownTokens={knownTokens}
-                            onBack={closePanel}
-                            estimateFees={async (params) =>
-                                await controllerRpc.estimateFees(accountAddress, params)
-                            }
-                            prepareMessage={async (params, password) =>
-                                controllerRpc.prepareMessage(accountAddress, params, password)
-                            }
-                            prepareTokenMessage={async (owner, rootTokenContract, params) =>
-                                controllerRpc.prepareTokenMessage(owner, rootTokenContract, params)
-                            }
-                            sendMessage={sendMessage}
-                        />
-                    )}
-                    {openedPanel == Panel.DEPLOY && (
-                        <DeployWallet
-                            account={selectedAccount}
-                            keyEntry={selectedKey}
-                            tonWalletState={tonWalletState}
-                            onBack={closePanel}
-                            estimateFees={async () =>
-                                controllerRpc.estimateDeploymentFees(accountAddress)
-                            }
-                            prepareDeployMessage={async (password) =>
-                                controllerRpc.prepareDeploymentMessage(accountAddress, password)
-                            }
-                            sendMessage={sendMessage}
-                        />
-                    )}
-                    {openedPanel == Panel.COLLECT_TOKENS && ethEventContract && (
-                        <CollectTokens
-                            account={selectedAccount}
-                            keyEntry={selectedKey}
-                            ethEventAddress={ethEventContract}
-                            tonWalletState={tonWalletState}
-                            onBack={closePanel}
-                            estimateFees={async (params) =>
-                                controllerRpc.estimateFees(accountAddress, params)
-                            }
-                            prepareMessage={async (params, password) =>
-                                controllerRpc.prepareMessage(accountAddress, params, password)
-                            }
-                            sendMessage={sendMessage}
-                        />
-                    )}
-                    {openedPanel == Panel.KEY_STORAGE && <KeyStorage />}
-                    {openedPanel == Panel.CREATE_ACCOUNT && <CreateAccountPage />}
-                    {openedPanel == Panel.ASSET && selectedAsset && (
+                    {drawer.currentPanel === Panel.MANAGE_SEEDS && <ManageSeeds />}
+                    {drawer.currentPanel === Panel.DEPLOY && <DeployWallet />}
+                    {drawer.currentPanel === Panel.CREATE_ACCOUNT && <CreateAccount />}
+                    {drawer.currentPanel === Panel.ASSET && selectedAsset && (
                         <AssetFull
-                            account={selectedAccount}
                             tokenWalletStates={tokenWalletStates}
-                            selectedKey={selectedKey}
+                            selectedKeys={selectedKeys}
                             selectedAsset={selectedAsset}
-                            controllerState={controllerState}
-                            controllerRpc={controllerRpc}
                         />
                     )}
-                    {openedPanel == Panel.TRANSACTION && selectedTransaction && (
-                        <TransactionInfo transaction={selectedTransaction} />
-                    )}
+                    {drawer.currentPanel === Panel.TRANSACTION &&
+                        selectedTransaction != null &&
+                        (isSubmitTransaction(selectedTransaction) ? (
+                            <MultisigTransactionSign transaction={selectedTransaction} />
+                        ) : (
+                            <TransactionInfo transaction={selectedTransaction} />
+                        ))}
                 </>
             </SlidingPanel>
         </>
     )
 }
-
-export default MainPage
