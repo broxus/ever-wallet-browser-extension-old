@@ -13,7 +13,7 @@ import { BaseController, BaseConfig, BaseState } from './BaseController'
 
 const NETWORK_PRESETS = {
     [0]: {
-        name: 'Mainnet (GQL)',
+        name: 'main.ton.dev (GQL 1)',
         group: 'mainnet',
         type: 'graphql',
         data: {
@@ -21,20 +21,47 @@ const NETWORK_PRESETS = {
             timeout: 60000,
         },
     } as ConnectionData,
-    [1]: ({
-        name: 'Mainnet (ADNL)',
+    [1]: {
+        name: 'main.ton.dev (GQL 2)',
+        group: 'mainnet',
+        type: 'graphql',
+        data: {
+            endpoint: 'https://main2.ton.dev/graphql',
+            timeout: 60000,
+        },
+    } as ConnectionData,
+    [2]: {
+        name: 'main.ton.dev (GQL 3)',
+        group: 'mainnet',
+        type: 'graphql',
+        data: {
+            endpoint: 'https://main3.ton.dev/graphql',
+            timeout: 60000,
+        },
+    } as ConnectionData,
+    [3]: ({
+        name: 'main.ton.dev (ADNL)',
         group: 'mainnet',
         type: 'jrpc',
         data: {
             endpoint: 'https://jrpc.broxus.com/rpc',
         },
     } as unknown) as ConnectionData,
-    [2]: {
-        name: 'Testnet (GQL)',
+    [4]: {
+        name: 'net.ton.dev',
         group: 'testnet',
         type: 'graphql',
         data: {
             endpoint: 'https://net.ton.dev/graphql',
+            timeout: 60000,
+        },
+    } as ConnectionData,
+    [5]: {
+        name: 'fld.ton.dev',
+        group: 'fld',
+        type: 'graphql',
+        data: {
+            endpoint: 'https://gql.custler.net/graphql',
             timeout: 60000,
         },
     } as ConnectionData,
@@ -105,12 +132,14 @@ export class ConnectionController extends BaseController<
         }
 
         while (true) {
-            const loadedConnectionId = await this._loadSelectedConnectionId()
-            if (loadedConnectionId != null) {
-                const selectedConnection = getPreset(loadedConnectionId)
-                if (selectedConnection != null) {
-                    this.update({ selectedConnection }, true)
-                }
+            let loadedConnectionId = await this._loadSelectedConnectionId()
+            if (loadedConnectionId == undefined) {
+                loadedConnectionId = 0
+            }
+
+            const selectedConnection = getPreset(loadedConnectionId)
+            if (selectedConnection != null) {
+                this.update({ selectedConnection }, true)
             }
 
             try {
