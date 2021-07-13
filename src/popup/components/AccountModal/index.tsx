@@ -108,6 +108,8 @@ export function AccountModal() {
     }
 
     const onManageSeeds = async () => {
+        hide()
+
         await rpc.openExtensionInExternalWindow({
             group: 'manage_seeds',
             width: 360 + scrollWidth - 1,
