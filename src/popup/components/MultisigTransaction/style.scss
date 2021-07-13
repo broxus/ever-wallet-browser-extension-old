@@ -16,7 +16,7 @@
         padding: 20px 20px 0;
         position: sticky;
         top: 0;
-        z-index: 1;
+        z-index: 100;
 
         &-title {
             align-self: start;
@@ -45,7 +45,7 @@
         margin: 32px 0 0;
         padding: 0 0 20px;
         position: sticky;
-        z-index: 1;
+        z-index: 100;
         column-gap: 12px;
 
         > * { width: 100%; }
@@ -53,7 +53,6 @@
         &-button-back {
             width: 100px;
             min-width: 100px;
-            margin-right: 12px;
         }
     }
 

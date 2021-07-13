@@ -1,8 +1,11 @@
 import * as React from 'react'
-import { useForm } from 'react-hook-form'
+import Autocomplete from '@material-ui/lab/Autocomplete'
+import { TextField } from '@material-ui/core'
+import classNames from 'classnames'
+import { useForm, Controller } from 'react-hook-form'
 
+import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
-import Input from '@popup/components/Input'
 
 type Props = {
     wordsCount: number
@@ -11,14 +14,30 @@ type Props = {
 }
 
 export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.Element {
-    const { register, handleSubmit, setValue } = useForm()
+    const { control, handleSubmit, setValue } = useForm()
 
+    const [hints, setHints] = React.useState<string[]>([])
     const numbers = React.useMemo(() => new Array(wordsCount).fill(1).map((_, i) => i + 1), [
         wordsCount,
     ])
 
-    const onPaste: React.ClipboardEventHandler<HTMLFormElement> = (event) => {
+    const onInputChange = (event: React.ChangeEvent<{}>, value: string) => {
+        if (event == null || (event?.nativeEvent as InputEvent)?.inputType === 'insertFromPaste') {
+            return
+        }
+
+        if (value) {
+            setHints(nt.getBip39Hints(value))
+        }
+    }
+
+    const onBlur = () => {
+        setHints([])
+    }
+
+    const onPaste: React.ClipboardEventHandler<HTMLFormElement | HTMLInputElement> = (event) => {
         try {
+            console.log('PASTE', event)
             const seedPhrase = event.clipboardData.getData('text/plain')
             const words = seedPhrase
                 .replace(/\r\n|\r|\n/g, ' ')
@@ -33,7 +52,9 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
                     })
                 }, 0)
             }
-        } catch (e) {}
+        } catch (e) {
+            console.log(e.message)
+        }
     }
 
     const onSubmit = (data: { [word: string]: string }) => {
@@ -55,18 +76,42 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
                 >
                     <div className="accounts-management__seed-columns">
                         <div className="accounts-management__seed-column">
-                            {numbers.slice(0, wordsCount / 2).map((number, idx) => (
+                            {numbers.slice(0, wordsCount / 2).map((number) => (
                                 <div key={number} className="accounts-management__seed-input">
                                     <span className="accounts-management__seed-input-number">{`${number}. `}</span>
-                                    <Input
-                                        autoFocus={idx === 0}
-                                        className="accounts-management__seed-input-placeholder"
-                                        label="Word..."
+                                    <Controller
+                                        control={control}
+                                        defaultValue=""
                                         name={`word${number}`}
-                                        register={register({
-                                            required: true,
-                                        })}
-                                        type="text"
+                                        render={({ ref, name, value }) => (
+                                            <Autocomplete
+                                                value={value}
+                                                id={`word${number}`}
+                                                autoComplete
+                                                fullWidth
+                                                freeSolo
+                                                options={hints}
+                                                innerRef={ref}
+                                                onBlur={onBlur}
+                                                onInputChange={onInputChange}
+                                                getOptionSelected={() => false}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        name={name}
+                                                        variant="outlined"
+                                                        inputProps={{
+                                                            ...params.inputProps,
+                                                            className: classNames(
+                                                                'simple-input',
+                                                                'accounts-management__seed-input-placeholder'
+                                                            ),
+                                                        }}
+                                                        placeholder="Word..."
+                                                    />
+                                                )}
+                                            />
+                                        )}
                                     />
                                 </div>
                             ))}
@@ -75,14 +120,39 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
                             {numbers.slice(wordsCount / 2, wordsCount).map((number) => (
                                 <div key={number} className="accounts-management__seed-input">
                                     <span className="accounts-management__seed-input-number">{`${number}. `}</span>
-                                    <Input
-                                        className="accounts-management__seed-input-placeholder"
-                                        label="Word..."
+                                    <Controller
+                                        control={control}
+                                        defaultValue=""
                                         name={`word${number}`}
-                                        register={register({
-                                            required: true,
-                                        })}
-                                        type="text"
+                                        render={({ ref, name, value }) => (
+                                            <Autocomplete
+                                                value={value}
+                                                id={`word${number}`}
+                                                autoComplete
+                                                fullWidth
+                                                freeSolo
+                                                options={hints}
+                                                innerRef={ref}
+                                                onBlur={onBlur}
+                                                onInputChange={onInputChange}
+                                                getOptionSelected={() => false}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        name={name}
+                                                        variant="outlined"
+                                                        inputProps={{
+                                                            ...params.inputProps,
+                                                            className: classNames(
+                                                                'simple-input',
+                                                                'accounts-management__seed-input-placeholder'
+                                                            ),
+                                                        }}
+                                                        placeholder="Word..."
+                                                    />
+                                                )}
+                                            />
+                                        )}
                                     />
                                 </div>
                             ))}

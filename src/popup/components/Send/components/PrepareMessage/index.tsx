@@ -1,13 +1,13 @@
 import * as React from 'react'
 import Decimal from 'decimal.js'
 import { useForm } from 'react-hook-form'
-import Select from 'react-select'
 
 import * as nt from '@nekoton'
 import { Fees, parseError } from '@popup/utils'
 import { Checkbox } from '@popup/components/Checkbox'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
+import { Select } from '@popup/components/Select'
 import { Message, EnterPassword } from '@popup/components/Send/components'
 import UserAvatar from '@popup/components/UserAvatar'
 import { selectStyles } from '@popup/constants/selectStyle'
@@ -212,6 +212,12 @@ export function PrepareMessage({
         }
     }
 
+    const onChangeAsset = (value: string) => {
+        if (value != null) {
+            setSelectedAsset(value)
+        }
+    }
+
     React.useEffect(() => {
         if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
             setValue('amount', messageParams.amount)
@@ -245,15 +251,11 @@ export function PrepareMessage({
                 <div className="prepare-message__wrapper">
                     <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
                         <Select
-                            name="currency"
-                            className="prepare-message__field-select"
-                            options={options as any}
-                            defaultValue={defaultValue}
+                            options={options}
                             placeholder="Select currency"
-                            styles={selectStyles}
-                            onChange={(asset) => {
-                                asset && setSelectedAsset(asset.value)
-                            }}
+                            defaultValue={defaultValue.value}
+                            value={selectedAsset}
+                            onChange={onChangeAsset}
                         />
                         {decimals != null && (
                             <div className="prepare-message__balance">

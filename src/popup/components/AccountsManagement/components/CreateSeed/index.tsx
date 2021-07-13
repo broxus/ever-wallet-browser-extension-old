@@ -1,5 +1,4 @@
 import * as React from 'react'
-import Select from 'react-select'
 
 import * as nt from '@nekoton'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
@@ -12,7 +11,7 @@ import {
 } from '@popup/components/AccountsManagement/components'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import { selectStyles } from '@popup/constants/selectStyle'
+import { Select } from '@popup/components/Select'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { generateSeed, validateMnemonic } from '@popup/store/app/actions'
 import { useRpc } from '@popup/providers/RpcProvider'
@@ -41,10 +40,10 @@ type OptionType = {
 }
 
 const flowOptions: OptionType[] = [
-    { value: AddSeedFlow.CREATE, label: 'Create new seed' },
-    { value: AddSeedFlow.IMPORT, label: 'Import seed' },
-    // { value: AddSeedFlow.IMPORT_LEGACY, label: 'Import seed (legacy)' },
-    // { value: AddSeedFlow.CONNECT_LEDGER, label: 'Connect Ledger' },
+    { label: 'Create new seed', value: AddSeedFlow.CREATE },
+    { label: 'Import seed', value: AddSeedFlow.IMPORT },
+    // { label: 'Import seed (legacy)', value: AddSeedFlow.IMPORT_LEGACY },
+    // { label: 'Connect Ledger', value: AddSeedFlow.CONNECT_LEDGER },
 ]
 
 export function CreateSeed(): JSX.Element {
@@ -61,8 +60,8 @@ export function CreateSeed(): JSX.Element {
 
     const seedWords = React.useMemo(() => seed.phrase.split(' '), [seed])
 
-    const onChangeFlow = (value: OptionType | null) => {
-        setFlow(value)
+    const onChangeFlow = (_: AddSeedFlow, option: any) => {
+        setFlow(option)
     }
 
     const onSubmit = async (password: string) => {
@@ -201,10 +200,9 @@ export function CreateSeed(): JSX.Element {
                             </div>
 
                             <div className="accounts-management__content-form-row">
-                                <Select
+                                <Select<AddSeedFlow>
                                     options={flowOptions}
-                                    value={flow}
-                                    styles={selectStyles}
+                                    value={flow?.value}
                                     onChange={onChangeFlow}
                                 />
                             </div>

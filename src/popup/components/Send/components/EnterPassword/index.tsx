@@ -1,11 +1,10 @@
 import * as React from 'react'
-import Select from 'react-select'
 
 import * as nt from '@nekoton'
 import { convertFees, Fees, prepareKey } from '@popup/utils'
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
-import { selectStyles } from '@popup/constants/selectStyle'
+import { Select } from '@popup/components/Select'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { convertPublicKey } from '@shared/utils'
 
@@ -52,8 +51,17 @@ export function EnterPassword({
 
     const convertedFees = fees != null ? convertFees(fees) : undefined
 
-    const changeKeyEntry = (value: nt.KeyStoreEntry | null) => {
-        if (value != null) {
+    const keyEntriesOptions = keyEntries.map((key) => ({
+        label: key.name,
+        value: key.publicKey,
+        ...key,
+    }))
+
+    const changeKeyEntry = (_: string, option: any) => {
+        if (option != null) {
+            const value = { ...option }
+            delete value.label
+            delete value.value
             onChangeKeyEntry(value)
         }
     }
@@ -125,10 +133,8 @@ export function EnterPassword({
                     {keyEntries.length > 1 ? (
                         <Select
                             className="enter-password__field-select"
-                            styles={selectStyles}
-                            options={keyEntries}
-                            value={keyEntry}
-                            formatOptionLabel={(value) => value.name}
+                            options={keyEntriesOptions}
+                            value={keyEntry.publicKey}
                             onChange={changeKeyEntry}
                         />
                     ) : null}

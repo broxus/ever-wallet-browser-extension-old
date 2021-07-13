@@ -5,6 +5,8 @@
 	flex: 1;
 	flex-direction: column;
 	min-height: 100%;
+	position: relative;
+	z-index: 1;
 
 	&__page {
 		display: flex;
@@ -23,7 +25,7 @@
 		padding: 20px 20px 0;
 		position: sticky;
 		top: 0;
-		z-index: 1;
+		z-index: 100;
 
 		&-title {
 			align-self: start;
@@ -52,7 +54,7 @@
 		margin: 32px 0 0;
 		padding: 0 0 20px;
 		position: sticky;
-		z-index: 1;
+		z-index: 100;
 		column-gap: 12px;
 
 		> * { width: 100%; }
@@ -60,7 +62,6 @@
 		&-button-back {
 			width: 100px;
 			min-width: 100px;
-			margin-right: 12px;
 		}
 	}
 
@@ -357,6 +358,14 @@
 		flex-direction: row;
 		column-gap: 12px;
 		row-gap: 12px;
+
+		> * { width: 100%; }
+	}
+
+	&__seed-column {
+		display: flex;
+		flex-direction: column;
+		> * { width: 100%; }
 	}
 
 	&__seed-input {
@@ -379,7 +388,36 @@
 
 		&-placeholder {
 			margin: 0;
-			padding: 0 16px 0 48px;
+			padding: 0 16px 0 48px !important;
+		}
+
+		.MuiInputBase-root {
+			width: 100%;
+			padding: 0 !important;
+			min-height: 0 !important;
+		}
+
+		fieldset.MuiOutlinedInput-notchedOutline {
+			border: 0 !important;
+		}
+
+		.MuiInputBase-input {
+			color: #000000;
+			font-family: "PT Root UI", sans-serif;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 16px;
+			border: 1px solid #ebedee;
+			height: 48px;
+			box-sizing: border-box;
+
+			&:hover {
+				border: 1px solid #b3b3b3;
+			}
+
+			&:focus {
+				border-bottom: 1px solid #0088cc;
+			}
 		}
 	}
 

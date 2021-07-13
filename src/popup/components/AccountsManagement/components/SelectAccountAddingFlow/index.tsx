@@ -1,13 +1,10 @@
 import * as React from 'react'
 import classNames from 'classnames'
-import Select from 'react-select'
 
-import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
+import { Select } from '@popup/components/Select'
 import { AddAccountFlow } from '@popup/components/AccountsManagement/components'
-import { selectStyles } from '@popup/constants/selectStyle'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
-
 
 const CreateAccountIcon = ({ className }: { className?: string }) => {
     return (
@@ -49,29 +46,39 @@ const PlusIcon = ({ className }: { className?: string }) => {
     )
 }
 
-
 type Props = {
-	flow: AddAccountFlow,
-	onSelect(flow: AddAccountFlow): void;
-	onNext(): void;
-	onBack?(): void;
+    flow: AddAccountFlow
+    onSelect(flow: AddAccountFlow): void
+    onNext(): void
+    onBack?(): void
 }
 
 export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Props): JSX.Element {
     const accountability = useAccountability()
 
-    const derivedKeysOptions = React.useMemo<nt.KeyStoreEntry[]>(
-    	() => accountability.derivedKeys.sort(
-    		(a, b) => a.accountId - b.accountId
-	    ),
-	    [accountability.derivedKeys]
+    const derivedKeys = React.useMemo(
+        () =>
+            accountability.derivedKeys.sort(
+                (a, b) => a.accountId - b.accountId
+            ) /*.map((key) => ({ label: key.name, value: key }))*/,
+        [accountability.derivedKeys]
     )
 
-    const onChangeDerivedKey = (value: nt.KeyStoreEntry | null) => {
-		if (value != null) {
-			accountability.setCurrentDerivedKey(value)
-		}
-	}
+    const derivedKeysOptions = React.useMemo(
+        () =>
+            derivedKeys.map((key) => ({
+                label: key.name,
+                value: key.publicKey,
+                ...key,
+            })),
+        [derivedKeys]
+    )
+
+    const onChangeDerivedKey = (value: string, option: any) => {
+        if (value != null) {
+            accountability.setCurrentDerivedKey(option)
+        }
+    }
 
     const onChangeFlow = (flow: AddAccountFlow) => {
         return () => {
@@ -79,61 +86,65 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
         }
     }
 
-	return (
-		<div className="accounts-management">
-			<header className="accounts-management__header">
-				<h2 className="accounts-management__header-title">
-					Add account
-				</h2>
-			</header>
+    return (
+        <div className="accounts-management">
+            <header className="accounts-management__header">
+                <h2 className="accounts-management__header-title">Add account</h2>
+            </header>
 
-			<div className="accounts-management__wrapper">
-				<div className="accounts-management__content">
-		            <div className="accounts-management__content-form-rows">
-		                <div className="accounts-management__content-form-row">
-		                    <Select
-		                        options={derivedKeysOptions}
-		                        value={accountability.currentDerivedKey || accountability.derivedKeys[0]}
-		                        formatOptionLabel={(value) => value.name}
-								styles={selectStyles}
-								onChange={onChangeDerivedKey}
-		                    />
-		                </div>
-		            </div>
+            <div className="accounts-management__wrapper">
+                <div className="accounts-management__content">
+                    <div className="accounts-management__content-form-rows">
+                        <div className="accounts-management__content-form-row">
+                            <Select
+                                options={derivedKeysOptions}
+                                value={
+                                    accountability.currentDerivedKey?.publicKey ||
+                                    accountability.derivedKeys[0]?.publicKey
+                                }
+                                getPopupContainer={(trigger) =>
+                                    trigger.closest('.sliding-panel__content') ||
+                                    document.getElementById('root') ||
+                                    document.body
+                                }
+                                onChange={onChangeDerivedKey}
+                            />
+                        </div>
+                    </div>
 
-		            <div className="accounts-management__add-options">
-		                <div
-		                    className={classNames('accounts-management__add-options-option', {
-		                        'accounts-management__add-options-option-selected':
-		                            flow === AddAccountFlow.CREATE,
-		                    })}
-		                    onClick={onChangeFlow(AddAccountFlow.CREATE)}
-		                >
-		                    <CreateAccountIcon className="accounts-management__add-options-icon" />
-		                    Create new account
-		                </div>
-		                <div
-		                    className={classNames('accounts-management__add-options-option', {
-		                        'accounts-management__add-options-option-selected':
-		                            flow === AddAccountFlow.IMPORT,
-		                    })}
-		                    onClick={onChangeFlow(AddAccountFlow.IMPORT)}
-		                >
-		                    <PlusIcon className="accounts-management__add-options-icon" />
-		                    Add an existing account
-		                </div>
-		            </div>
-				</div>
+                    <div className="accounts-management__add-options">
+                        <div
+                            className={classNames('accounts-management__add-options-option', {
+                                'accounts-management__add-options-option-selected':
+                                    flow === AddAccountFlow.CREATE,
+                            })}
+                            onClick={onChangeFlow(AddAccountFlow.CREATE)}
+                        >
+                            <CreateAccountIcon className="accounts-management__add-options-icon" />
+                            Create new account
+                        </div>
+                        <div
+                            className={classNames('accounts-management__add-options-option', {
+                                'accounts-management__add-options-option-selected':
+                                    flow === AddAccountFlow.IMPORT,
+                            })}
+                            onClick={onChangeFlow(AddAccountFlow.IMPORT)}
+                        >
+                            <PlusIcon className="accounts-management__add-options-icon" />
+                            Add an existing account
+                        </div>
+                    </div>
+                </div>
 
-	            <footer className="accounts-management__footer">
-	                {typeof onBack === 'function' && (
-						<div className="accounts-management__footer-button-back">
-							<Button text="Back" white onClick={onBack} />
-						</div>
-					)}
-					<Button text="Next" onClick={onNext} />
-				</footer>
-			</div>
-		</div>
-	)
+                <footer className="accounts-management__footer">
+                    {typeof onBack === 'function' && (
+                        <div className="accounts-management__footer-button-back">
+                            <Button text="Back" white onClick={onBack} />
+                        </div>
+                    )}
+                    <Button text="Next" onClick={onNext} />
+                </footer>
+            </div>
+        </div>
+    )
 }

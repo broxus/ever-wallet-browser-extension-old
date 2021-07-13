@@ -1,16 +1,15 @@
 import * as React from 'react'
 import Decimal from 'decimal.js'
 import QRCode from 'react-qr-code'
-import Select from 'react-select'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
+import { Select } from '@popup/components/Select'
 import { CopyButton } from '@popup/components/CopyButton'
 import { PreparedMessage } from '@popup/components/DeployWallet/components'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { selectStyles } from '@popup/constants/selectStyle'
 import { parseError, prepareKey } from '@popup/utils'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
@@ -33,11 +32,11 @@ type OptionType = {
 }
 
 const walletTypesOptions: OptionType[] = [
-    { value: DeployWalletType.STANDARD, label: 'Standard wallet' },
-    { value: DeployWalletType.MULTISIG, label: 'Multi-signature wallet' },
+    { label: 'Standard wallet', value: DeployWalletType.STANDARD },
+    { label: 'Multi-signature wallet', value: DeployWalletType.MULTISIG },
 ]
 
-export function DeployWallet(): JSX.Element {
+export function DeployWallet(): JSX.Element | null {
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -50,7 +49,7 @@ export function DeployWallet(): JSX.Element {
 
     const selectedAccount = React.useMemo(() => rpcState.state.selectedAccount?.tonWallet, [])
     if (selectedAccount == null) {
-        return <></>
+        return null
     }
 
     const scrollWidth = React.useMemo(() => getScrollWidth(), [])
@@ -72,8 +71,8 @@ export function DeployWallet(): JSX.Element {
         drawer.setPanel(undefined)
     }
 
-    const onChangeWalletType = (value: OptionType | null) => {
-        setWalletType(value)
+    const onChangeWalletType = (_: DeployWalletType, option: any) => {
+        setWalletType(option)
     }
 
     const onSubmit = async (password: string) => {
@@ -168,8 +167,12 @@ export function DeployWallet(): JSX.Element {
                                     <div className="deploy-wallet__content-wallet-type-select">
                                         <Select
                                             options={walletTypesOptions}
-                                            value={walletType}
-                                            styles={selectStyles}
+                                            value={walletType?.value}
+                                            getPopupContainer={(trigger) =>
+                                                trigger.closest('.sliding-panel__content') ||
+                                                document.getElementById('root') ||
+                                                document.body
+                                            }
                                             onChange={onChangeWalletType}
                                         />
                                     </div>
