@@ -51,8 +51,9 @@ body.fullscreen {
     align-items: center;
 
     #root {
-        max-width: min(90vw, 600px);
-        max-height: min(60vh, 600px);
+        width: min(90vw, 600px);
+        height: min(60vh, 600px);
+        min-height: auto;
         display: flex;
         align-items: center;
     }
