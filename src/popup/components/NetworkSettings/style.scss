@@ -1,0 +1,106 @@
+@import '../../styles/colors';
+
+.network-settings {
+	background: $windowBg;
+	border: 1px solid $modalBorder;
+	box-shadow: 0 4px 19px rgba(0, 0, 0, 0.25);
+	border-radius: 2px;
+	width: 200px;
+	padding: 16px;
+	position: absolute;
+	top: 60px;
+	left: 50%;
+	margin-left: -100px;
+	z-index: 10;
+
+	&-separator {
+		margin: 16px -16px;
+		border-bottom: 1px solid $modalBorder;
+		min-width: 100%;
+		display: block;
+	}
+
+	&__network-switcher {
+		background: rgba(255, 255, 255, 0.16);
+		border-radius: 91px;
+		color: $windowBg;
+		cursor: pointer;
+		display: flex;
+		justify-content: center;
+		height: 30px;
+		font-style: normal;
+		font-weight: 500;
+		font-size: 14px;
+		letter-spacing: 0.75px;
+		line-height: 20px;
+		padding: 5px 10px;
+	}
+
+	&-section {
+		&-header {
+			font-size: 12px;
+			font-weight: bold;
+			line-height: 20px;
+			letter-spacing: 0.75px;
+			text-transform: uppercase;
+			color: $accountHeader;
+			max-width: 100%;
+			margin-bottom: 5px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		&-item {
+			color: $windowFg;
+			cursor: pointer;
+			font-style: normal;
+			font-weight: normal;
+			font-size: 16px;
+			line-height: 20px;
+			letter-spacing: 0.25px;
+			margin-bottom: 16px;
+
+			&:hover {
+				color: $activeButtonBg;
+
+				//background-color: #919191;
+			}
+
+			&:last-child {
+				margin-bottom: 0;
+			}
+
+			&-value {
+				// margin-bottom: 16px;
+				font-style: normal;
+				font-weight: normal;
+				font-size: 12px;
+				line-height: 16px;
+				letter-spacing: 0.4px;
+				color: #96a1a7;
+			}
+		}
+	}
+
+	&__networks-list {
+		padding-bottom: 8px;
+
+		&-item {
+			cursor: pointer;
+			color: $windowFg;
+			display: block;
+			font-size: 16px;
+			line-height: 20px;
+			padding: 8px 0;
+
+			&:hover {
+				color: $activeButtonBg;
+			}
+
+			&--active {
+				font-weight: 700;
+			}
+		}
+	}
+}

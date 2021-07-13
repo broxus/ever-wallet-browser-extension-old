@@ -17,22 +17,6 @@
         cursor: pointer;
     }
 
-    &__network-switcher {
-        background: rgba(255, 255, 255, 0.16);
-        border-radius: 91px;
-        color: $windowBg;
-        //cursor: pointer;
-        display: flex;
-        justify-content: center;
-        height: 30px;
-        font-style: normal;
-        font-weight: 500;
-        font-size: 14px;
-        letter-spacing: 0.75px;
-        line-height: 20px;
-        padding: 5px 10px;
-    }
-
     &__profile-icon {
         cursor: pointer;
         position: relative;

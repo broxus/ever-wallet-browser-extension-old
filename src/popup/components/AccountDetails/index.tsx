@@ -11,11 +11,8 @@ import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { debounce } from '@popup/utils/debounce'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
-import { ConnectionDataItem } from '@shared/backgroundApi'
 import { convertTons } from '@shared/utils'
-
 
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
@@ -23,7 +20,7 @@ import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
 
 import './style.scss'
-
+import { NetworkSettings } from '@popup/components/NetworkSettings'
 
 export function AccountDetails(): JSX.Element {
     const accountability = useAccountability()
@@ -42,7 +39,7 @@ export function AccountDetails(): JSX.Element {
             (account) => account.tonWallet.address === accountability.selectedAccountAddress
         )
         return index >= 0 ? index : 0
-    }, [accountability.accounts.length])
+    }, [accountability.accounts.length, accountability.selectedAccountAddress])
 
     const onReceive = () => {
         drawer.setPanel(Panel.RECEIVE)
@@ -60,27 +57,14 @@ export function AccountDetails(): JSX.Element {
         })
     }
 
-    const onToggleNetwork = async () => {
-        const networks = await rpc.getAvailableNetworks()
-        const networkId = rpcState.state.selectedConnection.id
-
-        let nextNetwork: ConnectionDataItem | undefined
-        for (let i = 0; i < networks.length; ++i) {
-            const item = networks[i]
-            if (item.id == networkId) {
-                nextNetwork = networks[(i + 1) % networks.length]
-            }
-        }
-
-        console.log('Next network:', nextNetwork)
-        nextNetwork && (await rpc.changeNetwork(nextNetwork))
-    }
-
-    const onSlide = debounce( async (index: number) => {
+    const onSlide = async (index: number) => {
         // if not a last slide
         if (accountability.accounts.length === index) {
             const account = accountability.accounts[index - 1]
-            if (account === undefined || account?.tonWallet.address === accountability.selectedAccountAddress) {
+            if (
+                account === undefined ||
+                account?.tonWallet.address === accountability.selectedAccountAddress
+            ) {
                 return
             }
             await rpc.selectAccount(account.tonWallet.address)
@@ -88,26 +72,15 @@ export function AccountDetails(): JSX.Element {
 
         const account = accountability.accounts[index]
 
-        if (account === undefined || account?.tonWallet.address === accountability.selectedAccountAddress) {
+        if (
+            account === undefined ||
+            account?.tonWallet.address === accountability.selectedAccountAddress
+        ) {
             return
         }
 
         await rpc.selectAccount(account.tonWallet.address)
-    }, 500)
-
-    React.useEffect(() => {
-        const index = accountability.accounts.findIndex(
-            (account) => account.tonWallet.address === accountability.selectedAccountAddress
-        )
-        const selectedItem = slider.current?.state.selectedItem
-
-        if (index === selectedItem || accountability.accounts.length === selectedItem) {
-            return
-        }
-
-        slider.current?.setPosition(index >= 0 ? index : 0)
-        slider.current?.forceUpdate()
-    }, [accountability.selectedAccountAddress])
+    }
 
     return (
         <div className="account-details">
@@ -120,12 +93,7 @@ export function AccountDetails(): JSX.Element {
                 >
                     <img src={NotificationsIcon} alt="" />
                 </div>
-                <div
-                    className="account-details__network-switcher noselect"
-                    onClick={onToggleNetwork}
-                >
-                    {rpcState.state.selectedConnection.name}
-                </div>
+                <NetworkSettings />
                 <AccountModal />
                 {notificationsVisible && (
                     <Notifications onClose={() => setNotificationsVisible(false)} />
