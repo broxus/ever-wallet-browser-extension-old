@@ -12,7 +12,7 @@ import { WelcomePage } from '@popup/pages/WelcomePage'
 import ConnectLedgerPage from '@popup/pages/ConnectLedgerPage'
 import { DrawerPanelProvider } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 
 import './styles/main.scss'
 
@@ -46,7 +46,11 @@ function App(): JSX.Element | null {
         }
     }
 
-    if (rpcState.state.pendingApprovalCount && rpcState.group === 'approval') {
+    if (rpcState.group === 'approval') {
+        if (rpcState.state.pendingApprovalCount == 0) {
+            closeCurrentWindow()
+            return null
+        }
         return <ApprovalPage key="approvalPage" />
     }
 

@@ -30,11 +30,11 @@ export function ApprovalPage(): JSX.Element | null {
         [rpcState.state.pendingApprovals]
     )
 
-    const selectNextApproval = () => {
-        if (pendingApprovals.length === 0) {
-            return null
-        }
+    if (pendingApprovals.length === 0) {
+        return null
+    }
 
+    const selectNextApproval = () => {
         const normalizedApprovalIndex = Math.min(pendingApprovals.length - 1, approvalIndex)
         if (approvalIndex != normalizedApprovalIndex) {
             setApprovalIndex(normalizedApprovalIndex)
@@ -44,7 +44,6 @@ export function ApprovalPage(): JSX.Element | null {
     }
 
     const approval = selectNextApproval()
-
     if (approval == null) {
         return null
     }
@@ -59,16 +58,10 @@ export function ApprovalPage(): JSX.Element | null {
 
     const resolvePendingApproval = async (value: unknown) => {
         await rpc.resolvePendingApproval(approval.id, value)
-        if (rpcState.activeTab?.type !== ENVIRONMENT_TYPE_POPUP) {
-            closeCurrentWindow()
-        }
     }
 
     const rejectPendingApproval = async () => {
         await rpc.rejectPendingApproval(approval.id, rejectedByUser as any)
-        if (rpcState.activeTab?.type !== ENVIRONMENT_TYPE_POPUP) {
-            closeCurrentWindow()
-        }
     }
 
     return (
@@ -82,10 +75,16 @@ export function ApprovalPage(): JSX.Element | null {
                         } of ${pendingApprovals.length}`}</span>
                     </div>
                     <div className="pending-approvals__counter-nav">
-                        <div className="pending-approvals__counter-nav-button" onClick={decrementIndex}>
+                        <div
+                            className="pending-approvals__counter-nav-button"
+                            onClick={decrementIndex}
+                        >
                             <img src={Left} alt="" />
                         </div>
-                        <div className="pending-approvals__counter-nav-button" onClick={incrementIndex}>
+                        <div
+                            className="pending-approvals__counter-nav-button"
+                            onClick={incrementIndex}
+                        >
                             <img src={Right} alt="" />
                         </div>
                     </div>
