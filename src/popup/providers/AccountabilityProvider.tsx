@@ -246,7 +246,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
             return undefined
         }
         return nt.getContractTypeDetails(rpcState.state.selectedAccount.tonWallet.contractType)
-    }, [])
+    }, [rpcState.state.selectedAccount?.tonWallet.contractType])
 
     const nextAccountId = React.useMemo(() => window.ObjectExt.keys(internalAccounts).length, [
         internalAccounts,

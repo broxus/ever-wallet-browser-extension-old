@@ -329,7 +329,6 @@ const CreateAccountPage: React.FC<ICreateAccountPage> = ({
             onBack={() => {
                 setNewAccountStep(NewAccountLocalStep.SELECT_ACCOUNT_NAME)
             }}
-            excludedContracts={['WalletV3']}
         />,
         <EnterNewPassword
             disabled={inProcess}

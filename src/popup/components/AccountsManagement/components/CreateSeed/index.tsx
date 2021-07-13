@@ -42,7 +42,7 @@ type OptionType = {
 const flowOptions: OptionType[] = [
     { label: 'Create new seed', value: AddSeedFlow.CREATE },
     { label: 'Import seed', value: AddSeedFlow.IMPORT },
-    // { label: 'Import seed (legacy)', value: AddSeedFlow.IMPORT_LEGACY },
+    { label: 'Import legacy seed', value: AddSeedFlow.IMPORT_LEGACY },
     // { label: 'Connect Ledger', value: AddSeedFlow.CONNECT_LEDGER },
 ]
 

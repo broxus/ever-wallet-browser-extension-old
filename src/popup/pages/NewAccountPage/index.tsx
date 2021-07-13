@@ -79,7 +79,6 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
                         setLocalStep(LocalStep.SHOW_PHRASE)
                     }}
                     onBack={onBack}
-                    excludedContracts={['WalletV3']}
                 />
             )}
             {localStep == LocalStep.SHOW_PHRASE && (
