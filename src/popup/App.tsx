@@ -16,7 +16,6 @@ import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import './styles/main.scss'
 
-
 function App(): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -41,14 +40,13 @@ function App(): JSX.Element | null {
         // @ts-ignore
         else if (!hasAccount && rpcState.activeTab?.data?.route == null) {
             return <WelcomePage key="welcomePage" />
-        }
-        else {
+        } else {
             window.close()
             return null
         }
     }
 
-    if (rpcState.state.pendingApprovalCount) {
+    if (rpcState.state.pendingApprovalCount && rpcState.group === 'approval') {
         return <ApprovalPage key="approvalPage" />
     }
 
@@ -65,7 +63,7 @@ function App(): JSX.Element | null {
     }
 
     return (
-        <DrawerPanelProvider key="mainPage" >
+        <DrawerPanelProvider key="mainPage">
             <MainPage />
         </DrawerPanelProvider>
     )

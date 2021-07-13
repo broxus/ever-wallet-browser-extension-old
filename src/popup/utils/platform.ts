@@ -171,8 +171,8 @@ export class WindowManager {
 
             try {
                 const lastFocused = await getLastFocused()
-                top = (lastFocused.top || top) + ((lastFocused.height || 0) - height) / 2
-                left = (lastFocused.left || left) + ((lastFocused.width || 0) - width) / 2
+                top = ((lastFocused.top || top) + ((lastFocused.height || 0) - height) / 2) | 0
+                left = ((lastFocused.left || left) + ((lastFocused.width || 0) - width) / 2) | 0
             } catch (_) {
                 const { screenX, screenY, outerWidth } = window
                 top = Math.max(screenY, 0)
