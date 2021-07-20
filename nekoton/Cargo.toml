@@ -39,7 +39,7 @@ x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
 wasm-logger = "0.2"
 
-ton_abi = { git = "https://github.com/tonlabs/ton-labs-abi.git" }
+ton_abi = { git = "https://github.com/tonlabs/ton-labs-abi.git", rev = "a2b2a9dc2e8c30a070e9af79cf0c24a55bdd5a87" }
 ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
 ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
 

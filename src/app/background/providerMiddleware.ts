@@ -7,7 +7,7 @@ import {
     RawTokensObject,
 } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
-import { currentUtime, NekotonRpcError, UniqueArray } from '@shared/utils'
+import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
 import * as nt from '@nekoton'
 
@@ -672,6 +672,12 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     }
 
     const selectedAddress = allowedAccount.address
+    let repackedRecipient: string
+    try {
+        repackedRecipient = nt.repackAddress(recipient)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
 
     let body: string = ''
     if (payload != null) {
@@ -693,7 +699,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
             unsignedMessage = wallet.prepareTransfer(
                 contractState,
                 wallet.publicKey,
-                recipient,
+                repackedRecipient,
                 amount,
                 false,
                 body,
@@ -742,6 +748,12 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     }
 
     const selectedAddress = allowedAccount.address
+    let repackedRecipient: string
+    try {
+        repackedRecipient = nt.repackAddress(recipient)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
 
     let body: string = ''
     let knownPayload: nt.KnownPayload | undefined = undefined
@@ -759,7 +771,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         type: 'sendMessage',
         requestData: {
             sender: selectedAddress,
-            recipient,
+            recipient: repackedRecipient,
             amount,
             bounce,
             payload,
@@ -778,7 +790,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             unsignedMessage = wallet.prepareTransfer(
                 contractState,
                 password.data.publicKey,
-                recipient,
+                repackedRecipient,
                 amount,
                 false,
                 body,
@@ -807,7 +819,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
             type: 'transfer',
             data: {
                 amount,
-                recipient,
+                recipient: repackedRecipient,
             },
         },
     })
@@ -854,11 +866,17 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     }
 
     const selectedPublicKey = allowedAccount.publicKey
+    let repackedRecipient: string
+    try {
+        repackedRecipient = nt.repackAddress(recipient)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
 
     let unsignedMessage: nt.UnsignedMessage
     try {
         unsignedMessage = nt.createExternalMessage(
-            recipient,
+            repackedRecipient,
             payload.abi,
             payload.method,
             stateInit,
@@ -875,7 +893,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         type: 'callContractMethod',
         requestData: {
             publicKey: selectedPublicKey,
-            recipient,
+            recipient: repackedRecipient,
             payload,
         },
     })
@@ -890,7 +908,11 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         unsignedMessage.free()
     }
 
-    const transaction = await subscriptionsController.sendMessage(tabId, recipient, signedMessage)
+    const transaction = await subscriptionsController.sendMessage(
+        tabId,
+        repackedRecipient,
+        signedMessage
+    )
     let output: RawTokensObject | undefined
     try {
         const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)

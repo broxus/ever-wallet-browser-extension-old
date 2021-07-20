@@ -87,8 +87,8 @@ export function ApproveSendMessage({
 
         let messageToPrepare: TransferMessageToPrepare = {
             publicKey: selectedKey.publicKey,
-            recipient: nt.repackAddress(recipient), //shouldn't throw exceptions due to higher level validation
-            amount: parseTons(amount),
+            recipient,
+            amount,
             payload: undefined,
         }
 
