@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.1 (2021-07-21)
+
+Bugfixes
+
+* Fixed fee calculation for `sendMessage` approval
+* Fixed parsing of bounced TIP3 messages
+
 ### 0.2.0 (2021-07-14)
 
 Features

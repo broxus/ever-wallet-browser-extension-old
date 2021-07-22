@@ -843,7 +843,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.2.1"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#8009b948b2c13d7d74281916693878289e500375"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#aef56ce1ea5cc3f4521bacd6a32ac73829bd9fd5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -880,6 +880,9 @@ dependencies = [
  "ton_abi",
  "ton_block",
  "ton_executor",
+ "ton_token_abi",
+ "ton_token_packer",
+ "ton_token_unpacker",
  "ton_types",
  "ton_vm",
  "x25519-dalek",
@@ -1473,7 +1476,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "1.0.1"
-source = "git+https://github.com/tonlabs/ton-labs-abi.git#a2b2a9dc2e8c30a070e9af79cf0c24a55bdd5a87"
+source = "git+https://github.com/tonlabs/ton-labs-abi.git?rev=a2b2a9dc2e8c30a070e9af79cf0c24a55bdd5a87#a2b2a9dc2e8c30a070e9af79cf0c24a55bdd5a87"
 dependencies = [
  "base64 0.10.1",
  "byteorder",
@@ -1543,6 +1546,43 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_json",
+ "ton_types",
+]
+
+[[package]]
+name = "ton_token_abi"
+version = "0.1.0"
+source = "git+https://github.com/broxus/ton-token-abi.git#33ac7e8950c4f7b86e362de62aea5c880781f173"
+dependencies = [
+ "either",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "ton_token_packer"
+version = "0.1.0"
+source = "git+https://github.com/broxus/ton-token-abi.git#33ac7e8950c4f7b86e362de62aea5c880781f173"
+dependencies = [
+ "num-bigint",
+ "num-traits",
+ "thiserror",
+ "ton_abi",
+ "ton_block",
+ "ton_types",
+]
+
+[[package]]
+name = "ton_token_unpacker"
+version = "0.1.0"
+source = "git+https://github.com/broxus/ton-token-abi.git#33ac7e8950c4f7b86e362de62aea5c880781f173"
+dependencies = [
+ "num-bigint",
+ "num-traits",
+ "thiserror",
+ "ton_abi",
+ "ton_block",
  "ton_types",
 ]
 
