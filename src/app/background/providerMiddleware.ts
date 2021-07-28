@@ -792,7 +792,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
                 password.data.publicKey,
                 repackedRecipient,
                 amount,
-                false,
+                bounce,
                 body,
                 60
             )
