@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.2 (2021-07-29)
+
+Bugfixes
+
+* Fixed bounce flag usage for `sendMessage` provider method
+
 ### 0.2.1 (2021-07-21)
 
 Bugfixes
