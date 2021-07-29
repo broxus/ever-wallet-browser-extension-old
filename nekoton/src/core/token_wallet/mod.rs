@@ -6,9 +6,10 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
+use nt::abi;
 use nt::core::models as core_models;
 use nt::core::token_wallet;
-use nt::utils::*;
+use nt::utils::TrustMe;
 
 use crate::transport::TransportHandle;
 use crate::utils::*;
@@ -180,7 +181,7 @@ impl TokenWallet {
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = core_models::TransactionId {
+        let from = abi::TransactionId {
             lt: u64::from_str(&lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };

@@ -842,8 +842,8 @@ dependencies = [
 
 [[package]]
 name = "nekoton"
-version = "0.2.1"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#aef56ce1ea5cc3f4521bacd6a32ac73829bd9fd5"
+version = "0.3.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#e1ebd1c147e8005879398b2c6c7eb93efc7841b2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -861,6 +861,9 @@ dependencies = [
  "hex 0.4.3",
  "instant 0.1.9 (git+https://github.com/Rexagon/instant.git)",
  "log",
+ "nekoton-abi",
+ "nekoton-contracts",
+ "nekoton-utils",
  "num-bigint",
  "num-traits",
  "once_cell",
@@ -880,13 +883,78 @@ dependencies = [
  "ton_abi",
  "ton_block",
  "ton_executor",
- "ton_token_abi",
- "ton_token_packer",
- "ton_token_unpacker",
  "ton_types",
  "ton_vm",
- "x25519-dalek",
  "zeroize",
+]
+
+[[package]]
+name = "nekoton-abi"
+version = "0.3.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#e1ebd1c147e8005879398b2c6c7eb93efc7841b2"
+dependencies = [
+ "anyhow",
+ "base64 0.13.0",
+ "chrono",
+ "ed25519-dalek",
+ "hex 0.4.3",
+ "log",
+ "nekoton-derive",
+ "nekoton-utils",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "sha2 0.9.5",
+ "thiserror",
+ "ton_abi",
+ "ton_block",
+ "ton_executor",
+ "ton_types",
+ "ton_vm",
+]
+
+[[package]]
+name = "nekoton-contracts"
+version = "0.3.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#e1ebd1c147e8005879398b2c6c7eb93efc7841b2"
+dependencies = [
+ "once_cell",
+ "ton_abi",
+ "ton_types",
+]
+
+[[package]]
+name = "nekoton-derive"
+version = "0.3.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#e1ebd1c147e8005879398b2c6c7eb93efc7841b2"
+dependencies = [
+ "either",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "nekoton-utils"
+version = "0.3.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#e1ebd1c147e8005879398b2c6c7eb93efc7841b2"
+dependencies = [
+ "anyhow",
+ "base64 0.13.0",
+ "chacha20poly1305",
+ "ed25519-dalek",
+ "failure",
+ "hex 0.4.3",
+ "log",
+ "num-bigint",
+ "num-traits",
+ "ring",
+ "secstr",
+ "serde",
+ "sha2 0.9.5",
+ "thiserror",
+ "ton_block",
+ "ton_types",
 ]
 
 [[package]]
@@ -1546,43 +1614,6 @@ dependencies = [
  "num-traits",
  "serde",
  "serde_json",
- "ton_types",
-]
-
-[[package]]
-name = "ton_token_abi"
-version = "0.1.0"
-source = "git+https://github.com/broxus/ton-token-abi.git#33ac7e8950c4f7b86e362de62aea5c880781f173"
-dependencies = [
- "either",
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "ton_token_packer"
-version = "0.1.0"
-source = "git+https://github.com/broxus/ton-token-abi.git#33ac7e8950c4f7b86e362de62aea5c880781f173"
-dependencies = [
- "num-bigint",
- "num-traits",
- "thiserror",
- "ton_abi",
- "ton_block",
- "ton_types",
-]
-
-[[package]]
-name = "ton_token_unpacker"
-version = "0.1.0"
-source = "git+https://github.com/broxus/ton-token-abi.git#33ac7e8950c4f7b86e362de62aea5c880781f173"
-dependencies = [
- "num-bigint",
- "num-traits",
- "thiserror",
- "ton_abi",
- "ton_block",
  "ton_types",
 ]
 

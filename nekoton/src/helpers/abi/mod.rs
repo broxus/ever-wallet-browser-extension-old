@@ -8,8 +8,8 @@ use ton_block::{Deserializable, GetRepresentationHash, MsgAddressInt, Serializab
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use nt::helpers::abi::FunctionExt;
-use nt::utils::*;
+use nt::abi::{FunctionExt, read_function_id};
+use nt::utils::TrustMe;
 
 use crate::utils::*;
 
@@ -219,7 +219,7 @@ pub fn decode_output(
     let method = match method {
         MethodName::Known(name) => contract_abi.function(&name).handle_error()?,
         MethodName::Guess(names) => {
-            let output_id = nt::utils::read_u32(&message_body).handle_error()?;
+            let output_id = nt::abi::read_function_id(&message_body).handle_error()?;
 
             let mut method = None;
             for name in names.iter() {
@@ -305,7 +305,7 @@ pub fn decode_transaction(
         })
         .collect::<Result<Vec<_>, JsValue>>()?;
 
-    let output = nt::helpers::abi::process_raw_outputs(&ext_out_msgs, method).handle_error()?;
+    let output = nt::abi::process_raw_outputs(&ext_out_msgs, method).handle_error()?;
 
     Ok(Some(
         ObjectBuilder::new()
@@ -359,7 +359,7 @@ pub fn decode_transaction_events(
     let events = ext_out_msgs
         .into_iter()
         .filter_map(|body| {
-            let id = read_u32(&body).ok()?;
+            let id = read_function_id(&body).ok()?;
             let event = contract_abi.event_by_id(id).ok()?;
             let tokens = event.decode_input(body).ok()?;
 
@@ -412,7 +412,7 @@ fn read_input_function_id(
     internal: bool,
 ) -> Result<u32, JsValue> {
     if internal {
-        read_u32(&body).handle_error()
+        read_function_id(&body).handle_error()
     } else {
         if body.get_next_bit().handle_error()? {
             body.move_by(ed25519_dalek::SIGNATURE_LENGTH * 8)
@@ -431,7 +431,7 @@ fn read_input_function_id(
                 _ => return Err(AbiError::UnsupportedHeader).handle_error(),
             }
         }
-        read_u32(&body).handle_error()
+        read_function_id(&body).handle_error()
     }
 }
 
@@ -513,7 +513,7 @@ export type ExecutionOutput = {
 "#;
 
 fn make_execution_output(
-    data: &nt::helpers::abi::ExecutionOutput,
+    data: &nt::abi::ExecutionOutput,
 ) -> Result<ExecutionOutput, JsValue> {
     Ok(ObjectBuilder::new()
         .set(
@@ -1109,7 +1109,7 @@ pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String
     let params = parse_params_list(params).handle_error()?;
     let tokens = parse_tokens_object(&params, tokens).handle_error()?;
 
-    let cell = nt::helpers::abi::pack_into_cell(&tokens).handle_error()?;
+    let cell = nt::abi::pack_into_cell(&tokens).handle_error()?;
     let bytes = ton_types::serialize_toc(&cell).handle_error()?;
     Ok(base64::encode(&bytes))
 }
@@ -1124,7 +1124,7 @@ pub fn unpack_from_cell(
     let body = base64::decode(boc).handle_error()?;
     let cell =
         ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
-    nt::helpers::abi::unpack_from_cell(&params, cell.into(), allow_partial)
+    nt::abi::unpack_from_cell(&params, cell.into(), allow_partial)
         .handle_error()
         .and_then(|tokens| make_tokens_object(&tokens))
 }

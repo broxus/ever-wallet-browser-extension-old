@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
 use nt::core::generic_contract;
-use nt::utils::*;
+use nt::utils::TrustMe;
 
 use crate::transport::TransportHandle;
 use crate::utils::*;
@@ -41,7 +41,7 @@ impl GenericContract {
     #[wasm_bindgen(js_name = "contractState")]
     pub fn contract_state(&self) -> crate::core::models::ContractState {
         let inner = self.inner.contract.lock().trust_me();
-        crate::core::models::make_contract_state(inner.contract_state().clone())
+        crate::core::models::make_contract_state(*inner.contract_state())
     }
 
     #[wasm_bindgen(js_name = "estimateFees")]
@@ -110,7 +110,7 @@ impl GenericContract {
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = nt::core::models::TransactionId {
+        let from = nt::abi::TransactionId {
             lt: u64::from_str(&lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };

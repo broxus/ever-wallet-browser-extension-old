@@ -30,18 +30,18 @@ pub fn compute_ton_wallet_address(
 pub fn pack_address(address: &str, is_url_safe: bool, bounceable: bool) -> Result<String, JsValue> {
     let address = match MsgAddressInt::from_str(address) {
         Ok(address) => address,
-        Err(e) => match nt::helpers::address::unpack_std_smc_addr(address, is_url_safe) {
+        Err(e) => match nt::utils::unpack_std_smc_addr(address, is_url_safe) {
             Ok(address) => address,
             Err(_) => return Err(e).handle_error(),
         },
     };
 
-    nt::helpers::address::pack_std_smc_addr(is_url_safe, &address, bounceable).handle_error()
+    nt::utils::pack_std_smc_addr(is_url_safe, &address, bounceable).handle_error()
 }
 
 #[wasm_bindgen(js_name = "unpackAddress")]
 pub fn unpack_address(address: &str, is_url_safe: bool) -> Result<String, JsValue> {
-    let address = match nt::helpers::address::unpack_std_smc_addr(address, is_url_safe) {
+    let address = match nt::utils::unpack_std_smc_addr(address, is_url_safe) {
         Ok(address) => address,
         Err(e) => match MsgAddressInt::from_str(address) {
             Ok(address) => address,
@@ -54,12 +54,12 @@ pub fn unpack_address(address: &str, is_url_safe: bool) -> Result<String, JsValu
 
 #[wasm_bindgen(js_name = "checkAddress")]
 pub fn check_address(address: &str) -> bool {
-    nt::helpers::address::validate_address(address)
+    nt::utils::validate_address(address)
 }
 
 #[wasm_bindgen(js_name = "repackAddress")]
 pub fn repack_address(address: &str) -> Result<String, JsValue> {
-    nt::helpers::address::repack_address(address)
+    nt::utils::repack_address(address)
         .map(|x| x.to_string())
         .handle_error()
 }
@@ -104,7 +104,7 @@ pub fn encode_comment(comment: &str) -> Result<String, JsValue> {
         })
         .map(Result::<_, JsValue>::Ok)
         .unwrap_or_else(|| {
-            nt::helpers::abi::create_comment_payload(comment)
+            nt::abi::create_comment_payload(comment)
                 .handle_error()
                 .map(|slice| slice.into_cell())
         })?;
@@ -117,8 +117,8 @@ pub fn encode_comment(comment: &str) -> Result<String, JsValue> {
 #[wasm_bindgen(js_name = "extractPublicKey")]
 pub fn extract_public_key(boc: &str) -> Result<String, JsValue> {
     crate::utils::parse_account_stuff(boc)
-        .and_then(|x| nt::helpers::abi::extract_public_key(&x).handle_error())
-        .map(|x| hex::encode(x))
+        .and_then(|x| nt::abi::extract_public_key(&x).handle_error())
+        .map(hex::encode)
 }
 
 #[wasm_bindgen(js_name = "codeToTvc")]
@@ -126,10 +126,10 @@ pub fn code_to_tvc(code: &str) -> Result<String, JsValue> {
     let cell = base64::decode(code).handle_error()?;
     ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(cell))
         .handle_error()
-        .and_then(|x| nt::helpers::abi::code_to_tvc(x).handle_error())
+        .and_then(|x| nt::abi::code_to_tvc(x).handle_error())
         .and_then(|x| x.serialize().handle_error())
         .and_then(|x| ton_types::serialize_toc(&x).handle_error())
-        .map(|x| base64::encode(x))
+        .map(base64::encode)
 }
 
 #[wasm_bindgen(typescript_custom_section)]

@@ -241,7 +241,7 @@ impl JrpcConnection {
         let transport = self.make_transport();
         let from = match continuation {
             Some(continuation) => parse_transaction_id(continuation)?,
-            None => nt::core::models::TransactionId {
+            None => nt::abi::TransactionId {
                 lt: u64::MAX,
                 hash: Default::default(),
             },
