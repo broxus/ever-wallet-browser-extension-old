@@ -6,10 +6,10 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
-use nt::abi;
 use nt::core::models as core_models;
 use nt::core::ton_wallet;
-use nt::utils::TrustMe;
+use nt_abi as abi;
+use nt_utils::TrustMe;
 
 use crate::core::models::make_multisig_pending_transaction;
 use crate::transport::TransportHandle;

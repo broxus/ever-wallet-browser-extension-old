@@ -6,7 +6,7 @@ use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
 
 use nt::core::generic_contract;
-use nt::utils::TrustMe;
+use nt_utils::TrustMe;
 
 use crate::transport::TransportHandle;
 use crate::utils::*;
@@ -110,7 +110,7 @@ impl GenericContract {
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = nt::abi::TransactionId {
+        let from = nt_abi::TransactionId {
             lt: u64::from_str(&lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };

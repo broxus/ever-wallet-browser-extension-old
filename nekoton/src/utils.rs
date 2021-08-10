@@ -6,7 +6,7 @@ use ton_block::{Deserializable, MsgAddressInt};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
 
-use nt::utils::TrustMe;
+use nt_utils::TrustMe;
 
 pub struct QueryHandler<T> {
     tx: oneshot::Sender<T>,

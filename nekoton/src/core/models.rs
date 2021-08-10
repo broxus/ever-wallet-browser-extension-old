@@ -4,8 +4,8 @@ use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use nt::abi;
 use nt::core::models;
+use nt_abi as abi;
 
 use crate::utils::*;
 
