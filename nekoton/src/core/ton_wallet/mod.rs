@@ -8,7 +8,8 @@ use wasm_bindgen_futures::*;
 
 use nt::core::models as core_models;
 use nt::core::ton_wallet;
-use nt::utils::*;
+use nt_abi as abi;
+use nt_utils::TrustMe;
 
 use crate::core::models::make_multisig_pending_transaction;
 use crate::transport::TransportHandle;
@@ -68,7 +69,7 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "contractState")]
     pub fn contract_state(&self) -> crate::core::models::ContractState {
         let inner = self.inner.wallet.lock().trust_me();
-        crate::core::models::make_contract_state(inner.contract_state().clone())
+        crate::core::models::make_contract_state(*inner.contract_state())
     }
 
     #[wasm_bindgen(js_name = "prepareDeploy")]
@@ -287,7 +288,7 @@ impl TonWallet {
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = core_models::TransactionId {
+        let from = abi::TransactionId {
             lt: u64::from_str(&lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };

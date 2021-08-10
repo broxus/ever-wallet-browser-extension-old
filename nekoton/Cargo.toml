@@ -39,15 +39,25 @@ x25519-dalek = "1.1"
 getrandom = { version = "0.1", features = ["wasm-bindgen"] }
 wasm-logger = "0.2"
 
-ton_abi = { git = "https://github.com/tonlabs/ton-labs-abi.git", rev = "a2b2a9dc2e8c30a070e9af79cf0c24a55bdd5a87" }
-ton_block = { git = "https://github.com/tonlabs/ton-labs-block.git" }
-ton_types = { git = "https://github.com/tonlabs/ton-labs-types.git" }
+ton_abi = { git = "https://github.com/broxus/ton-labs-abi.git" }
+ton_block = { git = "https://github.com/broxus/ton-labs-block.git" }
+ton_types = { git = "https://github.com/broxus/ton-labs-types.git" }
 
 [dependencies.nt]
 package = "nekoton"
 git = "https://github.com/broxus/nekoton.git"
 branch = "master"
 features = ["web", "gql_transport", "jrpc_transport"]
+
+[dependencies.nt_utils]
+package = "nekoton-utils"
+git = "https://github.com/broxus/nekoton.git"
+branch = "master"
+
+[dependencies.nt_abi]
+package = "nekoton-abi"
+git = "https://github.com/broxus/nekoton.git"
+branch = "master"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3"

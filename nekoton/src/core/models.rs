@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use nt::core::models;
+use nt_abi as abi;
 
 use crate::utils::*;
 
@@ -497,10 +498,10 @@ extern "C" {
     pub type GenTimings;
 }
 
-pub fn make_gen_timings(data: models::GenTimings) -> GenTimings {
+pub fn make_gen_timings(data: abi::GenTimings) -> GenTimings {
     let (gen_lt, gen_utime) = match data {
-        models::GenTimings::Unknown => (0, 0),
-        models::GenTimings::Known { gen_lt, gen_utime } => (gen_lt, gen_utime),
+        abi::GenTimings::Unknown => (0, 0),
+        abi::GenTimings::Known { gen_lt, gen_utime } => (gen_lt, gen_utime),
     };
 
     ObjectBuilder::new()
@@ -510,7 +511,7 @@ pub fn make_gen_timings(data: models::GenTimings) -> GenTimings {
         .unchecked_into()
 }
 
-pub fn parse_gen_timings(data: GenTimings) -> Result<models::GenTimings, JsValue> {
+pub fn parse_gen_timings(data: GenTimings) -> Result<abi::GenTimings, JsValue> {
     #[derive(Clone, Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct ParsedGenTimings {
@@ -522,8 +523,8 @@ pub fn parse_gen_timings(data: GenTimings) -> Result<models::GenTimings, JsValue
         JsValue::into_serde::<ParsedGenTimings>(&data).handle_error()?;
     let gen_lt = u64::from_str(&gen_lt).handle_error()?;
     match (gen_lt, gen_utime) {
-        (0, _) | (_, 0) => Ok(models::GenTimings::Unknown),
-        (gen_lt, gen_utime) => Ok(models::GenTimings::Known { gen_lt, gen_utime }),
+        (0, _) | (_, 0) => Ok(abi::GenTimings::Unknown),
+        (gen_lt, gen_utime) => Ok(abi::GenTimings::Known { gen_lt, gen_utime }),
     }
 }
 
@@ -749,10 +750,10 @@ extern "C" {
     pub type LastTransactionId;
 }
 
-pub fn make_last_transaction_id(data: models::LastTransactionId) -> LastTransactionId {
+pub fn make_last_transaction_id(data: abi::LastTransactionId) -> LastTransactionId {
     let (lt, hash) = match data {
-        models::LastTransactionId::Exact(id) => (id.lt, Some(id.hash.to_hex_string())),
-        models::LastTransactionId::Inexact { latest_lt } => (latest_lt, None),
+        abi::LastTransactionId::Exact(id) => (id.lt, Some(id.hash.to_hex_string())),
+        abi::LastTransactionId::Inexact { latest_lt } => (latest_lt, None),
     };
 
     ObjectBuilder::new()
@@ -765,7 +766,7 @@ pub fn make_last_transaction_id(data: models::LastTransactionId) -> LastTransact
 
 pub fn parse_last_transaction_id(
     data: LastTransactionId,
-) -> Result<models::LastTransactionId, JsValue> {
+) -> Result<abi::LastTransactionId, JsValue> {
     #[derive(Deserialize)]
     #[serde(rename_all = "camelCase")]
     struct ParsedLastTransactionId {
@@ -781,9 +782,9 @@ pub fn parse_last_transaction_id(
     Ok(match (is_exact, hash) {
         (true, Some(hash)) => {
             let hash = ton_types::UInt256::from_str(&hash).handle_error()?;
-            models::LastTransactionId::Exact(models::TransactionId { lt, hash })
+            abi::LastTransactionId::Exact(abi::TransactionId { lt, hash })
         }
-        (false, None) => models::LastTransactionId::Inexact { latest_lt: lt },
+        (false, None) => abi::LastTransactionId::Inexact { latest_lt: lt },
         _ => return Err(ModelError::InvalidLastTransactionId).handle_error(),
     })
 }
@@ -802,7 +803,7 @@ extern "C" {
     pub type TransactionId;
 }
 
-pub fn make_transaction_id(data: models::TransactionId) -> TransactionId {
+pub fn make_transaction_id(data: abi::TransactionId) -> TransactionId {
     ObjectBuilder::new()
         .set("lt", data.lt.to_string())
         .set("hash", hex::encode(data.hash.as_slice()))
@@ -810,7 +811,7 @@ pub fn make_transaction_id(data: models::TransactionId) -> TransactionId {
         .unchecked_into()
 }
 
-pub fn parse_transaction_id(data: TransactionId) -> Result<models::TransactionId, JsValue> {
+pub fn parse_transaction_id(data: TransactionId) -> Result<abi::TransactionId, JsValue> {
     let lt = match js_sys::Reflect::get(&data, &JsValue::from_str("lt")).map(|lt| lt.as_string()) {
         Ok(Some(lt)) => u64::from_str(&lt).handle_error()?,
         _ => return Err(ModelError::InvalidTransactionId).handle_error(),
@@ -821,7 +822,7 @@ pub fn parse_transaction_id(data: TransactionId) -> Result<models::TransactionId
         Ok(Some(hash)) => ton_types::UInt256::from_str(&hash).handle_error()?,
         _ => return Err(ModelError::InvalidTransactionId).handle_error(),
     };
-    Ok(models::TransactionId { lt, hash })
+    Ok(abi::TransactionId { lt, hash })
 }
 
 pub fn make_polling_method(s: models::PollingMethod) -> PollingMethod {

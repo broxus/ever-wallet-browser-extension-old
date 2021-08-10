@@ -119,7 +119,7 @@ pub fn make_transactions_list(
     raw_transactions: Vec<nt::transport::models::RawTransaction>,
 ) -> TransactionsList {
     let continuation = raw_transactions.last().and_then(|transaction| {
-        (transaction.data.prev_trans_lt != 0).then(|| nt::core::models::TransactionId {
+        (transaction.data.prev_trans_lt != 0).then(|| nt_abi::TransactionId {
             lt: transaction.data.prev_trans_lt,
             hash: transaction.data.prev_trans_hash,
         })

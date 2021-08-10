@@ -281,7 +281,7 @@ impl GqlConnection {
             let raw_transactions = transport
                 .get_transactions(
                     address,
-                    nt::core::models::TransactionId {
+                    nt_abi::TransactionId {
                         lt: before_lt.unwrap_or(u64::MAX),
                         hash: Default::default(),
                     },

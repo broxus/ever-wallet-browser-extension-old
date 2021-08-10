@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.3 (2021-08-11)
+
+Bugfixes
+
+* Fixed parsing of bounced TIP3 messages (finally)
+
 ### 0.2.2 (2021-07-29)
 
 Bugfixes
