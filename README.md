@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.4 (2021-08-13)
+
+Bugfixes
+
+* Fixed abi parsing in provider middleware
+
 ### 0.2.3 (2021-08-11)
 
 Bugfixes
