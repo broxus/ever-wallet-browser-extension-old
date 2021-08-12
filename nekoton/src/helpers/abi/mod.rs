@@ -550,6 +550,10 @@ fn parse_token_value(
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
+                if value as u64 as f64 != value {
+                    return Err(AbiError::ExpectedIntegerNumber);
+                }
+
                 if value >= 0.0 {
                     Ok(BigUint::from(value as u64))
                 } else {
@@ -570,6 +574,10 @@ fn parse_token_value(
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
+                if value as u64 as f64 != value {
+                    return Err(AbiError::ExpectedIntegerNumber);
+                }
+
                 Ok(BigInt::from(value as u64))
             } else {
                 Err(AbiError::ExpectedStringOrNumber)
@@ -1143,6 +1151,8 @@ enum AbiError {
     ExpectedStringOrNumber,
     #[error("Expected unsigned number")]
     ExpectedUnsignedNumber,
+    #[error("Expected integer")]
+    ExpectedIntegerNumber,
     #[error("Expected array")]
     ExpectedArray,
     #[error("Expected tuple of two elements")]
