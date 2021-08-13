@@ -46,6 +46,7 @@ export type AccountToCreate = {
     name: string
     publicKey: string
     contractType: WalletContractType
+    workchain: number
 }
 
 export type DeployMessageToPrepare =
@@ -67,6 +68,7 @@ export type ConfirmMessageToPrepare = {
 export type TokenMessageToPrepare = {
     amount: string
     recipient: string
+    payload?: string
     notifyReceiver: boolean
 }
 

@@ -52,7 +52,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
             }
 
             key = await createMasterKey({ select: true, seed, password })
-            await createAccount({ name, contractType, publicKey: key.publicKey })
+            await createAccount({ name, contractType, publicKey: key.publicKey, workchain: 0 })
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)

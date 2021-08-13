@@ -9,6 +9,21 @@ use crate::utils::*;
 
 pub mod abi;
 
+#[wasm_bindgen(js_name = "extractAddressWorkchain")]
+pub fn extract_address_workchain(address: &str) -> Result<i8, JsValue> {
+    let address = match MsgAddressInt::from_str(address) {
+        Ok(address) => address,
+        Err(e) => match nt_utils::unpack_std_smc_addr(address, false) {
+            Ok(address) => address,
+            Err(_) => match nt_utils::unpack_std_smc_addr(address, true) {
+                Ok(address) => address,
+                Err(_) => return Err(e).handle_error(),
+            },
+        },
+    };
+    Ok(address.workchain_id() as i8)
+}
+
 #[wasm_bindgen(js_name = "computeTonWalletAddress")]
 pub fn compute_ton_wallet_address(
     public_key: &str,

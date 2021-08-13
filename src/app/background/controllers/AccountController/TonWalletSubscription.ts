@@ -17,6 +17,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
 
     public static async subscribe(
         connectionController: ConnectionController,
+        workchain: number,
         publicKey: string,
         contractType: nt.ContractType,
         handler: ITonWalletHandler
@@ -32,6 +33,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
             const tonWallet = await connection.subscribeToTonWallet(
                 publicKey,
                 contractType,
+                workchain,
                 handler
             )
 

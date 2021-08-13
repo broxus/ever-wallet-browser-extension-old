@@ -127,9 +127,9 @@ dependencies = [
 
 [[package]]
 name = "bitflags"
-version = "1.2.1"
+version = "1.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+checksum = "2da1976d75adbe5fbc88130ecd119529cf1cc6a93ae1546d8696ee66f0d21af1"
 
 [[package]]
 name = "block-buffer"
@@ -379,12 +379,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "doc-comment"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fea41bba32d969b513997752735605054bc0dfa92b4c56bf1189f2e174be7a10"
-
-[[package]]
 name = "downcast-rs"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -587,9 +581,9 @@ checksum = "f0a01e0497841a3b2db4f8afa483cce65f7e96a3498bd6c541734792aeac8fe7"
 
 [[package]]
 name = "graphql-introspection-query"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "610aac641dbd2a457ad4cef34aa2827dae3f035fd214cb38c2d62d8543f3973f"
+checksum = "7f2a4732cf5140bd6c082434494f785a19cfb566ab07d1382c3671f5812fed6d"
 dependencies = [
  "serde",
 ]
@@ -606,11 +600,10 @@ dependencies = [
 
 [[package]]
 name = "graphql_client"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0bb4f09181e4f80018d01c612125b07e0156f3753bfac37055fe2a25e031ca8"
+checksum = "a9b58571cfc3cc42c3e8ff44fc6cfbb6c0dea17ed22d20f9d8f1efc4e8209a3f"
 dependencies = [
- "doc-comment",
  "graphql_query_derive",
  "serde",
  "serde_json",
@@ -618,11 +611,10 @@ dependencies = [
 
 [[package]]
 name = "graphql_client_codegen"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e304c223c809b3bff4614018f8e6d9edb176b31d64ed9ea48b6ae8b1a03abb9"
+checksum = "b4bf9cd823359d74ad3d3ecf1afd4a975f4ff2f891cdf9a66744606daf52de8c"
 dependencies = [
- "failure",
  "graphql-introspection-query",
  "graphql-parser",
  "heck",
@@ -636,11 +628,10 @@ dependencies = [
 
 [[package]]
 name = "graphql_query_derive"
-version = "0.9.0"
+version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1f6b14d5ce549227aa9e649cd9d36d008b91021275a8e0a67d71cef815adc2f"
+checksum = "e56b093bfda71de1da99758b036f4cc811fd2511c8a76f75680e9ffbd2bb4251"
 dependencies = [
- "failure",
  "graphql_client_codegen",
  "proc-macro2",
  "syn",
@@ -797,8 +788,8 @@ dependencies = [
 
 [[package]]
 name = "nekoton"
-version = "0.3.2"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2e5a709d9a20177f2b19ec49bb089bf2cda76a99"
+version = "0.4.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#cfac8568b33a3e998a671bea9518551d45151c6b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -809,7 +800,6 @@ dependencies = [
  "downcast-rs",
  "dyn-clone",
  "ed25519-dalek",
- "failure",
  "futures",
  "getrandom",
  "graphql_client",
@@ -846,7 +836,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.3.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2e5a709d9a20177f2b19ec49bb089bf2cda76a99"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#cfac8568b33a3e998a671bea9518551d45151c6b"
 dependencies = [
  "anyhow",
  "base64",
@@ -871,7 +861,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.3.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2e5a709d9a20177f2b19ec49bb089bf2cda76a99"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#cfac8568b33a3e998a671bea9518551d45151c6b"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -881,7 +871,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.3.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2e5a709d9a20177f2b19ec49bb089bf2cda76a99"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#cfac8568b33a3e998a671bea9518551d45151c6b"
 dependencies = [
  "either",
  "proc-macro2",
@@ -892,13 +882,12 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.3.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2e5a709d9a20177f2b19ec49bb089bf2cda76a99"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#cfac8568b33a3e998a671bea9518551d45151c6b"
 dependencies = [
  "anyhow",
  "base64",
  "chacha20poly1305",
  "ed25519-dalek",
- "failure",
  "hex",
  "log",
  "num-bigint",
@@ -914,9 +903,9 @@ dependencies = [
 
 [[package]]
 name = "num"
-version = "0.2.1"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b8536030f9fea7127f841b45bb6243b27255787fb4eb83958aa1ef9d2fdc0c36"
+checksum = "8b7a8e9be5e039e2ff869df49155f1c06bd01ade2117ec783e56ab0932b67a8f"
 dependencies = [
  "num-bigint",
  "num-complex",
@@ -928,9 +917,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.2.6"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "090c7f9998ee0ff65aa5b723e4009f7b217707f1fb5ea551329cc4d6231fb304"
+checksum = "7d0a3d5e207573f948a9e5376662aa743a2ea13f7c50a554d7af443a73fbfeba"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -940,11 +929,10 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.2.4"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b6b19411a9719e753aff12e5187b74d60d3dc449ec3f4dc21e3989c3f554bc95"
+checksum = "747d632c0c558b87dbabbe6a82f3b4ae03720d0646ac5b7b4dae89394be5f2c5"
 dependencies = [
- "autocfg",
  "num-traits",
 ]
 
@@ -982,9 +970,9 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.2.4"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
+checksum = "12ac428b1cb17fce6f731001d307d351ec70a6d202fc2e60f7d4c5e42d8f4f07"
 dependencies = [
  "autocfg",
  "num-bigint",
@@ -1478,9 +1466,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.9.0"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4b7b349f11a7047e6d1276853e612d152f5e8a352c61917887cc2169e2366b4c"
+checksum = "01cf844b23c6131f624accf65ce0e4e9956a8bb329400ea5bcc26ae3a5c20b0b"
 dependencies = [
  "autocfg",
  "pin-project-lite",
@@ -1489,20 +1477,21 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "1.0.1"
-source = "git+https://github.com/broxus/ton-labs-abi.git#4cf5255b68cc818dd9b9ad47d00ad646f50f7e98"
+source = "git+https://github.com/broxus/ton-labs-abi.git#0a3745991bffaafa687eb47530eb2bea0977845b"
 dependencies = [
+ "anyhow",
  "base64",
  "byteorder",
  "chrono",
  "ed25519",
  "ed25519-dalek",
- "failure",
  "hex",
  "num-bigint",
  "num-traits",
  "serde",
  "serde_json",
  "sha2 0.9.5",
+ "thiserror",
  "ton_block",
  "ton_types",
 ]
@@ -1510,34 +1499,36 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.7.14"
-source = "git+https://github.com/broxus/ton-labs-block.git#2baac53fc2f9ca77af9913c6662f2de502523aa7"
+source = "git+https://github.com/broxus/ton-labs-block.git#28ca66fcd81f22dcf3f81d05837793109af301ae"
 dependencies = [
+ "anyhow",
  "base64",
  "clear_on_drop",
  "crc",
  "ed25519",
  "ed25519-dalek",
- "failure",
  "hex",
  "log",
  "num",
  "num-traits",
  "rand",
  "sha2 0.9.5",
+ "thiserror",
  "ton_types",
 ]
 
 [[package]]
 name = "ton_executor"
 version = "1.0.0"
-source = "git+https://github.com/broxus/ton-labs-executor.git#390d8f4f9ad1de54e8dae5c76b9452f4b570977e"
+source = "git+https://github.com/broxus/ton-labs-executor.git#34a25d80d0a7fa8bb5ed4b3e71684198322ad2ea"
 dependencies = [
+ "anyhow",
  "base64",
  "clear_on_drop",
- "failure",
  "log",
  "num",
  "num-traits",
+ "thiserror",
  "ton_block",
  "ton_types",
  "ton_vm",
@@ -1546,11 +1537,11 @@ dependencies = [
 [[package]]
 name = "ton_types"
 version = "1.10.2"
-source = "git+https://github.com/broxus/ton-labs-types.git#95449fd839f42ddafe4c334f32e6d03bab96eecc"
+source = "git+https://github.com/broxus/ton-labs-types.git#8ebe1b2dbf6bd7eada2dd32929e211c9d708a04b"
 dependencies = [
+ "anyhow",
  "base64",
  "crc",
- "failure",
  "hex",
  "lockfree",
  "log",
@@ -1559,22 +1550,24 @@ dependencies = [
  "num-traits",
  "rand",
  "sha2 0.9.5",
+ "thiserror",
 ]
 
 [[package]]
 name = "ton_vm"
 version = "1.0.0"
-source = "git+https://github.com/broxus/ton-labs-vm.git#23bf87441b366276e7f7c12eafdacb74d627b393"
+source = "git+https://github.com/broxus/ton-labs-vm.git#a211b20c36a0f48972bf7f39833a3679e7f1c85b"
 dependencies = [
+ "anyhow",
  "ed25519",
  "ed25519-dalek",
- "failure",
  "hex",
  "log",
  "num",
  "num-traits",
  "rand",
  "sha2 0.9.5",
+ "thiserror",
  "ton_types",
 ]
 

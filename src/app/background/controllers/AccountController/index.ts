@@ -582,11 +582,17 @@ export class AccountController extends BaseController<
         name,
         publicKey,
         contractType,
+        workchain,
     }: AccountToCreate): Promise<nt.AssetsList> {
         const { accountsStorage } = this.config
 
         try {
-            const selectedAccount = await accountsStorage.addAccount(name, publicKey, contractType)
+            const selectedAccount = await accountsStorage.addAccount(
+                name,
+                publicKey,
+                contractType,
+                workchain
+            )
 
             const accountEntries = { ...this.state.accountEntries }
             accountEntries[selectedAccount.tonWallet.address] = selectedAccount
@@ -966,13 +972,12 @@ export class AccountController extends BaseController<
         const subscription = await this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
         requireTokenWalletSubscription(owner, rootTokenContract, subscription)
 
-        console.log(params)
-
         return subscription.use(async (wallet) => {
             try {
                 return await wallet.prepareTransfer(
                     params.recipient,
                     params.amount,
+                    params.payload || '',
                     params.notifyReceiver
                 )
             } catch (e) {
@@ -1203,9 +1208,12 @@ export class AccountController extends BaseController<
             }
         }
 
+        const workchain = nt.extractAddressWorkchain(address)
+
         console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
         const subscription = await TonWalletSubscription.subscribe(
             this.config.connectionController,
+            workchain,
             publicKey,
             contractType,
             new TonWalletHandler(address, contractType, this)

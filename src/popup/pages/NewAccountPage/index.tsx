@@ -53,7 +53,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
                 seed,
                 password,
             })
-            await createAccount({ name, publicKey: key.publicKey, contractType })
+            await createAccount({ name, publicKey: key.publicKey, contractType, workchain: 0 })
         } catch (e) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
