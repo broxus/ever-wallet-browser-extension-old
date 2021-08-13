@@ -140,6 +140,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                     name: 'Ledger ' + (accountId + 1),
                     publicKey: key.publicKey,
                     contractType,
+                    workchain: 0,
                 })
             } catch (e) {
                 key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)

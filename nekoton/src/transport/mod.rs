@@ -48,6 +48,7 @@ const TON_WALLET_INIT_DATA: &'static str = r#"
 export type TonWalletInitData = {
     publicKey: string,
     contractType: ContractType,
+    workchain: number,
     custodians: string[],
 }; 
 "#;
@@ -55,6 +56,7 @@ export type TonWalletInitData = {
 fn make_ton_wallet_init_data(
     public_key: ed25519_dalek::PublicKey,
     contract_type: nt::core::ton_wallet::WalletType,
+    workchain: i8,
     custodians: Vec<ton_types::UInt256>,
 ) -> JsValue {
     ObjectBuilder::new()
@@ -63,6 +65,7 @@ fn make_ton_wallet_init_data(
             "contractType",
             crate::core::ton_wallet::ContractType::from(contract_type),
         )
+        .set("workchain", workchain)
         .set(
             "custodians",
             custodians

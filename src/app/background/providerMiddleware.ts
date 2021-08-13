@@ -386,6 +386,8 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requireOptional(req, req.params, 'cachedState', requireContractState)
     requireFunctionCall(req, req.params, 'functionCall')
 
+    console.log(req.params)
+
     const { connectionController } = ctx
 
     let contractState = cachedState

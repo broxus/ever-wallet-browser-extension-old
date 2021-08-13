@@ -24,7 +24,7 @@ ed25519-dalek = "1.0.1"
 futures = "0.3"
 js-sys = "0.3"
 log = "0.4"
-num-bigint = "0.2"
+num-bigint = "0.3"
 num-traits = "0.2"
 pin-project-lite = "0.2"
 rand = { version = "0.7", features = ["getrandom"] }

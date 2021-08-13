@@ -94,10 +94,16 @@ impl TokenWallet {
         &self,
         dest: &str,
         tokens: &str,
+        body: &str,
         notify_receiver: bool,
     ) -> Result<PromiseInternalMessage, JsValue> {
         let dest = parse_address(dest)?;
         let tokens = BigUint::from_str(tokens).handle_error()?;
+        let payload = if !body.is_empty() {
+            parse_slice(body)?.into_cell()
+        } else {
+            Default::default()
+        };
 
         let inner = self.inner.clone();
 
@@ -110,7 +116,7 @@ impl TokenWallet {
                     core_models::TransferRecipient::OwnerWallet(dest),
                     tokens,
                     notify_receiver,
-                    ton_types::Cell::default(),
+                    payload,
                 )
                 .handle_error()?;
 

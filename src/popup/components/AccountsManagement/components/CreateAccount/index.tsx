@@ -61,6 +61,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                 contractType,
                 name,
                 publicKey: accountability.currentDerivedKey.publicKey,
+                workchain: 0,
             })
             if (account !== undefined) {
                 drawer.setPanel(Panel.MANAGE_SEEDS)
@@ -82,7 +83,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
 
         await rpc
             .getTonWalletInitData(address)
-            .then(async ({ publicKey, contractType, custodians }) => {
+            .then(async ({ publicKey, contractType, workchain, custodians }) => {
                 if (accountability.currentDerivedKey == null) {
                     return
                 }
@@ -103,6 +104,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         contractType,
                                         publicKey,
                                         name: `Account ${accountability.nextAccountId + 1}`,
+                                        workchain,
                                     })
                                     .then((account) => {
                                         drawer.setPanel(Panel.MANAGE_SEEDS)
@@ -125,6 +127,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         contractType,
                                         publicKey,
                                         name: `Account ${accountability.nextAccountId + 1}`,
+                                        workchain,
                                     })
                                     .then(async (account) => {
                                         if (currentPublicKey) {

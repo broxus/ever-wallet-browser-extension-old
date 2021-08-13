@@ -67,6 +67,7 @@ impl GqlConnection {
         &self,
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
+        workchain: i8,
         handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
     ) -> Result<PromiseTonWallet, JsValue> {
         use crate::core::ton_wallet::*;
@@ -80,6 +81,7 @@ impl GqlConnection {
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::ton_wallet::TonWallet::subscribe(
                 transport.clone() as Arc<dyn nt::transport::Transport>,
+                workchain,
                 public_key,
                 contract_type,
                 handler,
@@ -184,6 +186,7 @@ impl GqlConnection {
             Ok(make_ton_wallet_init_data(
                 public_key,
                 wallet_type,
+                address.workchain_id() as i8,
                 custodians,
             ))
         })))

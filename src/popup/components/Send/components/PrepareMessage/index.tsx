@@ -157,6 +157,7 @@ export function PrepareMessage({
                 {
                     amount: parseCurrency(data.amount, decimals),
                     recipient: data.recipient,
+                    payload: data.comment ? nt.encodeComment(data.comment) : undefined,
                     notifyReceiver,
                 }
             )
@@ -343,16 +344,14 @@ export function PrepareMessage({
                             </div>
                         )}
 
-                        {selectedAsset.length == 0 && (
-                            <Input
-                                name="comment"
-                                label="Comment..."
-                                className="prepare-message__field-input"
-                                onChange={(value) => setValue('comment', value)}
-                                register={register()}
-                                type="text"
-                            />
-                        )}
+                        <Input
+                            name="comment"
+                            label="Comment..."
+                            className="prepare-message__field-input"
+                            onChange={(value) => setValue('comment', value)}
+                            register={register()}
+                            type="text"
+                        />
 
                         {selectedAsset.length > 0 && (
                             <div className="prepare-message__field-checkbox">

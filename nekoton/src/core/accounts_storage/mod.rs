@@ -39,6 +39,7 @@ impl AccountsStorage {
         name: String,
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
+        workchain: i8,
     ) -> Result<PromiseAssetsList, JsValue> {
         let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
@@ -47,7 +48,7 @@ impl AccountsStorage {
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let assets_list = inner
-                .add_account(&name, public_key, contract_type)
+                .add_account(&name, public_key, contract_type, workchain)
                 .await
                 .handle_error()?;
             Ok(make_assets_list(assets_list).unchecked_into())
