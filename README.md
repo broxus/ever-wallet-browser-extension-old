@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.5 (2021-08-15)
+
+Bugfixes
+
+* Fixed balance in assets list for tokens with zero decimals
+
 ### 0.2.4 (2021-08-14)
 
 Bugfixes
