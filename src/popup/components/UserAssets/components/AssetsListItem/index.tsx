@@ -7,7 +7,6 @@ import Arrow from '@popup/img/arrow.svg'
 
 import './style.scss'
 
-
 type Props = {
     type: AssetType
     address: string
@@ -30,9 +29,9 @@ export function AssetsListItem({
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
                 <AssetIcon type={type} address={address} className="assets-list-item__logo" />
                 <div className="assets-list-item__balance">
-                <span className="assets-list-item__balance__amount">
-                    {decimals && convertCurrency(balance || '0', decimals)}
-                </span>
+                    <span className="assets-list-item__balance__amount">
+                        {decimals != null && convertCurrency(balance || '0', decimals)}
+                    </span>
                     <span className="assets-list-item__balance__dollars">{name}</span>
                 </div>
             </div>
