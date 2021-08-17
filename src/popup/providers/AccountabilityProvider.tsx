@@ -260,7 +260,7 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
 
         let nextAccountId = 0
         for (let i = 0; i < accountIds.length; ++i) {
-            if (nextAccountId != i) {
+            if (nextAccountId != accountIds[i]) {
                 break
             }
             ++nextAccountId
