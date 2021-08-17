@@ -19,7 +19,7 @@ type Props = {
     children: React.ReactNode
 }
 
-interface AccountabilityContext {
+export interface AccountabilityContext {
     currentAccount: nt.AssetsList | undefined
     setCurrentAccount: React.Dispatch<React.SetStateAction<nt.AssetsList | undefined>>
     currentDerivedKey: nt.KeyStoreEntry | undefined
@@ -248,9 +248,26 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         return nt.getContractTypeDetails(rpcState.state.selectedAccount.tonWallet.contractType)
     }, [rpcState.state.selectedAccount?.tonWallet.contractType])
 
-    const nextAccountId = React.useMemo(() => window.ObjectExt.keys(internalAccounts).length, [
-        internalAccounts,
-    ])
+    const nextAccountId = React.useMemo(() => {
+        if (currentMasterKey == null) {
+            return 0
+        }
+
+        const accountIds = window.ObjectExt.values({ ...rpcState.state.storedKeys })
+            .filter((key) => key.masterKey === currentMasterKey.masterKey)
+            .map((key) => key.accountId)
+            .sort((a, b) => a - b)
+
+        let nextAccountId = 0
+        for (let i = 0; i < accountIds.length; ++i) {
+            if (nextAccountId != i) {
+                break
+            }
+            ++nextAccountId
+        }
+
+        return nextAccountId
+    }, [rpcState.state.storedKeys, currentMasterKey])
 
     const onManageAccount = (account?: nt.AssetsList) => {
         setCurrentAccount(account)

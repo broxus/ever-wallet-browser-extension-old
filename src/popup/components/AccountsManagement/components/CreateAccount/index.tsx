@@ -8,7 +8,11 @@ import {
 } from '@popup/components/AccountsManagement/components'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
-import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
+import {
+    AccountabilityContext,
+    Step,
+    useAccountability,
+} from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
@@ -26,6 +30,12 @@ enum FlowStep {
     SELECT_CONTRACT_TYPE,
 }
 
+const defaultAccountName = (accountability: AccountabilityContext) => {
+    const accountId = accountability.currentDerivedKey?.accountId || 0
+    const number = accountability.currentDerivedKeyAccounts.length
+    return `Account ${accountId + 1}.${number + 1}`
+}
+
 type Props = {
     onBackFromIndex?(): void
 }
@@ -41,7 +51,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
     const [flow, setFlow] = React.useState(AddAccountFlow.CREATE)
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(FlowStep.INDEX)
-    const [name, setName] = React.useState(`Account ${accountability.nextAccountId + 1}`)
+    const [name, setName] = React.useState(defaultAccountName(accountability))
     const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
     const onManageDerivedKey = () => {
@@ -103,7 +113,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                     .createAccount({
                                         contractType,
                                         publicKey,
-                                        name: `Account ${accountability.nextAccountId + 1}`,
+                                        name,
                                         workchain,
                                     })
                                     .then((account) => {
@@ -126,7 +136,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                     .createAccount({
                                         contractType,
                                         publicKey,
-                                        name: `Account ${accountability.nextAccountId + 1}`,
+                                        name,
                                         workchain,
                                     })
                                     .then(async (account) => {
