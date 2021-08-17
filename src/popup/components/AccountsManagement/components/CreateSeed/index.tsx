@@ -1,13 +1,11 @@
 import * as React from 'react'
 
 import * as nt from '@nekoton'
-import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import {
     CheckNewSeedPhrase,
     EnterNewSeedPasswords,
     ImportSeed,
     NewSeedPhrase,
-    NewAccountContractType,
 } from '@popup/components/AccountsManagement/components'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
@@ -131,6 +129,8 @@ export function CreateSeed(): JSX.Element {
     }
 
     const onBack = () => {
+        setError(undefined)
+
         switch (step) {
             case FlowStep.SHOW_PHRASE:
             case FlowStep.IMPORT_PHRASE:
@@ -142,7 +142,13 @@ export function CreateSeed(): JSX.Element {
                 break
 
             case FlowStep.PASSWORD_REQUEST:
-                setStep(FlowStep.CHECK_PHRASE)
+                if (flow === AddSeedFlow.CREATE) {
+                    setStep(FlowStep.SHOW_PHRASE)
+                } else if (flow === AddSeedFlow.IMPORT || flow === AddSeedFlow.IMPORT_LEGACY) {
+                    setStep(FlowStep.IMPORT_PHRASE)
+                } else if (flow === AddSeedFlow.CONNECT_LEDGER) {
+                    setStep(FlowStep.CONNECT_LEDGER)
+                }
                 break
 
             default:
@@ -220,6 +226,7 @@ export function CreateSeed(): JSX.Element {
                 <ImportSeed
                     key="importSeed"
                     wordsCount={flow === AddSeedFlow.IMPORT_LEGACY ? 24 : 12}
+                    error={error}
                     onSubmit={onNextWhenImport}
                     onBack={onBack}
                 />

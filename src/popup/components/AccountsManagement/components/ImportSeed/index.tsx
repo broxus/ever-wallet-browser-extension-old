@@ -9,12 +9,13 @@ import Button from '@popup/components/Button'
 import { Select } from '@popup/components/Select'
 
 type Props = {
+    error?: string
     wordsCount: number
     onSubmit(words: string[]): void
     onBack(): void
 }
 
-export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.Element {
+export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props): JSX.Element {
     const { control, handleSubmit, setValue } = useForm()
 
     const [hints, setHints] = React.useState<LabelValueType[]>([])
@@ -42,7 +43,6 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
 
     const onPaste: React.ClipboardEventHandler<HTMLFormElement | HTMLInputElement> = (event) => {
         try {
-            console.log('PASTE', event)
             const seedPhrase = event.clipboardData.getData('text/plain')
             const words = seedPhrase
                 .replace(/\r\n|\r|\n/g, ' ')
@@ -75,8 +75,8 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
         }
     }
 
-    const onSubmit = (data: { [key: string]: [word: string, option: object] }) => {
-        props.onSubmit(window.ObjectExt.values(data).map(([word]) => word))
+    const doOnSubmit = (data: { [key: string]: [word: string, option: object] }) => {
+        onSubmit(window.ObjectExt.values(data).map(([word]) => word))
     }
 
     return (
@@ -88,7 +88,7 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
             <div className="accounts-management__wrapper">
                 <form
                     id="words"
-                    onSubmit={handleSubmit(onSubmit)}
+                    onSubmit={handleSubmit(doOnSubmit)}
                     className="accounts-management__content-form"
                     onPaste={onPaste}
                 >
@@ -170,13 +170,16 @@ export function ImportSeed({ wordsCount = 12, onBack, ...props }: Props): JSX.El
                             ))}
                         </div>
                     </div>
+                    {error !== undefined && (
+                        <div className="accounts-management__content-error">{error}</div>
+                    )}
                 </form>
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
                         <Button text="Back" white onClick={onBack} />
                     </div>
-                    <Button text="Confirm" form="words" onClick={handleSubmit(onSubmit)} />
+                    <Button text="Confirm" form="words" onClick={handleSubmit(doOnSubmit)} />
                 </footer>
             </div>
         </div>
