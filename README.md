@@ -32,6 +32,14 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.6 (2021-08-17)
+
+Bugfixes
+
+* Fixed next account id selection
+* Fixed default account name
+* Fixed error label while importing seed
+
 ### 0.2.5 (2021-08-15)
 
 Bugfixes
