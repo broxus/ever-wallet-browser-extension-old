@@ -95,11 +95,13 @@ export interface ConnectionConfig extends BaseConfig {}
 
 export interface ConnectionControllerState extends BaseState {
     selectedConnection: ConnectionDataItem
+    pendingConnection: ConnectionDataItem | undefined
 }
 
 function makeDefaultState(): ConnectionControllerState {
     return {
         selectedConnection: getPreset(0)!,
+        pendingConnection: undefined,
     }
 }
 
@@ -172,13 +174,28 @@ export class ConnectionController extends BaseController<
                 this._controller = controller
                 this._release = release
                 this._params = params
+
+                this._controller.update({
+                    pendingConnection: params,
+                })
             }
 
             public async switch() {
                 await this._controller
                     ._connect(this._params)
-                    .then(() => this._release())
+                    .then(() => {
+                        this._controller.update({
+                            selectedConnection: this._params,
+                            pendingConnection: undefined,
+                        })
+
+                        this._release()
+                    })
                     .catch((e) => {
+                        this._controller.update({
+                            pendingConnection: undefined,
+                        })
+
                         this._release()
                         throw e
                     })
@@ -292,7 +309,7 @@ export class ConnectionController extends BaseController<
                     .then(() => resolve(TestConnectionResult.DONE))
                     .catch((e) => reject(e))
 
-                setTimeout(() => reject(new Error('Connection timeout')), 60000)
+                setTimeout(() => reject(new Error('Connection timeout')), 10000)
             }).finally(() => (this._cancelTestConnection = undefined))
         }
 
@@ -337,20 +354,13 @@ export class ConnectionController extends BaseController<
             }
 
             this._initializedConnection = connectionData
+            await this._saveSelectedConnectionId()
         } catch (e) {
             throw new NekotonRpcError(
                 RpcErrorCode.INTERNAL,
                 `Failed to create connection: ${e.toString()}`
             )
         }
-
-        this.update(
-            {
-                selectedConnection: params,
-            },
-            true
-        )
-        await this._saveSelectedConnectionId()
     }
 
     private async _acquireConnection() {

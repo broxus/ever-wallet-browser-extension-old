@@ -40,6 +40,17 @@ export function NetworkSettings(): JSX.Element {
 
     hideModalOnClick(wrapperRef, iconRef, hide)
 
+    const makeNetworkTitle = () => {
+        const currentNetwork = rpcState.state.selectedConnection.name
+        const pendingNetwork = rpcState.state.pendingConnection?.name
+
+        if (pendingNetwork == null || pendingNetwork == currentNetwork) {
+            return currentNetwork
+        } else {
+            return `${pendingNetwork}...`
+        }
+    }
+
     return (
         <>
             <div
@@ -47,7 +58,7 @@ export function NetworkSettings(): JSX.Element {
                 onClick={toggle}
                 ref={iconRef}
             >
-                {rpcState.state.selectedConnection.name}
+                {makeNetworkTitle()}
             </div>
             {isActive && (
                 <div ref={wrapperRef} className="network-settings">
