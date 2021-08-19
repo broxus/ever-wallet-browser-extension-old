@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.7 (2021-08-19)
+
+Bugfixes
+
+* Fixed network selection for broken connections
+
 ### 0.2.6 (2021-08-17)
 
 Bugfixes

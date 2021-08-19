@@ -165,6 +165,10 @@ export class NekotonController extends EventEmitter {
             this._debouncedSendUpdate()
         })
 
+        this._components.connectionController.subscribe((_state) => {
+            this._debouncedSendUpdate()
+        })
+
         this._components.permissionsController.config.notifyDomain = this._notifyConnections.bind(
             this
         )

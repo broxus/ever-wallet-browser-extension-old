@@ -95,11 +95,13 @@ export interface ConnectionConfig extends BaseConfig {}
 
 export interface ConnectionControllerState extends BaseState {
     selectedConnection: ConnectionDataItem
+    pendingConnection: ConnectionDataItem | undefined
 }
 
 function makeDefaultState(): ConnectionControllerState {
     return {
         selectedConnection: getPreset(0)!,
+        pendingConnection: undefined,
     }
 }
 
@@ -117,6 +119,7 @@ export class ConnectionController extends BaseController<
     private _networkMutex: Mutex
     private _release?: () => void
     private _acquiredConnectionCounter: number = 0
+    private _cancelTestConnection?: () => void
 
     constructor(config: ConnectionConfig, state?: ConnectionControllerState) {
         super(config, state || makeDefaultState())
@@ -171,18 +174,35 @@ export class ConnectionController extends BaseController<
                 this._controller = controller
                 this._release = release
                 this._params = params
+
+                this._controller.update({
+                    pendingConnection: params,
+                })
             }
 
             public async switch() {
                 await this._controller
                     ._connect(this._params)
-                    .then(() => this._release())
+                    .then(() => {
+                        this._controller.update({
+                            selectedConnection: this._params,
+                            pendingConnection: undefined,
+                        })
+
+                        this._release()
+                    })
                     .catch((e) => {
+                        this._controller.update({
+                            pendingConnection: undefined,
+                        })
+
                         this._release()
                         throw e
                     })
             }
         }
+
+        this._cancelTestConnection?.()
 
         const release = await this._networkMutex.acquire()
         return new NetworkSwitchHandle(this, release, params)
@@ -263,78 +283,84 @@ export class ConnectionController extends BaseController<
 
         this._initializedConnection = undefined
 
-        const testConnection = async ({ data: { connection } }: InitializedConnection) => {
-            await new Promise<void>((resolve, reject) => {
-                // Try to get any account state
-                connection
-                    .getFullContractState(
-                        '-1:0000000000000000000000000000000000000000000000000000000000000000'
-                    )
-                    .then(() => resolve())
-                    .catch((e) => reject(e))
-
-                setTimeout(() => reject(new Error('Connection timeout')), 60000)
-            })
-        }
-
-        if (params.type === 'graphql') {
-            try {
-                const socket = new GqlSocket()
-
-                const connection = {
-                    group: params.group,
-                    type: 'graphql',
-                    data: {
-                        socket,
-                        connection: await socket.connect(params.data),
-                    },
-                } as InitializedConnection
-
-                await testConnection(connection)
-
-                this._initializedConnection = connection
-            } catch (e) {
-                throw new NekotonRpcError(
-                    RpcErrorCode.INTERNAL,
-                    `Failed to create GraphQL connection: ${e.toString()}`
-                )
-            }
-        } else if (params.type === 'jrpc') {
-            try {
-                const socket = new JrpcSocket()
-
-                const connection = {
-                    group: params.group,
-                    type: 'jrpc',
-                    data: {
-                        socket,
-                        connection: await socket.connect(params.data),
-                    },
-                } as InitializedConnection
-
-                await testConnection(connection)
-
-                this._initializedConnection = connection
-            } catch (e) {
-                throw new NekotonRpcError(
-                    RpcErrorCode.INTERNAL,
-                    `Failed to create JRPC connection ${e.toString()}`
-                )
-            }
-        } else {
+        if (params.type !== 'graphql' && params.type !== 'jrpc') {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,
                 'Unsupported connection type'
             )
         }
 
-        this.update(
-            {
-                selectedConnection: params,
-            },
-            true
-        )
-        await this._saveSelectedConnectionId()
+        enum TestConnectionResult {
+            DONE,
+            CANCELLED,
+        }
+
+        const testConnection = async ({
+            data: { connection },
+        }: InitializedConnection): Promise<TestConnectionResult> => {
+            return new Promise<TestConnectionResult>((resolve, reject) => {
+                this._cancelTestConnection = () => resolve(TestConnectionResult.CANCELLED)
+
+                // Try to get any account state
+                connection
+                    .getFullContractState(
+                        '-1:0000000000000000000000000000000000000000000000000000000000000000'
+                    )
+                    .then(() => resolve(TestConnectionResult.DONE))
+                    .catch((e) => reject(e))
+
+                setTimeout(() => reject(new Error('Connection timeout')), 10000)
+            }).finally(() => (this._cancelTestConnection = undefined))
+        }
+
+        try {
+            const { connection, connectionData } = await (params.type === 'graphql'
+                ? async () => {
+                      const socket = new GqlSocket()
+                      const connection = await socket.connect(params.data)
+
+                      return {
+                          connection,
+                          connectionData: {
+                              group: params.group,
+                              type: 'graphql',
+                              data: {
+                                  socket,
+                                  connection: await socket.connect(params.data),
+                              },
+                          } as InitializedConnection,
+                      }
+                  }
+                : async () => {
+                      const socket = new JrpcSocket()
+                      const connection = await socket.connect(params.data)
+
+                      return {
+                          connection,
+                          connectionData: {
+                              group: params.group,
+                              type: 'jrpc',
+                              data: {
+                                  socket,
+                                  connection,
+                              },
+                          } as InitializedConnection,
+                      }
+                  })()
+
+            if ((await testConnection(connectionData)) == TestConnectionResult.CANCELLED) {
+                connection.free()
+                return
+            }
+
+            this._initializedConnection = connectionData
+            await this._saveSelectedConnectionId()
+        } catch (e) {
+            throw new NekotonRpcError(
+                RpcErrorCode.INTERNAL,
+                `Failed to create connection: ${e.toString()}`
+            )
+        }
     }
 
     private async _acquireConnection() {
