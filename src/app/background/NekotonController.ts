@@ -323,6 +323,9 @@ export class NekotonController extends EventEmitter {
 
     public async changeNetwork(params: ConnectionDataItem) {
         const currentNetwork = this._components.connectionController.state.selectedConnection
+        if (currentNetwork.id == params.id) {
+            return
+        }
 
         await this._components.accountController.stopSubscriptions()
         console.debug('Stopped account subscriptions')

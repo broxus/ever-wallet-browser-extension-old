@@ -17,6 +17,8 @@ export function NetworkSettings(): JSX.Element {
     const [availableNetworks, setNetworks] = React.useState<ConnectionDataItem[]>([])
     const [isActive, setActiveTo] = React.useState(false)
 
+    const currentNetwork = rpcState.state.selectedConnection
+
     const onSelectNetwork = (network: ConnectionDataItem) => {
         return async () => {
             hide()
@@ -41,13 +43,11 @@ export function NetworkSettings(): JSX.Element {
     hideModalOnClick(wrapperRef, iconRef, hide)
 
     const makeNetworkTitle = () => {
-        const currentNetwork = rpcState.state.selectedConnection.name
-        const pendingNetwork = rpcState.state.pendingConnection?.name
-
-        if (pendingNetwork == null || pendingNetwork == currentNetwork) {
-            return currentNetwork
+        const pendingNetwork = rpcState.state.pendingConnection
+        if (pendingNetwork == null || pendingNetwork.id == currentNetwork.id) {
+            return currentNetwork.name
         } else {
-            return `${pendingNetwork}...`
+            return `${pendingNetwork.name}...`
         }
     }
 
@@ -61,31 +61,31 @@ export function NetworkSettings(): JSX.Element {
                 {makeNetworkTitle()}
             </div>
             {isActive && (
-                <div ref={wrapperRef} className="network-settings">
+                <div ref={wrapperRef} className="network-settings noselect">
                     <div className="network-settings-section">
                         <div className="network-settings-section-header">Available networks</div>
 
                         <ul className="network-settings__networks-list">
-                            {availableNetworks.map((network) => (
-                                <li key={network.id}>
-                                    <a
-                                        role="button"
-                                        className={classNames(
-                                            'network-settings__networks-list-item',
-                                            {
-                                                'network-settings__networks-list-item--active':
-                                                    network.id ===
-                                                    rpcState.state.selectedConnection.id,
-                                            }
-                                        )}
-                                        onClick={onSelectNetwork(network)}
-                                    >
-                                        <div className="network-settings__networks-list-item-title">
-                                            {network.name}
-                                        </div>
-                                    </a>
-                                </li>
-                            ))}
+                            {availableNetworks.map((network) => {
+                                const current = network.id == currentNetwork.id
+
+                                const className = classNames(
+                                    'network-settings__networks-list-item',
+                                    { 'network-settings__networks-list-item--active': current }
+                                )
+
+                                const onClick = current ? undefined : onSelectNetwork(network)
+
+                                return (
+                                    <li key={network.id}>
+                                        <a role="button" className={className} onClick={onClick}>
+                                            <div className="network-settings__networks-list-item-title">
+                                                {network.name}
+                                            </div>
+                                        </a>
+                                    </li>
+                                )
+                            })}
                         </ul>
                     </div>
                 </div>
