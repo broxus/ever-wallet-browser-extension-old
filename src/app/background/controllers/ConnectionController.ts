@@ -117,6 +117,7 @@ export class ConnectionController extends BaseController<
     private _networkMutex: Mutex
     private _release?: () => void
     private _acquiredConnectionCounter: number = 0
+    private _cancelTestConnection?: () => void
 
     constructor(config: ConnectionConfig, state?: ConnectionControllerState) {
         super(config, state || makeDefaultState())
@@ -183,6 +184,8 @@ export class ConnectionController extends BaseController<
                     })
             }
         }
+
+        this._cancelTestConnection?.()
 
         const release = await this._networkMutex.acquire()
         return new NetworkSwitchHandle(this, release, params)
@@ -263,68 +266,81 @@ export class ConnectionController extends BaseController<
 
         this._initializedConnection = undefined
 
-        const testConnection = async ({ data: { connection } }: InitializedConnection) => {
-            await new Promise<void>((resolve, reject) => {
+        if (params.type !== 'graphql' && params.type !== 'jrpc') {
+            throw new NekotonRpcError(
+                RpcErrorCode.RESOURCE_UNAVAILABLE,
+                'Unsupported connection type'
+            )
+        }
+
+        enum TestConnectionResult {
+            DONE,
+            CANCELLED,
+        }
+
+        const testConnection = async ({
+            data: { connection },
+        }: InitializedConnection): Promise<TestConnectionResult> => {
+            return new Promise<TestConnectionResult>((resolve, reject) => {
+                this._cancelTestConnection = () => resolve(TestConnectionResult.CANCELLED)
+
                 // Try to get any account state
                 connection
                     .getFullContractState(
                         '-1:0000000000000000000000000000000000000000000000000000000000000000'
                     )
-                    .then(() => resolve())
+                    .then(() => resolve(TestConnectionResult.DONE))
                     .catch((e) => reject(e))
 
                 setTimeout(() => reject(new Error('Connection timeout')), 60000)
-            })
+            }).finally(() => (this._cancelTestConnection = undefined))
         }
 
-        if (params.type === 'graphql') {
-            try {
-                const socket = new GqlSocket()
+        try {
+            const { connection, connectionData } = await (params.type === 'graphql'
+                ? async () => {
+                      const socket = new GqlSocket()
+                      const connection = await socket.connect(params.data)
 
-                const connection = {
-                    group: params.group,
-                    type: 'graphql',
-                    data: {
-                        socket,
-                        connection: await socket.connect(params.data),
-                    },
-                } as InitializedConnection
+                      return {
+                          connection,
+                          connectionData: {
+                              group: params.group,
+                              type: 'graphql',
+                              data: {
+                                  socket,
+                                  connection: await socket.connect(params.data),
+                              },
+                          } as InitializedConnection,
+                      }
+                  }
+                : async () => {
+                      const socket = new JrpcSocket()
+                      const connection = await socket.connect(params.data)
 
-                await testConnection(connection)
+                      return {
+                          connection,
+                          connectionData: {
+                              group: params.group,
+                              type: 'jrpc',
+                              data: {
+                                  socket,
+                                  connection,
+                              },
+                          } as InitializedConnection,
+                      }
+                  })()
 
-                this._initializedConnection = connection
-            } catch (e) {
-                throw new NekotonRpcError(
-                    RpcErrorCode.INTERNAL,
-                    `Failed to create GraphQL connection: ${e.toString()}`
-                )
+            if ((await testConnection(connectionData)) == TestConnectionResult.CANCELLED) {
+                connection.free()
+                return
             }
-        } else if (params.type === 'jrpc') {
-            try {
-                const socket = new JrpcSocket()
 
-                const connection = {
-                    group: params.group,
-                    type: 'jrpc',
-                    data: {
-                        socket,
-                        connection: await socket.connect(params.data),
-                    },
-                } as InitializedConnection
-
-                await testConnection(connection)
-
-                this._initializedConnection = connection
-            } catch (e) {
-                throw new NekotonRpcError(
-                    RpcErrorCode.INTERNAL,
-                    `Failed to create JRPC connection ${e.toString()}`
-                )
-            }
-        } else {
+            this._initializedConnection = connectionData
+        } catch (e) {
             throw new NekotonRpcError(
-                RpcErrorCode.RESOURCE_UNAVAILABLE,
-                'Unsupported connection type'
+                RpcErrorCode.INTERNAL,
+                `Failed to create connection: ${e.toString()}`
             )
         }
 
