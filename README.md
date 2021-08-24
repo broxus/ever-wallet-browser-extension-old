@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.8 (2021-08-24)
+
+Security
+
+* Fixed CVE-2021-23343 in dependencies 
+
 ### 0.2.7 (2021-08-19)
 
 Bugfixes

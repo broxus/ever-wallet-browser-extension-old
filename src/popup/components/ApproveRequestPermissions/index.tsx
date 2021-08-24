@@ -7,6 +7,7 @@ import { Checkbox } from '@popup/components/Checkbox'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
 import UserAvatar from '@popup/components/UserAvatar'
 import { ApprovalOutput, PendingApproval } from '@shared/backgroundApi'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { convertTons } from '@shared/utils'
 
 import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
@@ -33,6 +34,8 @@ export function ApproveRequestPermissions({
     accountEntries,
     onSubmit,
 }: Props): JSX.Element {
+    const accountability = useAccountability()
+
     const { origin } = approval
     const { permissions } = approval.requestData
 
@@ -42,8 +45,10 @@ export function ApproveRequestPermissions({
         shouldSelectAccount ? LocalStep.SELECT_ACCOUNT : LocalStep.CONFIRM
     )
 
-    const [selectedAccount, setSelectedAccount] = React.useState<nt.AssetsList>()
-    const [confirmChecked, setConfirmChecked] = React.useState(false)
+    const [selectedAccount, setSelectedAccount] = React.useState<nt.AssetsList | undefined>(
+        accountability.selectedAccount
+    )
+    const [confirmChecked, setConfirmChecked] = React.useState(true)
 
     return (
         <div
@@ -58,13 +63,19 @@ export function ApproveRequestPermissions({
                         <div className="connect-wallet__origin-source-value">{origin}</div>
                     </div>
                     {localStep === LocalStep.SELECT_ACCOUNT && (
-                        <h2 key="select-account-heading" className="connect-wallet__header-title noselect">
+                        <h2
+                            key="select-account-heading"
+                            className="connect-wallet__header-title noselect"
+                        >
                             Select account to connect with Crystal wallet
                         </h2>
                     )}
                     {localStep === LocalStep.CONFIRM && (
                         <>
-                            <h2 key="confirm-heading" className="connect-wallet__header-title noselect">
+                            <h2
+                                key="confirm-heading"
+                                className="connect-wallet__header-title noselect"
+                            >
                                 Connected to {selectedAccount?.name}
                             </h2>
                             <div className="connect-wallet__account-balance">
@@ -72,7 +83,7 @@ export function ApproveRequestPermissions({
                                     (selectedAccount &&
                                         accountContractStates[selectedAccount.tonWallet.address]
                                             ?.balance) ||
-                                    '0'
+                                        '0'
                                 )} TON`}
                             </div>
                         </>
@@ -89,7 +100,8 @@ export function ApproveRequestPermissions({
                             >
                                 <Checkbox
                                     checked={
-                                        selectedAccount?.tonWallet.address == account.tonWallet.address
+                                        selectedAccount?.tonWallet.address ==
+                                        account.tonWallet.address
                                     }
                                     id={`account-${account.tonWallet.address}`}
                                     onChange={(checked) => {
@@ -180,9 +192,7 @@ export function ApproveRequestPermissions({
 
             {localStep === LocalStep.CONNECTING && (
                 <div className="connect-wallet__connecting">
-                    <h2 className="connect-wallet__connecting-heading">
-                        Connecting...
-                    </h2>
+                    <h2 className="connect-wallet__connecting-heading">Connecting...</h2>
                     <div className="connect-wallet__connecting-process">
                         <WebsiteIcon origin={origin} />
                         <p className="connecting-process">
