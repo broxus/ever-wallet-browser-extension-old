@@ -354,7 +354,7 @@ export class ConnectionController extends BaseController<
             }
 
             this._initializedConnection = connectionData
-            await this._saveSelectedConnectionId()
+            await this._saveSelectedConnectionId(params.id)
         } catch (e) {
             throw new NekotonRpcError(
                 RpcErrorCode.INTERNAL,
@@ -403,14 +403,11 @@ export class ConnectionController extends BaseController<
         })
     }
 
-    private async _saveSelectedConnectionId(): Promise<void> {
+    private async _saveSelectedConnectionId(connectionId: number): Promise<void> {
         return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { selectedConnectionId: this.state.selectedConnection.id },
-                () => {
-                    resolve()
-                }
-            )
+            chrome.storage.local.set({ selectedConnectionId: connectionId }, () => {
+                resolve()
+            })
         })
     }
 }

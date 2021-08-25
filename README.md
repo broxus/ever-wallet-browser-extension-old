@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.9 (2021-08-25)
+
+Bugfixes
+
+* Fixed saving the selected connection id
+
 ### 0.2.8 (2021-08-24)
 
 Security
