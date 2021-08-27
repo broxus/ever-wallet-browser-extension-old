@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from 'react'
 
-import Right from '@popup/img/right-arrow-blue.svg'
-import Left from '@popup/img/left-arrow-blue.svg'
 import Button from '@popup/components/Button'
-
-import { Checkbox } from '@popup/components/Checkbox'
-import UserAvatar from '@popup/components/UserAvatar'
-import { convertAddress, convertTons } from '@shared/utils'
 
 import { ControllerState, IControllerRpcClient } from '@popup/utils/ControllerRpcClient'
 import Loader from '@popup/components/Loader'
 import Modal from '@popup/components/Modal'
+import Nav from '@popup/components/Nav'
+import AccountSelector from '@popup/components/AccountSelector'
 
 import * as nt from '@nekoton'
 import './style.scss'
@@ -23,53 +19,6 @@ interface ISelectLedgerAccount {
     onBack?: () => void
     onSuccess?: () => void
     onNext?: (selected: number[]) => void
-}
-
-interface ILedgerAccount {
-    checked: boolean
-    setChecked: (arg0: boolean) => void
-    publicKey: string
-    index: number
-    preselected: boolean
-    // balance: string
-}
-
-const LedgerAccount: React.FC<ILedgerAccount> = ({
-    publicKey,
-    checked,
-    setChecked,
-    index,
-    preselected,
-}) => {
-    return (
-        <div
-            className={`select-ledger-account__account ${
-                preselected ? 'select-ledger-account__account-selected' : ''
-            }`}
-        >
-            <Checkbox
-                checked={checked || preselected}
-                onChange={!preselected ? setChecked : () => {}}
-            />
-            <UserAvatar
-                address={nt.computeTonWalletAddress(publicKey, 'SafeMultisigWallet', 0)}
-                className="select-ledger-account__account-avatar"
-            />
-            <span className="select-ledger-account__account-index">{index + 1}</span>
-            {/*<div>*/}
-            <span
-                className={`select-ledger-account__account-public-key ${
-                    preselected ? 'select-ledger-account__account-grey' : ''
-                }`}
-            >
-                {convertAddress(publicKey)}
-            </span>
-            {/*<div className="select-ledger-account__account-grey">*/}
-            {/*    {convertTons(balance)} TON*/}
-            {/*</div>*/}
-            {/*</div>*/}
-        </div>
-    )
 }
 
 type LedgerAccountDetails = {
@@ -164,25 +113,14 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                 </div>
             ) : (
                 <>
-                    <div className="select-ledger-account__nav">
-                        <span className="select-ledger-account__nav-page">{`Page ${currentPage}`}</span>
-                        <div style={{ display: 'flex' }}>
-                            {currentPage > 1 && (
-                                <div
-                                    className="select-ledger-account__nav-button"
-                                    onClick={() => getNewPage(ledgerPages.PREVIOUS)}
-                                >
-                                    <img src={Left} alt="" />
-                                </div>
-                            )}
-                            <div
-                                className="select-ledger-account__nav-button"
-                                onClick={() => getNewPage(ledgerPages.NEXT)}
-                            >
-                                <img src={Right} alt="" />
-                            </div>
-                        </div>
-                    </div>
+                    <Nav
+                        hint={`Page ${currentPage}`}
+                        showPrev={currentPage > 1}
+                        onClickPrev={() => getNewPage(ledgerPages.PREVIOUS)}
+                        showNext
+                        onClickNext={() => getNewPage(ledgerPages.NEXT)}
+                    />
+
                     {error && (
                         <Modal
                             onClose={() => {
@@ -220,17 +158,17 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                             const checked = selected.includes(index)
                             const preselected = controllerState.storedKeys.hasOwnProperty(publicKey)
                             return (
-                                <LedgerAccount
+                                <AccountSelector
                                     key={publicKey}
                                     publicKey={publicKey}
-                                    index={index}
-                                    preselected={preselected}
-                                    checked={checked}
+                                    index={index.toString()}
                                     setChecked={() => {
                                         checked
                                             ? setSelected(selected.filter((el) => el !== index))
                                             : setSelected([...selected, index])
                                     }}
+                                    checked={checked}
+                                    preselected={preselected}
                                 />
                             )
                         })}

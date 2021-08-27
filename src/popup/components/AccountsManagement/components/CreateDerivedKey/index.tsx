@@ -1,114 +1,136 @@
 import * as React from 'react'
-import { useForm } from 'react-hook-form'
 
-import Button from '@popup/components/Button'
-import Input from '@popup/components/Input'
-import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
-import { useRpc } from '@popup/providers/RpcProvider'
 import { parseError } from '@popup/utils'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
+import { EnterPasswordForm, SelectDerivedKeys } from '@popup/components/AccountsManagement/components'
+
+const PUBLIC_KEYS_LIMIT = 100
+
+type PublicKeys = Map<string, number>
+
+enum LocalStep {
+    PASSWORD,
+    SELECT,
+}
 
 export function CreateDerivedKey(): JSX.Element {
-    const accountability = useAccountability()
     const rpc = useRpc()
+    const accountability = useAccountability()
+    const { derivedKeys, currentMasterKey, accounts, selectedAccount } = accountability
+    const [password, setPassword] = React.useState<string | undefined>()
+    const [passwordError, setPasswordError] = React.useState<string | undefined>()
+    const [selectKeysError, setSelectKeysError] = React.useState<string | undefined>()
+    const [publicKeys, setPublicKeys] = React.useState<PublicKeys>(new Map())
+    const [inProcess, setInProcess] = React.useState<boolean>(false)
+    const [localStep, setLocalStep] = React.useState<LocalStep>(LocalStep.PASSWORD)
 
-    const { register, handleSubmit, errors } = useForm<{
-        name: string | undefined
-        password: string
-    }>()
+    const goToManageSeed = () => {
+        accountability.setStep(Step.MANAGE_SEED)
+    }
 
-    const [error, setError] = React.useState<string>()
-    const [inProcess, setInProcess] = React.useState(false)
-
-    const onSubmit = async ({ name, password }: { name: string | undefined; password: string }) => {
-        if (accountability.currentMasterKey == null) {
+    const onSubmitPassword = async (password: string) => {
+        if (currentMasterKey == null) {
             return
         }
 
         setInProcess(true)
 
-        name = name !== undefined ? name.trim() : name
-        name = name === '' ? undefined : name
-
         try {
             await rpc
-                .createDerivedKey({
-                    accountId: accountability.nextAccountId,
-                    masterKey: accountability.currentMasterKey.masterKey,
-                    name,
-                    password,
-                })
-                .then((derivedKey) => {
-                    setInProcess(false)
-
-                    if (derivedKey !== undefined) {
-                        accountability.onManageDerivedKey(derivedKey)
+                .getPublicKeys({
+                    type: 'master_key',
+                    data: {
+                        password,
+                        offset: 0,
+                        limit: PUBLIC_KEYS_LIMIT,
+                        masterKey: currentMasterKey.masterKey,
                     }
                 })
-                .catch((e) => {
-                    setError(parseError(e))
+                .then((rawPublicKeys) => {
+                    setPublicKeys(new Map(rawPublicKeys.map((key, i) => [key, i])))
+                    setPassword(password)
+                    setInProcess(false)
+                    setLocalStep(LocalStep.SELECT)
+                })
+                .catch(e => {
+                    setPasswordError(parseError(e))
                     setInProcess(false)
                 })
         } catch (e) {
-            setError(parseError(e))
+            setPasswordError(parseError(e))
             setInProcess(false)
         }
     }
 
-    const onBack = () => {
-        accountability.setStep(Step.MANAGE_SEED)
+    const onSubmitKeys = async (selectedKeys: PublicKeys) => {
+        if (!currentMasterKey || !password) {
+            return
+        }
+
+        setInProcess(true)
+
+        const { masterKey } = currentMasterKey
+        const currentKeysIds = derivedKeys.map(({accountId}) => accountId)
+        const selectedKeysIds = [...selectedKeys.values()]
+        const keysIdsToCreate = selectedKeysIds
+            .filter(accountId => !currentKeysIds.includes(accountId))
+        const keyIdsToRemove = currentKeysIds
+            .filter(accountId => !selectedKeysIds.includes(accountId))
+        const keysToRemove = [...publicKeys.entries()]
+            .filter(([, accountId]) => keyIdsToRemove.includes(accountId))
+            .map(([publicKey]) => publicKey)
+        const paramsToCreate = keysIdsToCreate
+            .map(accountId => ({ password, accountId, masterKey }))
+        const paramsToRemove = keysToRemove.map(publicKey => ({ publicKey }))
+        const accountsToRemove = accountability.accounts
+            .filter(({ tonWallet }) => keysToRemove.includes(tonWallet.publicKey))
+            .map(({ tonWallet }) => tonWallet.address)
+        const activeAccountIndex = selectedAccount
+            ? accounts.findIndex(({ tonWallet }) => tonWallet.address === selectedAccount.tonWallet.address)
+            : 0
+        const indexesOfRemovedAccount = accountsToRemove
+            .map(address => accounts.findIndex(({ tonWallet }) => tonWallet.address === address))
+        const newCurrentAccount = indexesOfRemovedAccount.includes(activeAccountIndex)
+            ? accounts[Math.max(0, Math.min(...indexesOfRemovedAccount) - 1)]
+            : accounts[activeAccountIndex]
+
+        try {
+            await Promise.all([
+                rpc.createDerivedKeys(paramsToCreate),
+                rpc.selectAccount(newCurrentAccount.tonWallet.address),
+                rpc.removeAccounts(accountsToRemove),
+                rpc.removeKeys(paramsToRemove),
+            ])
+        } catch (e) {
+            setSelectKeysError(parseError(e))
+        }
+
+        setInProcess(false)
+        goToManageSeed()
     }
 
     return (
-        <div className="accounts-management">
-            <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">Create key</h2>
-            </header>
+        <>
+            {localStep === LocalStep.PASSWORD && (
+                <EnterPasswordForm
+                    title="Add keys"
+                    onSubmit={onSubmitPassword}
+                    onBack={goToManageSeed}
+                    inProcess={inProcess}
+                    error={passwordError}
+                />
+            )}
 
-            <div className="accounts-management__wrapper">
-                <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="accounts-management__content-form-rows">
-                        <div className="accounts-management__content-form-row">
-                            <Input
-                                name="name"
-                                register={register()}
-                                disabled={inProcess}
-                                label="Enter key name..."
-                                autoFocus
-                                type="text"
-                            />
-                            <div className="accounts-management__content-form-row-hint">
-                                <sup>*</sup> Will be generated automatically
-                            </div>
-                        </div>
-
-                        <div className="accounts-management__content-form-row">
-                            <Input
-                                name="password"
-                                register={register({
-                                    required: true,
-                                    minLength: 6,
-                                })}
-                                disabled={inProcess}
-                                label="Enter seed password..."
-                                type="password"
-                            />
-                            {(errors.password || error) && (
-                                <div className="accounts-management__content-error">
-                                    {errors.password && 'The password is required'}
-                                    {error}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </form>
-
-                <footer className="accounts-management__footer">
-                    <div className="accounts-management__footer-button-back">
-                        <Button text="Back" disabled={inProcess} white onClick={onBack} />
-                    </div>
-                    <Button text="Confirm" disabled={inProcess} onClick={handleSubmit(onSubmit)} />
-                </footer>
-            </div>
-        </div>
+            {localStep === LocalStep.SELECT && currentMasterKey && (
+                <SelectDerivedKeys
+                    onSubmit={onSubmitKeys}
+                    publicKeys={publicKeys}
+                    masterKey={currentMasterKey.masterKey}
+                    error={selectKeysError}
+                    inProcess={inProcess}
+                />
+            )}
+        </>
     )
 }
