@@ -445,45 +445,41 @@ export class AccountController extends BaseController<
         try {
             const publicKeys = await keyStore.getPublicKeys(params)
 
-            return publicKeys;
+            return publicKeys
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
 
-    public async createDerivedKey({
-        accountId,
-        masterKey,
-        name,
-        password,
-    }: KeyToDerive): Promise<nt.KeyStoreEntry> {
-        const { keyStore } = this.config
+    public async createDerivedKey(data: KeyToDerive): Promise<nt.KeyStoreEntry> {
+        const entry = await this._createDerivedKey(data)
 
-        try {
-            const entry = await keyStore.addKey({
-                type: 'master_key',
-                data: {
-                    name,
-                    password,
-                    params: { masterKey, accountId },
-                },
-            })
+        this.update({
+            storedKeys: {
+                ...this.state.storedKeys,
+                [entry.publicKey]: entry,
+            },
+        })
 
-            this.update({
-                storedKeys: {
-                    ...this.state.storedKeys,
-                    [entry.publicKey]: entry,
-                },
-            })
-
-            return entry
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
+        return entry
     }
 
     public async createDerivedKeys(data: KeyToDerive[]): Promise<nt.KeyStoreEntry[]> {
-        return Promise.all(data.map(item => this.createDerivedKey(item)))
+        const storedKeys = { ...this.state.storedKeys }
+
+        const entries = await Promise.all(
+            data.map(async (item) => {
+                const entry = await this._createDerivedKey(item)
+                storedKeys[entry.publicKey] = entry
+                return entry
+            })
+        )
+
+        this.update({
+            storedKeys,
+        })
+
+        return entries
     }
 
     public async updateDerivedKeyName(entry: nt.KeyStoreEntry): Promise<void> {
@@ -580,7 +576,7 @@ export class AccountController extends BaseController<
     }
 
     public async removeKeys(data: KeyToRemove[]): Promise<Array<nt.KeyStoreEntry | undefined>> {
-        return Promise.all(data.map(item => this.removeKey(item)))
+        return Promise.all(data.map((item) => this.removeKey(item)))
     }
 
     public async getLedgerFirstPage() {
@@ -728,7 +724,7 @@ export class AccountController extends BaseController<
     }
 
     public async removeAccounts(addresses: string[]) {
-        return Promise.all(addresses.map(address => this.removeAccount(address)))
+        return Promise.all(addresses.map((address) => this.removeAccount(address)))
     }
 
     public async renameAccount(address: string, name: string): Promise<void> {
@@ -1248,6 +1244,28 @@ export class AccountController extends BaseController<
         subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
 
         await subscription?.start()
+    }
+
+    private async _createDerivedKey({
+        accountId,
+        masterKey,
+        name,
+        password,
+    }: KeyToDerive): Promise<nt.KeyStoreEntry> {
+        const { keyStore } = this.config
+
+        return keyStore
+            .addKey({
+                type: 'master_key',
+                data: {
+                    name,
+                    password,
+                    params: { masterKey, accountId },
+                },
+            })
+            .catch((e) => {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            })
     }
 
     private async _getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
