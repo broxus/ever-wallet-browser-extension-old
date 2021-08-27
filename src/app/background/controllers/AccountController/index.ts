@@ -439,6 +439,18 @@ export class AccountController extends BaseController<
         await this._saveRecentMasterKeys()
     }
 
+    public async getPublicKeys(params: nt.GetPublicKeys): Promise<string[]> {
+        const { keyStore } = this.config
+
+        try {
+            const publicKeys = await keyStore.getPublicKeys(params)
+
+            return publicKeys;
+        } catch (e) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
     public async createDerivedKey({
         accountId,
         masterKey,
@@ -468,6 +480,10 @@ export class AccountController extends BaseController<
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public async createDerivedKeys(data: KeyToDerive[]): Promise<nt.KeyStoreEntry[]> {
+        return Promise.all(data.map(item => this.createDerivedKey(item)))
     }
 
     public async updateDerivedKeyName(entry: nt.KeyStoreEntry): Promise<void> {
@@ -561,6 +577,10 @@ export class AccountController extends BaseController<
         } catch (e) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public async removeKeys(data: KeyToRemove[]): Promise<Array<nt.KeyStoreEntry | undefined>> {
+        return Promise.all(data.map(item => this.removeKey(item)))
     }
 
     public async getLedgerFirstPage() {
@@ -705,6 +725,10 @@ export class AccountController extends BaseController<
                 accountTokenTransactions,
             })
         })
+    }
+
+    public async removeAccounts(addresses: string[]) {
+        return Promise.all(addresses.map(address => this.removeAccount(address)))
     }
 
     public async renameAccount(address: string, name: string): Promise<void> {
