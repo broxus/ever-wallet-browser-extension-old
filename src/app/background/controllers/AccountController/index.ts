@@ -557,26 +557,32 @@ export class AccountController extends BaseController<
     }
 
     public async removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
-        const { keyStore } = this.config
+        const entry = await this._removeKey({ publicKey })
+        const storedKeys = { ...this.state.storedKeys }
+        delete storedKeys[publicKey]
 
-        try {
-            const entry = await keyStore.removeKey(publicKey)
+        this.update({
+            storedKeys,
+        })
 
-            const storedKeys = { ...this.state.storedKeys }
-            delete storedKeys[publicKey]
-
-            this.update({
-                storedKeys,
-            })
-
-            return entry
-        } catch (e) {
-            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-        }
+        return entry
     }
 
     public async removeKeys(data: KeyToRemove[]): Promise<Array<nt.KeyStoreEntry | undefined>> {
-        return Promise.all(data.map((item) => this.removeKey(item)))
+        const storedKeys = { ...this.state.storedKeys }
+        const entries = await Promise.all(
+            data.map(async (item) => {
+                const entry = await this._removeKey(item)
+                delete storedKeys[item.publicKey]
+                return entry
+            })
+        )
+
+        this.update({
+            storedKeys,
+        })
+
+        return entries
     }
 
     public async getLedgerFirstPage() {
@@ -1263,6 +1269,16 @@ export class AccountController extends BaseController<
                     params: { masterKey, accountId },
                 },
             })
+            .catch((e) => {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            })
+    }
+
+    public async _removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
+        const { keyStore } = this.config
+
+        return keyStore
+            .removeKey(publicKey)
             .catch((e) => {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             })
