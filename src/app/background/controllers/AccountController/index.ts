@@ -1277,11 +1277,9 @@ export class AccountController extends BaseController<
     public async _removeKey({ publicKey }: KeyToRemove): Promise<nt.KeyStoreEntry | undefined> {
         const { keyStore } = this.config
 
-        return keyStore
-            .removeKey(publicKey)
-            .catch((e) => {
-                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
-            })
+        return keyStore.removeKey(publicKey).catch((e) => {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        })
     }
 
     private async _getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {

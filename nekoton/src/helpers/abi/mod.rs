@@ -541,7 +541,7 @@ fn parse_token_value(
     value: JsValue,
 ) -> Result<ton_abi::TokenValue, AbiError> {
     let value = match param {
-        &ton_abi::ParamType::Uint(size) => {
+        &ton_abi::ParamType::Uint(size) | &ton_abi::ParamType::VarUint(size) => {
             let number = if let Some(value) = value.as_string() {
                 if let Some(value) = value.strip_prefix("0x") {
                     BigUint::from_str_radix(value, 16)
@@ -563,9 +563,14 @@ fn parse_token_value(
                 Err(AbiError::ExpectedStringOrNumber)
             }?;
 
-            ton_abi::TokenValue::Uint(ton_abi::Uint { number, size })
+            match param {
+                ton_abi::ParamType::Uint(_) => {
+                    ton_abi::TokenValue::Uint(ton_abi::Uint { number, size })
+                }
+                _ => ton_abi::TokenValue::VarUint(size, number),
+            }
         }
-        &ton_abi::ParamType::Int(size) => {
+        &ton_abi::ParamType::Int(size) | &ton_abi::ParamType::VarInt(size) => {
             let number = if let Some(value) = value.as_string() {
                 if let Some(value) = value.strip_prefix("0x") {
                     BigInt::from_str_radix(value, 16)
@@ -583,7 +588,12 @@ fn parse_token_value(
                 Err(AbiError::ExpectedStringOrNumber)
             }?;
 
-            ton_abi::TokenValue::Int(ton_abi::Int { number, size })
+            match param {
+                ton_abi::ParamType::Int(_) => {
+                    ton_abi::TokenValue::Int(ton_abi::Int { number, size })
+                }
+                _ => ton_abi::TokenValue::VarInt(size, number),
+            }
         }
         ton_abi::ParamType::Bool => value
             .as_bool()
@@ -610,6 +620,7 @@ fn parse_token_value(
             let value: js_sys::Array = value.unchecked_into();
 
             ton_abi::TokenValue::Array(
+                *param.clone(),
                 value
                     .iter()
                     .map(|value| parse_token_value(param.as_ref(), value))
@@ -627,6 +638,7 @@ fn parse_token_value(
             }
 
             ton_abi::TokenValue::FixedArray(
+                *param.clone(),
                 value
                     .iter()
                     .map(|value| parse_token_value(param.as_ref(), value))
@@ -679,7 +691,7 @@ fn parse_token_value(
                 );
             }
 
-            ton_abi::TokenValue::Map(*param_key.clone(), result)
+            ton_abi::TokenValue::Map(*param_key.clone(), *param_value.clone(), result)
         }
         ton_abi::ParamType::Address => {
             let value = if let Some(value) = value.as_string() {
@@ -706,6 +718,10 @@ fn parse_token_value(
 
             ton_abi::TokenValue::Bytes(value)
         }
+        ton_abi::ParamType::String => {
+            let value = value.as_string().ok_or(AbiError::ExpectedString)?;
+            ton_abi::TokenValue::String(value)
+        }
         &ton_abi::ParamType::FixedBytes(size) => {
             let value = if let Some(value) = value.as_string() {
                 base64::decode(&value).map_err(|_| AbiError::InvalidBytes)
@@ -719,7 +735,7 @@ fn parse_token_value(
 
             ton_abi::TokenValue::FixedBytes(value)
         }
-        ton_abi::ParamType::Gram => {
+        ton_abi::ParamType::Token => {
             let value = if let Some(value) = value.as_string() {
                 if let Some(value) = value.strip_prefix("0x") {
                     u128::from_str_radix(value, 16)
@@ -737,7 +753,7 @@ fn parse_token_value(
                 Err(AbiError::ExpectedStringOrNumber)
             }?;
 
-            ton_abi::TokenValue::Gram(ton_block::Grams(value))
+            ton_abi::TokenValue::Token(ton_block::Grams(value))
         }
         ton_abi::ParamType::Time => {
             let value = if let Some(value) = value.as_string() {
@@ -798,7 +814,14 @@ fn parse_token_value(
 
             ton_abi::TokenValue::PublicKey(value)
         }
-        _ => return Err(AbiError::UnexpectedToken),
+        ton_abi::ParamType::Optional(param) => {
+            if value.is_null() {
+                ton_abi::TokenValue::Optional(*param.clone(), None)
+            } else {
+                let value = Box::new(parse_token_value(param, value)?);
+                ton_abi::TokenValue::Optional(*param.clone(), Some(value))
+            }
+        }
     };
 
     Ok(value)
@@ -808,6 +831,8 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
     Ok(match value {
         ton_abi::TokenValue::Uint(value) => JsValue::from(value.number.to_string()),
         ton_abi::TokenValue::Int(value) => JsValue::from(value.number.to_string()),
+        ton_abi::TokenValue::VarInt(_, value) => JsValue::from(value.to_string()),
+        ton_abi::TokenValue::VarUint(_, value) => JsValue::from(value.to_string()),
         ton_abi::TokenValue::Bool(value) => JsValue::from(*value),
         ton_abi::TokenValue::Tuple(values) => {
             let tuple = js_sys::Object::new();
@@ -821,16 +846,18 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
             }
             tuple.unchecked_into()
         }
-        ton_abi::TokenValue::Array(values) | ton_abi::TokenValue::FixedArray(values) => values
-            .iter()
-            .map(make_token_value)
-            .collect::<Result<js_sys::Array, _>>()
-            .map(JsCast::unchecked_into)?,
+        ton_abi::TokenValue::Array(_, values) | ton_abi::TokenValue::FixedArray(_, values) => {
+            values
+                .iter()
+                .map(make_token_value)
+                .collect::<Result<js_sys::Array, _>>()
+                .map(JsCast::unchecked_into)?
+        }
         ton_abi::TokenValue::Cell(value) => {
             let data = ton_types::serialize_toc(value).handle_error()?;
             JsValue::from(base64::encode(&data))
         }
-        ton_abi::TokenValue::Map(_, values) => values
+        ton_abi::TokenValue::Map(_, _, values) => values
             .iter()
             .map(|(key, value)| {
                 Result::<JsValue, JsValue>::Ok(
@@ -846,12 +873,17 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
         ton_abi::TokenValue::Bytes(value) | ton_abi::TokenValue::FixedBytes(value) => {
             JsValue::from(base64::encode(value))
         }
-        ton_abi::TokenValue::Gram(value) => JsValue::from(value.0.to_string()),
+        ton_abi::TokenValue::String(value) => JsValue::from(value),
+        ton_abi::TokenValue::Token(value) => JsValue::from(value.0.to_string()),
         ton_abi::TokenValue::Time(value) => JsValue::from(value.to_string()),
         ton_abi::TokenValue::Expire(value) => JsValue::from(*value),
         ton_abi::TokenValue::PublicKey(value) => {
             JsValue::from(value.map(|value| hex::encode(value.as_bytes())))
         }
+        ton_abi::TokenValue::Optional(_, value) => match value {
+            Some(value) => make_token_value(value)?,
+            None => JsValue::null(),
+        },
     })
 }
 
@@ -1094,7 +1126,7 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         }
         "cell" => ton_abi::ParamType::Cell,
         "address" => ton_abi::ParamType::Address,
-        "gram" => ton_abi::ParamType::Gram,
+        "gram" => ton_abi::ParamType::Token,
         "bytes" => ton_abi::ParamType::Bytes,
         s if s.starts_with("fixedbytes") => {
             let len = (&s[10..])
@@ -1137,8 +1169,6 @@ pub fn unpack_from_cell(
 
 #[derive(thiserror::Error, Debug)]
 enum AbiError {
-    #[error("Unexpected token")]
-    UnexpectedToken,
     #[error("Expected boolean")]
     ExpectedBoolean,
     #[error("Expected string")]
