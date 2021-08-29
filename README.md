@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.10 (2021-09-??)
+
+Features
+
+* Added support for ABI 2.1
+* Reworked key creation window 
+
+Bugfixes
+
+* Fixed password visibility in confirmation popup
+
 ### 0.2.9 (2021-08-25)
 
 Bugfixes
