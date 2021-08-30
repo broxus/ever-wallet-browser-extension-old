@@ -1,4 +1,5 @@
 import * as React from 'react'
+import _ from 'lodash'
 
 import * as nt from '@nekoton'
 import { useRpc } from '@popup/providers/RpcProvider'
@@ -97,11 +98,12 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
     const [currentMasterKey, setCurrentMasterKey] = React.useState<nt.KeyStoreEntry>()
     const [step, setStep] = React.useState<Step>(Step.MANAGE_SEEDS)
 
-    // All available seeds (master keys)
+    // All available keys includes master key
     const masterKeys = React.useMemo(
         () =>
-            window.ObjectExt.values({ ...rpcState.state.storedKeys }).filter(
-                (key) => key.accountId === 0
+            _.uniqBy(
+                window.ObjectExt.values({ ...rpcState.state.storedKeys }),
+                ({ masterKey }) => masterKey
             ),
         [rpcState.state.storedKeys]
     )

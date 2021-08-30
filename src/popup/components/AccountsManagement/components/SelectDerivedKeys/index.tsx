@@ -12,7 +12,7 @@ type PublicKeys = Map<string, number>
 interface ISelectDerivedKeys {
     onSubmit: (publicKeys: PublicKeys) => void,
     publicKeys: PublicKeys
-    masterKey: string
+    preselectedKey: string
     error?: string
     inProcess?: boolean
 }
@@ -20,13 +20,15 @@ interface ISelectDerivedKeys {
 export function SelectDerivedKeys({
     onSubmit,
     publicKeys,
-    masterKey,
+    preselectedKey,
     error,
     inProcess,
 }: ISelectDerivedKeys): JSX.Element {
     const accountability = useAccountability()
     const { derivedKeys } = accountability
-    const [selectedKeys, setSelectedKeys] = React.useState<Map<string, number>>(new Map())
+    const [selectedKeys, setSelectedKeys] = React.useState<Map<string, number>>(
+        new Map(derivedKeys.map(({ publicKey, accountId }) => [publicKey, accountId]))
+    )
     const [currentPage, setCurrentPage] = React.useState<number>(0)
 
     const pagesCount = Math.ceil(publicKeys.size / PAGE_LENGTH)
@@ -68,14 +70,6 @@ export function SelectDerivedKeys({
         })
     }
 
-    React.useEffect(() => {
-        setSelectedKeys((selectedKeys) => {
-            return new Map([...selectedKeys].concat(derivedKeys.map(derivedKey => (
-                [derivedKey.publicKey, derivedKey.accountId]
-            ))))
-        })
-    }, [derivedKeys])
-
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
@@ -100,7 +94,7 @@ export function SelectDerivedKeys({
                             checked={selectedKeys.has(publicKey)}
                             setChecked={(checked) => onCheck(checked, publicKey)}
                             index={`${startIndex + index + 1}`}
-                            preselected={publicKey === masterKey}
+                            preselected={publicKey === preselectedKey}
                         />
                     ))}
                     {error && (

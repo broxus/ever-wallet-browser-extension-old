@@ -71,7 +71,7 @@ export function CreateDerivedKey(): JSX.Element {
         setInProcess(true)
 
         const { masterKey } = currentMasterKey
-        const currentKeysIds = derivedKeys.map(({accountId}) => accountId)
+        const currentKeysIds = derivedKeys.map(({ accountId }) => accountId)
         const selectedKeysIds = [...selectedKeys.values()]
         const keysIdsToCreate = selectedKeysIds
             .filter(accountId => !currentKeysIds.includes(accountId))
@@ -83,25 +83,22 @@ export function CreateDerivedKey(): JSX.Element {
         const paramsToCreate = keysIdsToCreate
             .map(accountId => ({ password, accountId, masterKey }))
         const paramsToRemove = keysToRemove.map(publicKey => ({ publicKey }))
-        const accountsToRemove = accountability.accounts
-            .filter(({ tonWallet }) => keysToRemove.includes(tonWallet.publicKey))
-            .map(({ tonWallet }) => tonWallet.address)
-        const activeAccountIndex = selectedAccount
-            ? accounts.findIndex(({ tonWallet }) => tonWallet.address === selectedAccount.tonWallet.address)
-            : 0
-        const indexesOfRemovedAccount = accountsToRemove
-            .map(address => accounts.findIndex(({ tonWallet }) => tonWallet.address === address))
-        const newCurrentAccount = indexesOfRemovedAccount.includes(activeAccountIndex)
-            ? accounts[Math.max(0, Math.min(...indexesOfRemovedAccount) - 1)]
-            : accounts[activeAccountIndex]
+        const accountsToRemove = accounts
+            .filter(({ tonWallet: { publicKey } }) => keysToRemove.includes(publicKey))
+            .map(({ tonWallet: { address } }) => address)
 
         try {
-            await Promise.all([
-                rpc.createDerivedKeys(paramsToCreate),
-                rpc.selectAccount(newCurrentAccount.tonWallet.address),
-                rpc.removeAccounts(accountsToRemove),
-                rpc.removeKeys(paramsToRemove),
-            ])
+            if (paramsToCreate.length) {
+                await rpc.createDerivedKeys(paramsToCreate)
+            }
+
+            if (accountsToRemove.length) {
+                await rpc.removeAccounts(accountsToRemove)
+            }
+
+            if (paramsToRemove.length) {
+                await rpc.removeKeys(paramsToRemove)
+            }
         } catch (e) {
             setSelectKeysError(parseError(e))
         }
@@ -122,13 +119,13 @@ export function CreateDerivedKey(): JSX.Element {
                 />
             )}
 
-            {localStep === LocalStep.SELECT && currentMasterKey && (
+            {localStep === LocalStep.SELECT && selectedAccount && (
                 <SelectDerivedKeys
                     onSubmit={onSubmitKeys}
                     publicKeys={publicKeys}
-                    masterKey={currentMasterKey.masterKey}
                     error={selectKeysError}
                     inProcess={inProcess}
+                    preselectedKey={selectedAccount.tonWallet.publicKey}
                 />
             )}
         </>
