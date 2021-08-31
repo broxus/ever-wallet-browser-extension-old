@@ -17,7 +17,6 @@ import { convertAddress } from '@shared/utils'
 
 import './style.scss'
 
-
 export function ManageSeeds(): JSX.Element {
 	const accountability = useAccountability()
 

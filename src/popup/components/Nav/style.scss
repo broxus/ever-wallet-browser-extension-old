@@ -1,0 +1,41 @@
+.nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ebedee;
+    padding: 0 20px 6px;
+    margin: 0 -20px;
+
+    &__title {
+        margin: 0 12px 0 0;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+        color: #000;
+
+        &_hint {
+            color: #96a1a7;
+        }
+    }
+
+    &__buttons {
+        display: flex;
+    }
+
+    &__button {
+        cursor: pointer;
+        height: 32px;
+        border-radius: 50%;
+
+        &:hover {
+            background: rgba(0, 136, 204, 0.1);
+            transition: 400ms ease-in;
+        }
+
+        &:not(:last-child) {
+            margin-right: 8px;
+        }
+    }
+}

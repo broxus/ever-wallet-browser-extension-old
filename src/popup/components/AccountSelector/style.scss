@@ -1,0 +1,44 @@
+.account-selector {
+    border-bottom: 1px solid #ebedee;
+    display: flex;
+    align-items: center;
+    padding: 14px 0;
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: 0.25px;
+
+    &_selected {
+        opacity: 0.3;
+    }
+
+    &:last-child {
+        margin-bottom: 48px;
+    }
+
+    &__avatar {
+        margin-right: 12px;
+    }
+
+    &__index {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 20px;
+        letter-spacing: 0.75px;
+        color: #96a1a7;
+        margin-right: 16px;
+    }
+
+    &__public-key {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 16px;
+        line-height: 20px;
+        letter-spacing: 0.25px;
+        color: #000000;
+    }
+
+    &__grey {
+        color: #96a1a7;
+    }
+}

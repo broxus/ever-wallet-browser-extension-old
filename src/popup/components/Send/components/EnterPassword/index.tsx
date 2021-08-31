@@ -49,6 +49,8 @@ export function EnterPassword({
 
     const [password, setPassword] = React.useState<string>('')
 
+    const passwordRef = React.useRef<HTMLInputElement>(null)
+
     const convertedFees = fees != null ? convertFees(fees) : undefined
 
     const keyEntriesOptions = keyEntries.map((key) => ({
@@ -75,6 +77,12 @@ export function EnterPassword({
             await trySubmit()
         }
     }
+
+    React.useEffect(() => {
+        if (passwordRef.current) {
+            passwordRef.current.scrollIntoView()
+        }
+    }, [])
 
     return (
         <div className="enter-password">
@@ -148,6 +156,7 @@ export function EnterPassword({
                                 value={password}
                                 onKeyDown={onKeyDown}
                                 onChange={setPassword}
+                                register={passwordRef}
                             />
                             <div className="enter-password__field-hint">
                                 Enter password for seed:{' '}
