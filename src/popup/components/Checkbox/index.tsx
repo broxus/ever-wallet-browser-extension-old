@@ -1,21 +1,39 @@
 import React from 'react'
+import classNames from 'classnames'
 
 import './style.scss'
 
 type Props = {
-    checked: boolean
     id?: string
+    checked: boolean
+    disabled?: boolean
     onChange: (value: boolean) => void
 }
 
-export function Checkbox({ checked, id, onChange }: Props): JSX.Element {
+export function Checkbox({
+    id,
+    checked,
+    disabled,
+    onChange
+}: Props): JSX.Element {
     const onToggle = () => {
         onChange?.(!checked)
     }
 
     return (
-        <label className="checkbox-container" htmlFor={id}>
-            <input id={id} type="checkbox" checked={checked} onChange={onToggle} />
+        <label
+            htmlFor={id}
+            className={classNames('checkbox-container', {
+                'checkbox-container_disabled': disabled,
+            })}
+        >
+            <input
+                id={id}
+                type="checkbox"
+                checked={checked}
+                onChange={onToggle}
+                disabled={disabled}
+            />
             <span className="checkbox-checkmark" />
         </label>
     )

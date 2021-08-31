@@ -13,7 +13,9 @@ interface IAccount {
     checked?: boolean
     setChecked: (checked: boolean) => void
     publicKey: string,
+    keyName?: string,
     index?: string,
+    disabled?: boolean,
     // balance: string
 }
 
@@ -22,7 +24,9 @@ const AccountSelector = ({
     checked,
     setChecked,
     publicKey,
+    keyName,
     index,
+    disabled,
 }: IAccount) => (
     <div
         className={classNames({
@@ -33,6 +37,7 @@ const AccountSelector = ({
         <Checkbox
             checked={Boolean(checked || preselected)}
             onChange={!preselected ? setChecked : () => {}}
+            disabled={disabled}
         />
 
         <UserAvatar
@@ -51,7 +56,7 @@ const AccountSelector = ({
                 'account-selector__grey': preselected,
             })}
         >
-            {convertAddress(publicKey)}
+            {keyName || convertAddress(publicKey)}
         </span>
         {/*<div className="account-selector__grey">*/}
         {/*    {convertTons(balance)} TON*/}
