@@ -13,6 +13,11 @@
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+
+    &_disabled {
+        cursor: not-allowed;
+        opacity: 0.3;
+    }
 }
 
 /* Hide the browser's default checkbox */

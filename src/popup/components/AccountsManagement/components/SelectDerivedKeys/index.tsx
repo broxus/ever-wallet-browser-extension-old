@@ -4,6 +4,7 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import Button from '@popup/components/Button'
 import Nav from '@popup/components/Nav'
 import AccountSelector from '@popup/components/AccountSelector'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 const PAGE_LENGTH = 5;
 
@@ -25,6 +26,7 @@ export function SelectDerivedKeys({
     inProcess,
 }: ISelectDerivedKeys): JSX.Element {
     const accountability = useAccountability()
+    const rpcState = useRpcState()
     const { derivedKeys } = accountability
     const [selectedKeys, setSelectedKeys] = React.useState<Map<string, number>>(
         new Map(derivedKeys.map(({ publicKey, accountId }) => [publicKey, accountId]))
@@ -91,10 +93,12 @@ export function SelectDerivedKeys({
                         <AccountSelector
                             key={publicKey}
                             publicKey={publicKey}
+                            keyName={rpcState.state.storedKeys[publicKey]?.name}
                             checked={selectedKeys.has(publicKey)}
                             setChecked={(checked) => onCheck(checked, publicKey)}
                             index={`${startIndex + index + 1}`}
                             preselected={publicKey === preselectedKey}
+                            disabled={inProcess}
                         />
                     ))}
                     {error && (
