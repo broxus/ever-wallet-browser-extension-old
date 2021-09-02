@@ -32,7 +32,11 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
-### 0.2.10 (2021-09-??)
+### 0.2.11 (2021-09-02)
+
+Minor fixes
+
+### 0.2.10 (2021-09-01)
 
 Features
 
