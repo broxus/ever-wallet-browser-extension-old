@@ -39,7 +39,13 @@ const checkDocumentElement = () => {
 }
 
 function checkExcludedDomains() {
-    const excludedDomains = ['dropbox.com', 'atlassian.net', 'atlassian.com', 'broxus.github.io', 'ozon.ru']
+    const excludedDomains = [
+        'dropbox.com',
+        'atlassian.net',
+        'atlassian.com',
+        'broxus.github.io',
+        'ozon.ru',
+    ]
 
     const currentUrl = window.location.href
 
