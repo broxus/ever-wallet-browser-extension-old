@@ -147,6 +147,29 @@ export class SubscriptionController extends BaseController<
         await this._clearSendMessageRequests()
     }
 
+    public async sendMessageLocally(
+        tabId: number,
+        address: string,
+        signedMessage: nt.SignedMessage
+    ): Promise<nt.Transaction> {
+        await this.subscribeToContract(tabId, address, { state: true })
+        const subscription = this._subscriptions.get(address)
+        if (subscription == null) {
+            throw new NekotonRpcError(
+                RpcErrorCode.RESOURCE_UNAVAILABLE,
+                'Failed to subscribe to contract'
+            )
+        }
+
+        return await subscription.use(async (contract) => {
+            try {
+                return await contract.sendMessageLocally(signedMessage)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+            }
+        })
+    }
+
     public async sendMessage(tabId: number, address: string, signedMessage: nt.SignedMessage) {
         let messageRequests = await this._sendMessageRequests.get(address)
         if (messageRequests == null) {

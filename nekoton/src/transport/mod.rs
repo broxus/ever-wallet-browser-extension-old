@@ -154,6 +154,9 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<TransactionsList>")]
     pub type PromiseTransactionsList;
+
+    #[wasm_bindgen(typescript_type = "Promise<Transaction>")]
+    pub type PromiseTransaction;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
