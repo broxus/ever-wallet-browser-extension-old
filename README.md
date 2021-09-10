@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.12 (2021-09-10)
+
+Features
+
+* Added support for local `sendExternalMessage` execution
+* Added `exitCode` to transactions model
+
+Bugfixes
+
+* Fixed empty ADNL transactions response
+
 ### 0.2.11 (2021-09-02)
 
 Minor fixes
