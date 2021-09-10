@@ -121,6 +121,15 @@ export type TransactionsList = {
 pub fn make_transactions_list(
     raw_transactions: Vec<nt::transport::models::RawTransaction>,
 ) -> TransactionsList {
+    let batch_info = match (raw_transactions.first(), raw_transactions.last()) {
+        (Some(first), Some(last)) => Some(nt::core::models::TransactionsBatchInfo {
+            min_lt: last.data.lt, // transactions in response are in descending order
+            max_lt: first.data.lt,
+            old: false,
+        }),
+        _ => None,
+    };
+
     let continuation = raw_transactions.last().and_then(|transaction| {
         (transaction.data.prev_trans_lt != 0).then(|| nt_abi::TransactionId {
             lt: transaction.data.prev_trans_lt,
@@ -143,6 +152,10 @@ pub fn make_transactions_list(
             "continuation",
             continuation.map(crate::core::models::make_transaction_id),
         )
+        .set(
+            "info",
+            batch_info.map(crate::core::models::make_transactions_batch_info),
+        )
         .build()
         .unchecked_into()
 }
@@ -154,6 +167,9 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<TransactionsList>")]
     pub type PromiseTransactionsList;
+
+    #[wasm_bindgen(typescript_type = "Promise<Transaction>")]
+    pub type PromiseTransaction;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

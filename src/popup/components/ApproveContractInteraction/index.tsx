@@ -68,6 +68,25 @@ export function ApproveContractInteraction({
         }
     }
 
+    const iterateItems = (object: object) => {
+        return Object.entries(object).map(([key, value], i) => (
+            <div className="connect-wallet__details__description-param-data__block" key={i}>
+                <div className="connect-wallet__details__description-param-data__block--param-name">
+                    {key}
+                </div>
+                <div className="connect-wallet__details__description-param-data__block--value">
+                    {value instanceof Array ? (
+                        <pre>{JSON.stringify(value, undefined, 2)}</pre>
+                    ) : typeof value === 'object' ? (
+                        iterateItems(value)
+                    ) : (
+                        value.toString()
+                    )}
+                </div>
+            </div>
+        ))
+    }
+
     return (
         <>
             <div className="connect-wallet">
@@ -111,25 +130,7 @@ export function ApproveContractInteraction({
                                         <span>Method:</span>
                                         <span>{payload.method}</span>
                                     </div>
-                                    {Object.entries(payload.params).map(([key, value], i) => (
-                                        <div
-                                            className="connect-wallet__details__description-param-data__block"
-                                            key={i}
-                                        >
-                                            <div className="connect-wallet__details__description-param-data__block--param-name">
-                                                {key}
-                                            </div>
-                                            {value instanceof Array ? (
-                                                <div className="connect-wallet__details__description-param-data__block--value">
-                                                    {JSON.stringify(value, undefined, 4)}
-                                                </div>
-                                            ) : (
-                                                <div className="connect-wallet__details__description-param-data__block--value">
-                                                    {value.toString()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                    {iterateItems(payload.params)}
                                 </div>
                             </div>
                         )}

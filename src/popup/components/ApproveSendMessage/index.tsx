@@ -126,6 +126,25 @@ export function ApproveSendMessage({
         updateFees()
     }, [selectedKey])
 
+    const iterateItems = (object: object) => {
+        return Object.entries(object).map(([key, value], i) => (
+            <div className="approve-send-message__spend-details-param-data__block" key={i}>
+                <div className="approve-send-message__spend-details-param-data__block--param-name">
+                    {key}
+                </div>
+                <div className="approve-send-message__spend-details-param-data__block--value">
+                    {value instanceof Array ? (
+                        <pre>{JSON.stringify(value, undefined, 2)}</pre>
+                    ) : typeof value === 'object' ? (
+                        iterateItems(value)
+                    ) : (
+                        value.toString()
+                    )}
+                </div>
+            </div>
+        ))
+    }
+
     return (
         <div className="approve-send-message">
             <header className="approve-send-message__header">
@@ -197,25 +216,7 @@ export function ApproveSendMessage({
                                         <span>Method:</span>
                                         <span>{payload.method}</span>
                                     </div>
-                                    {Object.entries(payload.params).map(([key, value], i) => (
-                                        <div
-                                            className="approve-send-message__spend-details-param-data__block"
-                                            key={i}
-                                        >
-                                            <div className="approve-send-message__spend-details-param-data__block--param-name">
-                                                {key}
-                                            </div>
-                                            {value instanceof Array ? (
-                                                <div className="approve-send-message__spend-details-param-data__block--value">
-                                                    {JSON.stringify(value, undefined, 4)}
-                                                </div>
-                                            ) : (
-                                                <div className="approve-send-message__spend-details-param-data__block--value">
-                                                    {value.toString()}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
+                                    {iterateItems(payload.params)}
                                 </div>
                             </div>
                         )}

@@ -175,7 +175,11 @@
 					}
 
 					&--value {
-						word-break: break-all;
+						&, pre {
+							white-space: pre-wrap;
+							white-space: -moz-pre-wrap;
+							word-wrap: break-word;
+						}
 					}
 				}
 			}

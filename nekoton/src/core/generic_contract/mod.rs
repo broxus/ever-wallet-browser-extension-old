@@ -8,7 +8,7 @@ use wasm_bindgen_futures::*;
 use nt::core::generic_contract;
 use nt_utils::TrustMe;
 
-use crate::transport::TransportHandle;
+use crate::transport::{PromiseTransaction, TransportHandle};
 use crate::utils::*;
 
 #[wasm_bindgen]
@@ -57,6 +57,25 @@ impl GenericContract {
 
             let res = contract.estimate_fees(&message.boc).await.handle_error()?;
             Ok(JsValue::from(res.to_string()))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "sendMessageLocally")]
+    pub fn send_message_locally(
+        &self,
+        signed_message: crate::crypto::JsSignedMessage,
+    ) -> Result<PromiseTransaction, JsValue> {
+        let inner = self.inner.clone();
+        let message = crate::crypto::parse_signed_message(signed_message)?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let mut contract = inner.contract.lock().trust_me();
+
+            let res = contract
+                .execute_transaction_locally(&message.boc, Default::default())
+                .await
+                .handle_error()?;
+            Ok(crate::core::models::make_transaction(res).unchecked_into())
         })))
     }
 

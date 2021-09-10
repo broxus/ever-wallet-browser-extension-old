@@ -386,8 +386,6 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requireOptional(req, req.params, 'cachedState', requireContractState)
     requireFunctionCall(req, req.params, 'functionCall')
 
-    console.log(req.params)
-
     const { connectionController } = ctx
 
     let contractState = cachedState
@@ -846,7 +844,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
 
-    const { publicKey, recipient, stateInit, payload } = req.params
+    const { publicKey, recipient, stateInit, payload, local } = req.params
     requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'recipient')
     requireOptionalString(req, req.params, 'stateInit')
@@ -910,11 +908,21 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         unsignedMessage.free()
     }
 
-    const transaction = await subscriptionsController.sendMessage(
-        tabId,
-        repackedRecipient,
-        signedMessage
-    )
+    let transaction: nt.Transaction
+    if (local === true) {
+        transaction = await subscriptionsController.sendMessageLocally(
+            tabId,
+            repackedRecipient,
+            signedMessage
+        )
+    } else {
+        transaction = await subscriptionsController.sendMessage(
+            tabId,
+            repackedRecipient,
+            signedMessage
+        )
+    }
+
     let output: RawTokensObject | undefined
     try {
         const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)
