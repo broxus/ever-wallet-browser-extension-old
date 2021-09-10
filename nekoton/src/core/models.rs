@@ -561,6 +561,7 @@ export type Transaction = {
     prevTransactionId?: TransactionId,
     createdAt: number,
     aborted: boolean,
+    exitCode?: number,
     origStatus: AccountStatus,
     endStatus: AccountStatus,
     totalFees: string,
@@ -584,6 +585,7 @@ pub fn make_transaction(data: models::Transaction) -> Transaction {
         )
         .set("createdAt", data.created_at)
         .set("aborted", data.aborted)
+        .set("exitCode", data.result_code)
         .set("origStatus", make_account_status(data.orig_status))
         .set("endStatus", make_account_status(data.end_status))
         .set("totalFees", data.total_fees.to_string())
