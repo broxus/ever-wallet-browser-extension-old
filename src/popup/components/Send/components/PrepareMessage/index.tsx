@@ -156,7 +156,7 @@ export function PrepareMessage({
                 selectedAsset,
                 {
                     amount: parseCurrency(data.amount, decimals),
-                    recipient: data.recipient,
+                    recipient: nt.repackAddress(data.recipient),
                     payload: data.comment ? nt.encodeComment(data.comment) : undefined,
                     notifyReceiver,
                 }

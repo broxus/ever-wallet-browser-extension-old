@@ -1,6 +1,6 @@
 {
   "name": "ton-crystal-wallet",
-  "version": "0.2.12",
+  "version": "0.2.13",
   "description": "TON Crystal Wallet browser extension",
   "scripts": {
     "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js",
@@ -54,7 +54,7 @@
     "@material-ui/core": "^4.11.3",
     "@material-ui/lab": "^4.0.0-alpha.57",
     "@types/react-dom": "^17.0.1",
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "base64-js": "^1.5.1",
     "bignumber.js": "^9.0.1",
     "buffer": "^6.0.3",
@@ -62,7 +62,7 @@
     "decimal.js": "^10.2.1",
     "end-of-stream": "^1.4.4",
     "fast-safe-stringify": "^2.0.7",
-    "immer": "^9.0.1",
+    "immer": "^9.0.6",
     "is-stream": "^2.0.0",
     "loglevel": "^1.7.1",
     "moment": "^2.29.1",
