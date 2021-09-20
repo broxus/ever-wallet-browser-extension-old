@@ -476,6 +476,7 @@ export type ContractType =
     | 'SafeMultisigWallet'
     | 'SafeMultisigWallet24h'
     | 'SetcodeMultisigWallet'
+    | 'BridgeMultisigWallet'
     | 'SurfWallet'
     | 'WalletV3';
 "#;

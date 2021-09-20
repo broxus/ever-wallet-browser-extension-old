@@ -32,6 +32,20 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.14 (2021-09-20)
+
+Features
+
+* Added bridge multisig support
+
+Bugfixes
+
+* Fixed CVE-2021-3757, CVE-2021-3749, CVE-2021-23436 in dependencies
+
+### 0.2.13 (2021-09-11)
+
+Minor fixes
+
 ### 0.2.12 (2021-09-10)
 
 Features
