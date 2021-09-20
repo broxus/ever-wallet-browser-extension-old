@@ -8,9 +8,10 @@ import { useAccountability } from '@popup/providers/AccountabilityProvider'
 const CONTRACT_TYPES: { [K in nt.ContractType]?: string } = {
     SafeMultisigWallet: 'SafeMultisig (default)',
     SafeMultisigWallet24h: 'SafeMultisig24',
-    SetcodeMultisigWallet: 'SetcodeMultisigWallet',
+    BridgeMultisigWallet: 'BridgeMultisigWallet',
     SurfWallet: 'Surf',
     WalletV3: 'WalletV3',
+    SetcodeMultisigWallet: 'SetcodeMultisigWallet',
 }
 
 type Props = {

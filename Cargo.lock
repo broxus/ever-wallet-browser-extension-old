@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.43"
+version = "1.0.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "28ae2b3dec75a406790005a200b1bd89785afc02517a00ca99ecfe093ee9e6cf"
+checksum = "61604a8f862e1d5c3229fdd78f8b02c68dcf73a4c4b05fd636d12240aaa242c1"
 
 [[package]]
 name = "arrayref"
@@ -147,9 +147,9 @@ checksum = "b4ae4235e6dac0694637c763029ecea1a2ec9e4e06ec2729bd21ba4d9c863eb7"
 
 [[package]]
 name = "bumpalo"
-version = "3.7.0"
+version = "3.7.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c59e7af012c713f529e7a3ee57ce9b31ddd858d4b512923602f74608b009631"
+checksum = "d9df67f7bf9ef8498769f994239c45613ef0c5899415fb58e9add412d2c1a538"
 
 [[package]]
 name = "byteorder"
@@ -308,9 +308,9 @@ dependencies = [
 
 [[package]]
 name = "curve25519-dalek-ng"
-version = "4.0.1"
+version = "4.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "574d8b2cd0bae5434fd50d53280f8299d95557a978686555880aaf5b8f4f81e9"
+checksum = "b2d05dbe571a5f832174d536b65101025c33693189830372032c005af68cbaec"
 dependencies = [
  "byteorder",
  "digest",
@@ -665,9 +665,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.101"
+version = "0.2.102"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cb00336871be5ed2c8ed44b60ae9959dc5b9f08539422ed43f09e34ecaeba21"
+checksum = "a2a5ac8f984bfcf3a823267e5fde638acc3325f6496633a5da6bb6eb2171e103"
 
 [[package]]
 name = "libsecp256k1"
@@ -764,7 +764,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.6.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e038c37477170c17187c5761dc471602dadb724e"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#90fd3bb9d629c69d6309b6d1b3867939baf11bdc"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -811,7 +811,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.6.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e038c37477170c17187c5761dc471602dadb724e"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#90fd3bb9d629c69d6309b6d1b3867939baf11bdc"
 dependencies = [
  "anyhow",
  "base64",
@@ -824,6 +824,7 @@ dependencies = [
  "num-bigint",
  "num-traits",
  "serde",
+ "serde_json",
  "sha2",
  "smallvec",
  "thiserror",
@@ -837,7 +838,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.6.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e038c37477170c17187c5761dc471602dadb724e"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#90fd3bb9d629c69d6309b6d1b3867939baf11bdc"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -847,7 +848,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.6.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e038c37477170c17187c5761dc471602dadb724e"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#90fd3bb9d629c69d6309b6d1b3867939baf11bdc"
 dependencies = [
  "either",
  "proc-macro2",
@@ -858,7 +859,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.6.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e038c37477170c17187c5761dc471602dadb724e"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#90fd3bb9d629c69d6309b6d1b3867939baf11bdc"
 dependencies = [
  "anyhow",
  "base64",
@@ -1251,9 +1252,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.67"
+version = "1.0.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a7f9e390c27c3c0ce8bc5d725f6e4d30a29d26659494aa4b17535f7522c5c950"
+checksum = "0f690853975602e1bfe1ccbf50504d67174e3bcf340f23b5ea9992e0587a52d8"
 dependencies = [
  "itoa",
  "ryu",
@@ -1305,9 +1306,9 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "subtle-ng"
-version = "2.4.1"
+version = "2.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8049cf85f0e715d6af38dde439cb0ccb91f67fb9f5f63c80f8b43e48356e1a3f"
+checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 
 [[package]]
 name = "syn"
@@ -1408,9 +1409,9 @@ dependencies = [
 
 [[package]]
 name = "tinyvec"
-version = "1.3.1"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "848a1e1181b9f6753b5e96a092749e29b11d19ede67dfbbd6c7dc7e0f49b5338"
+checksum = "5241dd6f21443a3606b432718b166d3cedc962fd4b8bea54a8bc7f514ebda986"
 dependencies = [
  "tinyvec_macros",
 ]
