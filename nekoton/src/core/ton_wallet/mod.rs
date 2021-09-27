@@ -472,7 +472,7 @@ impl RawContractState {
 
 #[wasm_bindgen(typescript_custom_section)]
 const CONTRACT_TYPE: &'static str = r#"
-export type ContractType = 
+export type ContractType =
     | 'SafeMultisigWallet'
     | 'SafeMultisigWallet24h'
     | 'SetcodeMultisigWallet'

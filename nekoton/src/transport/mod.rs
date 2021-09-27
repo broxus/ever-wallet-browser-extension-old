@@ -50,7 +50,7 @@ export type TonWalletInitData = {
     contractType: ContractType,
     workchain: number,
     custodians: string[],
-}; 
+};
 "#;
 
 fn make_ton_wallet_init_data(
@@ -125,7 +125,7 @@ pub fn make_transactions_list(
         (Some(first), Some(last)) => Some(nt::core::models::TransactionsBatchInfo {
             min_lt: last.data.lt, // transactions in response are in descending order
             max_lt: first.data.lt,
-            old: false,
+            batch_type: nt::core::models::TransactionsBatchType::New,
         }),
         _ => None,
     };
@@ -174,7 +174,7 @@ extern "C" {
 
 #[wasm_bindgen(typescript_custom_section)]
 const TRANSPORT_INFO: &'static str = r#"
-export type ReliableBahavior = 
+export type ReliableBahavior =
     | 'intensive_polling'
     | 'block_walking';
 
