@@ -37,7 +37,7 @@ wasm-bindgen-futures = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
 wasm-logger = "0.2"
 
-ed25519-dalek = {git = "https://github.com/broxus/ed25519-dalek.git"}
+ed25519-dalek = { git = "https://github.com/broxus/ed25519-dalek.git" }
 
 ton_abi = { git = "https://github.com/broxus/ton-labs-abi.git" }
 ton_block = { git = "https://github.com/broxus/ton-labs-block.git" }

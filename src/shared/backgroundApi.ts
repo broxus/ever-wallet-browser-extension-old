@@ -109,6 +109,8 @@ export type GqlSocketParams = {
     endpoint: string
     // Request timeout in milliseconds
     timeout: number
+    // Gql node type
+    local: boolean,
 }
 
 export type JrpcSocketParams = {

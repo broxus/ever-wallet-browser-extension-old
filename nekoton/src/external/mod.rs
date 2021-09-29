@@ -1,7 +1,7 @@
 use std::convert::TryFrom;
 use std::sync::Arc;
 
-use anyhow::{Result, Error};
+use anyhow::{Error, Result};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use wasm_bindgen::prelude::*;
@@ -155,6 +155,9 @@ pub enum StorageError {
 extern "C" {
     pub type GqlSender;
 
+    #[wasm_bindgen(method, js_name = "isLocal")]
+    pub fn is_local(this: &GqlSender) -> bool;
+
     #[wasm_bindgen(method)]
     pub fn send(this: &GqlSender, data: &str, handler: GqlQuery);
 }
@@ -177,6 +180,10 @@ impl GqlConnectionImpl {
 
 #[async_trait]
 impl nt::external::GqlConnection for GqlConnectionImpl {
+    fn is_local(&self) -> bool {
+        self.sender.is_local()
+    }
+
     async fn post(&self, data: &str) -> Result<String> {
         let (tx, rx) = oneshot::channel();
 
