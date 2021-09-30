@@ -40,6 +40,39 @@ impl UnsignedMessage {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const SIGNED_DATA: &str = r#"
+export type SignedData = {
+    dataHash: string,
+    signature: string,
+    signatureParts: {
+        high: string,
+        low: string,
+    }
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "SignedData")]
+    pub type JsSignedData;
+}
+
+pub fn make_signed_data(hash: [u8; 32], signature: [u8; 64]) -> JsSignedData {
+    ObjectBuilder::new()
+        .set("dataHash", hex::encode(hash))
+        .set("signature", base64::encode(signature))
+        .set(
+            "signatureParts",
+            ObjectBuilder::new()
+                .set("high", format!("0x{}", hex::encode(&signature[32..])))
+                .set("low", format!("0x{}", hex::encode(&signature[..32])))
+                .build(),
+        )
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const SIGNED_MESSAGE: &str = r#"
 export type SignedMessage = {
     hash: string,
@@ -137,8 +170,8 @@ pub fn make_legacy_mnemonic() -> JsMnemonicType {
 
 #[wasm_bindgen(typescript_custom_section)]
 const MNEMONIC_TYPE: &str = r#"
-export type MnemonicType = 
-    | { type: 'labs', accountId: number } 
+export type MnemonicType =
+    | { type: 'labs', accountId: number }
     | { type: 'legacy' };
 "#;
 

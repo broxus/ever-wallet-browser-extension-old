@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use serde::Deserialize;
+use sha2::Digest;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::*;
@@ -315,6 +316,25 @@ impl KeyStore {
         })))
     }
 
+    #[wasm_bindgen(js_name = "signData")]
+    pub fn sign_data(
+        &self,
+        data: &str,
+        key_password: JsKeyPassword,
+    ) -> Result<PromiseSignedData, JsValue> {
+        let data = base64::decode(data).handle_error()?;
+        let inner = self.inner.clone();
+        let key_password =
+            JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let hash: [u8; 32] = sha2::Sha256::digest(&data).into();
+            let signature = sign_data(&inner, key_password, &hash).await?;
+
+            Ok(crate::crypto::make_signed_data(hash, signature).unchecked_into())
+        })))
+    }
+
     #[wasm_bindgen(js_name = "removeKey")]
     pub fn remove_key(&self, public_key: &str) -> Result<PromiseOptionKeyStoreEntry, JsValue> {
         let public_key = parse_public_key(public_key)?;
@@ -401,6 +421,9 @@ async fn sign_data(
 extern "C" {
     #[wasm_bindgen(typescript_type = "Promise<SignedMessage>")]
     pub type PromiseSignedMessage;
+
+    #[wasm_bindgen(typescript_type = "Promise<SignedData>")]
+    pub type PromiseSignedData;
 
     #[wasm_bindgen(typescript_type = "Promise<Array<KeyStoreEntry>>")]
     pub type PromiseKeyStoreEntries;

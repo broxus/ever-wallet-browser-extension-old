@@ -771,8 +771,19 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
     requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'data')
 
+    const { approvalController, accountController } = ctx
+
+    const password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        type: 'signData',
+        requestData: {
+            publicKey,
+            data,
+        },
+    })
+
     try {
-        //TODO
+        res.result = await accountController.signData(data, password)
     } catch (e) {
         throw invalidRequest(req, e.toString())
     }
