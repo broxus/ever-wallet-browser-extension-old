@@ -751,15 +751,39 @@ const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) =
     requireString(req, req.params, 'type')
     requireAssetTypeParams(req, req.params, 'params', type)
 
-    try {
-        switch (type) {
-            case 'tip3_token': {
-                // TODO
-                break
+    const { origin, permissionsController, accountController, approvalController } = ctx
+
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.address != account) {
+        throw invalidRequest(req, 'Specified account is not allowed')
+    }
+
+    switch (type) {
+        case 'tip3_token': {
+            const { rootContract } = params
+
+            const hasTokenWallet = accountController.hasTokenWallet(account, rootContract)
+            if (!hasTokenWallet) {
+                await approvalController.addAndShowApprovalRequest({
+                    origin,
+                    type: 'addTip3Token',
+                    requestData: {
+                        account,
+                        rootContract,
+                    },
+                })
+                await accountController.updateTokenWallets(account, {
+                    [rootContract]: true,
+                })
             }
+
+            res.result = {
+                newAsset: !hasTokenWallet,
+            }
+            return end()
         }
-    } catch (e) {
-        throw invalidRequest(req, e.toString())
+        default:
+            throw invalidRequest(req, 'Unknown asset type')
     }
 }
 
@@ -771,7 +795,7 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
     requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'data')
 
-    const { approvalController, accountController } = ctx
+    const { origin, approvalController, accountController } = ctx
 
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
@@ -784,6 +808,7 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
 
     try {
         res.result = await accountController.signData(data, password)
+        end()
     } catch (e) {
         throw invalidRequest(req, e.toString())
     }

@@ -132,6 +132,13 @@ export type ApprovalApi = {
         }
         output: Partial<RawPermissions>
     }
+    addTip3Token: {
+        input: {
+            account: string
+            rootContract: string
+        }
+        output: {}
+    }
     signData: {
         input: {
             publicKey: string

@@ -257,6 +257,11 @@ export class AccountController extends BaseController<
         })
     }
 
+    public hasTokenWallet(address: string, rootTokenContract: string): boolean {
+        const subscriptions = this._tokenWalletSubscriptions.get(address)
+        return subscriptions?.get(rootTokenContract) != null
+    }
+
     public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
         const { accountsStorage, connectionController } = this.config
 

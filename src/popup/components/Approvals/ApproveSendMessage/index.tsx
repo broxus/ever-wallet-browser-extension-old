@@ -2,15 +2,14 @@ import * as React from 'react'
 import Decimal from 'decimal.js'
 
 import * as nt from '@nekoton'
+import Approval from '../Approval'
 import Button from '@popup/components/Button'
-import UserAvatar from '@popup/components/UserAvatar'
-import WebsiteIcon from '@popup/components/WebsiteIcon'
 import { EnterPassword } from '@popup/components/Send/components'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { Fees, parseError } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
-import { convertTons, parseTons } from '@shared/utils'
+import { convertTons } from '@shared/utils'
 
 import './style.scss'
 
@@ -24,7 +23,6 @@ type Props = {
     accountContractStates: { [address: string]: nt.ContractState }
     accountEntries: { [address: string]: nt.AssetsList }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
-    networkName: string
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     onSubmit: (password: nt.KeyPassword) => void
     onReject: () => void
@@ -32,7 +30,6 @@ type Props = {
 
 export function ApproveSendMessage({
     approval,
-    networkName,
     accountEntries,
     accountContractStates,
     checkPassword,
@@ -128,11 +125,9 @@ export function ApproveSendMessage({
 
     const iterateItems = (object: object) => {
         return Object.entries(object).map(([key, value], i) => (
-            <div className="approve-send-message__spend-details-param-data__block" key={i}>
-                <div className="approve-send-message__spend-details-param-data__block--param-name">
-                    {key}
-                </div>
-                <div className="approve-send-message__spend-details-param-data__block--value">
+            <div className="approval__spend-details-param-data__block" key={i}>
+                <div className="approval__spend-details-param-data__block--param-name">{key}</div>
+                <div className="approval__spend-details-param-data__block--value">
                     {value instanceof Array ? (
                         <pre>{JSON.stringify(value, undefined, 2)}</pre>
                     ) : typeof value === 'object' ? (
@@ -146,45 +141,26 @@ export function ApproveSendMessage({
     }
 
     return (
-        <div className="approve-send-message">
-            <header className="approve-send-message__header">
-                <div className="approve-send-message__meta">
-                    <div className="approve-send-message__account">
-                        <UserAvatar address={account.tonWallet.address} small />
-                        <div className="approve-send-message__account-name">{account?.name}</div>
-                    </div>
-                    <div className="approve-send-message__network">{networkName}</div>
-                </div>
-                <div className="approve-send-message__origin-source">
-                    <WebsiteIcon origin={origin} />
-                    <div className="approve-send-message__origin-source-value">{origin}</div>
-                </div>
-                {localStep === ApproveStep.MESSAGE_PREVIEW && (
-                    <h2 className="approve-send-message__header-title noselect">
-                        Send internal message
-                    </h2>
-                )}
-                {localStep === ApproveStep.ENTER_PASSWORD && (
-                    <h2 className="approve-send-message__header-title noselect">Confirm message</h2>
-                )}
-            </header>
-
+        <Approval
+            account={account}
+            title={
+                localStep === ApproveStep.MESSAGE_PREVIEW
+                    ? 'Send internal message'
+                    : 'Confirm message'
+            }
+            origin={origin}
+            className={'approve-send-message'}
+        >
             {localStep === ApproveStep.MESSAGE_PREVIEW && (
-                <div className="approve-send-message__wrapper">
-                    <div key="message" className="approve-send-message__spend-details">
-                        <div className="approve-send-message__spend-details-param">
-                            <span className="approve-send-message__spend-details-param-desc">
-                                Recipient
-                            </span>
-                            <span className="approve-send-message__spend-details-param-value">
-                                {recipient}
-                            </span>
+                <div className="approval__wrapper">
+                    <div key="message" className="approval__spend-details">
+                        <div className="approval__spend-details-param">
+                            <span className="approval__spend-details-param-desc">Recipient</span>
+                            <span className="approval__spend-details-param-value">{recipient}</span>
                         </div>
-                        <div className="approve-send-message__spend-details-param">
-                            <span className="approve-send-message__spend-details-param-desc">
-                                Amount
-                            </span>
-                            <span className="approve-send-message__spend-details-param-value">
+                        <div className="approval__spend-details-param">
+                            <span className="approval__spend-details-param-desc">Amount</span>
+                            <span className="approval__spend-details-param-value">
                                 {convertTons(amount)} TON
                             </span>
                             {balance.lessThan(amount) && (
@@ -196,23 +172,21 @@ export function ApproveSendMessage({
                                 </div>
                             )}
                         </div>
-                        <div className="approve-send-message__spend-details-param">
-                            <span className="approve-send-message__spend-details-param-desc">
+                        <div className="approval__spend-details-param">
+                            <span className="approval__spend-details-param-desc">
                                 Blockchain fee
                             </span>
-                            <span className="approve-send-message__spend-details-param-value">
+                            <span className="approval__spend-details-param-value">
                                 {fees?.transactionFees !== undefined
                                     ? `~${convertTons(fees.transactionFees)} TON`
                                     : 'calculating...'}
                             </span>
                         </div>
                         {payload && (
-                            <div className="approve-send-message__spend-details-param">
-                                <span className="approve-send-message__spend-details-param-desc">
-                                    Data
-                                </span>
-                                <div className="approve-send-message__spend-details-param-data">
-                                    <div className="approve-send-message__spend-details-param-data__method">
+                            <div className="approval__spend-details-param">
+                                <span className="approval__spend-details-param-desc">Data</span>
+                                <div className="approval__spend-details-param-data">
+                                    <div className="approval__spend-details-param-data__method">
                                         <span>Method:</span>
                                         <span>{payload.method}</span>
                                     </div>
@@ -222,20 +196,16 @@ export function ApproveSendMessage({
                         )}
                     </div>
 
-                    <footer className="approve-send-message__footer">
-                        <div className="approve-send-message__buttons-button">
-                            <Button type="button" white text="Reject" onClick={onReject} />
-                        </div>
-                        <div className="approve-send-message__buttons-button">
-                            <Button
-                                type="submit"
-                                text="Send"
-                                disabled={balance.lessThan(amount) || selectedKey == null}
-                                onClick={() => {
-                                    setLocalStep(ApproveStep.ENTER_PASSWORD)
-                                }}
-                            />
-                        </div>
+                    <footer className="approval__footer">
+                        <Button type="button" white text="Reject" onClick={onReject} />
+                        <Button
+                            type="submit"
+                            text="Send"
+                            disabled={balance.lessThan(amount) || selectedKey == null}
+                            onClick={() => {
+                                setLocalStep(ApproveStep.ENTER_PASSWORD)
+                            }}
+                        />
                     </footer>
                 </div>
             )}
@@ -257,6 +227,6 @@ export function ApproveSendMessage({
                     onChangeKeyEntry={setKey}
                 />
             )}
-        </div>
+        </Approval>
     )
 }

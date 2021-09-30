@@ -48,47 +48,6 @@
         align-items: center;
         display: flex;
         flex-direction: column;
-        height: 269px;
-        padding: 16px 20px 0;
-
-        &__title {
-            color: $windowFg;
-            font-style: normal;
-            font-size: 14px;
-            line-height: 20px;
-            letter-spacing: 0.75px;
-            width: 100%;
-        }
-        &__source {
-            color: #c5e4f3;
-            font-style: normal;
-            font-size: 14px;
-            line-height: 20px;
-            letter-spacing: 0.75px;
-            margin-bottom: 24px;
-            opacity: 0.64;
-            width: 100%;
-        }
-        &__balance {
-            font-style: normal;
-            font-weight: bold;
-            font-size: 24px;
-            line-height: 32px;
-            color: $accountBalance;
-            width: 100%;
-            &-decimals {
-                font-weight: normal;
-                font-size: 18px;
-                line-height: 24px;
-                letter-spacing: 0.5px;
-            }
-        }
-    }
-
-    &__spend-top-panel {
-        align-items: center;
-        display: flex;
-        flex-direction: column;
         padding: 16px 20px 0;
 
         &__network {
@@ -144,19 +103,6 @@
         }
     }
 
-    &__spend-details {
-        padding: 20px;
-        &-title {
-            font-style: normal;
-            font-weight: 500;
-            font-size: 20px;
-            line-height: 24px;
-            letter-spacing: 0.15px;
-            margin-bottom: 10px;
-            color: $windowFg;
-        }
-    }
-
     &__network {
         display: flex;
         justify-content: center;
@@ -170,143 +116,7 @@
         margin-bottom: 20px;
     }
 
-    &__address {
-        display: flex;
-        justify-content: space-between;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-        font-style: normal;
-        font-weight: normal;
-        font-size: 14px;
-        line-height: 20px;
-        letter-spacing: 0.75px;
-        color: $accountName;
-        margin-bottom: 16px;
-        padding-bottom: 18px;
-        width: 100%;
 
-        &-entry {
-            display: flex;
-            align-items: center;
-            padding: 0 12px;
-            white-space: nowrap;
-        }
-    }
-
-    &__details {
-        padding: 0 20px 20px;
-
-        &__panel {
-            display: flex;
-            border-bottom: 1px solid #ebedee;
-            margin-bottom: 20px;
-
-            &__tab {
-                font-style: normal;
-                font-weight: 500;
-                font-size: 16px;
-                color: $inactiveTab;
-                cursor: pointer;
-                line-height: 20px;
-                text-align: center;
-                letter-spacing: 0.25px;
-                padding: 16px 24px;
-                width: 50%;
-
-                &._active {
-                    color: $windowBgActive;
-                    border-bottom: 2px solid $windowBgActive;
-                    margin-bottom: -1px;
-                }
-            }
-        }
-
-        &__description {
-            padding: 20px;
-            background: $lightGreyBg;
-            margin-bottom: 28px;
-
-            &-param {
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-
-                &:not(:last-child) {
-                    margin-bottom: 16px;
-                    border-bottom: 1px solid #ebedee;
-                }
-
-                &-desc {
-                    font-style: normal;
-                    font-weight: normal;
-                    font-size: 14px;
-                    line-height: 20px;
-                    letter-spacing: 0.75px;
-                    margin-bottom: 4px;
-                    color: #7d8b92;
-                }
-
-                &-value {
-                    color: $windowFg;
-                    font-style: normal;
-                    font-weight: normal;
-                    font-size: 14px;
-                    line-height: 20px;
-                    letter-spacing: 0.75px;
-                    margin-bottom: 16px;
-                    word-break: break-all;
-                }
-
-                &-data {
-                    font-family: PT Mono, sans-serif;
-                    font-style: normal;
-                    font-weight: normal;
-                    font-size: 12px;
-                    line-height: 20px;
-                    letter-spacing: 0.75px;
-                    color: $windowFg;
-
-                    &__method {
-                        display: flex;
-                        flex-direction: column;
-                        margin-bottom: 8px;
-                    }
-
-                    &__block {
-                        background: #e9e9e9;
-                        display: flex;
-                        flex-direction: column;
-                        margin-bottom: 8px;
-                        padding: 12px;
-
-                        &--param-name {
-                            font-weight: bold;
-                        }
-
-                        &--value {
-                            &, pre {
-                                white-space: pre-wrap;
-                                white-space: -moz-pre-wrap;
-                                word-wrap: break-word;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    &__buttons {
-        display: flex;
-        padding: 0 20px 20px;
-        margin-top: auto;
-
-        &-button {
-            width: 100%;
-            &:not(last-child) {
-                margin-right: 12px;
-            }
-        }
-    }
 
     &-select-account {
         display: flex;
