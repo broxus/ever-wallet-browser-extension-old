@@ -5,6 +5,8 @@ import {
     FullContractState,
     GenTimings,
     RawTokensObject,
+    AssetType,
+    AssetTypeParams,
 } from 'ton-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
@@ -202,6 +204,24 @@ function requireMethodOrArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, o
     const property = object[key]
     if (typeof property !== 'string' && !Array.isArray(property)) {
         throw invalidRequest(req, `'${key}' must be a method name or an array of possible names`)
+    }
+}
+
+function requireAssetTypeParams<T, O, P extends keyof O>(
+    req: JsonRpcRequest<T>,
+    object: O,
+    key: P,
+    assetType: AssetType
+) {
+    requireObject(req, object, key)
+    const property = (object[key] as unknown) as AssetTypeParams<AssetType>
+    switch (assetType) {
+        case 'tip3_token': {
+            requireString(req, property, 'rootContract')
+            break
+        }
+        default:
+            throw invalidRequest(req, 'Unknown asset type')
     }
 }
 
@@ -654,6 +674,110 @@ const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async
     }
 }
 
+const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { recipient, stateInit, payload, local } = req.params
+    requireString(req, req.params, 'recipient')
+    requireOptionalString(req, req.params, 'stateInit')
+    requireFunctionCall(req, req.params, 'payload')
+    requireOptionalBoolean(req, req.params, 'local')
+
+    const { tabId, subscriptionsController } = ctx
+    requireTabid(req, tabId)
+
+    let repackedRecipient: string
+    try {
+        repackedRecipient = nt.repackAddress(recipient)
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    let signedMessage: nt.SignedMessage
+    try {
+        signedMessage = nt.createExternalMessageWithoutSignature(
+            repackedRecipient,
+            payload.abi,
+            payload.method,
+            stateInit,
+            payload.params,
+            60
+        )
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    let transaction: nt.Transaction
+    if (local === true) {
+        transaction = await subscriptionsController.sendMessageLocally(
+            tabId,
+            repackedRecipient,
+            signedMessage
+        )
+    } else {
+        transaction = await subscriptionsController.sendMessage(
+            tabId,
+            repackedRecipient,
+            signedMessage
+        )
+    }
+
+    let output: RawTokensObject | undefined
+    try {
+        const decoded = nt.decodeTransaction(transaction, payload.abi, payload.method)
+        output = decoded?.output
+    } catch (_) {}
+
+    res.result = {
+        transaction,
+        output,
+    }
+    end()
+}
+
+const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { account, type, params } = req.params
+    requireString(req, req.params, 'account')
+    requireString(req, req.params, 'type')
+    requireAssetTypeParams(req, req.params, 'params', type)
+
+    try {
+        switch (type) {
+            case 'tip3_token': {
+                // TODO
+                break
+            }
+        }
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { publicKey, data } = req.params
+    requireString(req, req.params, 'publicKey')
+    requireString(req, req.params, 'data')
+
+    try {
+        //TODO
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
@@ -849,6 +973,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     requireString(req, req.params, 'recipient')
     requireOptionalString(req, req.params, 'stateInit')
     requireFunctionCall(req, req.params, 'payload')
+    requireOptionalBoolean(req, req.params, 'local')
 
     const {
         tabId,
@@ -958,6 +1083,9 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     decodeOutput,
     decodeTransaction,
     decodeTransactionEvents,
+    sendUnsignedExternalMessage,
+    addAsset,
+    signData,
     estimateFees,
     sendMessage,
     sendExternalMessage,

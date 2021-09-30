@@ -88,7 +88,7 @@
     "redux": "^4.0.5",
     "redux-thunk": "^2.3.0",
     "reselect": "^4.0.0",
-    "ton-inpage-provider": "^0.1.21",
+    "ton-inpage-provider": "^0.1.23",
     "util": "^0.12.3"
   }
 }

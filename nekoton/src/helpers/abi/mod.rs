@@ -1,5 +1,5 @@
 use std::borrow::Cow;
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
@@ -82,6 +82,63 @@ pub fn encode_internal_input(
         .handle_error()?;
     let body = ton_types::serialize_toc(&body).handle_error()?;
     Ok(base64::encode(&body))
+}
+
+#[wasm_bindgen(js_name = "createExternalMessageWithoutSignature")]
+pub fn create_external_message_without_signature(
+    dst: &str,
+    contract_abi: &str,
+    method: &str,
+    state_init: Option<String>,
+    input: TokensObject,
+    timeout: u32,
+) -> Result<crate::crypto::JsSignedMessage, JsValue> {
+    use nt::core::models::{Expiration, ExpireAt};
+
+    // Parse params
+    let dst = parse_address(dst)?;
+    let contract_abi = parse_contract_abi(contract_abi)?;
+    let method = contract_abi.function(method).handle_error()?;
+    let state_init = state_init
+        .as_deref()
+        .map(ton_block::StateInit::construct_from_base64)
+        .transpose()
+        .handle_error()?;
+    let input = parse_tokens_object(&method.inputs, input).handle_error()?;
+
+    // Prepare headers
+    let time = chrono::Utc::now().timestamp_millis() as u64;
+    let expire_at = ExpireAt::new_from_millis(Expiration::Timeout(timeout), time);
+
+    let mut header = HashMap::with_capacity(3);
+    header.insert("time".to_string(), ton_abi::TokenValue::Time(time));
+    header.insert(
+        "expire".to_string(),
+        ton_abi::TokenValue::Expire(expire_at.timestamp),
+    );
+    header.insert("pubkey".to_string(), ton_abi::TokenValue::PublicKey(None));
+
+    // Encode body
+    let body = method
+        .encode_input(&header, &input, false, None)
+        .handle_error()?;
+
+    // Build message
+    let mut message =
+        ton_block::Message::with_ext_in_header(ton_block::ExternalInboundMessageHeader {
+            dst,
+            ..Default::default()
+        });
+    if let Some(state_init) = state_init {
+        message.set_state_init(state_init);
+    }
+    message.set_body(body.into());
+
+    // Serialize message
+    crate::crypto::make_signed_message(nt::crypto::SignedMessage {
+        message,
+        expire_at: expire_at.timestamp,
+    })
 }
 
 #[wasm_bindgen(js_name = "createExternalMessage")]
@@ -532,7 +589,7 @@ export type AbiToken =
     | { [K in string]: AbiToken }
     | AbiToken[]
     | (readonly [AbiToken, AbiToken])[];
-    
+
 type TokensObject = { [K in string]: AbiToken };
 "#;
 
