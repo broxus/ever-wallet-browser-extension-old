@@ -1,4 +1,4 @@
-@import '../../styles/colors';
+@import '../../../styles/colors';
 
 .connect-wallet {
 	display: flex;
@@ -102,6 +102,8 @@
 
 		&-list {
 			display: flex;
+			width: 100%;
+			flex-direction: column;
 
 			&-item {
 				align-items: center;

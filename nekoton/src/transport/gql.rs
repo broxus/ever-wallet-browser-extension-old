@@ -14,6 +14,7 @@ use super::{
     PromiseRootTokenContractDetails, PromiseTokenWallet, PromiseTonWallet,
     PromiseTonWalletInitData, PromiseTransactionsList, TransportError, TransportHandle,
 };
+use crate::core::token_wallet::RootTokenContractDetailsWithAddress;
 use crate::external::{GqlConnectionImpl, GqlSender};
 use crate::utils::*;
 
@@ -72,7 +73,7 @@ impl GqlConnection {
     ) -> Result<PromiseTonWallet, JsValue> {
         use crate::core::ton_wallet::*;
 
-        let public_key = parse_public_key(&public_key)?;
+        let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
 
         let transport = Arc::new(self.make_transport());
@@ -104,7 +105,7 @@ impl GqlConnection {
     ) -> Result<PromiseTonWallet, JsValue> {
         use crate::core::ton_wallet::*;
 
-        let address = parse_address(&address)?;
+        let address = parse_address(address)?;
 
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
@@ -189,6 +190,40 @@ impl GqlConnection {
                 address.workchain_id() as i8,
                 custodians,
             ))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenRootDetails")]
+    pub fn get_token_root_details(
+        &self,
+        root_token_contract: &str,
+        owner_address: &str,
+    ) -> Result<RootTokenContractDetailsWithAddress, JsValue> {
+        let root_token_contract = parse_address(root_token_contract)?;
+        let owner = parse_address(owner_address)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            crate::core::token_wallet::get_token_root_details_with_user_token_wallet(
+                &transport,
+                &root_token_contract,
+                &owner,
+            )
+            .await
+            .map(JsCast::unchecked_into)
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenWalletBalance")]
+    pub fn get_token_wallet_balance(&self, token_wallet: &str) -> Result<PromiseString, JsValue> {
+        let token_wallet = parse_address(token_wallet)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            crate::core::token_wallet::get_token_wallet_balance(&transport, &token_wallet)
+                .await
+                .map(JsValue::from)
+                .map(JsCast::unchecked_into)
         })))
     }
 

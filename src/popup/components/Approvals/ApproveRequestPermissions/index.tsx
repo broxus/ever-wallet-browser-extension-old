@@ -142,7 +142,7 @@ export function ApproveRequestPermissions({
                 <div className="connect-wallet__wrapper">
                     <div className="connect-wallet__permissions">
                         <h3 className="connect-wallet__permissions-heading noselect">
-                            Allow this site to:
+                            Permissions:
                         </h3>
                         <div className="connect-wallet__permissions-list">
                             <div className="connect-wallet__permissions-list-item">

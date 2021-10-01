@@ -46,6 +46,8 @@ export const getIconUrl = (url: string) => {
 export const TOKENS_MANIFEST_URL =
     'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
 
+export const TOKENS_MANIFEST_REPO = 'https://github.com/broxus/ton-assets'
+
 export const prepareKey = (entry: nt.KeyStoreEntry, password: string): nt.KeyPassword => {
     switch (entry.signerName) {
         case 'encrypted_key': {
