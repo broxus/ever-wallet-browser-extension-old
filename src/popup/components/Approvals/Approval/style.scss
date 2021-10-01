@@ -141,6 +141,27 @@
                 word-break: break-all;
             }
 
+            &-notification {
+                padding: 12px;
+                color: $windowFg;
+                font-style: normal;
+                font-weight: normal;
+                font-size: 14px;
+                line-height: 20px;
+                letter-spacing: 0.75px;
+                margin-bottom: 16px;
+                border-radius: 2px;
+
+                &--error {
+                    background: rgba(204, 0, 34, 0.1);
+                    color: #CC0022;
+                }
+
+                a:hover {
+                    text-decoration: underline;
+                }
+            }
+
             &-data {
                 font-family: PT Mono, sans-serif;
                 font-style: normal;
@@ -149,6 +170,7 @@
                 line-height: 20px;
                 letter-spacing: 0.75px;
                 color: $windowFg;
+                word-break: break-all;
 
                 &:last-child {
                     margin-bottom: 0;

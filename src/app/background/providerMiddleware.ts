@@ -760,26 +760,34 @@ const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) =
 
     switch (type) {
         case 'tip3_token': {
-            const { rootContract } = params
+            const { rootContract: rawRootContract } = params
+            let rootContract: string
+            try {
+                rootContract = nt.repackAddress(rawRootContract)
+            } catch (e) {
+                throw invalidRequest(req, e.toString())
+            }
 
             const hasTokenWallet = accountController.hasTokenWallet(account, rootContract)
-            if (!hasTokenWallet) {
-                await approvalController.addAndShowApprovalRequest({
-                    origin,
-                    type: 'addTip3Token',
-                    requestData: {
-                        account,
-                        rootContract,
-                    },
-                })
-                await accountController.updateTokenWallets(account, {
-                    [rootContract]: true,
-                })
+            if (hasTokenWallet) {
+                res.result = { newAsset: false }
+                return end()
             }
 
-            res.result = {
-                newAsset: !hasTokenWallet,
-            }
+            const details = await accountController.getTokenRootDetails(rootContract)
+            await approvalController.addAndShowApprovalRequest({
+                origin,
+                type: 'addTip3Token',
+                requestData: {
+                    account,
+                    details,
+                },
+            })
+            await accountController.updateTokenWallets(account, {
+                [rootContract]: true,
+            })
+
+            res.result = { newAsset: true }
             return end()
         }
         default:

@@ -68,7 +68,12 @@ export function ApproveSignData({
 
     return (
         <>
-            <Approval account={account} title="Sign data" origin={origin} className={'sign-data'}>
+            <Approval
+                account={account}
+                title="Sign data"
+                origin={origin}
+                className={'approval--sign-data'}
+            >
                 <div className="approval__wrapper">
                     <div className="approval__spend-details">
                         <div className="approval__spend-details-param">

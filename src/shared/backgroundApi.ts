@@ -135,7 +135,7 @@ export type ApprovalApi = {
     addTip3Token: {
         input: {
             account: string
-            rootContract: string
+            details: nt.RootTokenContractDetails
         }
         output: {}
     }

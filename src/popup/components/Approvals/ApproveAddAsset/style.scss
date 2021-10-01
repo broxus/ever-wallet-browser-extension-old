@@ -1,0 +1,19 @@
+.approval--add-tip3-token {
+    &__token-name {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        word-break: normal;
+
+        .root-token-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+        }
+
+        .root-token-name {
+            width: 100%;
+            text-overflow: ellipsis;
+        }
+    }
+}

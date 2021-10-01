@@ -192,6 +192,26 @@ impl GqlConnection {
         })))
     }
 
+    #[wasm_bindgen(js_name = "getTokenRootDetails")]
+    pub fn get_token_root_details(
+        &self,
+        root_token_contract: &str,
+    ) -> Result<PromiseRootTokenContractDetails, JsValue> {
+        let root_token_contract = parse_address(root_token_contract)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let details =
+                nt::core::token_wallet::get_token_root_details(&transport, &root_token_contract)
+                    .await
+                    .handle_error()?;
+            Ok(make_root_token_contract_details(
+                root_token_contract,
+                details,
+            ))
+        })))
+    }
+
     #[wasm_bindgen(js_name = "getTokenRootDetailsFromTokenWallet")]
     pub fn get_token_root_details_from_token_wallet(
         &self,

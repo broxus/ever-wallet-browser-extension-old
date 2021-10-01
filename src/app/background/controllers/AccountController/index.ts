@@ -257,6 +257,16 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async getTokenRootDetails(rootContract: string): Promise<nt.RootTokenContractDetails> {
+        return this.config.connectionController.use(async ({ data: { connection } }) => {
+            try {
+                return await connection.getTokenRootDetails(rootContract)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
+    }
+
     public hasTokenWallet(address: string, rootTokenContract: string): boolean {
         const subscriptions = this._tokenWalletSubscriptions.get(address)
         return subscriptions?.get(rootTokenContract) != null
