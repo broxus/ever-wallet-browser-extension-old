@@ -45,6 +45,18 @@ const TokenNotification: React.FC<TokenNotificationProps> = ({ type, children })
     return <div className={`${baseClass} ${baseClass}--${typeName}`}>{children}</div>
 }
 
+enum PhishingAttempt {
+    Explicit,
+    SameSymbol,
+    Suggestion,
+}
+
+enum ExistingToken {
+    None,
+    Trusted,
+    Untrusted,
+}
+
 type Props = {
     approval: PendingApproval<'addTip3Token'>
     accountEntries: { [address: string]: nt.AssetsList }
@@ -78,12 +90,37 @@ const ApproveAddAsset: React.FC<Props> = ({
 
     const manifestData = tokensMeta?.[details.address]
 
-    let phishingAttempt = false
-    for (const info of Object.values(tokensMeta || {})) {
-        if (info.symbol == details.symbol && info.address != details.address) {
-            phishingAttempt = true
+    const additionalAssets =
+        account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
+
+    let existingToken = ExistingToken.None
+    if (tokensMeta != null) {
+        for (const { rootTokenContract } of additionalAssets) {
+            const info = rpcState.state.knownTokens[rootTokenContract] as nt.Symbol | undefined
+            if (info == null || info.name != details.symbol) {
+                continue
+            }
+
+            existingToken =
+                tokensMeta[info.rootTokenContract] != null
+                    ? ExistingToken.Trusted
+                    : ExistingToken.Untrusted
             break
         }
+    }
+
+    let phishingAttempt: PhishingAttempt | undefined
+    for (const info of Object.values(tokensMeta || {})) {
+        if (info.symbol == details.symbol && info.address != details.address) {
+            phishingAttempt = PhishingAttempt.Explicit
+            break
+        }
+    }
+
+    if (existingToken == ExistingToken.Untrusted && manifestData != null) {
+        phishingAttempt = PhishingAttempt.Suggestion
+    } else if (existingToken != ExistingToken.None) {
+        phishingAttempt = PhishingAttempt.SameSymbol
     }
 
     return (
@@ -127,13 +164,35 @@ const ApproveAddAsset: React.FC<Props> = ({
                             <span className="approval__spend-details-param-value">
                                 {details.symbol}
                             </span>
-                            {phishingAttempt && (
+                            {phishingAttempt === PhishingAttempt.Explicit && (
                                 <TokenNotification type={TokenNotificationType.Error}>
                                     <p>
                                         Token has the symbol from the trusted list but a different
                                         root contract address.
                                     </p>
                                     <p>Be careful: it may be a phishing attempt.</p>
+                                </TokenNotification>
+                            )}
+                            {phishingAttempt === PhishingAttempt.SameSymbol && (
+                                <TokenNotification type={TokenNotificationType.Error}>
+                                    <p>You already have a token with the same symbol.</p>
+                                    <p>Be careful: it may be a phishing attempt.</p>
+                                </TokenNotification>
+                            )}
+                            {phishingAttempt === PhishingAttempt.Suggestion && (
+                                <TokenNotification type={TokenNotificationType.Warning}>
+                                    <p>
+                                        You have already added a token with the same symbol before,
+                                        however the new one is in the&nbsp;
+                                        <a href={TOKENS_MANIFEST_REPO} target="_blank">
+                                            official assets repository
+                                        </a>
+                                        .
+                                    </p>
+                                    <p>
+                                        This may be a new version and you might consider deleting
+                                        the previous one.
+                                    </p>
                                 </TokenNotification>
                             )}
                         </div>

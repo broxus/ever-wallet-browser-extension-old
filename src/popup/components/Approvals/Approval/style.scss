@@ -157,6 +157,11 @@
                     color: #CC0022;
                 }
 
+                &--warning {
+                    background: rgba(230, 172, 0, 0.1);
+                    color: #E6AC00;
+                }
+
                 a:hover {
                     text-decoration: underline;
                 }
