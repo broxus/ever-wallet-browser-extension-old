@@ -774,7 +774,7 @@ const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) =
                 return end()
             }
 
-            const details = await accountController.getTokenRootDetails(rootContract)
+            const details = await accountController.getTokenRootDetails(rootContract, account)
             await approvalController.addAndShowApprovalRequest({
                 origin,
                 type: 'addTip3Token',

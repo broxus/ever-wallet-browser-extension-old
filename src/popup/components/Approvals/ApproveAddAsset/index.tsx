@@ -5,6 +5,8 @@ import { PendingApproval } from '@shared/backgroundApi'
 import { AppState, TokensManifestItem } from '@popup/store/app/types'
 import { TOKENS_MANIFEST_REPO } from '@popup/utils'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { convertCurrency } from '@shared/utils'
 
 import Button from '@popup/components/Button'
 import AssetIcon from '@popup/components/AssetIcon'
@@ -73,11 +75,13 @@ const ApproveAddAsset: React.FC<Props> = ({
     onReject,
 }) => {
     const rpcState = useRpcState()
+    const rpc = useRpc()
 
     const { origin } = approval
     const { account: accountAddress, details } = approval.requestData
 
     const [inProcess, setInProcess] = React.useState(false)
+    const [balance, setBalance] = React.useState<string>()
 
     const account = window.ObjectExt.values(accountEntries).find(
         (account) => account.tonWallet.address == accountAddress
@@ -87,6 +91,15 @@ const ApproveAddAsset: React.FC<Props> = ({
         setInProcess(true)
         return null
     }
+
+    React.useEffect(() => {
+        rpc.getTokenWalletBalance(details.tokenWallet)
+            .then((balance) => setBalance(balance))
+            .catch((e) => {
+                console.error(e)
+                setBalance('0')
+            })
+    }, [details.tokenWallet])
 
     const manifestData = tokensMeta?.[details.address]
 
@@ -208,6 +221,18 @@ const ApproveAddAsset: React.FC<Props> = ({
                             </span>
                             <span className="approval__spend-details-param-value">
                                 {details.address}
+                            </span>
+                        </div>
+                        <div className="approval__spend-details-param">
+                            <span className="approval__spend-details-param-desc">
+                                Current balance
+                            </span>
+                            <span className="approval__spend-details-param-value">
+                                {balance != null
+                                    ? `${convertCurrency(balance, details.decimals)} ${
+                                          details.symbol
+                                      }`
+                                    : 'calculating...'}
                             </span>
                         </div>
                     </div>

@@ -130,7 +130,7 @@ impl GenericContract {
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
         let from = nt_abi::TransactionId {
-            lt: u64::from_str(&lt).handle_error()?,
+            lt: u64::from_str(lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };
 

@@ -188,7 +188,7 @@ impl TokenWallet {
     #[wasm_bindgen(js_name = "preloadTransactions")]
     pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
         let from = abi::TransactionId {
-            lt: u64::from_str(&lt).handle_error()?,
+            lt: u64::from_str(lt).handle_error()?,
             hash: ton_types::UInt256::from_str(hash).handle_error()?,
         };
 
@@ -358,6 +358,87 @@ fn make_token_wallet_transaction_info(
         .set("data", data)
         .build()
         .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const ROOT_TOKEN_CONTRACT_DETAILS_WITH_ADDRESS: &'static str = r#"
+export type RootTokenContractDetailsWithAddress = {
+    address: string,
+    name: string,
+    symbol: string,
+    decimals: number,
+    tokenWallet: string,
+};
+"#;
+
+fn make_root_token_contract_details_with_address(
+    root_token_contract: &ton_block::MsgAddressInt,
+    details: nt::core::models::RootTokenContractDetails,
+    token_wallet: &ton_block::MsgAddressInt,
+) -> JsValue {
+    ObjectBuilder::new()
+        .set("address", root_token_contract.to_string())
+        .set("name", details.name)
+        .set("symbol", details.symbol)
+        .set("decimals", details.decimals)
+        .set("tokenWallet", token_wallet.to_string())
+        .build()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "RootTokenContractDetailsWithAddress")]
+    pub type RootTokenContractDetailsWithAddress;
+
+    #[wasm_bindgen(typescript_type = "Promise<RootTokenContractDetailsWithAddress>")]
+    pub type PromiseRootTokenContractDetailsWithAddress;
+}
+
+pub async fn get_token_root_details_with_user_token_wallet(
+    transport: &dyn nt::transport::Transport,
+    root_token_contract: &ton_block::MsgAddressInt,
+    owner: &ton_block::MsgAddressInt,
+) -> Result<RootTokenContractDetailsWithAddress, JsValue> {
+    let root_contract_state = match transport
+        .get_contract_state(root_token_contract)
+        .await
+        .handle_error()?
+    {
+        nt::transport::models::RawContractState::Exists(state) => state,
+        nt::transport::models::RawContractState::NotExists => {
+            return Err("Invalid root token contract").handle_error()
+        }
+    };
+    let root_contract_state = nt::core::token_wallet::RootTokenContractState(&root_contract_state);
+
+    let details = root_contract_state.guess_details().handle_error()?;
+    let token_wallet = root_contract_state
+        .get_wallet_address(details.version, owner, None)
+        .handle_error()?;
+
+    Ok(
+        make_root_token_contract_details_with_address(root_token_contract, details, &token_wallet)
+            .unchecked_into(),
+    )
+}
+
+pub async fn get_token_wallet_balance(
+    transport: &dyn nt::transport::Transport,
+    token_wallet: &ton_block::MsgAddressInt,
+) -> Result<String, JsValue> {
+    let token_wallet_state = match transport
+        .get_contract_state(token_wallet)
+        .await
+        .handle_error()?
+    {
+        nt::transport::models::RawContractState::Exists(state) => state,
+        nt::transport::models::RawContractState::NotExists => return Ok(0.to_string()),
+    };
+    let token_wallet_state = nt::core::token_wallet::TokenWalletContractState(&token_wallet_state);
+
+    let version = token_wallet_state.get_version().handle_error()?;
+    let balance = token_wallet_state.get_balance(version).handle_error()?;
+    Ok(balance.to_string())
 }
 
 #[wasm_bindgen]

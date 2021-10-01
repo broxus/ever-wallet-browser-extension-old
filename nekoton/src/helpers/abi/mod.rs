@@ -607,6 +607,7 @@ fn parse_token_value(
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
+                #[allow(clippy::float_cmp)]
                 if value as u64 as f64 != value {
                     return Err(AbiError::ExpectedIntegerNumber);
                 }
@@ -636,6 +637,7 @@ fn parse_token_value(
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
+                #[allow(clippy::float_cmp)]
                 if value as i64 as f64 != value {
                     return Err(AbiError::ExpectedIntegerNumber);
                 }
@@ -918,7 +920,7 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
             .iter()
             .map(|(key, value)| {
                 Result::<JsValue, JsValue>::Ok(
-                    [JsValue::from_str(key.as_str()), make_token_value(&value)?]
+                    [JsValue::from_str(key.as_str()), make_token_value(value)?]
                         .iter()
                         .collect::<js_sys::Array>()
                         .unchecked_into(),
@@ -1001,7 +1003,7 @@ fn insert_init_data(
     if let Some(public_key) = public_key {
         map.set_builder(
             0u64.write_to_new_cell().trust_me().into(),
-            &ton_types::BuilderData::new()
+            ton_types::BuilderData::new()
                 .append_raw(public_key.as_bytes(), 256)
                 .trust_me(),
         )

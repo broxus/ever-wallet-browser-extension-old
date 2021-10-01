@@ -257,10 +257,23 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async getTokenRootDetails(rootContract: string): Promise<nt.RootTokenContractDetails> {
+    public async getTokenRootDetails(
+        rootContract: string,
+        ownerAddress: string
+    ): Promise<nt.RootTokenContractDetailsWithAddress> {
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
-                return await connection.getTokenRootDetails(rootContract)
+                return await connection.getTokenRootDetails(rootContract, ownerAddress)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
+    }
+
+    public async getTokenWalletBalance(tokenWallet: string): Promise<string> {
+        return this.config.connectionController.use(async ({ data: { connection } }) => {
+            try {
+                return await connection.getTokenWalletBalance(tokenWallet)
             } catch (e) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
