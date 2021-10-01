@@ -4,6 +4,7 @@ import * as nt from '@nekoton'
 import { PendingApproval } from '@shared/backgroundApi'
 import { AppState, TokensManifestItem } from '@popup/store/app/types'
 import { TOKENS_MANIFEST_REPO } from '@popup/utils'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import Button from '@popup/components/Button'
 import AssetIcon from '@popup/components/AssetIcon'
@@ -24,6 +25,26 @@ const TrustStatus: React.FC<VerificationStatusProps> = ({ trusted, className }) 
     return <img src={url} alt="" className={className} />
 }
 
+enum TokenNotificationType {
+    Error,
+    Warning,
+}
+
+type TokenNotificationProps = {
+    type: TokenNotificationType
+}
+
+const TokenNotification: React.FC<TokenNotificationProps> = ({ type, children }) => {
+    const typeName =
+        type == TokenNotificationType.Error
+            ? 'error'
+            : type == TokenNotificationType.Warning
+            ? 'warning'
+            : ''
+    const baseClass = 'approval__spend-details-param-notification'
+    return <div className={`${baseClass} ${baseClass}--${typeName}`}>{children}</div>
+}
+
 type Props = {
     approval: PendingApproval<'addTip3Token'>
     accountEntries: { [address: string]: nt.AssetsList }
@@ -39,6 +60,8 @@ const ApproveAddAsset: React.FC<Props> = ({
     onSubmit,
     onReject,
 }) => {
+    const rpcState = useRpcState()
+
     const { origin } = approval
     const { account: accountAddress, details } = approval.requestData
 
@@ -54,6 +77,14 @@ const ApproveAddAsset: React.FC<Props> = ({
     }
 
     const manifestData = tokensMeta?.[details.address]
+
+    let phishingAttempt = false
+    for (const info of Object.values(tokensMeta || {})) {
+        if (info.symbol == details.symbol && info.address != details.address) {
+            phishingAttempt = true
+            break
+        }
+    }
 
     return (
         <>
@@ -79,7 +110,7 @@ const ApproveAddAsset: React.FC<Props> = ({
                                 )}
                             </div>
                             {tokensMeta != null && manifestData == null && (
-                                <div className="approval__spend-details-param-notification approval__spend-details-param-notification--error">
+                                <TokenNotification type={TokenNotificationType.Error}>
                                     <p>
                                         This token is not published in the&nbsp;
                                         <a href={TOKENS_MANIFEST_REPO} target="_blank">
@@ -88,7 +119,7 @@ const ApproveAddAsset: React.FC<Props> = ({
                                         .
                                     </p>
                                     <p>Add it with caution if you trust the source.</p>
-                                </div>
+                                </TokenNotification>
                             )}
                         </div>
                         <div className="approval__spend-details-param">
@@ -96,6 +127,15 @@ const ApproveAddAsset: React.FC<Props> = ({
                             <span className="approval__spend-details-param-value">
                                 {details.symbol}
                             </span>
+                            {phishingAttempt && (
+                                <TokenNotification type={TokenNotificationType.Error}>
+                                    <p>
+                                        Token has the symbol from the trusted list but a different
+                                        root contract address.
+                                    </p>
+                                    <p>Be careful: it may be a phishing attempt.</p>
+                                </TokenNotification>
+                            )}
                         </div>
                         <div className="approval__spend-details-param">
                             <span className="approval__spend-details-param-desc">Decimals</span>
