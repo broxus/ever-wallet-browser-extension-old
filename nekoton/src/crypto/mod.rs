@@ -44,6 +44,7 @@ const SIGNED_DATA: &str = r#"
 export type SignedData = {
     dataHash: string,
     signature: string,
+    signatureHex: string,
     signatureParts: {
         high: string,
         low: string,
@@ -61,6 +62,7 @@ pub fn make_signed_data(hash: [u8; 32], signature: [u8; 64]) -> JsSignedData {
     ObjectBuilder::new()
         .set("dataHash", hex::encode(hash))
         .set("signature", base64::encode(signature))
+        .set("signatureHex", hex::encode(signature))
         .set(
             "signatureParts",
             ObjectBuilder::new()
