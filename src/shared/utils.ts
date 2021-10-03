@@ -721,7 +721,7 @@ export const extractTokenTransactionValue = ({ info }: nt.TokenWalletTransaction
 export type TokenTransactionAddress =
     | undefined
     | nt.TransferRecipient
-    | { type: 'eth_account'; address: string }
+    | { type: 'proxy'; address: string }
 
 export const extractTokenTransactionAddress = ({
     info,
@@ -735,7 +735,7 @@ export const extractTokenTransactionAddress = ({
     } else if (info.type == 'outgoing_transfer') {
         return info.data.to
     } else if (info.type == 'swap_back') {
-        return { type: 'eth_account', address: info.data.to }
+        return { type: 'proxy', address: info.data.callbackAddress }
     } else {
         return undefined
     }

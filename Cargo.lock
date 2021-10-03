@@ -765,7 +765,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#753f2e71c0ba72fc8c51a0eaed02027e2ab4cfae"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -812,7 +812,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#753f2e71c0ba72fc8c51a0eaed02027e2ab4cfae"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
 dependencies = [
  "anyhow",
  "base64",
@@ -839,7 +839,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#753f2e71c0ba72fc8c51a0eaed02027e2ab4cfae"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -849,7 +849,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#753f2e71c0ba72fc8c51a0eaed02027e2ab4cfae"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
 dependencies = [
  "either",
  "proc-macro2",
@@ -860,7 +860,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#753f2e71c0ba72fc8c51a0eaed02027e2ab4cfae"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
 dependencies = [
  "anyhow",
  "base64",

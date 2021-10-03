@@ -225,7 +225,7 @@ const KNOWN_PAYLOAD: &str = r#"
 export type KnownPayload =
     | EnumItem<'comment', string>
     | EnumItem<'token_outgoing_transfer', { to: TransferRecipient, tokens: string }>
-    | EnumItem<'token_swap_back', { tokens: string, to: string }>;
+    | EnumItem<'token_swap_back', { tokens: string, callbackAddress: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -248,7 +248,7 @@ pub fn make_known_payload(data: Option<models::KnownPayload>) -> Option<KnownPay
             "token_swap_back",
             ObjectBuilder::new()
                 .set("tokens", swap_back.tokens.to_string())
-                .set("to", swap_back.to)
+                .set("callbackAddress", swap_back.callback_address.to_string())
                 .build(),
         ),
         _ => return None,

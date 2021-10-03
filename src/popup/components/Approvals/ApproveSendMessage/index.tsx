@@ -9,7 +9,7 @@ import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { Fees, parseError } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
-import { convertTons } from '@shared/utils'
+import { convertCurrency, convertTons } from '@shared/utils'
 
 import './style.scss'
 
@@ -58,6 +58,11 @@ export function ApproveSendMessage({
     const [error, setError] = React.useState<string>()
     const [fees, setFees] = React.useState<Fees>()
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(keys[0])
+    const [tokenTransaction, setTokenTransaction] = React.useState<{
+        amount: string
+        symbol: string
+        decimals: number
+    }>()
 
     React.useEffect(() => {
         if (
@@ -69,8 +74,11 @@ export function ApproveSendMessage({
 
         rpc.getTokenRootDetailsFromTokenWallet(recipient)
             .then((details) => {
-                // TODO: set details
-                console.log(details)
+                setTokenTransaction({
+                    amount: knownPayload.data.tokens,
+                    symbol: details.symbol,
+                    decimals: details.decimals,
+                })
             })
             .catch(() => {
                 /*do nothing*/
@@ -158,8 +166,22 @@ export function ApproveSendMessage({
                             <span className="approval__spend-details-param-desc">Recipient</span>
                             <span className="approval__spend-details-param-value">{recipient}</span>
                         </div>
+                        {tokenTransaction != null && (
+                            <div className="approval__spend-details-param">
+                                <span className="approval__spend-details-param-desc">Amount</span>
+                                <span className="approval__spend-details-param-value">
+                                    {convertCurrency(
+                                        tokenTransaction.amount,
+                                        tokenTransaction.decimals
+                                    )}{' '}
+                                    {tokenTransaction.symbol}
+                                </span>
+                            </div>
+                        )}
                         <div className="approval__spend-details-param">
-                            <span className="approval__spend-details-param-desc">Amount</span>
+                            <span className="approval__spend-details-param-desc">
+                                {tokenTransaction == null ? 'Amount' : 'Attached amount'}
+                            </span>
                             <span className="approval__spend-details-param-value">
                                 {convertTons(amount)} TON
                             </span>

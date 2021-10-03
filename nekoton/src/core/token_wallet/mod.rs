@@ -293,7 +293,7 @@ const TOKEN_WALLET_TRANSACTION_INFO: &str = r#"
 export type TokenWalletTransactionInfo =
     | EnumItem<'incoming_transfer', { tokens: string, senderAddress: string }>
     | EnumItem<'outgoing_transfer', { to: TransferRecipient, tokens: string }>
-    | EnumItem<'swap_back', { tokens: string, to: string }>
+    | EnumItem<'swap_back', { tokens: string, callbackAddress: string }>
     | EnumItem<'accept', { tokens: string }>
     | EnumItem<'transfer_bounced', { tokens: string }>
     | EnumItem<'swap_back_bounced', { tokens: string }>;
@@ -329,8 +329,8 @@ fn make_token_wallet_transaction_info(
         core_models::TokenWalletTransaction::SwapBack(swap_back) => (
             "swap_back",
             ObjectBuilder::new()
-                .set("to", swap_back.to)
                 .set("tokens", swap_back.tokens.to_string())
+                .set("callbackAddress", swap_back.callback_address.to_string())
                 .build(),
         ),
         core_models::TokenWalletTransaction::Accept(tokens) => (
