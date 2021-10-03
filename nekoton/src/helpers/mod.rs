@@ -9,6 +9,12 @@ use crate::utils::*;
 
 pub mod abi;
 
+#[wasm_bindgen(js_name = "base64ToUtf8Lossy")]
+pub fn base64_to_utf8_lossy(data: &str) -> Result<String, JsValue> {
+    let data = base64::decode(data).handle_error()?;
+    Ok(String::from_utf8_lossy(&data).to_string())
+}
+
 #[wasm_bindgen(js_name = "extractAddressWorkchain")]
 pub fn extract_address_workchain(address: &str) -> Result<i8, JsValue> {
     let address = match MsgAddressInt::from_str(address) {

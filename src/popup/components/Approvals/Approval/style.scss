@@ -128,6 +128,44 @@
                 letter-spacing: 0.75px;
                 margin-bottom: 4px;
                 color: #7d8b92;
+
+                &.with-selector {
+                    position: relative;
+
+                    .selector {
+                        display: flex;
+                        flex-direction: row;
+
+                        top: -2px;
+                        right: 0;
+                        position: absolute;
+
+                        & > .item {
+                            background-color: #E9E9E9;
+                            padding: 2px 5px;
+
+                            &.active {
+                                color: $windowFg;
+                                background-color: darken(#E9E9E9, 10);
+                            }
+
+                            &:hover:not(.active) {
+                                cursor: pointer;
+                                background-color: darken(#E9E9E9, 5);
+                            }
+                        }
+
+                        & > .item:first-child {
+                            border-top-left-radius: 2px;
+                            border-bottom-left-radius: 2px;
+                        }
+
+                        & > .item:last-child {
+                            border-top-right-radius: 2px;
+                            border-bottom-right-radius: 2px;
+                        }
+                    }
+                }
             }
 
             &-value {
