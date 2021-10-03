@@ -744,10 +744,7 @@ fn parse_token_value(
                 let key = parse_token_value(param_key.as_ref(), value.get(0))?;
                 let value = parse_token_value(param_value.as_ref(), value.get(1))?;
 
-                result.insert(
-                    serde_json::to_string(&key).map_err(|_| AbiError::InvalidMappingKey)?,
-                    value,
-                );
+                result.insert(key.to_string(), value);
             }
 
             ton_abi::TokenValue::Map(*param_key.clone(), *param_value.clone(), result)
@@ -1266,8 +1263,6 @@ enum AbiError {
     InvalidBytesLength,
     #[error("Invalid public key")]
     InvalidPublicKey,
-    #[error("Invalid mapping key")]
-    InvalidMappingKey,
     #[error("Invalid components")]
     InvalidComponents,
     #[error("Tuple property not found")]
