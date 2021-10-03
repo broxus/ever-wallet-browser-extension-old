@@ -750,6 +750,9 @@ export const convertAddress = (address: string | undefined) =>
 export const trimTokenName = (token: string | undefined) =>
     token ? `${token?.slice(0, 4)}...${token?.slice(-4)}` : ''
 
+export const convertTokenName = (token: string | undefined) =>
+    token ? (token.length >= 10 ? trimTokenName(token) : token) : ''
+
 export const multiplier = _.memoize((decimals: number) => new Decimal(10).pow(decimals))
 
 export const amountPattern = _.memoize(

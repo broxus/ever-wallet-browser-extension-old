@@ -9,7 +9,7 @@ import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { Fees, parseError } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
-import { convertCurrency, convertTons } from '@shared/utils'
+import { convertCurrency, convertTokenName, convertTons } from '@shared/utils'
 
 import './style.scss'
 
@@ -174,7 +174,7 @@ export function ApproveSendMessage({
                                         tokenTransaction.amount,
                                         tokenTransaction.decimals
                                     )}{' '}
-                                    {tokenTransaction.symbol}
+                                    {convertTokenName(tokenTransaction.symbol)}
                                 </span>
                             </div>
                         )}

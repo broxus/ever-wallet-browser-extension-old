@@ -97,6 +97,7 @@ export function ApproveSignData({
 
     const selectorItem = (type: DisplayType, name: string) => (
         <div
+            key={name}
             className={classNames('item', { active: displayType == type })}
             onClick={() => setDisplayType(type)}
         >

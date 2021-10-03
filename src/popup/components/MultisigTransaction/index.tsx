@@ -3,10 +3,10 @@ import * as React from 'react'
 import * as nt from '@nekoton'
 import {
     convertCurrency,
+    convertTokenName,
     currentUtime,
     extractTokenTransactionAddress,
     extractTransactionAddress,
-    trimTokenName,
 } from '@shared/utils'
 import { Fees, parseError } from '@popup/utils'
 
@@ -55,10 +55,41 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         return null
     }
 
+    const knownPayload = transaction.info.data.knownPayload
+
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
     const [error, setError] = React.useState<string>()
     const [fees, setFees] = React.useState<Fees>()
+
+    const [parsedTokenTransaction, setParsedTokenTransaction] = React.useState<{
+        amount: string
+        symbol: string
+        decimals: number
+    }>()
+
+    React.useEffect(() => {
+        if (
+            knownPayload?.type !== 'token_outgoing_transfer' &&
+            knownPayload?.type !== 'token_swap_back'
+        ) {
+            return
+        }
+
+        const recipient = extractTransactionAddress(transaction).address
+
+        rpc.getTokenRootDetailsFromTokenWallet(recipient)
+            .then((details) => {
+                setParsedTokenTransaction({
+                    amount: knownPayload.data.tokens,
+                    symbol: details.symbol,
+                    decimals: details.decimals,
+                })
+            })
+            .catch(() => {
+                /*do nothing*/
+            })
+    }, [])
 
     const source = transaction.inMessage.dst!
     const value = React.useMemo(() => {
@@ -259,12 +290,34 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                         </div>
                     )}
 
+                    {symbol == null && parsedTokenTransaction != null && (
+                        <>
+                            <div className="transaction-info-tx-details-separator" />
+                            <div className="transaction-info-tx-details-param">
+                                <span className="transaction-info-tx-details-param-desc">
+                                    Amount
+                                </span>
+                                <span className="transaction-info-tx-details-param-value">
+                                    {convertCurrency(
+                                        parsedTokenTransaction.amount,
+                                        parsedTokenTransaction.decimals
+                                    )}{' '}
+                                    {convertTokenName(parsedTokenTransaction.symbol)}
+                                </span>
+                            </div>
+                        </>
+                    )}
+
                     <div className="transaction-info-tx-details-separator" />
                     <div className="transaction-info-tx-details-param">
-                        <span className="transaction-info-tx-details-param-desc">Amount</span>
+                        <span className="transaction-info-tx-details-param-desc">
+                            {symbol == null && parsedTokenTransaction != null
+                                ? 'Attached amount'
+                                : 'Amount'}
+                        </span>
                         <span className="transaction-info-tx-details-param-value">
                             {convertCurrency(value.toString(), decimals)}{' '}
-                            {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
+                            {convertTokenName(currencyName)}
                         </span>
                     </div>
 

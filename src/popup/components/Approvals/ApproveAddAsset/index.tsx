@@ -6,7 +6,7 @@ import { AppState, TokensManifestItem } from '@popup/store/app/types'
 import { TOKENS_MANIFEST_REPO } from '@popup/utils'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { convertCurrency } from '@shared/utils'
+import { convertCurrency, convertTokenName } from '@shared/utils'
 
 import Button from '@popup/components/Button'
 import AssetIcon from '@popup/components/AssetIcon'
@@ -229,9 +229,10 @@ const ApproveAddAsset: React.FC<Props> = ({
                             </span>
                             <span className="approval__spend-details-param-value">
                                 {balance != null
-                                    ? `${convertCurrency(balance, details.decimals)} ${
-                                          details.symbol
-                                      }`
+                                    ? `${convertCurrency(
+                                          balance,
+                                          details.decimals
+                                      )} ${convertTokenName(details.symbol)}`
                                     : 'calculating...'}
                             </span>
                         </div>
