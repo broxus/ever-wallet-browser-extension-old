@@ -1,3 +1,6 @@
+use ed25519_dalek::Verifier;
+use std::convert::TryFrom;
+
 use serde::Deserialize;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
@@ -6,6 +9,40 @@ use wasm_bindgen::JsCast;
 use nt::crypto;
 
 use crate::utils::*;
+
+#[wasm_bindgen(js_name = "verifySignature")]
+pub fn verify_signature(
+    public_key: &str,
+    data_hash: &str,
+    signature: &str,
+) -> Result<bool, JsValue> {
+    let public_key = parse_public_key(public_key)?;
+
+    let data_hash = match hex::decode(data_hash) {
+        Ok(data_hash) => data_hash,
+        Err(e) => match base64::decode(data_hash) {
+            Ok(data_hash) => data_hash,
+            Err(_) => return Err(e).handle_error(),
+        },
+    };
+    if data_hash.len() != 32 {
+        return Err("Invalid data hash. Expected 32 bytes").handle_error();
+    }
+
+    let signature = match base64::decode(signature) {
+        Ok(signature) => signature,
+        Err(e) => match hex::decode(signature) {
+            Ok(signature) => signature,
+            Err(_) => return Err(e).handle_error(),
+        },
+    };
+    let signature = match ed25519_dalek::Signature::try_from(signature.as_slice()) {
+        Ok(signature) => signature,
+        Err(_) => return Err("Invalid signature. Expected 64 bytes").handle_error(),
+    };
+
+    Ok(public_key.verify(&data_hash, &signature).is_ok())
+}
 
 #[wasm_bindgen]
 pub struct UnsignedMessage {

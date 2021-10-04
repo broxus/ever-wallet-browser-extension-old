@@ -674,6 +674,25 @@ const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async
     }
 }
 
+const verifySignature: ProviderMethod<'verifySignature'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { publicKey, dataHash, signature } = req.params
+    requireString(req, req.params, 'publicKey')
+    requireString(req, req.params, 'dataHash')
+    requireString(req, req.params, 'signature')
+
+    try {
+        res.result = {
+            isValid: nt.verifySignature(publicKey, dataHash, signature),
+        }
+        end()
+    } catch (e) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'> = async (
     req,
     res,
@@ -1127,6 +1146,7 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     decodeOutput,
     decodeTransaction,
     decodeTransactionEvents,
+    verifySignature,
     sendUnsignedExternalMessage,
     addAsset,
     signData,
