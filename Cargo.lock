@@ -765,7 +765,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1223a1c2d8275f01e50ddbb4180b7a34ce7fafff"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -812,7 +812,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1223a1c2d8275f01e50ddbb4180b7a34ce7fafff"
 dependencies = [
  "anyhow",
  "base64",
@@ -839,7 +839,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1223a1c2d8275f01e50ddbb4180b7a34ce7fafff"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -849,7 +849,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1223a1c2d8275f01e50ddbb4180b7a34ce7fafff"
 dependencies = [
  "either",
  "proc-macro2",
@@ -860,7 +860,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.7.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#a1eca3572de1286e0deceaaf7fc1dee6e8d0680a"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#1223a1c2d8275f01e50ddbb4180b7a34ce7fafff"
 dependencies = [
  "anyhow",
  "base64",
@@ -1093,9 +1093,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d0b9745dc2debf507c8422de05d7226cc1f0644216dfdfead988f9b1ab32a7"
+checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
 dependencies = [
  "proc-macro2",
 ]

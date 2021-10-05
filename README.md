@@ -37,7 +37,7 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 Features
 
 * Added local node support
-* Added `signData` and `addAsset` approval windows (use `ton-inpage-provider@^0.1.27`)
+* Added `signData` and `addAsset` approval windows (use `ton-inpage-provider@^0.1.28`)
 * Added `verifySignature` and `sendUnsignedExternalMessage` methods to provider api
 
 Bugfixes
