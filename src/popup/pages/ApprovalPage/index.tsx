@@ -1,12 +1,13 @@
 import * as React from 'react'
 
-import { ApproveContractInteraction } from '@popup/components/ApproveContractInteraction'
-import { ApproveRequestPermissions } from '@popup/components/ApproveRequestPermissions'
-import { ApproveSendMessage } from '@popup/components/ApproveSendMessage'
+import { ApproveContractInteraction } from '@popup/components/Approvals/ApproveContractInteraction'
+import { ApproveRequestPermissions } from '@popup/components/Approvals/ApproveRequestPermissions'
+import { ApproveSendMessage } from '@popup/components/Approvals/ApproveSendMessage'
+import { ApproveSignData } from '@popup/components/Approvals/ApproveSignData'
+import ApproveAddAsset from '@popup/components/Approvals/ApproveAddAsset'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
-import { ENVIRONMENT_TYPE_POPUP } from '@shared/constants'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, serializeError } from '@shared/utils'
 
@@ -90,8 +91,7 @@ export function ApprovalPage(): JSX.Element | null {
                     </div>
                 </div>
             )}
-
-            {approval.type === 'requestPermissions' && (
+            {approval.type === 'requestPermissions' ? (
                 <ApproveRequestPermissions
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
@@ -99,12 +99,25 @@ export function ApprovalPage(): JSX.Element | null {
                     onSubmit={resolvePendingApproval}
                     onReject={rejectPendingApproval}
                 />
-            )}
-
-            {approval.type === 'sendMessage' && (
+            ) : approval.type === 'addTip3Token' ? (
+                <ApproveAddAsset
+                    approval={approval}
+                    accountEntries={rpcState.state.accountEntries}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
+                />
+            ) : approval.type === 'signData' ? (
+                <ApproveSignData
+                    approval={approval}
+                    accountEntries={rpcState.state.accountEntries}
+                    storedKeys={rpcState.state.storedKeys}
+                    checkPassword={rpc.checkPassword}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
+                />
+            ) : approval.type === 'sendMessage' ? (
                 <ApproveSendMessage
                     approval={approval}
-                    networkName={rpcState.state.selectedConnection.name}
                     accountEntries={rpcState.state.accountEntries}
                     accountContractStates={rpcState.state.accountContractStates}
                     storedKeys={rpcState.state.storedKeys}
@@ -112,18 +125,17 @@ export function ApprovalPage(): JSX.Element | null {
                     onSubmit={resolvePendingApproval}
                     onReject={rejectPendingApproval}
                 />
-            )}
-
-            {approval.type === 'callContractMethod' && (
+            ) : approval.type === 'callContractMethod' ? (
                 <ApproveContractInteraction
                     approval={approval}
-                    networkName={rpcState.state.selectedConnection.name}
                     accountEntries={rpcState.state.accountEntries}
                     storedKeys={rpcState.state.storedKeys}
                     checkPassword={rpc.checkPassword}
                     onSubmit={resolvePendingApproval}
                     onReject={rejectPendingApproval}
                 />
+            ) : (
+                <>Unknown approval</>
             )}
         </>
     )

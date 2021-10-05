@@ -2,16 +2,14 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
+import Approval from '../Approval'
 import { EnterPassword } from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
-import UserAvatar from '@popup/components/UserAvatar'
-import WebsiteIcon from '@popup/components/WebsiteIcon'
 import { parseError, prepareKey } from '@popup/utils'
 import { PendingApproval } from '@shared/backgroundApi'
 
 type Props = {
     approval: PendingApproval<'callContractMethod'>
-    networkName: string
     accountEntries: { [address: string]: nt.AssetsList }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
@@ -22,7 +20,6 @@ type Props = {
 export function ApproveContractInteraction({
     approval,
     accountEntries,
-    networkName,
     storedKeys,
     checkPassword,
     onSubmit,
@@ -35,7 +32,6 @@ export function ApproveContractInteraction({
     const [error, setError] = React.useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = React.useState(false)
 
-    // TODO: somehow select proper account
     const account = window.ObjectExt.values(accountEntries).find(
         (account) => account.tonWallet.publicKey == publicKey
     )
@@ -70,11 +66,9 @@ export function ApproveContractInteraction({
 
     const iterateItems = (object: object) => {
         return Object.entries(object).map(([key, value], i) => (
-            <div className="connect-wallet__details__description-param-data__block" key={i}>
-                <div className="connect-wallet__details__description-param-data__block--param-name">
-                    {key}
-                </div>
-                <div className="connect-wallet__details__description-param-data__block--value">
+            <div className="approval__spend-details-param-data__block" key={i}>
+                <div className="approval__spend-details-param-data__block--param-name">{key}</div>
+                <div className="approval__spend-details-param-data__block--value">
                     {value instanceof Array ? (
                         <pre>{JSON.stringify(value, undefined, 2)}</pre>
                     ) : typeof value === 'object' ? (
@@ -89,44 +83,18 @@ export function ApproveContractInteraction({
 
     return (
         <>
-            <div className="connect-wallet">
-                <div className="connect-wallet__spend-top-panel">
-                    <div className="connect-wallet__spend-top-panel__network">
-                        <div className="connect-wallet__address-entry">
-                            <UserAvatar address={account.tonWallet.address} small />
-                            <div className="connect-wallet__spend-top-panel__account">
-                                {account?.name}
-                            </div>
-                        </div>
-                        <div className="connect-wallet__network" style={{ marginBottom: '0' }}>
-                            {networkName}
-                        </div>
-                    </div>
-                    <div className="connect-wallet__spend-top-panel__site">
-                        <WebsiteIcon origin={origin} />
-                        <div className="connect-wallet__address-entry">{origin}</div>
-                    </div>
-                    <h3 className="connect-wallet__spend-top-panel__header noselect">
-                        Contract interaction
-                    </h3>
-                </div>
-                <div className="connect-wallet__spend-details">
-                    <div className="connect-wallet__details__description">
-                        <div className="connect-wallet__details__description-param">
-                            <span className="connect-wallet__details__description-param-desc">
-                                Contract
-                            </span>
-                            <span className="connect-wallet__details__description-param-value">
-                                {recipient}
-                            </span>
+            <Approval account={account} title="Contract interaction" origin={origin}>
+                <div className="approval__wrapper">
+                    <div className="approval__spend-details">
+                        <div className="approval__spend-details-param">
+                            <span className="approval__spend-details-param-desc">Contract</span>
+                            <span className="approval__spend-details-param-value">{recipient}</span>
                         </div>
                         {payload && (
-                            <div className="connect-wallet__details__description-param">
-                                <span className="connect-wallet__details__description-param-desc">
-                                    Data
-                                </span>
-                                <div className="connect-wallet__details__description-param-data">
-                                    <div className="connect-wallet__details__description-param-data__method">
+                            <div className="approval__spend-details-param">
+                                <span className="approval__spend-details-param-desc">Data</span>
+                                <div className="approval__spend-details-param-data">
+                                    <div className="approval__spend-details-param-data__method">
                                         <span>Method:</span>
                                         <span>{payload.method}</span>
                                     </div>
@@ -135,12 +103,9 @@ export function ApproveContractInteraction({
                             </div>
                         )}
                     </div>
-                </div>
-                <div className="connect-wallet__buttons">
-                    <div className="connect-wallet__buttons-button">
+
+                    <footer className="approval__footer">
                         <Button type="button" white text="Reject" onClick={onReject} />
-                    </div>
-                    <div className="connect-wallet__buttons-button">
                         <Button
                             type="submit"
                             text="Send"
@@ -148,9 +113,9 @@ export function ApproveContractInteraction({
                                 setPasswordModalVisible(true)
                             }}
                         />
-                    </div>
+                    </footer>
                 </div>
-            </div>
+            </Approval>
             <SlidingPanel
                 isOpen={passwordModalVisible}
                 onClose={() => setPasswordModalVisible(false)}

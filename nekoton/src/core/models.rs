@@ -225,7 +225,7 @@ const KNOWN_PAYLOAD: &str = r#"
 export type KnownPayload =
     | EnumItem<'comment', string>
     | EnumItem<'token_outgoing_transfer', { to: TransferRecipient, tokens: string }>
-    | EnumItem<'token_swap_back', { tokens: string, to: string }>;
+    | EnumItem<'token_swap_back', { tokens: string, callbackAddress: string }>;
 "#;
 
 #[wasm_bindgen]
@@ -248,7 +248,7 @@ pub fn make_known_payload(data: Option<models::KnownPayload>) -> Option<KnownPay
             "token_swap_back",
             ObjectBuilder::new()
                 .set("tokens", swap_back.tokens.to_string())
-                .set("to", swap_back.to)
+                .set("callbackAddress", swap_back.callback_address.to_string())
                 .build(),
         ),
         _ => return None,
@@ -381,7 +381,7 @@ pub fn make_multisig_submit_transaction_info(
 #[wasm_bindgen(typescript_custom_section)]
 const MULTISIG_CONFIRM_TRANSACTION_INFO: &str = r#"
 export type MultisigConfirmTransactionInfo = {
-    custodian: string, 
+    custodian: string,
     transactionId: string,
 };
 "#;
@@ -447,8 +447,8 @@ extern "C" {
 
 pub fn make_symbol(data: models::Symbol) -> Symbol {
     ObjectBuilder::new()
-        .set("name", data.symbol)
-        .set("fullName", data.name)
+        .set("name", data.name)
+        .set("fullName", data.full_name)
         .set("decimals", data.decimals)
         .set("rootTokenContract", data.root_token_contract.to_string())
         .build()
@@ -585,7 +585,7 @@ pub fn make_transaction(data: models::Transaction) -> Transaction {
         )
         .set("createdAt", data.created_at)
         .set("aborted", data.aborted)
-        .set("exitCode", data.result_code)
+        .set("exitCode", data.exit_code)
         .set("origStatus", make_account_status(data.orig_status))
         .set("endStatus", make_account_status(data.end_status))
         .set("totalFees", data.total_fees.to_string())
@@ -670,7 +670,8 @@ extern "C" {
 
 pub fn make_message(data: models::Message) -> Message {
     let (body, body_hash) = if let Some(body) = data.body {
-        (Some(body.data), Some(body.hash.to_hex_string()))
+        let data = ton_types::serialize_toc(&body.data).expect("Shouldn't fail");
+        (Some(base64::encode(data)), Some(body.hash.to_hex_string()))
     } else {
         (None, None)
     };
@@ -732,7 +733,13 @@ pub fn make_transactions_batch_info(data: models::TransactionsBatchInfo) -> Tran
     ObjectBuilder::new()
         .set("minLt", data.min_lt.to_string())
         .set("maxLt", data.max_lt.to_string())
-        .set("batchType", if data.old { "old" } else { "new" })
+        .set(
+            "batchType",
+            match data.batch_type {
+                models::TransactionsBatchType::Old => "old",
+                models::TransactionsBatchType::New => "new",
+            },
+        )
         .build()
         .unchecked_into()
 }

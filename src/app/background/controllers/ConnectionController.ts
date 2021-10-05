@@ -19,6 +19,7 @@ const NETWORK_PRESETS = {
         data: {
             endpoint: 'https://main.ton.dev/graphql',
             timeout: 60000,
+            local: false,
         },
     } as ConnectionData,
     [1]: {
@@ -28,6 +29,7 @@ const NETWORK_PRESETS = {
         data: {
             endpoint: 'https://main2.ton.dev/graphql',
             timeout: 60000,
+            local: false,
         },
     } as ConnectionData,
     [2]: {
@@ -37,6 +39,7 @@ const NETWORK_PRESETS = {
         data: {
             endpoint: 'https://main3.ton.dev/graphql',
             timeout: 60000,
+            local: false,
         },
     } as ConnectionData,
     [3]: ({
@@ -54,6 +57,7 @@ const NETWORK_PRESETS = {
         data: {
             endpoint: 'https://net.ton.dev/graphql',
             timeout: 60000,
+            local: false,
         },
     } as ConnectionData,
     [5]: {
@@ -63,6 +67,17 @@ const NETWORK_PRESETS = {
         data: {
             endpoint: 'https://gql.custler.net/graphql',
             timeout: 60000,
+            local: false,
+        },
+    } as ConnectionData,
+    [100]: {
+        name: 'Local node',
+        group: 'localnet',
+        type: 'graphql',
+        data: {
+            endpoint: 'http://127.0.0.1/graphql',
+            timeout: 60000,
+            local: true,
         },
     } as ConnectionData,
 }
@@ -314,12 +329,13 @@ export class ConnectionController extends BaseController<
         }
 
         try {
-            const { connection, connectionData } = await (params.type === 'graphql'
+            const { shouldTest, connection, connectionData } = await (params.type === 'graphql'
                 ? async () => {
                       const socket = new GqlSocket()
                       const connection = await socket.connect(params.data)
 
                       return {
+                          shouldTest: !params.data.local,
                           connection,
                           connectionData: {
                               group: params.group,
@@ -336,6 +352,7 @@ export class ConnectionController extends BaseController<
                       const connection = await socket.connect(params.data)
 
                       return {
+                          shouldTest: true,
                           connection,
                           connectionData: {
                               group: params.group,
@@ -348,7 +365,10 @@ export class ConnectionController extends BaseController<
                       }
                   })()
 
-            if ((await testConnection(connectionData)) == TestConnectionResult.CANCELLED) {
+            if (
+                shouldTest &&
+                (await testConnection(connectionData)) == TestConnectionResult.CANCELLED
+            ) {
                 connection.free()
                 return
             }
@@ -430,6 +450,10 @@ export class GqlSocket {
 
             constructor(params: GqlSocketParams) {
                 this.params = params
+            }
+
+            isLocal(): boolean {
+                return this.params.local
             }
 
             send(data: string, handler: nt.GqlQuery) {

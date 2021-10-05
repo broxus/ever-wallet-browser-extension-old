@@ -257,6 +257,34 @@ export class AccountController extends BaseController<
         })
     }
 
+    public async getTokenRootDetails(
+        rootContract: string,
+        ownerAddress: string
+    ): Promise<nt.RootTokenContractDetailsWithAddress> {
+        return this.config.connectionController.use(async ({ data: { connection } }) => {
+            try {
+                return await connection.getTokenRootDetails(rootContract, ownerAddress)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
+    }
+
+    public async getTokenWalletBalance(tokenWallet: string): Promise<string> {
+        return this.config.connectionController.use(async ({ data: { connection } }) => {
+            try {
+                return await connection.getTokenWalletBalance(tokenWallet)
+            } catch (e) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
+    }
+
+    public hasTokenWallet(address: string, rootTokenContract: string): boolean {
+        const subscriptions = this._tokenWalletSubscriptions.get(address)
+        return subscriptions?.get(rootTokenContract) != null
+    }
+
     public async updateTokenWallets(address: string, params: TokenWalletsToUpdate): Promise<void> {
         const { accountsStorage, connectionController } = this.config
 
@@ -1035,6 +1063,10 @@ export class AccountController extends BaseController<
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
+    }
+
+    public async signData(data: string, password: nt.KeyPassword) {
+        return this.config.keyStore.signData(data, password)
     }
 
     public async signPreparedMessage(

@@ -109,6 +109,8 @@ export type GqlSocketParams = {
     endpoint: string
     // Request timeout in milliseconds
     timeout: number
+    // Gql node type
+    local: boolean
 }
 
 export type JrpcSocketParams = {
@@ -129,6 +131,20 @@ export type ApprovalApi = {
             permissions: Permission[]
         }
         output: Partial<RawPermissions>
+    }
+    addTip3Token: {
+        input: {
+            account: string
+            details: nt.RootTokenContractDetailsWithAddress
+        }
+        output: {}
+    }
+    signData: {
+        input: {
+            publicKey: string
+            data: string
+        }
+        output: nt.KeyPassword
     }
     callContractMethod: {
         input: {
