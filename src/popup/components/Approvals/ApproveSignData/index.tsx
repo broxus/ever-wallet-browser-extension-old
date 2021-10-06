@@ -134,7 +134,7 @@ export function ApproveSignData({
                         <Button type="button" white text="Reject" onClick={onReject} />
                         <Button
                             type="submit"
-                            text="Send"
+                            text="Sign"
                             onClick={() => {
                                 setPasswordModalVisible(true)
                             }}

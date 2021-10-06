@@ -340,7 +340,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res.result = {
         version,
         numericVersion: convertVersionToInt32(version),
-        selectedConnection: selectedConnection.name,
+        selectedConnection: selectedConnection.group,
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
