@@ -600,10 +600,11 @@ fn parse_token_value(
     let value = match param {
         &ton_abi::ParamType::Uint(size) | &ton_abi::ParamType::VarUint(size) => {
             let number = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if let Some(value) = value.strip_prefix("0x") {
                     BigUint::from_str_radix(value, 16)
                 } else {
-                    BigUint::from_str(&value)
+                    BigUint::from_str(value)
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
@@ -630,10 +631,11 @@ fn parse_token_value(
         }
         &ton_abi::ParamType::Int(size) | &ton_abi::ParamType::VarInt(size) => {
             let number = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if let Some(value) = value.strip_prefix("0x") {
                     BigInt::from_str_radix(value, 16)
                 } else {
-                    BigInt::from_str(&value)
+                    BigInt::from_str(value)
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
@@ -706,6 +708,7 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Cell => {
             let value = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if value.is_empty() {
                     Ok(ton_types::Cell::default())
                 } else {
@@ -751,7 +754,8 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Address => {
             let value = if let Some(value) = value.as_string() {
-                MsgAddressInt::from_str(&value).map_err(|_| AbiError::InvalidAddress)
+                let value = value.trim();
+                MsgAddressInt::from_str(value).map_err(|_| AbiError::InvalidAddress)
             } else {
                 Err(AbiError::ExpectedString)
             }?;
@@ -763,10 +767,11 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Bytes => {
             let value = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if value.is_empty() {
                     Ok(Vec::new())
                 } else {
-                    base64::decode(&value).map_err(|_| AbiError::InvalidBytes)
+                    base64::decode(value).map_err(|_| AbiError::InvalidBytes)
                 }
             } else {
                 Err(AbiError::ExpectedString)
@@ -780,7 +785,8 @@ fn parse_token_value(
         }
         &ton_abi::ParamType::FixedBytes(size) => {
             let value = if let Some(value) = value.as_string() {
-                base64::decode(&value).map_err(|_| AbiError::InvalidBytes)
+                let value = value.trim();
+                base64::decode(value).map_err(|_| AbiError::InvalidBytes)
             } else {
                 Err(AbiError::ExpectedString)
             }?;
@@ -793,10 +799,11 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Token => {
             let value = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if let Some(value) = value.strip_prefix("0x") {
                     u128::from_str_radix(value, 16)
                 } else {
-                    u128::from_str(&value)
+                    u128::from_str(value)
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
@@ -813,10 +820,11 @@ fn parse_token_value(
         }
         ton_abi::ParamType::Time => {
             let value = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if let Some(value) = value.strip_prefix("0x") {
                     u64::from_str_radix(value, 16)
                 } else {
-                    u64::from_str(&value)
+                    u64::from_str(value)
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else if let Some(value) = value.as_f64() {
@@ -839,10 +847,11 @@ fn parse_token_value(
                     Err(AbiError::ExpectedUnsignedNumber)
                 }
             } else if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if let Some(value) = value.strip_prefix("0x") {
                     u32::from_str_radix(value, 16)
                 } else {
-                    u32::from_str(&value)
+                    u32::from_str(value)
                 }
                 .map_err(|_| AbiError::InvalidNumber)
             } else {
@@ -853,10 +862,11 @@ fn parse_token_value(
         }
         ton_abi::ParamType::PublicKey => {
             let value = if let Some(value) = value.as_string() {
+                let value = value.trim();
                 if value.is_empty() {
                     Ok(None)
                 } else {
-                    hex::decode(value.strip_prefix("0x").unwrap_or(&value))
+                    hex::decode(value.strip_prefix("0x").unwrap_or(value))
                         .map_err(|_| AbiError::InvalidPublicKey)
                         .and_then(|value| {
                             ed25519_dalek::PublicKey::from_bytes(&value)
@@ -1151,15 +1161,19 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         "bool" => ton_abi::ParamType::Bool,
         "tuple" => ton_abi::ParamType::Tuple(Vec::new()),
         s if s.starts_with("int") => {
-            let len = (&s[3..])
-                .parse::<usize>()
-                .map_err(|_| AbiError::ExpectedParamType)?;
+            let len = usize::from_str(&s[3..]).map_err(|_| AbiError::ExpectedParamType)?;
             ton_abi::ParamType::Int(len)
         }
         s if s.starts_with("uint") => {
-            let len = (&s[4..])
-                .parse::<usize>()
-                .map_err(|_| AbiError::ExpectedParamType)?;
+            let len = usize::from_str(&s[4..]).map_err(|_| AbiError::ExpectedParamType)?;
+            ton_abi::ParamType::Uint(len)
+        }
+        s if s.starts_with("varint") => {
+            let len = usize::from_str(&s[6..]).map_err(|_| AbiError::ExpectedParamType)?;
+            ton_abi::ParamType::Int(len)
+        }
+        s if s.starts_with("varuint") => {
+            let len = usize::from_str(&s[7..]).map_err(|_| AbiError::ExpectedParamType)?;
             ton_abi::ParamType::Uint(len)
         }
         s if s.starts_with("map(") && s.ends_with(')') => {
@@ -1182,17 +1196,20 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         }
         "cell" => ton_abi::ParamType::Cell,
         "address" => ton_abi::ParamType::Address,
-        "gram" => ton_abi::ParamType::Token,
+        "token" | "gram" => ton_abi::ParamType::Token,
         "bytes" => ton_abi::ParamType::Bytes,
         s if s.starts_with("fixedbytes") => {
-            let len = (&s[10..])
-                .parse::<usize>()
-                .map_err(|_| AbiError::ExpectedParamType)?;
+            let len = usize::from_str(&s[10..]).map_err(|_| AbiError::ExpectedParamType)?;
             ton_abi::ParamType::FixedBytes(len)
         }
         "time" => ton_abi::ParamType::Time,
         "expire" => ton_abi::ParamType::Expire,
         "pubkey" => ton_abi::ParamType::PublicKey,
+        "string" => ton_abi::ParamType::String,
+        s if s.starts_with("optional(") && s.ends_with(")") => {
+            let inner_type = parse_param_type(&s[9..s.len() - 1])?;
+            ton_abi::ParamType::Optional(Box::new(inner_type))
+        }
         _ => return Err(AbiError::ExpectedParamType),
     };
 
