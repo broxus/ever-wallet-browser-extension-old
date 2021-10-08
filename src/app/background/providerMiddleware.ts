@@ -340,7 +340,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res.result = {
         version,
         numericVersion: convertVersionToInt32(version),
-        selectedConnection: selectedConnection.name,
+        selectedConnection: selectedConnection.group,
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
@@ -1011,8 +1011,8 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         },
     })
 
-    if (transaction.outMessages.findIndex((message: nt.Message) => message.dst == recipient) < 0) {
-        throw invalidRequest(req, 'No output messages produced')
+    if (transaction.resultCode != 0) {
+        throw invalidRequest(req, 'Action phase failed')
     }
 
     res.result = {
