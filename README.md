@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.17 (2021-10-12)
+
+Bugfixes
+
+* Fixed zerostate accounts management (added special handlers for `-1:777..`, `-1:888..` and `-1:999..`)
+
 ### 0.2.16 (2021-10-09)
 
 Bugfixes
