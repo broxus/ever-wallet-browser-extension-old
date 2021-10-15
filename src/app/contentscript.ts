@@ -43,8 +43,8 @@ function checkExcludedDomains() {
         'dropbox.com',
         'atlassian.net',
         'atlassian.com',
-        'broxus.github.io',
         'ozon.ru',
+        'mail.ru',
     ]
 
     const currentUrl = window.location.href

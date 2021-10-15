@@ -341,6 +341,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
         version,
         numericVersion: convertVersionToInt32(version),
         selectedConnection: selectedConnection.group,
+        supportedPermissions: ['tonClient', 'accountInteraction'],
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
