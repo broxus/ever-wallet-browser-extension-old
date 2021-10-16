@@ -75,7 +75,7 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
     React.useEffect(() => {
         ;(async () => {
             const [, state] = await Promise.all([
-                init('index_bg.wasm'),
+                init(),
                 (async () => {
                     rpc.onNotification((data) => {
                         const stateToUpdate = data.params

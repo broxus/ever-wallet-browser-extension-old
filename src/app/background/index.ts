@@ -22,7 +22,7 @@ let uiIsTriggering: boolean = false
 const openNekotonTabsIDs: { [id: number]: true } = {}
 
 const initialize = async () => {
-    await init('index_bg.wasm')
+    await init()
     await setupController()
 }
 

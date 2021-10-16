@@ -57,13 +57,9 @@ module.exports = {
         },
     },
     plugins: [
-        new IgnorePlugin({
-            resourceRegExp: /^wbg$/,
-        }),
         new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: path.resolve(__dirname, './nekoton/pkg/index_bg.wasm') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon16.png') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon48.png') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon128.png') },
