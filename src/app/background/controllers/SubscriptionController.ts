@@ -164,7 +164,7 @@ export class SubscriptionController extends BaseController<
         return await subscription.use(async (contract) => {
             try {
                 return await contract.sendMessageLocally(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })
@@ -196,7 +196,7 @@ export class SubscriptionController extends BaseController<
                     try {
                         await contract.sendMessage(signedMessage)
                         subscription.skipRefreshTimer()
-                    } catch (e) {
+                    } catch (e: any) {
                         throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
                     }
                 })
@@ -394,7 +394,7 @@ class GenericContractSubscription extends ContractSubscription<nt.GenericContrac
             }
 
             return new GenericContractSubscription(connection, release, address, contract)
-        } catch (e) {
+        } catch (e: any) {
             release()
             throw e
         }

@@ -13,10 +13,10 @@ type IEnterPasswordScreen = {
 }
 
 const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, onBack }) => {
-    const { register, handleSubmit, errors, watch } = useForm()
+    const { register, handleSubmit, watch, formState } = useForm()
 
     const trySubmit = (data: any) => {
-        !disabled && onSubmit(data.pwd)
+        !disabled && onSubmit(data.password)
     }
 
     return (
@@ -39,8 +39,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
                             autoFocus
                             disabled={disabled}
                             type={'password'}
-                            name="pwd"
-                            register={register({
+                            {...register('password', {
                                 required: true,
                                 minLength: 6,
                             })}
@@ -48,19 +47,18 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
                         <Input
                             label={'Confirm password'}
                             type={'password'}
-                            name="pwdConfirm"
                             disabled={disabled}
-                            register={register({
+                            {...register('passwordConfirm', {
                                 required: true,
-                                validate: (value) => value === watch('pwd'),
+                                validate: (value) => value === watch('password'),
                             })}
                         />
-                        {errors.pwd && (
+                        {formState.errors.password && (
                             <div className="check-seed__content-error">
                                 The password is required and must be minimum 6 characters long
                             </div>
                         )}
-                        {errors.pwdConfirm && (
+                        {formState.errors.passwordConfirm && (
                             <div className="check-seed__content-error">
                                 Your password doesn't match
                             </div>

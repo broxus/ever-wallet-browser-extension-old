@@ -77,7 +77,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                 drawer.setPanel(Panel.MANAGE_SEEDS)
                 accountability.onManageAccount(account)
             }
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)
@@ -260,7 +260,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         autoFocus
                                         type="text"
                                         value={name || ''}
-                                        onChange={setName}
+                                        onChange={(e) => setName(e.target.value)}
                                     />
                                 </div>
                                 {step === FlowStep.ENTER_ADDRESS && (
@@ -271,7 +271,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                             autoFocus
                                             type="text"
                                             value={address || ''}
-                                            onChange={setAddress}
+                                            onChange={(e) => setAddress(e.target.value)}
                                         />
                                     </div>
                                 )}

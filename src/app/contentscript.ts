@@ -73,7 +73,7 @@ const injectScript = () => {
         scriptTag.setAttribute('async', 'false')
         container.insertBefore(scriptTag, container.children[0])
         container.removeChild(scriptTag)
-    } catch (e) {
+    } catch (e: any) {
         console.error('Nekoton: Provider injection failed', e)
     }
 }

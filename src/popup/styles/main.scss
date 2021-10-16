@@ -1,8 +1,6 @@
-@import 'fonts';
+@import "fonts";
 @import 'reset';
 @import 'colors';
-
-$font-family: 'PT Root UI', serif;
 
 html {
     width: 100%;
@@ -11,12 +9,14 @@ html {
     padding: 0;
     box-sizing: border-box;
 
-    font-family: $font-family;
+    font-family: 'PT Root UI', sans-serif;
     overflow: hidden;
     overflow-y: auto;
 }
 
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
 *:not(.initial-scroll)::-webkit-scrollbar {
     width: 0;

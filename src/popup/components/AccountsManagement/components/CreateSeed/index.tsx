@@ -85,7 +85,7 @@ export function CreateSeed(): JSX.Element {
                 accountability.onManageMasterKey(entry)
                 accountability.onManageDerivedKey(entry)
             }
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
             setInProcess(false)
         } finally {
@@ -123,7 +123,7 @@ export function CreateSeed(): JSX.Element {
             validateMnemonic(phrase, mnemonicType)
             setSeed({ phrase, mnemonicType })
             setStep(FlowStep.PASSWORD_REQUEST)
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         }
     }
@@ -171,7 +171,7 @@ export function CreateSeed(): JSX.Element {
                                     label="Enter seed name..."
                                     type="text"
                                     value={name || ''}
-                                    onChange={setName}
+                                    onChange={(e) => setName(e.target.value)}
                                 />
                             </div>
 

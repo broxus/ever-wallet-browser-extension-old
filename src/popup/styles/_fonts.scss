@@ -1,47 +1,29 @@
 @font-face {
-    font-family: 'DAOpenSans';
-    font-weight: normal;
-    src: url('../fonts/DAOpenSansRegular.ttf');
-}
-
-@font-face {
-    font-family: 'DAOpenSans';
-    font-weight: 600;
-    src: url('../fonts/DAOpenSansSemibold.ttf');
-}
-
-@font-face {
-    font-family: 'DAOpenSans';
-    font-weight: bold;
-    src: url('../fonts/DAOpenSansBold.ttf');
-}
-
-@font-face {
     font-family: 'PT Root UI';
     font-weight: normal;
-    src: url('../fonts/PT-Root-UI-Regular.ttf');
+    src: url(../fonts/PT-Root-UI-Regular.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'PT Root UI';
     font-weight: 500;
-    src: url('../fonts/PT-Root-UI-Medium.ttf');
+    src: url(../fonts/PT-Root-UI-Medium.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'PT Root UI';
     font-weight: bold;
-    src: url('../fonts/PT-Root-UI-Bold.ttf');
+    src: url(../fonts/PT-Root-UI-Bold.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'PT Mono';
     font-weight: normal;
-    src: url('../fonts/PTMono-Regular.ttf');
+    src: url(../fonts/PTMono-Regular.ttf) format('truetype');
 }
 
 @font-face {
     font-family: 'PT Mono';
     font-weight: bold;
-    src: url('../fonts/PTMono-Bold.ttf');
+    src: url(../fonts/PTMono-Bold.ttf) format('truetype');
 }

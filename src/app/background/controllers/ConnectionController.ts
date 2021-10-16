@@ -42,14 +42,14 @@ const NETWORK_PRESETS = {
             local: false,
         },
     } as ConnectionData,
-    [3]: ({
+    [3]: {
         name: 'Mainnet (ADNL)',
         group: 'mainnet',
         type: 'jrpc',
         data: {
             endpoint: 'https://jrpc.broxus.com/rpc',
         },
-    } as unknown) as ConnectionData,
+    } as unknown as ConnectionData,
     [4]: {
         name: 'Testnet',
         group: 'testnet',
@@ -279,7 +279,7 @@ export class ConnectionController extends BaseController<
                 await this.startSwitchingNetwork(connection).then((handle) => handle.switch())
                 console.log(`Successfully connected to ${this.state.selectedConnection.name}`)
                 return
-            } catch (e) {
+            } catch (e: any) {
                 console.error('Connection failed:', e)
             }
         }
@@ -375,7 +375,7 @@ export class ConnectionController extends BaseController<
 
             this._initializedConnection = connectionData
             await this._saveSelectedConnectionId(params.id)
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(
                 RpcErrorCode.INTERNAL,
                 `Failed to create connection: ${e.toString()}`
@@ -467,7 +467,7 @@ export class GqlSocket {
                             body: data,
                         }).then((response) => response.text())
                         handler.onReceive(response)
-                    } catch (e) {
+                    } catch (e: any) {
                         handler.onError(e)
                     }
                 })()
@@ -498,7 +498,7 @@ export class JrpcSocket {
                             body: data,
                         }).then((response) => response.text())
                         handler.onReceive(response)
-                    } catch (e) {
+                    } catch (e: any) {
                         handler.onError(e)
                     }
                 })()

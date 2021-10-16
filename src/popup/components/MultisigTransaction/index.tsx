@@ -197,7 +197,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
             }).catch(console.error)
 
             drawer.setPanel(undefined)
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)

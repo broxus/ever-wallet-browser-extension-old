@@ -155,8 +155,8 @@ export function EnterPassword({
                                 disabled={disabled}
                                 value={password}
                                 onKeyDown={onKeyDown}
-                                onChange={setPassword}
-                                register={passwordRef}
+                                onChange={(e) => setPassword(e.target.value)}
+                                ref={passwordRef}
                             />
                             <div className="enter-password__field-hint">
                                 Enter password for seed:{' '}

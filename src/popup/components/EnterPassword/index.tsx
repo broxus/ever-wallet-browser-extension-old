@@ -21,7 +21,7 @@ export function EnterPassword({
     handleNext,
     handleBack,
 }: Props): JSX.Element {
-    const { register, handleSubmit, errors } = useForm<{ password: string }>()
+    const { register, handleSubmit, formState } = useForm<{ password: string }>()
 
     const onSubmit = ({ password }: { password: string }) => {
         handleNext(password)
@@ -34,8 +34,7 @@ export function EnterPassword({
                     <h2 className="enter-password__content-pwd-form-title">Enter your password</h2>
                     <form id="password" onSubmit={handleSubmit(onSubmit)}>
                         <Input
-                            name="password"
-                            register={register({
+                            {...register('password', {
                                 required: true,
                                 minLength: 6,
                             })}
@@ -44,9 +43,9 @@ export function EnterPassword({
                             autoFocus
                             type={'password'}
                         />
-                        {(errors.password || error) && (
+                        {(formState.errors.password || error) && (
                             <div className="check-seed__content-error">
-                                {errors.password && 'The password is required'}
+                                {formState.errors.password && 'The password is required'}
                                 {error}
                             </div>
                         )}

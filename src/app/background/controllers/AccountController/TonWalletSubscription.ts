@@ -44,7 +44,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
                 tonWallet,
                 handler
             )
-        } catch (e) {
+        } catch (e: any) {
             release()
             throw e
         }

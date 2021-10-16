@@ -86,7 +86,7 @@ const start = async () => {
         while (true) {
             try {
                 return await makeConnection()
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e)
                 await new Promise<void>((resolve) => {
                     setTimeout(() => resolve(), 1000)

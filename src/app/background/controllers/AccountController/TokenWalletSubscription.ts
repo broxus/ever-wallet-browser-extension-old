@@ -49,7 +49,7 @@ export class TokenWalletSubscription {
             )
 
             return new TokenWalletSubscription(connection, release, tokenWallet)
-        } catch (e) {
+        } catch (e: any) {
             console.log(owner, rootTokenContract)
             release()
             throw e
@@ -111,7 +111,7 @@ export class TokenWalletSubscription {
                     await this._tokenWalletMutex.use(async () => {
                         await this._tokenWallet.refresh()
                     })
-                } catch (e) {
+                } catch (e: any) {
                     console.error(
                         `Error during token wallet refresh (owner: ${this._owner}, root: ${this._symbol.rootTokenContract})`,
                         e

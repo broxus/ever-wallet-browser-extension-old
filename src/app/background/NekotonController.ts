@@ -340,7 +340,7 @@ export class NekotonController extends EventEmitter {
 
         try {
             await this._components.connectionController.trySwitchingNetwork(params, true)
-        } catch (e) {
+        } catch (e: any) {
             await this._components.connectionController.trySwitchingNetwork(currentNetwork, true)
         } finally {
             await this._components.accountController.startSubscriptions()
@@ -384,7 +384,7 @@ export class NekotonController extends EventEmitter {
                     method: 'sendUpdate',
                     params,
                 })
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e)
             }
         }

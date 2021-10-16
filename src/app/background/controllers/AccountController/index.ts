@@ -109,10 +109,8 @@ export class AccountController extends BaseController<
     AccountControllerState
 > {
     private readonly _tonWalletSubscriptions: Map<string, TonWalletSubscription> = new Map()
-    private readonly _tokenWalletSubscriptions: Map<
-        string,
-        Map<string, TokenWalletSubscription>
-    > = new Map()
+    private readonly _tokenWalletSubscriptions: Map<string, Map<string, TokenWalletSubscription>> =
+        new Map()
     private readonly _sendMessageRequests: Map<string, Map<string, SendMessageCallback>> = new Map()
     private readonly _accountsMutex = new Mutex()
 
@@ -251,7 +249,7 @@ export class AccountController extends BaseController<
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
                 return await connection.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
         })
@@ -264,7 +262,7 @@ export class AccountController extends BaseController<
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
                 return await connection.getTokenRootDetails(rootContract, ownerAddress)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
         })
@@ -274,7 +272,7 @@ export class AccountController extends BaseController<
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
                 return await connection.getTokenWalletBalance(tokenWallet)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
         })
@@ -306,9 +304,8 @@ export class AccountController extends BaseController<
                                     rootTokenContract
                                 )
                             } else {
-                                const tokenSubscriptions = this._tokenWalletSubscriptions.get(
-                                    address
-                                )
+                                const tokenSubscriptions =
+                                    this._tokenWalletSubscriptions.get(address)
                                 const subscription = tokenSubscriptions?.get(rootTokenContract)
                                 if (subscription != null) {
                                     tokenSubscriptions?.delete(rootTokenContract)
@@ -351,7 +348,7 @@ export class AccountController extends BaseController<
                 const assetsList = await accountsStorage.getAccount(address)
                 assetsList && this._updateAssetsList(assetsList)
             })
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -425,7 +422,7 @@ export class AccountController extends BaseController<
             }
 
             return entry
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -474,7 +471,7 @@ export class AccountController extends BaseController<
             const publicKeys = await keyStore.getPublicKeys(params)
 
             return publicKeys
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -579,7 +576,7 @@ export class AccountController extends BaseController<
             })
 
             return entry
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -658,7 +655,7 @@ export class AccountController extends BaseController<
 
             await this.startSubscriptions()
             return selectedAccount
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -825,7 +822,7 @@ export class AccountController extends BaseController<
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -856,7 +853,7 @@ export class AccountController extends BaseController<
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -881,7 +878,7 @@ export class AccountController extends BaseController<
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -896,7 +893,7 @@ export class AccountController extends BaseController<
         return subscription.use(async (wallet) => {
             try {
                 return await wallet.getMultisigPendingTransactions()
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
@@ -937,7 +934,7 @@ export class AccountController extends BaseController<
 
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -972,7 +969,7 @@ export class AccountController extends BaseController<
                 )
 
                 return await this.config.keyStore.sign(unsignedMessage, password)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage?.free()
@@ -1010,7 +1007,7 @@ export class AccountController extends BaseController<
 
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -1034,7 +1031,7 @@ export class AccountController extends BaseController<
                     params.payload || '',
                     params.notifyReceiver
                 )
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
@@ -1059,7 +1056,7 @@ export class AccountController extends BaseController<
                     params.amount,
                     params.proxyAddress
                 )
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
@@ -1115,7 +1112,7 @@ export class AccountController extends BaseController<
                     }
 
                     subscription.skipRefreshTimer()
-                } catch (e) {
+                } catch (e: any) {
                     throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
                 }
             }).catch((e) => {
@@ -1131,7 +1128,7 @@ export class AccountController extends BaseController<
         await subscription.use(async (wallet) => {
             try {
                 await wallet.preloadTransactions(lt, hash)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })
@@ -1154,7 +1151,7 @@ export class AccountController extends BaseController<
         await subscription.use(async (wallet) => {
             try {
                 await wallet.preloadTransactions(lt, hash)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })

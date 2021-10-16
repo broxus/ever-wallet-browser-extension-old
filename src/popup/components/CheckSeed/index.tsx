@@ -28,7 +28,7 @@ export const CheckSeedOnCreation: React.FC<ICheckSeed> = ({ onSubmit, onBack, se
 }
 
 const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
-    const { register, handleSubmit, errors } = useForm()
+    const { register, handleSubmit, formState } = useForm()
 
     const numbers = useMemo(() => generateRandomNumbers(), [seed])
 
@@ -45,19 +45,23 @@ const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
                     onSubmit={handleSubmit(onSubmit)}
                     className="check-seed__content-form"
                 >
-                    {numbers.map((item: number, i: number) => (
-                        <CheckSeedInput
-                            key={i}
-                            number={item}
-                            autoFocus={i === 0}
-                            name={`word${i}`}
-                            register={register({
-                                required: true,
-                                validate: (word: string) => validateWord(word, item),
-                            })}
-                        />
-                    ))}
-                    {(errors.word0 || errors.word1 || errors.word2 || errors.word3) && (
+                    {numbers.map((item: number, i: number) => {
+                        return (
+                            <CheckSeedInput
+                                key={i}
+                                number={item}
+                                autoFocus={i === 0}
+                                {...register(`word${i}`, {
+                                    required: true,
+                                    validate: (word: string) => validateWord(word, item),
+                                })}
+                            />
+                        )
+                    })}
+                    {(formState.errors.word0 ||
+                        formState.errors.word1 ||
+                        formState.errors.word2 ||
+                        formState.errors.word3) && (
                         <div className="check-seed__content-error">Your seed doesn't match</div>
                     )}
                 </form>

@@ -19,9 +19,10 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
     const { control, handleSubmit, setValue } = useForm()
 
     const [hints, setHints] = React.useState<LabelValueType[]>([])
-    const numbers = React.useMemo(() => new Array(wordsCount).fill(1).map((_, i) => i + 1), [
-        wordsCount,
-    ])
+    const numbers = React.useMemo(
+        () => new Array(wordsCount).fill(1).map((_, i) => i + 1),
+        [wordsCount]
+    )
 
     const onInputChange = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event == null || event.type === 'paste') {
@@ -57,7 +58,7 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                     })
                 }, 0)
             }
-        } catch (e) {
+        } catch (e: any) {
             console.log(e.message)
         }
     }
@@ -71,7 +72,7 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                     nextToFocus.focus?.()
                     nextToFocus.scrollIntoView({ behavior: 'smooth', block: 'center' })
                 }
-            } catch (e) {}
+            } catch (e: any) {}
         }
     }
 
@@ -104,10 +105,10 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                                         rules={{
                                             required: true,
                                         }}
-                                        render={(
-                                            { ref, onChange: onChangeControl },
-                                            { invalid }
-                                        ) => (
+                                        render={({
+                                            field: { ref, onChange: onChangeControl },
+                                            fieldState: { invalid },
+                                        }) => (
                                             <Select
                                                 ref={ref}
                                                 className={classNames({
@@ -115,7 +116,7 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                                                 })}
                                                 id={`select-index-${number}`}
                                                 listHeight={120}
-                                                options={(hints as unknown) as OptionsType}
+                                                options={hints as unknown as OptionsType}
                                                 placeholder="Word..."
                                                 showArrow={false}
                                                 showSearch
@@ -142,10 +143,10 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                                         rules={{
                                             required: true,
                                         }}
-                                        render={(
-                                            { ref, onChange: onChangeControl },
-                                            { invalid }
-                                        ) => (
+                                        render={({
+                                            field: { ref, onChange: onChangeControl },
+                                            fieldState: { invalid },
+                                        }) => (
                                             <Select
                                                 ref={ref}
                                                 className={classNames({
@@ -153,7 +154,7 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                                                 })}
                                                 id={`select-index-${number}`}
                                                 listHeight={120}
-                                                options={(hints as unknown) as OptionsType}
+                                                options={hints as unknown as OptionsType}
                                                 placeholder="Word..."
                                                 showArrow={false}
                                                 showSearch

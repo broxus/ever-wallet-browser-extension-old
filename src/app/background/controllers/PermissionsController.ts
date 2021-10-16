@@ -76,7 +76,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
                     resolve()
                 })
             })
-        } catch (e) {
+        } catch (e: any) {
             console.warn('Failed to load permissions', e)
         }
     }

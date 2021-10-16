@@ -50,7 +50,9 @@ type ContextConsumer = {
 
 export const closeCurrentWindow = () => {
     chrome.windows.getCurrent((windowDetails) => {
-        chrome.windows.remove(windowDetails.id)
+        if (windowDetails.id != null) {
+            chrome.windows.remove(windowDetails.id).catch(console.error)
+        }
     })
 }
 
@@ -81,7 +83,7 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
                         try {
                             console.log('Got state', stateToUpdate)
                             setState(stateToUpdate as ControllerState)
-                        } catch (e) {
+                        } catch (e: any) {
                             console.log(e.toString())
                         }
                     })

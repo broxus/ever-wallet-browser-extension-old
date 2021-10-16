@@ -91,7 +91,7 @@ export function TransactionsList({
                 console.log('Preloading transactions')
                 await preloadTransactions(continuation)
                 setLatestContinuation(continuation)
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e)
                 loading = false
             }

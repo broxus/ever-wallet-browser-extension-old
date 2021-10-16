@@ -9,17 +9,18 @@ type Props = {
     number: number
     autoFocus?: boolean
     name: string
-    register:
-        | (HTMLSelectElement & HTMLTextAreaElement & CustomElement<FieldValues> & HTMLInputElement)
-        | (FieldElement & Ref)
-        | null
+    ref?: any
+    onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void
+    onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
 export function CheckSeedInput({
     number,
     autoFocus = false,
     name,
-    register,
+    ref,
+    onBlur,
+    onChange,
 }: Props): JSX.Element {
     return (
         <div className="check-seed__input">
@@ -30,7 +31,9 @@ export function CheckSeedInput({
                 autoFocus={autoFocus}
                 type="text"
                 name={name}
-                register={register}
+                ref={ref}
+                onBlur={onBlur}
+                onChange={onChange}
             />
         </div>
     )

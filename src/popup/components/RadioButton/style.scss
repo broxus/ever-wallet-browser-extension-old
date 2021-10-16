@@ -1,3 +1,5 @@
+@use "sass:math";
+
 label,
 label:before,
 label:after {
@@ -82,8 +84,8 @@ $md-radio-ripple-size: 15px;
         }
 
         &::after {
-            top: $md-radio-size / 2 - $md-radio-checked-size / 2 + 20;
-            left: $md-radio-size / 2 - $md-radio-checked-size / 2;
+            top: math.div($md-radio-size, 2) - math.div($md-radio-checked-size, 2) + 20;
+            left: math.div($md-radio-size, 2) - math.div($md-radio-checked-size, 2);
             width: $md-radio-checked-size;
             height: $md-radio-checked-size;
             transform: scale(0);

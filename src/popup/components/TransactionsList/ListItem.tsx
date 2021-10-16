@@ -17,6 +17,7 @@ import {
     currentUtime,
     isConfirmTransaction,
 } from '@shared/utils'
+import Decimal from 'decimal.js'
 
 import './style.scss'
 
@@ -74,7 +75,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
     const { unconfirmedTransaction, multisigTransaction } = React.useMemo(() => {
         const source = transaction.inMessage.dst
 
-        return source != null
+        return source != null && transactionId != null
             ? {
                   unconfirmedTransaction:
                       rpcState.state.accountUnconfirmedTransactions[source]?.[transactionId],

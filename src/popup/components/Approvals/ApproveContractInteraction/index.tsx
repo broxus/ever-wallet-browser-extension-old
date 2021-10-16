@@ -57,7 +57,7 @@ export function ApproveContractInteraction({
             } else {
                 setError('Invalid password')
             }
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)

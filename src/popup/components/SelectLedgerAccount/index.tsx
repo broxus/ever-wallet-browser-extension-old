@@ -62,7 +62,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
             }
             setAccounts(accountSlice)
             setCurrentPage(accountSlice?.[0]?.index / 5 + 1)
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         }
         setLoading(false)
@@ -91,7 +91,7 @@ const SelectLedgerAccount: React.FC<ISelectLedgerAccount> = ({
                     contractType,
                     workchain: 0,
                 })
-            } catch (e) {
+            } catch (e: any) {
                 key && controllerRpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
                 setError(parseError(e))
             }

@@ -370,7 +370,7 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
             ),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -393,7 +393,7 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
         )
 
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -439,7 +439,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
             code,
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -465,7 +465,7 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
             address: nt.getExpectedAddress(tvc, abi, workchain || 0, publicKey, initParams),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -482,7 +482,7 @@ const packIntoCell: ProviderMethod<'packIntoCell'> = async (req, res, _next, end
             boc: nt.packIntoCell(structure as nt.AbiParam[], data),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -501,7 +501,7 @@ const unpackFromCell: ProviderMethod<'unpackFromCell'> = async (req, res, _next,
             data: nt.unpackFromCell(structure as nt.AbiParam[], boc, allowPartial),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -518,7 +518,7 @@ const extractPublicKey: ProviderMethod<'extractPublicKey'> = async (req, res, _n
             publicKey: nt.extractPublicKey(boc),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -535,7 +535,7 @@ const codeToTvc: ProviderMethod<'codeToTvc'> = async (req, res, _next, end, ctx)
             tvc: nt.codeToTvc(code),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -550,7 +550,7 @@ const splitTvc: ProviderMethod<'splitTvc'> = async (req, res, _next, end, ctx) =
     try {
         res.result = nt.splitTvc(tvc)
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -573,7 +573,7 @@ const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
             boc: nt.encodeInternalInput(abi, method, params),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -591,7 +591,7 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     try {
         res.result = nt.decodeInput(body, abi, method, internal) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -608,7 +608,7 @@ const decodeEvent: ProviderMethod<'decodeEvent'> = async (req, res, _next, end, 
     try {
         res.result = nt.decodeEvent(body, abi, event) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -625,7 +625,7 @@ const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end
     try {
         res.result = nt.decodeOutput(body, abi, method) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -647,7 +647,7 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
     try {
         res.result = nt.decodeTransaction(transaction, abi, method) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -670,7 +670,7 @@ const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async
             events: nt.decodeTransactionEvents(transaction, abi),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -689,7 +689,7 @@ const verifySignature: ProviderMethod<'verifySignature'> = async (req, res, _nex
             isValid: nt.verifySignature(publicKey, dataHash, signature),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -716,7 +716,7 @@ const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'>
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -730,7 +730,7 @@ const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'>
             payload.params,
             60
         )
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -784,7 +784,7 @@ const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) =
             let rootContract: string
             try {
                 rootContract = nt.repackAddress(rawRootContract)
-            } catch (e) {
+            } catch (e: any) {
                 throw invalidRequest(req, e.toString())
             }
 
@@ -837,7 +837,7 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
     try {
         res.result = await accountController.signData(data, password)
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -863,7 +863,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -871,7 +871,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     if (payload != null) {
         try {
             body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         }
     }
@@ -904,7 +904,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         try {
             const signedMessage = unsignedMessage.signFake()
             return await wallet.estimateFees(signedMessage)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
             unsignedMessage.free()
@@ -939,7 +939,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -949,7 +949,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         try {
             body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
             knownPayload = nt.parseKnownPayload(body)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         }
     }
@@ -994,7 +994,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
 
         try {
             return await accountController.signPreparedMessage(unsignedMessage, password)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
             unsignedMessage.free()
@@ -1058,7 +1058,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -1073,7 +1073,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
             selectedPublicKey,
             60
         )
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -1091,7 +1091,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     try {
         unsignedMessage.refreshTimeout()
         signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     } finally {
         unsignedMessage.free()

@@ -16,7 +16,7 @@ type Props = {
 }
 
 export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
-    const { register, handleSubmit, errors, getValues, setValue } = useForm({
+    const { register, handleSubmit, getValues, setValue, formState } = useForm({
         defaultValues: data,
     })
 
@@ -31,7 +31,7 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
             const { custodians } = getValues()
             custodians?.splice(idx, 1)
             custodians?.forEach((value: string, i: number) => {
-                setValue(`custodians[${i}]`, value)
+                setValue(`custodians.${i}`, value)
             })
             setCustodiansCount(custodiansCount - 1)
         }
@@ -48,8 +48,7 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                         <div className="deploy-wallet__field-confirms">
                             <Input
                                 autoFocus
-                                name="reqConfirms"
-                                register={register({
+                                {...register('reqConfirms', {
                                     required: true,
                                     min: 1,
                                     max: custodiansCount,
@@ -60,14 +59,14 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                                 out of {custodiansCount} custodians
                             </div>
                         </div>
-                        {errors.reqConfirms !== undefined && (
+                        {formState.errors.reqConfirms !== undefined && (
                             <>
-                                {errors.reqConfirms.type === 'max' && (
+                                {formState.errors.reqConfirms.type === 'max' && (
                                     <div className="deploy-wallet__content-error">
                                         You can specify no more than {custodiansCount} custodians.
                                     </div>
                                 )}
-                                {errors.reqConfirms.type === 'required' && (
+                                {formState.errors.reqConfirms.type === 'required' && (
                                     <div className="deploy-wallet__content-error">
                                         Specify the number of custodians.
                                     </div>
@@ -80,42 +79,44 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                         Custodians
                     </div>
 
-                    {new Array(custodiansCount).fill(1).map((_, idx) => (
-                        <div key={`custodians[${idx}]`} className="deploy-wallet__content-form-row">
-                            <div className="deploy-wallet__content-header">
-                                Public key of Custodian {idx + 1}
-                            </div>
-                            <div
-                                className={classNames('deploy-wallet__field', {
-                                    'deploy-wallet__field--removable': custodiansCount > 1,
-                                })}
-                            >
-                                <Input
-                                    name={`custodians[${idx}]`}
-                                    register={register({
-                                        required: true,
-                                        pattern: /^[a-fA-F0-9]{64}$/,
+                    {new Array(custodiansCount).fill(1).map((_, idx) => {
+                        const name = `custodians.${idx}` as const
+                        return (
+                            <div key={name} className="deploy-wallet__content-form-row">
+                                <div className="deploy-wallet__content-header">
+                                    Public key of Custodian {idx + 1}
+                                </div>
+                                <div
+                                    className={classNames('deploy-wallet__field', {
+                                        'deploy-wallet__field--removable': custodiansCount > 1,
                                     })}
-                                    label="Enter public key..."
-                                    type="text"
-                                />
-                                {custodiansCount > 1 && (
-                                    <a
-                                        role="button"
-                                        className="deploy-wallet__field-delete"
-                                        onClick={removeField(idx)}
-                                    >
-                                        Delete
-                                    </a>
+                                >
+                                    <Input
+                                        {...register(name, {
+                                            required: true,
+                                            pattern: /^[a-fA-F0-9]{64}$/,
+                                        })}
+                                        label="Enter public key..."
+                                        type="text"
+                                    />
+                                    {custodiansCount > 1 && (
+                                        <a
+                                            role="button"
+                                            className="deploy-wallet__field-delete"
+                                            onClick={removeField(idx)}
+                                        >
+                                            Delete
+                                        </a>
+                                    )}
+                                </div>
+                                {formState.errors.custodians?.[idx]?.type === 'pattern' && (
+                                    <div className="deploy-wallet__content-error">
+                                        It doesn't look like a public key
+                                    </div>
                                 )}
                             </div>
-                            {errors.custodians?.[idx]?.type === 'pattern' && (
-                                <div className="deploy-wallet__content-error">
-                                    It doesn't look like a public key
-                                </div>
-                            )}
-                        </div>
-                    ))}
+                        )
+                    })}
 
                     <div className="deploy-wallet__content-form-row">
                         <a

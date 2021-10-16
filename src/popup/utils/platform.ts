@@ -125,19 +125,17 @@ export const openExtensionInBrowser = async (route?: string, query?: string) => 
     })
 }
 
-const getEnvironmentTypeCached = memoize(
-    (url): Environment => {
-        const parseUrl = new URL(url)
-        if (parseUrl.pathname === '/popup.html') {
-            return ENVIRONMENT_TYPE_POPUP
-        } else if (parseUrl.pathname === '/notification.html') {
-            return ENVIRONMENT_TYPE_NOTIFICATION
-        } else if (parseUrl.pathname === '/home.html') {
-            return ENVIRONMENT_TYPE_FULLSCREEN
-        }
-        return ENVIRONMENT_TYPE_BACKGROUND
+const getEnvironmentTypeCached = memoize((url): Environment => {
+    const parseUrl = new URL(url)
+    if (parseUrl.pathname === '/popup.html') {
+        return ENVIRONMENT_TYPE_POPUP
+    } else if (parseUrl.pathname === '/notification.html') {
+        return ENVIRONMENT_TYPE_NOTIFICATION
+    } else if (parseUrl.pathname === '/home.html') {
+        return ENVIRONMENT_TYPE_FULLSCREEN
     }
-)
+    return ENVIRONMENT_TYPE_BACKGROUND
+})
 
 export const getEnvironmentType = (url = window.location.href) => getEnvironmentTypeCached(url)
 
@@ -160,7 +158,7 @@ export class WindowManager {
     public async showPopup(params: ShowPopupParams) {
         const popup = await this._getPopup(params.group)
 
-        if (popup != null) {
+        if (popup != null && popup.id != null) {
             await focusWindow(popup.id)
             return
         } else {
@@ -192,12 +190,14 @@ export class WindowManager {
                 throw Error('NotificationManager: Failed to create popup window')
             }
 
-            if (popupWindow.left !== left && popupWindow.state !== 'fullscreen') {
-                await updateWindowPosition(popupWindow.id, left, top)
-            }
+            if (popupWindow.id != null) {
+                if (popupWindow.left !== left && popupWindow.state !== 'fullscreen') {
+                    await updateWindowPosition(popupWindow.id, left, top)
+                }
 
-            this._groups[params.group] = popupWindow.id
-            this._popups[popupWindow.id] = params.group
+                this._groups[params.group] = popupWindow.id
+                this._popups[popupWindow.id] = params.group
+            }
         }
     }
 
@@ -210,7 +210,7 @@ export class WindowManager {
 
         const windows = await getAllWindows()
         for (const window of windows) {
-            if (window.type !== 'popup') {
+            if (window.type !== 'popup' || window.id == null) {
                 continue
             }
 

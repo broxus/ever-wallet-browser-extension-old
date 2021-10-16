@@ -19,7 +19,7 @@ export function EnterPasswordForm({
     onSubmit,
     onBack,
 }: IEnterPasswordForm): JSX.Element {
-    const { register, handleSubmit, errors } = useForm<{
+    const { register, handleSubmit, formState } = useForm<{
         password: string
     }>()
 
@@ -39,8 +39,7 @@ export function EnterPasswordForm({
                         <div className="accounts-management__content-form-row">
                             <Input
                                 autoFocus
-                                name="password"
-                                register={register({
+                                {...register('password', {
                                     required: true,
                                     minLength: 6,
                                 })}
@@ -48,9 +47,9 @@ export function EnterPasswordForm({
                                 label="Enter seed password..."
                                 type="password"
                             />
-                            {(errors.password || error) && (
+                            {(formState.errors.password || error) && (
                                 <div className="accounts-management__content-error">
-                                    {errors.password && 'The password is required'}
+                                    {formState.errors.password && 'The password is required'}
                                     {error}
                                 </div>
                             )}

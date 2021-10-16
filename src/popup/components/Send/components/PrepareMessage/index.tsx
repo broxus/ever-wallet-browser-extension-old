@@ -89,7 +89,7 @@ export function PrepareMessage({
     )
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(keyEntries[0])
 
-    const { register, setValue, handleSubmit, errors } = useForm<MessageParams>()
+    const { register, setValue, handleSubmit, formState } = useForm<MessageParams>()
 
     let defaultValue: { value: string; label: string } = {
         value: '',
@@ -141,8 +141,8 @@ export function PrepareMessage({
         if (selectedAsset.length == 0) {
             messageToPrepare = {
                 publicKey: selectedKey.publicKey,
-                recipient: nt.repackAddress(data.recipient), //shouldn't throw exceptions due to higher level validation
-                amount: parseTons(data.amount),
+                recipient: nt.repackAddress(data.recipient.trim()), //shouldn't throw exceptions due to higher level validation
+                amount: parseTons(data.amount.trim()),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
             }
         } else {
@@ -155,8 +155,8 @@ export function PrepareMessage({
                 tonWalletAsset.address,
                 selectedAsset,
                 {
-                    amount: parseCurrency(data.amount, decimals),
-                    recipient: nt.repackAddress(data.recipient),
+                    amount: parseCurrency(data.amount.trim(), decimals),
+                    recipient: nt.repackAddress(data.recipient.trim()),
                     payload: data.comment ? nt.encodeComment(data.comment) : undefined,
                     notifyReceiver,
                 }
@@ -206,7 +206,7 @@ export function PrepareMessage({
                     },
                 },
             })
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)
@@ -267,12 +267,10 @@ export function PrepareMessage({
                             </div>
                         )}
                         <Input
-                            name="amount"
                             type="text"
                             className="prepare-message__field-input"
                             label="Amount..."
-                            onChange={(value) => setValue('amount', value.trim())}
-                            register={register({
+                            {...register('amount', {
                                 required: true,
                                 pattern: decimals != null ? amountPattern(decimals) : /^\d$/,
                                 validate: {
@@ -292,7 +290,7 @@ export function PrepareMessage({
                                             } else {
                                                 return current.greaterThan(0)
                                             }
-                                        } catch (e) {
+                                        } catch (e: any) {
                                             return false
                                         }
                                     },
@@ -305,7 +303,7 @@ export function PrepareMessage({
                                                 parseCurrency(value || '', decimals)
                                             )
                                             return current.lessThanOrEqualTo(balance)
-                                        } catch (e) {
+                                        } catch (e: any) {
                                             return false
                                         }
                                     },
@@ -313,44 +311,44 @@ export function PrepareMessage({
                             })}
                         />
 
-                        {errors.amount && (
+                        {formState.errors.amount && (
                             <div className="prepare-message__error-message">
-                                {errors.amount.type == 'required' && 'This field is required'}
-                                {errors.amount.type == 'invalidAmount' && 'Invalid amount'}
-                                {errors.amount.type == 'insufficientBalance' &&
+                                {formState.errors.amount.type == 'required' &&
+                                    'This field is required'}
+                                {formState.errors.amount.type == 'invalidAmount' &&
+                                    'Invalid amount'}
+                                {formState.errors.amount.type == 'insufficientBalance' &&
                                     'Insufficient balance'}
-                                {errors.amount.type == 'pattern' && 'Invalid format'}
+                                {formState.errors.amount.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
 
                         <Input
-                            name="recipient"
+                            type="text"
                             label="Recipient address..."
                             className="prepare-message__field-input"
-                            onChange={(value) => setValue('recipient', value)}
-                            register={register({
+                            {...register('recipient', {
                                 required: true,
                                 validate: (value: string) =>
                                     value != null && nt.checkAddress(value),
                             })}
-                            type="text"
                         />
 
-                        {errors.recipient && (
+                        {formState.errors.recipient && (
                             <div className="prepare-message__error-message">
-                                {errors.recipient.type == 'required' && 'This field is required'}
-                                {errors.recipient.type == 'validate' && 'Invalid recipient'}
-                                {errors.recipient.type == 'pattern' && 'Invalid format'}
+                                {formState.errors.recipient.type == 'required' &&
+                                    'This field is required'}
+                                {formState.errors.recipient.type == 'validate' &&
+                                    'Invalid recipient'}
+                                {formState.errors.recipient.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
 
                         <Input
-                            name="comment"
                             label="Comment..."
                             className="prepare-message__field-input"
-                            onChange={(value) => setValue('comment', value)}
-                            register={register()}
                             type="text"
+                            {...register('comment')}
                         />
 
                         {selectedAsset.length > 0 && (
