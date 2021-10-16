@@ -11,7 +11,7 @@ license-file = "../LICENSE"
 crate-type = ["cdylib"]
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-Oz", "--enable-mutable-globals"]
+wasm-opt = ["-O3", "--enable-mutable-globals"]
 
 [dependencies]
 anyhow = "1.0"
