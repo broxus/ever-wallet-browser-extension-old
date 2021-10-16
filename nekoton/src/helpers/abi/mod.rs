@@ -1053,6 +1053,7 @@ export type AbiParamKindGram = 'gram';
 export type AbiParamKindTime = 'time';
 export type AbiParamKindExpire = 'expire';
 export type AbiParamKindPublicKey = 'pubkey';
+export type AbiParamKindString = 'string';
 export type AbiParamKindArray = `${AbiParamKind}[]`;
 
 export type AbiParamKindMap = `map(${AbiParamKindInt | AbiParamKindUint | AbiParamKindAddress},${AbiParamKind | `${AbiParamKind}[]`})`;
@@ -1068,7 +1069,8 @@ export type AbiParamKind =
   | AbiParamKindGram
   | AbiParamKindTime
   | AbiParamKindExpire
-  | AbiParamKindPublicKey;
+  | AbiParamKindPublicKey
+  | AbiParamKindString;
 
 export type AbiParam = {
   name: string;

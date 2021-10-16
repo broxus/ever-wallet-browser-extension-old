@@ -342,7 +342,7 @@ export class ConnectionController extends BaseController<
                               type: 'graphql',
                               data: {
                                   socket,
-                                  connection: await socket.connect(params.data),
+                                  connection,
                               },
                           } as InitializedConnection,
                       }

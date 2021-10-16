@@ -33,7 +33,7 @@ serde_json = "1.0"
 sha2 = "0.9"
 syn = "=1.0.72"
 thiserror = "1.0"
-wasm-bindgen = { version = "=0.2.76", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
 wasm-logger = "0.2"
@@ -59,8 +59,3 @@ branch = "master"
 package = "nekoton-abi"
 git = "https://github.com/broxus/nekoton.git"
 branch = "master"
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3"
-js-sys = "0.3"
-wasm-bindgen-futures = "0.4"
