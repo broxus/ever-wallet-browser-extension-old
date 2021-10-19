@@ -64,6 +64,12 @@ module.exports = {
                 { from: path.resolve(__dirname, './src/popup/icons/icon48.png') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon128.png') },
                 { from: path.resolve(__dirname, './src/manifest.json') },
+                {
+                    from: path.resolve(
+                        __dirname,
+                        'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'
+                    ),
+                },
             ],
         }),
         new DefinePlugin({

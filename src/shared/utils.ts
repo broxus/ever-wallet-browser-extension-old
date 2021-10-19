@@ -191,9 +191,9 @@ export const nodeify = <C extends {}, M extends keyof C>(
 }
 
 export class PortDuplexStream extends Duplex {
-    private port: chrome.runtime.Port
+    private port: browser.Runtime.Port
 
-    constructor(port: chrome.runtime.Port) {
+    constructor(port: browser.Runtime.Port) {
         super({ objectMode: true })
         this.port = port
         this.port.onMessage.addListener((msg: unknown) => this._onMessage(msg))
@@ -237,7 +237,7 @@ export class PortDuplexStream extends Duplex {
 }
 
 export const checkForError = () => {
-    const { lastError } = chrome.runtime
+    const { lastError } = window.browser.runtime
     if (!lastError) {
         return undefined
     }

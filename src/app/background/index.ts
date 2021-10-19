@@ -4,7 +4,8 @@ import '../../polyfills'
 
 import endOfStream from 'end-of-stream'
 import init from '@nekoton'
-import { PortDuplexStream, checkForError } from '@shared/utils'
+import type browser from 'webextension-polyfill'
+import { PortDuplexStream } from '@shared/utils'
 import {
     ENVIRONMENT_TYPE_POPUP,
     ENVIRONMENT_TYPE_NOTIFICATION,
@@ -37,8 +38,8 @@ const setupController = async () => {
         },
     })
 
-    chrome.runtime.onConnect.addListener(connectRemote)
-    chrome.runtime.onConnectExternal.addListener(connectExternal)
+    window.browser.runtime.onConnect.addListener(connectRemote)
+    window.browser.runtime.onConnectExternal.addListener(connectExternal)
 
     const nekotonInternalProcessHash: { [type: string]: true } = {
         [ENVIRONMENT_TYPE_POPUP]: true,
@@ -46,7 +47,7 @@ const setupController = async () => {
         [ENVIRONMENT_TYPE_FULLSCREEN]: true,
     }
 
-    function connectRemote(remotePort: chrome.runtime.Port) {
+    function connectRemote(remotePort: browser.Runtime.Port) {
         const processName = remotePort.name
 
         const isNekotonInternalProcess = nekotonInternalProcessHash[processName]
@@ -78,7 +79,7 @@ const setupController = async () => {
         }
     }
 
-    function connectExternal(remotePort: chrome.runtime.Port) {
+    function connectExternal(remotePort: browser.Runtime.Port) {
         console.debug('connectExternal')
         const portStream = new PortDuplexStream(remotePort)
         remotePort.sender && controller.setupUntrustedCommunication(portStream, remotePort.sender)
@@ -86,16 +87,7 @@ const setupController = async () => {
 }
 
 const triggerUi = async (params: TriggerUiParams) => {
-    const tabs = await new Promise<chrome.tabs.Tab[]>((resolve, reject) =>
-        chrome.tabs.query({ active: true }, (tabs) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(tabs)
-            }
-        })
-    )
+    const tabs = await window.browser.tabs.query({ active: true })
 
     const currentlyActiveNekotonTab = Boolean(
         tabs.find((tab) => tab.id != null && openNekotonTabsIDs[tab.id])
@@ -117,7 +109,7 @@ const triggerUi = async (params: TriggerUiParams) => {
 
 const ensureInitialized = initialize().catch(console.error)
 
-chrome.runtime.onInstalled.addListener(({ reason }) => {
+window.browser.runtime.onInstalled.addListener(({ reason }) => {
     if (reason === 'install' && !(process.env.NEKOTON_DEBUG || process.env.IN_TEST)) {
         ensureInitialized.then(() => openExtensionInBrowser()).catch(console.error)
     }

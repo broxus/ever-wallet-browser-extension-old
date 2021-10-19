@@ -1,3 +1,5 @@
+import type { Browser } from 'webextension-polyfill'
+
 export {}
 
 declare global {
@@ -21,5 +23,9 @@ declare global {
         export interface ProcessEnv {
             NEKOTON_DEBUG: boolean
         }
+    }
+
+    declare global {
+        const browser: Browser.Browser
     }
 }

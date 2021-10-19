@@ -391,12 +391,12 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     <footer className="multisig-transaction__footer">
                         <Button
                             white
-                            onClick={() => {
-                                chrome.tabs.create({
+                            onClick={() =>
+                                window.browser.tabs.create({
                                     url: `https://ton-explorer.com/transactions/${txHash}`,
                                     active: false,
                                 })
-                            }}
+                            }
                             text="Open in explorer"
                         />
                     </footer>

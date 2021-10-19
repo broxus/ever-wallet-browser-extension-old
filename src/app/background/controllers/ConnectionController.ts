@@ -413,22 +413,18 @@ export class ConnectionController extends BaseController<
     }
 
     private async _loadSelectedConnectionId(): Promise<number | undefined> {
-        return new Promise<number | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedConnectionId'], ({ selectedConnectionId }) => {
-                if (typeof selectedConnectionId !== 'number') {
-                    return resolve(undefined)
-                }
-                resolve(selectedConnectionId)
-            })
-        })
+        const { selectedConnectionId } = await window.browser.storage.local.get([
+            'selectedConnectionId',
+        ])
+        if (typeof selectedConnectionId === 'number') {
+            return selectedConnectionId
+        } else {
+            return undefined
+        }
     }
 
     private async _saveSelectedConnectionId(connectionId: number): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ selectedConnectionId: connectionId }, () => {
-                resolve()
-            })
-        })
+        await window.browser.storage.local.set({ selectedConnectionId: connectionId })
     }
 }
 

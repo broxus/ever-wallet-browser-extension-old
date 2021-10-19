@@ -3,7 +3,7 @@ import { Duplex } from 'readable-stream'
 import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
-import { debounce } from 'lodash'
+import type browser from 'webextension-polyfill'
 import { ProviderEvent, RawProviderEventData } from 'ton-inpage-provider'
 import * as nt from '@nekoton'
 
@@ -169,13 +169,11 @@ export class NekotonController extends EventEmitter {
             this._debouncedSendUpdate()
         })
 
-        this._components.permissionsController.config.notifyDomain = this._notifyConnections.bind(
-            this
-        )
+        this._components.permissionsController.config.notifyDomain =
+            this._notifyConnections.bind(this)
         this._components.subscriptionsController.config.notifyTab = this._notifyTab.bind(this)
-        this._components.subscriptionsController.config.getOriginTabs = this._getOriginTabs.bind(
-            this
-        )
+        this._components.subscriptionsController.config.getOriginTabs =
+            this._getOriginTabs.bind(this)
 
         this.on('controllerConnectionChanged', (activeControllerConnections: number) => {
             if (activeControllerConnections > 0) {
@@ -191,7 +189,7 @@ export class NekotonController extends EventEmitter {
 
     public setupTrustedCommunication<T extends Duplex>(
         connectionStream: T,
-        sender: chrome.runtime.MessageSender
+        sender: browser.Runtime.MessageSender
     ) {
         const mux = setupMultiplex(connectionStream)
         this._setupControllerConnection(mux.createStream('controller'))
@@ -200,7 +198,7 @@ export class NekotonController extends EventEmitter {
 
     public setupUntrustedCommunication<T extends Duplex>(
         connectionStream: T,
-        sender: chrome.runtime.MessageSender
+        sender: browser.Runtime.MessageSender
     ) {
         const mux = setupMultiplex(connectionStream)
         this._setupProviderConnection(mux.createStream(NEKOTON_PROVIDER), sender, false)
@@ -209,12 +207,8 @@ export class NekotonController extends EventEmitter {
     public getApi() {
         type ApiCallback<T> = (error: Error | null, result?: T) => void
 
-        const {
-            windowManager,
-            approvalController,
-            accountController,
-            connectionController,
-        } = this._components
+        const { windowManager, approvalController, accountController, connectionController } =
+            this._components
 
         return {
             initialize: (windowId: number | undefined, cb: ApiCallback<WindowInfo>) => {
@@ -236,7 +230,7 @@ export class NekotonController extends EventEmitter {
                     openExtensionInBrowser(params.route, params.query).then(() => cb(null))
                 } else {
                     focusTab(existingTabs[0]).then(async (tab) => {
-                        tab && (await focusWindow(tab.windowId))
+                        tab && tab.windowId != null && (await focusWindow(tab.windowId))
                         cb(null)
                     })
                 }
@@ -348,8 +342,8 @@ export class NekotonController extends EventEmitter {
             this._notifyAllConnections({
                 method: 'networkChanged',
                 params: {
-                    selectedConnection: this._components.connectionController.state
-                        .selectedConnection.group,
+                    selectedConnection:
+                        this._components.connectionController.state.selectedConnection.group,
                 },
             })
 
@@ -400,12 +394,12 @@ export class NekotonController extends EventEmitter {
 
     private _setupProviderConnection<T extends Duplex>(
         outStream: T,
-        sender: chrome.runtime.MessageSender,
+        sender: browser.Runtime.MessageSender,
         isInternal: boolean
     ) {
         const origin = isInternal ? 'nekoton' : new URL(sender.url || 'unknown').origin
         let extensionId
-        if (sender.id !== chrome.runtime.id) {
+        if (sender.id !== window.browser.runtime.id) {
             extensionId = sender.id
         }
         let tabId: number | undefined
@@ -430,10 +424,10 @@ export class NekotonController extends EventEmitter {
 
             engine.middleware.forEach((middleware) => {
                 if (
-                    ((middleware as unknown) as DestroyableMiddleware).destroy &&
-                    typeof ((middleware as unknown) as DestroyableMiddleware).destroy === 'function'
+                    (middleware as unknown as DestroyableMiddleware).destroy &&
+                    typeof (middleware as unknown as DestroyableMiddleware).destroy === 'function'
                 ) {
-                    ;((middleware as unknown) as DestroyableMiddleware).destroy()
+                    ;(middleware as unknown as DestroyableMiddleware).destroy()
                 }
             })
 
@@ -608,29 +602,38 @@ export class NekotonController extends EventEmitter {
 
 export class StorageConnector {
     get(key: string, handler: nt.StorageQueryResultHandler) {
-        chrome.storage.local.get(key, (items) => {
-            handler.onResult(items[key])
-        })
+        window.browser.storage.local
+            .get(key)
+            .then((items) => {
+                handler.onResult(items[key])
+            })
+            .catch((e) => handler.onError(e))
     }
 
     set(key: string, value: string, handler: nt.StorageQueryHandler) {
-        chrome.storage.local.set({ [key]: value }, () => {
-            handler.onResult()
-        })
+        window.browser.storage.local
+            .set({ [key]: value })
+            .then(() => {
+                handler.onResult()
+            })
+            .catch((e) => handler.onError(e))
     }
 
     setUnchecked(key: string, value: string) {
-        chrome.storage.local.set({ [key]: value }, () => {})
+        window.browser.storage.local.set({ [key]: value }).catch(console.error)
     }
 
     remove(key: string, handler: nt.StorageQueryHandler) {
-        chrome.storage.local.remove([key], () => {
-            handler.onResult()
-        })
+        window.browser.storage.local
+            .remove([key])
+            .then(() => {
+                handler.onResult()
+            })
+            .catch((e) => handler.onError(e))
     }
 
     removeUnchecked(key: string) {
-        chrome.storage.local.remove([key], () => {})
+        window.browser.storage.local.remove([key]).catch(console.error)
     }
 }
 

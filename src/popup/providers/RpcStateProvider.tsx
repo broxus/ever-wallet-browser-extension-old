@@ -49,11 +49,14 @@ type ContextConsumer = {
 }
 
 export const closeCurrentWindow = () => {
-    chrome.windows.getCurrent((windowDetails) => {
-        if (windowDetails.id != null) {
-            chrome.windows.remove(windowDetails.id).catch(console.error)
-        }
-    })
+    window.browser.windows
+        .getCurrent()
+        .then(async (windowDetails) => {
+            if (windowDetails.id != null) {
+                await window.browser.windows.remove(windowDetails.id)
+            }
+        })
+        .catch(console.error)
 }
 
 export const Context = React.createContext<ContextConsumer>({

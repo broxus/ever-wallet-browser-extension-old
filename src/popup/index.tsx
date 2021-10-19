@@ -40,7 +40,7 @@ const start = async () => {
         }>((resolve, reject) => {
             console.log('Connecting')
 
-            const extensionPort = chrome.runtime.connect({ name: windowType })
+            const extensionPort = window.browser.runtime.connect({ name: windowType })
             const connectionStream = new PortDuplexStream(extensionPort)
 
             const initId = getUniqueId()
@@ -97,7 +97,7 @@ const start = async () => {
 
     if (container != null) {
         const iconSrc = Oval
-        container.innerHTML = `<div class="loader-page"><img src="${iconSrc}" class="loader-page__spinner" alt="" /></div>`
+        container.innerHTML = `<div class='loader-page'><img src='${iconSrc}' class='loader-page__spinner' alt='' /></div>`
     }
 
     const { group, connectionStream } = await tryConnect()
@@ -134,19 +134,22 @@ const queryCurrentActiveTab = async (windowType: Environment) => {
             return resolve({ type: windowType } as any)
         }
 
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            const [activeTab] = tabs
-            const { id, title, url } = activeTab
-            const { origin, protocol } = url
-                ? new URL(url)
-                : { origin: undefined, protocol: undefined }
+        window.browser.tabs
+            .query({ active: true, currentWindow: true })
+            .then((tabs) => {
+                const [activeTab] = tabs
+                const { id, title, url } = activeTab
+                const { origin, protocol } = url
+                    ? new URL(url)
+                    : { origin: undefined, protocol: undefined }
 
-            if (!origin || origin == 'null') {
-                return resolve({ type: ENVIRONMENT_TYPE_BACKGROUND } as any)
-            }
+                if (!origin || origin == 'null') {
+                    return resolve({ type: ENVIRONMENT_TYPE_BACKGROUND } as any)
+                }
 
-            resolve({ type: windowType, data: { id, title, origin, protocol, url } })
-        })
+                resolve({ type: windowType, data: { id, title, origin, protocol, url } })
+            })
+            .catch(console.error)
     })
 }
 
@@ -189,7 +192,7 @@ const connectToBackground = (
         }
     })
 
-    setupControllerConnection((mux.createStream('controller') as unknown) as Duplex, callback)
+    setupControllerConnection(mux.createStream('controller') as unknown as Duplex, callback)
 }
 
 const setupControllerConnection = (

@@ -6,6 +6,7 @@ import pump from 'pump'
 
 import { PortDuplexStream } from '@shared/utils'
 import { CONTENT_SCRIPT, INPAGE_SCRIPT, NEKOTON_PROVIDER } from '@shared/constants'
+import browser from 'webextension-polyfill'
 
 const logStreamDisconnectWarning = (remoteLabel: string, error?: Error) => {
     console.debug(`Nekoton: Content script lost connection to "${remoteLabel}"`, error)
@@ -43,6 +44,7 @@ function checkExcludedDomains() {
         'dropbox.com',
         'atlassian.net',
         'atlassian.com',
+        'broxus.github.io',
         'ozon.ru',
         'mail.ru',
     ]
@@ -69,7 +71,7 @@ const injectScript = () => {
     try {
         const container = document.head || document.documentElement
         const scriptTag = document.createElement('script')
-        scriptTag.src = chrome.extension.getURL('inpage.js')
+        scriptTag.src = window.browser.runtime.getURL('inpage.js')
         scriptTag.setAttribute('async', 'false')
         container.insertBefore(scriptTag, container.children[0])
         container.removeChild(scriptTag)
@@ -111,7 +113,7 @@ const setupStreams = () => {
         name: CONTENT_SCRIPT,
         target: INPAGE_SCRIPT,
     })
-    const extensionPort = chrome.runtime.connect({ name: CONTENT_SCRIPT })
+    const extensionPort = window.browser.runtime.connect({ name: CONTENT_SCRIPT })
     const extensionStream = new PortDuplexStream(extensionPort)
 
     const pageMux = new ObjectMultiplex()

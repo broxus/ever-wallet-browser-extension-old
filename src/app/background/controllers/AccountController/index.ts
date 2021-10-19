@@ -1747,162 +1747,121 @@ export class AccountController extends BaseController<
     }
 
     private async _loadSelectedAccountAddress(): Promise<string | undefined> {
-        return new Promise<string | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedAccountAddress'], ({ selectedAccountAddress }) => {
-                if (typeof selectedAccountAddress !== 'string') {
-                    return resolve(undefined)
-                }
-                resolve(selectedAccountAddress)
-            })
-        })
+        const { selectedAccountAddress } = await window.browser.storage.local.get([
+            'selectedAccountAddress',
+        ])
+        if (typeof selectedAccountAddress === 'string') {
+            return selectedAccountAddress
+        } else {
+            return undefined
+        }
     }
 
     private async _saveSelectedAccountAddress(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { selectedAccountAddress: this.state.selectedAccount?.tonWallet.address },
-                () => resolve()
-            )
+        await window.browser.storage.local.set({
+            selectedAccountAddress: this.state.selectedAccount?.tonWallet.address,
         })
     }
 
     private async _removeSelectedAccountAddress(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('selectedAccountAddress', () => resolve())
-        })
+        await window.browser.storage.local.remove('selectedAccountAddress')
     }
 
     private async _loadSelectedMasterKey(): Promise<string | undefined> {
-        return new Promise<string | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedMasterKey'], ({ selectedMasterKey }) => {
-                if (typeof selectedMasterKey !== 'string') {
-                    return resolve(undefined)
-                }
-                resolve(selectedMasterKey)
-            })
-        })
+        const { selectedMasterKey } = await window.browser.storage.local.get(['selectedMasterKey'])
+        if (typeof selectedMasterKey === 'string') {
+            return selectedMasterKey
+        } else {
+            return undefined
+        }
     }
 
     private async _saveSelectedMasterKey(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey })
     }
 
     private async _removeSelectedMasterKey(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('selectedMasterKey', () => resolve())
-        })
+        await window.browser.storage.local.remove('selectedMasterKey')
     }
 
     private async _loadMasterKeysNames(): Promise<
         AccountControllerState['masterKeysNames'] | undefined
     > {
-        return new Promise<AccountControllerState['masterKeysNames'] | undefined>((resolve) => {
-            chrome.storage.local.get(['masterKeysNames'], ({ masterKeysNames }) => {
-                if (typeof masterKeysNames !== 'object') {
-                    return resolve(undefined)
-                }
-                resolve(masterKeysNames)
-            })
-        })
+        const { masterKeysNames } = await window.browser.storage.local.get(['masterKeysNames'])
+        if (typeof masterKeysNames === 'object') {
+            return masterKeysNames
+        } else {
+            return undefined
+        }
     }
 
     private async _clearMasterKeysNames(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('masterKeysNames', () => resolve())
-        })
+        await window.browser.storage.local.remove('masterKeysNames')
     }
 
     private async _saveMasterKeysNames(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ masterKeysNames: this.state.masterKeysNames }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ masterKeysNames: this.state.masterKeysNames })
     }
 
     private async _loadRecentMasterKeys(): Promise<
         AccountControllerState['recentMasterKeys'] | undefined
     > {
-        return new Promise<AccountControllerState['recentMasterKeys'] | undefined>((resolve) => {
-            chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
-                if (!Array.isArray(recentMasterKeys)) {
-                    return resolve(undefined)
-                }
-                resolve(recentMasterKeys)
-            })
-        })
+        const { recentMasterKeys } = await window.browser.storage.local.get(['recentMasterKeys'])
+        if (Array.isArray(recentMasterKeys)) {
+            return recentMasterKeys
+        } else {
+            return undefined
+        }
     }
 
     private async _clearRecentMasterKeys(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('recentMasterKeys', () => resolve())
-        })
+        await window.browser.storage.local.remove('recentMasterKeys')
     }
 
     private async _saveRecentMasterKeys(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys })
     }
 
     private async _loadAccountsVisibility(): Promise<
         AccountControllerState['accountsVisibility'] | undefined
     > {
-        return new Promise<AccountControllerState['accountsVisibility'] | undefined>((resolve) => {
-            chrome.storage.local.get(['accountsVisibility'], ({ accountsVisibility }) => {
-                if (typeof accountsVisibility !== 'object') {
-                    return resolve(undefined)
-                }
-                resolve(accountsVisibility)
-            })
-        })
+        const { accountsVisibility } = await window.browser.storage.local.get([
+            'accountsVisibility',
+        ])
+        if (typeof accountsVisibility === 'object') {
+            return accountsVisibility
+        } else {
+            return undefined
+        }
     }
 
     private async _clearAccountsVisibility(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('accountsVisibility', () => resolve())
-        })
+        await window.browser.storage.local.remove('accountsVisibility')
     }
 
     private async _saveAccountsVisibility(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () =>
-                resolve()
-            )
+        await window.browser.storage.local.set({
+            accountsVisibility: this.state.accountsVisibility,
         })
     }
 
     private async _loadExternalAccounts(): Promise<
         AccountControllerState['externalAccounts'] | undefined
     > {
-        return new Promise<AccountControllerState['externalAccounts'] | undefined>((resolve) => {
-            chrome.storage.local.get(['externalAccounts'], ({ externalAccounts }) => {
-                if (!Array.isArray(externalAccounts)) {
-                    return resolve(undefined)
-                }
-                resolve(externalAccounts)
-            })
-        })
+        const { externalAccounts } = await window.browser.storage.local.get(['externalAccounts'])
+        if (Array.isArray(externalAccounts)) {
+            return externalAccounts
+        } else {
+            return undefined
+        }
     }
 
     private async _clearExternalAccounts(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('externalAccounts', () => resolve())
-        })
+        await window.browser.storage.local.remove('externalAccounts')
     }
 
     private async _saveExternalAccounts(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ externalAccounts: this.state.externalAccounts }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ externalAccounts: this.state.externalAccounts })
     }
 }
 
