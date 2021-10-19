@@ -56,7 +56,6 @@ export class NotificationController extends BaseController<
                 title,
                 message: body,
                 iconUrl: `${window.browser.runtime.getURL('icon128.png')}`,
-                requireInteraction: true,
                 eventTime,
             } as any)
             .then((notificationId) => {
@@ -71,5 +70,6 @@ export class NotificationController extends BaseController<
                     }, timeout)
                 }
             })
+            .catch(console.error)
     }
 }
