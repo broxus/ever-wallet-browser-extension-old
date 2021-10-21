@@ -73,7 +73,8 @@ export function EnterPassword({
     }
 
     const onKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.keyCode === 13) {
+        const keyCode = event.which || event.keyCode
+        if (keyCode === 13) {
             await trySubmit()
         }
     }

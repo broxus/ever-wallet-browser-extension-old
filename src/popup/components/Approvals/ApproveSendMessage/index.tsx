@@ -3,6 +3,7 @@ import Decimal from 'decimal.js'
 
 import * as nt from '@nekoton'
 import Approval from '../Approval'
+import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 import Button from '@popup/components/Button'
 import { EnterPassword } from '@popup/components/Send/components'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
@@ -62,6 +63,7 @@ export function ApproveSendMessage({
         amount: string
         symbol: string
         decimals: number
+        rootTokenContract: string
     }>()
 
     React.useEffect(() => {
@@ -78,6 +80,7 @@ export function ApproveSendMessage({
                     amount: knownPayload.data.tokens,
                     symbol: details.symbol,
                     decimals: details.decimals,
+                    rootTokenContract: details.address,
                 })
             })
             .catch(() => {
@@ -157,7 +160,7 @@ export function ApproveSendMessage({
                     : 'Confirm message'
             }
             origin={origin}
-            className={'approve-send-message'}
+            className={'approval--send-message'}
         >
             {localStep === ApproveStep.MESSAGE_PREVIEW && (
                 <div className="approval__wrapper">
@@ -169,12 +172,20 @@ export function ApproveSendMessage({
                         {tokenTransaction != null && (
                             <div className="approval__spend-details-param">
                                 <span className="approval__spend-details-param-desc">Amount</span>
-                                <span className="approval__spend-details-param-value">
+                                <span className="approval__spend-details-param-value approval--send-message__amount">
+                                    <AssetIcon
+                                        type={'token_wallet'}
+                                        address={tokenTransaction.rootTokenContract}
+                                        className="root-token-icon noselect"
+                                    />
                                     {convertCurrency(
                                         tokenTransaction.amount,
                                         tokenTransaction.decimals
-                                    )}{' '}
-                                    {convertTokenName(tokenTransaction.symbol)}
+                                    )}
+                                    &nbsp;
+                                    <span className="root-token-name">
+                                        {convertTokenName(tokenTransaction.symbol)}
+                                    </span>
                                 </span>
                             </div>
                         )}
@@ -182,7 +193,8 @@ export function ApproveSendMessage({
                             <span className="approval__spend-details-param-desc">
                                 {tokenTransaction == null ? 'Amount' : 'Attached amount'}
                             </span>
-                            <span className="approval__spend-details-param-value">
+                            <span className="approval__spend-details-param-value approval--send-message__amount">
+                                <TonAssetIcon className="root-token-icon noselect" />
                                 {convertTons(amount)} TON
                             </span>
                             {balance.lessThan(amount) && (
@@ -198,7 +210,8 @@ export function ApproveSendMessage({
                             <span className="approval__spend-details-param-desc">
                                 Blockchain fee
                             </span>
-                            <span className="approval__spend-details-param-value">
+                            <span className="approval__spend-details-param-value approval--send-message__amount">
+                                <TonAssetIcon className="root-token-icon noselect" />
                                 {fees?.transactionFees !== undefined
                                     ? `~${convertTons(fees.transactionFees)} TON`
                                     : 'calculating...'}

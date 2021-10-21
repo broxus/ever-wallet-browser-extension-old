@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { connect } from 'react-redux'
 import { AppState, TokensManifestItem } from '@popup/store/app/types'
 import { AssetType } from '@shared/utils'
@@ -6,6 +6,14 @@ import { AssetType } from '@shared/utils'
 import UserAvatar from '@popup/components/UserAvatar'
 
 import TonLogo from '@popup/img/ton-logo.svg'
+
+type ITonAssetIcon = {
+    className?: string
+}
+
+export const TonAssetIcon: React.FC<ITonAssetIcon> = ({ className }) => (
+    <img src={TonLogo} alt="" className={className} />
+)
 
 type IAssetIcon = {
     type: AssetType
@@ -16,7 +24,7 @@ type IAssetIcon = {
 
 const AssetIcon: React.FC<IAssetIcon> = ({ type, address, tokensMeta, className }) => {
     if (type == 'ton_wallet') {
-        return <img src={TonLogo} alt="" className={className} />
+        return <TonAssetIcon className={className} />
     }
 
     const logoURI = tokensMeta?.[address]?.logoURI
