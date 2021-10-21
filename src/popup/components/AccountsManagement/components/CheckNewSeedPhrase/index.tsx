@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useForm } from 'react-hook-form'
 
 import Button from '@popup/components/Button'
-import { CheckSeedInput } from '@popup/components/CheckSeedInput'
+import CheckSeedInput from '@popup/components/CheckSeedInput'
 import { shuffleArray } from '@shared/utils'
 
 type Props = {
