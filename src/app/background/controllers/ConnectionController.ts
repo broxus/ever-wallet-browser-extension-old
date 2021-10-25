@@ -151,14 +151,7 @@ export class ConnectionController extends BaseController<
             throw new Error('Must not sync twice')
         }
 
-        const clockUpdateInterval = 10 * 60 * 1000
-        const startUpdatingClockOffset = async () => {
-            const clockOffset = await computeClockOffset()
-            console.log(`Clock offset: ${clockOffset}`)
-            this.config.clock.updateOffset(clockOffset)
-            setTimeout(startUpdatingClockOffset, clockUpdateInterval)
-        }
-        startUpdatingClockOffset().catch(console.error)
+        await this._prepareTimeSync()
 
         while (true) {
             let loadedConnectionId = await this._loadSelectedConnectionId()
@@ -296,6 +289,46 @@ export class ConnectionController extends BaseController<
         }
 
         throw new Error('Failed to find suitable connection')
+    }
+
+    private async _prepareTimeSync() {
+        const computeClockOffset = (): Promise<number> => {
+            return new Promise<number>((resolve, reject) => {
+                const now = Date.now()
+                fetch('https://jrpc.broxus.com')
+                    .then((body) => {
+                        const then = Date.now()
+                        body.text().then((timestamp) => {
+                            const server = parseInt(timestamp, undefined)
+                            resolve(server - (now + then) / 2)
+                        })
+                    })
+                    .catch(reject)
+                setTimeout(() => reject(new Error('Clock offset resolution timeout')), 5000)
+            }).catch((e) => {
+                console.warn('Failed to compute clock offset:', e)
+                return 0
+            })
+        }
+
+        const updateClockOffset = async () => {
+            const clockOffset = await computeClockOffset()
+            console.log(`Clock offset: ${clockOffset}`)
+            this.config.clock.updateOffset(clockOffset)
+        }
+
+        // NOTE: Update clock offset twice because first request is always too long
+        await updateClockOffset()
+        await updateClockOffset()
+
+        let lastTime = Date.now()
+        setInterval(() => {
+            const currentTime = Date.now()
+            if (Math.abs(currentTime - lastTime) > 2000) {
+                updateClockOffset().catch(console.error)
+            }
+            lastTime = currentTime
+        }, 1000)
     }
 
     private async _connect(params: ConnectionDataItem) {
@@ -513,34 +546,5 @@ export class JrpcSocket {
         }
 
         return new nt.JrpcConnection(new JrpcSender(params))
-    }
-}
-
-const ntp = (now: number, server: number, then: number) => server - (now + then) / 2
-
-async function computeClockOffset(): Promise<number> {
-    try {
-        const now = Date.now()
-        const { server, then } = await new Promise<{ server: number; then: number }>(
-            (resolve, reject) => {
-                fetch('https://jrpc.broxus.com')
-                    .then((body) => {
-                        const then = Date.now()
-                        body.text().then((timestamp) =>
-                            resolve({
-                                server: parseInt(timestamp, undefined),
-                                then,
-                            })
-                        )
-                    })
-                    .catch(reject)
-                setTimeout(() => reject(new Error('Clock offset resolution timeout')), 5000)
-            }
-        )
-
-        return ntp(now, server, then)
-    } catch (e) {
-        console.warn('Failed to compute clock offset:', e)
-        return 0
     }
 }
