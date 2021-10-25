@@ -7,7 +7,7 @@ use ton_block::{Deserializable, MsgAddressInt};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::{JsCast, JsValue};
 
-use nt_utils::TrustMe;
+use nt_utils::{Clock, TrustMe};
 
 pub struct QueryHandler<T> {
     tx: oneshot::Sender<T>,
@@ -124,7 +124,7 @@ impl ClockWithOffset {
 
 impl ClockWithOffset {
     pub fn as_const(&self) -> nt_utils::ConstClock {
-        nt_utils::ConstClock::from_millis(self.inner.lock().trust_me().offset_ms() + 1)
+        nt_utils::ConstClock::from_millis(self.inner.lock().trust_me().now_ms_u64() + 1)
     }
 }
 
