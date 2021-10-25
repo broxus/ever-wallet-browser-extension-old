@@ -73,11 +73,18 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "prepareDeploy")]
-    pub fn prepare_deploy(&self, timeout: u32) -> Result<crate::crypto::UnsignedMessage, JsValue> {
+    pub fn prepare_deploy(
+        &self,
+        clock: &ClockWithOffset,
+        timeout: u32,
+    ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
 
         let inner = wallet
-            .prepare_deploy(core_models::Expiration::Timeout(timeout))
+            .prepare_deploy(
+                &*clock.inner.lock().trust_me(),
+                core_models::Expiration::Timeout(timeout),
+            )
             .handle_error()?;
         Ok(crate::crypto::UnsignedMessage { inner })
     }
@@ -85,6 +92,7 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "prepareDeployWithMultipleOwners")]
     pub fn prepare_deploy_with_multiple_owners(
         &self,
+        clock: &ClockWithOffset,
         timeout: u32,
         custodians: CustodiansList,
         req_confirms: u8,
@@ -95,6 +103,7 @@ impl TonWallet {
 
         let inner = wallet
             .prepare_deploy_with_multiple_owners(
+                &*clock.inner.lock().trust_me(),
                 core_models::Expiration::Timeout(timeout),
                 &custodians,
                 req_confirms,
@@ -106,6 +115,7 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "prepareConfirm")]
     pub fn prepare_confirm(
         &self,
+        clock: &ClockWithOffset,
         raw_current_state: &RawContractState,
         public_key: &str,
         transaction_id: &str,
@@ -117,6 +127,7 @@ impl TonWallet {
         let wallet = self.inner.wallet.lock().unwrap();
         let message = wallet
             .prepare_confirm_transaction(
+                &*clock.inner.lock().trust_me(),
                 &raw_current_state.inner,
                 &public_key,
                 transaction_id,
@@ -130,6 +141,7 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "prepareTransfer")]
     pub fn prepare_transfer(
         &self,
+        clock: &ClockWithOffset,
         raw_current_state: &RawContractState,
         public_key: &str,
         dest: &str,
@@ -152,6 +164,7 @@ impl TonWallet {
         Ok(
             match wallet
                 .prepare_transfer(
+                    &*clock.inner.lock().trust_me(),
                     &raw_current_state.inner,
                     &public_key,
                     dest,
@@ -225,15 +238,20 @@ impl TonWallet {
     #[wasm_bindgen(js_name = "estimateFees")]
     pub fn estimate_fees(
         &self,
+        clock: &ClockWithOffset,
         signed_message: crate::crypto::JsSignedMessage,
     ) -> Result<PromiseString, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
+        let clock = clock.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
-            let res = wallet.estimate_fees(&message.boc).await.handle_error()?;
+            let res = wallet
+                .estimate_fees(&*clock.lock().trust_me(), &message.boc)
+                .await
+                .handle_error()?;
             Ok(JsValue::from(res.to_string()))
         })))
     }

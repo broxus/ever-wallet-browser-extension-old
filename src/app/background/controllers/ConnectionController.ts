@@ -106,7 +106,9 @@ export type InitializedConnection = { group: string } & (
       >
 )
 
-export interface ConnectionConfig extends BaseConfig {}
+export interface ConnectionConfig extends BaseConfig {
+    clock: nt.ClockWithOffset
+}
 
 export interface ConnectionControllerState extends BaseState {
     selectedConnection: ConnectionDataItem
@@ -148,6 +150,10 @@ export class ConnectionController extends BaseController<
         if (this._initializedConnection != null) {
             throw new Error('Must not sync twice')
         }
+
+        const clockOffset = await computeClockOffset()
+        console.log(`Clock offset: ${clockOffset}`)
+        this.config.clock.updateOffset(clockOffset)
 
         while (true) {
             let loadedConnectionId = await this._loadSelectedConnectionId()
@@ -502,5 +508,34 @@ export class JrpcSocket {
         }
 
         return new nt.JrpcConnection(new JrpcSender(params))
+    }
+}
+
+const ntp = (now: number, server: number, then: number) => server - (now + then) / 2
+
+async function computeClockOffset(): Promise<number> {
+    try {
+        const now = new Date().getTime()
+        const { server, then } = await new Promise<{ server: number; then: number }>(
+            (resolve, reject) => {
+                fetch('https://jrpc.broxus.com')
+                    .then((body) => {
+                        const then = new Date().getTime()
+                        body.text().then((timestamp) =>
+                            resolve({
+                                server: parseInt(timestamp, undefined),
+                                then,
+                            })
+                        )
+                    })
+                    .catch(reject)
+                setTimeout(() => reject(new Error('Clock offset resolution timeout')), 5000)
+            }
+        )
+
+        return ntp(now, server, then)
+    } catch (e) {
+        console.warn('Failed to compute clock offset:', e)
+        return 0
     }
 }

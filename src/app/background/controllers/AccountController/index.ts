@@ -32,7 +32,6 @@ import {
     TokenWalletsToUpdate,
     ConfirmMessageToPrepare,
     WalletMessageToSend,
-    BriefMessageInfo,
     StoredBriefMessageInfo,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
@@ -51,6 +50,7 @@ export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
+    clock: nt.ClockWithOffset
     connectionController: ConnectionController
     notificationController: NotificationController
     ledgerBridge: LedgerBridge
@@ -804,6 +804,7 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareTransfer(
+                this.config.clock,
                 contractState,
                 params.publicKey,
                 params.recipient,
@@ -821,7 +822,7 @@ export class AccountController extends BaseController<
 
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(signedMessage)
+                return await wallet.estimateFees(this.config.clock, signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -844,6 +845,7 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareConfirm(
+                this.config.clock,
                 contractState,
                 params.publicKey,
                 params.transactionId,
@@ -852,7 +854,7 @@ export class AccountController extends BaseController<
 
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(signedMessage)
+                return await wallet.estimateFees(this.config.clock, signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -874,10 +876,10 @@ export class AccountController extends BaseController<
                 )
             }
 
-            const unsignedMessage = wallet.prepareDeploy(60)
+            const unsignedMessage = wallet.prepareDeploy(this.config.clock, 60)
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(signedMessage)
+                return await wallet.estimateFees(this.config.clock, signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -917,6 +919,7 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareTransfer(
+                this.config.clock,
                 contractState,
                 params.publicKey,
                 params.recipient,
@@ -962,6 +965,7 @@ export class AccountController extends BaseController<
             let unsignedMessage: nt.UnsignedMessage | undefined
             try {
                 unsignedMessage = wallet.prepareConfirm(
+                    this.config.clock,
                     contractState,
                     params.publicKey,
                     params.transactionId,
@@ -996,9 +1000,10 @@ export class AccountController extends BaseController<
 
             let unsignedMessage: nt.UnsignedMessage
             if (params.type === 'single_owner') {
-                unsignedMessage = wallet.prepareDeploy(60)
+                unsignedMessage = wallet.prepareDeploy(this.config.clock, 60)
             } else {
                 unsignedMessage = wallet.prepareDeployWithMultipleOwners(
+                    this.config.clock,
                     60,
                     params.custodians,
                     params.reqConfirms

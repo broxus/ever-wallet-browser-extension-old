@@ -1,4 +1,5 @@
 use std::str::FromStr;
+use std::sync::{Arc, Mutex};
 
 use anyhow::Error;
 use futures::channel::oneshot;
@@ -93,6 +94,32 @@ pub fn parse_slice(boc: &str) -> Result<ton_types::SliceData, JsValue> {
 
 pub fn parse_account_stuff(boc: &str) -> Result<ton_block::AccountStuff, JsValue> {
     ton_block::AccountStuff::construct_from_base64(boc).handle_error()
+}
+
+#[wasm_bindgen]
+pub struct ClockWithOffset {
+    #[wasm_bindgen(skip)]
+    pub inner: Arc<Mutex<nt_utils::ClockWithOffset>>,
+}
+
+#[wasm_bindgen]
+impl ClockWithOffset {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> ClockWithOffset {
+        Self {
+            inner: Arc::new(Mutex::new(Default::default())),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "updateOffset")]
+    pub fn update_offset(&self, offset_ms: f64) {
+        self.inner.lock().trust_me().update_offset(offset_ms as u64)
+    }
+
+    #[wasm_bindgen(js_name = "offsetMs")]
+    pub fn offset_ms(&self) -> f64 {
+        self.inner.lock().trust_me().offset_ms() as f64
+    }
 }
 
 #[wasm_bindgen(typescript_custom_section)]

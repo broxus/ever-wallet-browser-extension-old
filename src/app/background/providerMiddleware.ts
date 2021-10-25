@@ -28,6 +28,7 @@ interface CreateProviderMiddlewareOptions {
     origin: string
     tabId?: number
     isInternal: boolean
+    clock: nt.ClockWithOffset
     approvalController: ApprovalController
     accountController: AccountController
     permissionsController: PermissionsController
@@ -159,7 +160,7 @@ function requireTabid<T>(
 
 function requireTransactionId<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as nt.TransactionId
+    const property = object[key] as unknown as nt.TransactionId
     requireString(req, property, 'lt')
     requireString(req, property, 'hash')
 }
@@ -170,7 +171,7 @@ function requireLastTransactionId<T, O, P extends keyof O>(
     key: P
 ) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as nt.LastTransactionId
+    const property = object[key] as unknown as nt.LastTransactionId
     requireBoolean(req, property, 'isExact')
     requireString(req, property, 'lt')
     requireOptionalString(req, property, 'hash')
@@ -178,14 +179,14 @@ function requireLastTransactionId<T, O, P extends keyof O>(
 
 function requireGenTimings<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as GenTimings
+    const property = object[key] as unknown as GenTimings
     requireString(req, property, 'genLt')
     requireNumber(req, property, 'genUtime')
 }
 
 function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as FullContractState
+    const property = object[key] as unknown as FullContractState
     requireString(req, property, 'balance')
     requireGenTimings(req, property, 'genTimings')
     requireOptional(req, property, 'lastTransactionId', requireLastTransactionId)
@@ -194,7 +195,7 @@ function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, o
 
 function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as RawFunctionCall
+    const property = object[key] as unknown as RawFunctionCall
     requireString(req, property, 'abi')
     requireString(req, property, 'method')
     requireObject(req, property, 'params')
@@ -214,7 +215,7 @@ function requireAssetTypeParams<T, O, P extends keyof O>(
     assetType: AssetType
 ) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as AssetTypeParams<AssetType>
+    const property = object[key] as unknown as AssetTypeParams<AssetType>
     switch (assetType) {
         case 'tip3_token': {
             requireString(req, property, 'rootContract')
@@ -852,7 +853,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     requireString(req, req.params, 'amount')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
 
-    const { origin, permissionsController, accountController } = ctx
+    const { origin, clock, permissionsController, accountController } = ctx
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.address != sender) {
@@ -885,6 +886,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         let unsignedMessage: nt.UnsignedMessage | undefined = undefined
         try {
             unsignedMessage = wallet.prepareTransfer(
+                clock,
                 contractState,
                 wallet.publicKey,
                 repackedRecipient,
@@ -903,7 +905,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
 
         try {
             const signedMessage = unsignedMessage.signFake()
-            return await wallet.estimateFees(signedMessage)
+            return await wallet.estimateFees(clock, signedMessage)
         } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
@@ -928,7 +930,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     requireBoolean(req, req.params, 'bounce')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
 
-    const { origin, permissionsController, accountController, approvalController } = ctx
+    const { origin, clock, permissionsController, accountController, approvalController } = ctx
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.address != sender) {
@@ -976,6 +978,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         let unsignedMessage: nt.UnsignedMessage | undefined = undefined
         try {
             unsignedMessage = wallet.prepareTransfer(
+                clock,
                 contractState,
                 password.data.publicKey,
                 repackedRecipient,
@@ -1042,6 +1045,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     const {
         tabId,
         origin,
+        clock,
         permissionsController,
         approvalController,
         accountController,
@@ -1065,6 +1069,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     let unsignedMessage: nt.UnsignedMessage
     try {
         unsignedMessage = nt.createExternalMessage(
+            clock,
             repackedRecipient,
             payload.abi,
             payload.method,
@@ -1089,7 +1094,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
 
     let signedMessage: nt.SignedMessage
     try {
-        unsignedMessage.refreshTimeout()
+        unsignedMessage.refreshTimeout(clock)
         signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
     } catch (e: any) {
         throw invalidRequest(req, e.toString())

@@ -54,6 +54,7 @@ interface NekotonControllerComponents {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
+    clock: nt.ClockWithOffset
     windowManager: WindowManager
     accountController: AccountController
     approvalController: ApprovalController
@@ -99,13 +100,18 @@ export class NekotonController extends EventEmitter {
 
         const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
 
-        const connectionController = new ConnectionController({})
+        const clock = new nt.ClockWithOffset()
+
+        const connectionController = new ConnectionController({
+            clock,
+        })
 
         const notificationController = new NotificationController({
             disabled: true,
         })
 
         const accountController = new AccountController({
+            clock,
             storage,
             accountsStorage,
             keyStore,
@@ -124,6 +130,7 @@ export class NekotonController extends EventEmitter {
             approvalController,
         })
         const subscriptionsController = new SubscriptionController({
+            clock,
             connectionController,
         })
 
@@ -138,6 +145,7 @@ export class NekotonController extends EventEmitter {
             storage,
             accountsStorage,
             keyStore,
+            clock,
             windowManager: options.windowManager,
             accountController,
             approvalController,
@@ -457,6 +465,7 @@ export class NekotonController extends EventEmitter {
                 origin,
                 tabId,
                 isInternal,
+                clock: this._components.clock,
                 approvalController: this._components.approvalController,
                 accountController: this._components.accountController,
                 connectionController: this._components.connectionController,

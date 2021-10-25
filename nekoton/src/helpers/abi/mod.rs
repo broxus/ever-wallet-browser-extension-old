@@ -143,6 +143,7 @@ pub fn create_external_message_without_signature(
 
 #[wasm_bindgen(js_name = "createExternalMessage")]
 pub fn create_external_message(
+    clock: &ClockWithOffset,
     dst: &str,
     contract_abi: &str,
     method: &str,
@@ -173,6 +174,7 @@ pub fn create_external_message(
 
     Ok(crate::crypto::UnsignedMessage {
         inner: nt::core::utils::make_labs_unsigned_message(
+            &*clock.inner.lock().trust_me(),
             message,
             nt::core::models::Expiration::Timeout(timeout),
             &public_key,
