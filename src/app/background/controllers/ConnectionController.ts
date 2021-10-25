@@ -151,9 +151,14 @@ export class ConnectionController extends BaseController<
             throw new Error('Must not sync twice')
         }
 
-        const clockOffset = await computeClockOffset()
-        console.log(`Clock offset: ${clockOffset}`)
-        this.config.clock.updateOffset(clockOffset)
+        const clockUpdateInterval = 10 * 60 * 1000
+        const startUpdatingClockOffset = async () => {
+            const clockOffset = await computeClockOffset()
+            console.log(`Clock offset: ${clockOffset}`)
+            this.config.clock.updateOffset(clockOffset)
+            setTimeout(startUpdatingClockOffset, clockUpdateInterval)
+        }
+        startUpdatingClockOffset().catch(console.error)
 
         while (true) {
             let loadedConnectionId = await this._loadSelectedConnectionId()
@@ -515,12 +520,12 @@ const ntp = (now: number, server: number, then: number) => server - (now + then)
 
 async function computeClockOffset(): Promise<number> {
     try {
-        const now = new Date().getTime()
+        const now = Date.now()
         const { server, then } = await new Promise<{ server: number; then: number }>(
             (resolve, reject) => {
                 fetch('https://jrpc.broxus.com')
                     .then((body) => {
-                        const then = new Date().getTime()
+                        const then = Date.now()
                         body.text().then((timestamp) =>
                             resolve({
                                 server: parseInt(timestamp, undefined),
