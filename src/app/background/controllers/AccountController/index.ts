@@ -1272,6 +1272,7 @@ export class AccountController extends BaseController<
 
         console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
         const subscription = await TonWalletSubscription.subscribe(
+            this.config.clock,
             this.config.connectionController,
             workchain,
             publicKey,
@@ -1367,6 +1368,7 @@ export class AccountController extends BaseController<
 
         console.debug('_createTokenWalletSubscription -> subscribing to token wallet')
         const subscription = await TokenWalletSubscription.subscribe(
+            this.config.clock,
             this.config.connectionController,
             owner,
             rootTokenContract,

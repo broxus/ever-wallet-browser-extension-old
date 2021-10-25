@@ -243,13 +243,13 @@ impl TonWallet {
     ) -> Result<PromiseString, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
-        let clock = clock.inner.clone();
+        let clock = clock.as_const();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
             let res = wallet
-                .estimate_fees(&*clock.lock().trust_me(), &message.boc)
+                .estimate_fees(&clock, &message.boc)
                 .await
                 .handle_error()?;
             Ok(JsValue::from(res.to_string()))
@@ -279,13 +279,14 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "refresh")]
-    pub fn refresh(&mut self) -> PromiseVoid {
+    pub fn refresh(&mut self, clock: &ClockWithOffset) -> PromiseVoid {
         let inner = self.inner.clone();
+        let clock = clock.as_const();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
-            wallet.refresh().await.handle_error()?;
+            wallet.refresh(&clock).await.handle_error()?;
             Ok(JsValue::undefined())
         }))
     }

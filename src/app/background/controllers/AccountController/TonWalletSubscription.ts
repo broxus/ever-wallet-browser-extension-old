@@ -16,6 +16,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     private _hasUnconfirmedTransactions: boolean = false
 
     public static async subscribe(
+        clock: nt.ClockWithOffset,
         connectionController: ConnectionController,
         workchain: number,
         publicKey: string,
@@ -38,6 +39,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
             )
 
             return new TonWalletSubscription(
+                clock,
                 connection,
                 release,
                 tonWallet.address,
@@ -51,13 +53,14 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     }
 
     constructor(
+        clock: nt.ClockWithOffset,
         connection: nt.GqlConnection | nt.JrpcConnection,
         release: () => void,
         address: string,
         contract: nt.TonWallet,
         handler: ITonWalletHandler
     ) {
-        super(connection, release, address, contract)
+        super(clock, connection, release, address, contract)
         this._contractType = contract.contractType
         this._handler = handler
     }

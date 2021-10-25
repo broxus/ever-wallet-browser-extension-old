@@ -15,7 +15,7 @@ use crate::utils::*;
 
 #[wasm_bindgen(js_name = "runLocal")]
 pub fn run_local(
-    gen_timings: crate::core::models::GenTimings,
+    clock: &ClockWithOffset,
     last_transaction_id: crate::core::models::LastTransactionId,
     account_stuff_boc: &str,
     contract_abi: &str,
@@ -24,7 +24,6 @@ pub fn run_local(
 ) -> Result<ExecutionOutput, JsValue> {
     use crate::core::models::*;
 
-    let gen_timings = parse_gen_timings(gen_timings)?;
     let last_transaction_id = parse_last_transaction_id(last_transaction_id)?;
     let account_stuff = parse_account_stuff(account_stuff_boc)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
@@ -32,7 +31,12 @@ pub fn run_local(
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
     let output = method
-        .run_local(account_stuff, gen_timings, &last_transaction_id, &input)
+        .run_local(
+            &*clock.inner.lock().trust_me(),
+            account_stuff,
+            &last_transaction_id,
+            &input,
+        )
         .handle_error()?;
 
     make_execution_output(&output)

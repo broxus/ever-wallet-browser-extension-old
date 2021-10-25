@@ -22,7 +22,7 @@ export interface IContractHandler<T extends nt.Transaction> {
 export interface IContract {
     readonly pollingMethod: 'manual' | 'reliable'
 
-    refresh(): Promise<void>
+    refresh(clock: nt.ClockWithOffset): Promise<void>
 
     handleBlock(blockId: string): Promise<void>
 
@@ -30,6 +30,7 @@ export interface IContract {
 }
 
 export class ContractSubscription<C extends IContract> {
+    private readonly _clock: nt.ClockWithOffset
     private readonly _connection: nt.GqlConnection | nt.JrpcConnection
     private readonly _address: string
     protected readonly _contract: C
@@ -44,11 +45,13 @@ export class ContractSubscription<C extends IContract> {
     private _suggestedBlockId?: string
 
     protected constructor(
+        clock: nt.ClockWithOffset,
         connection: nt.GqlConnection | nt.JrpcConnection,
         release: () => void,
         address: string,
         contract: C
     ) {
+        this._clock = clock
         this._releaseConnection = release
         this._connection = connection
         this._address = address
@@ -118,7 +121,7 @@ export class ContractSubscription<C extends IContract> {
 
                     try {
                         this._currentPollingMethod = await this._contractMutex.use(async () => {
-                            await this._contract.refresh()
+                            await this._contract.refresh(this._clock)
                             return this._contract.pollingMethod
                         })
                     } catch (e: any) {

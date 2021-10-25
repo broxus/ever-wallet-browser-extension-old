@@ -16,6 +16,7 @@ export interface ITokenWalletHandler {
 }
 
 export class TokenWalletSubscription {
+    private readonly _clock: nt.ClockWithOffset
     private readonly _connection: nt.GqlConnection | nt.JrpcConnection
     private readonly _address: string
     private readonly _owner: string
@@ -29,6 +30,7 @@ export class TokenWalletSubscription {
     private _isRunning: boolean = false
 
     public static async subscribe(
+        clock: nt.ClockWithOffset,
         connectionController: ConnectionController,
         owner: string,
         rootTokenContract: string,
@@ -48,7 +50,7 @@ export class TokenWalletSubscription {
                 handler
             )
 
-            return new TokenWalletSubscription(connection, release, tokenWallet)
+            return new TokenWalletSubscription(clock, connection, release, tokenWallet)
         } catch (e: any) {
             console.log(owner, rootTokenContract)
             release()
@@ -57,10 +59,12 @@ export class TokenWalletSubscription {
     }
 
     private constructor(
+        clock: nt.ClockWithOffset,
         connection: nt.GqlConnection | nt.JrpcConnection,
         release: () => void,
         tokenWallet: nt.TokenWallet
     ) {
+        this._clock = clock
         this._releaseConnection = release
         this._connection = connection
         this._address = tokenWallet.address
@@ -109,7 +113,7 @@ export class TokenWalletSubscription {
 
                 try {
                     await this._tokenWalletMutex.use(async () => {
-                        await this._tokenWallet.refresh()
+                        await this._tokenWallet.refresh(this._clock)
                     })
                 } catch (e: any) {
                     console.error(

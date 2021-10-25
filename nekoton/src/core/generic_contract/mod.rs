@@ -52,13 +52,13 @@ impl GenericContract {
     ) -> Result<PromiseString, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
-        let clock = clock.inner.clone();
+        let clock = clock.as_const();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
             let res = contract
-                .estimate_fees(&*clock.lock().trust_me(), &message.boc)
+                .estimate_fees(&clock, &message.boc)
                 .await
                 .handle_error()?;
             Ok(JsValue::from(res.to_string()))
@@ -73,17 +73,13 @@ impl GenericContract {
     ) -> Result<PromiseTransaction, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
-        let clock = clock.inner.clone();
+        let clock = clock.as_const();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
             let res = contract
-                .execute_transaction_locally(
-                    &*clock.lock().trust_me(),
-                    &message.boc,
-                    Default::default(),
-                )
+                .execute_transaction_locally(&clock, &message.boc, Default::default())
                 .await
                 .handle_error()?;
             Ok(crate::core::models::make_transaction(res).unchecked_into())
@@ -113,13 +109,14 @@ impl GenericContract {
     }
 
     #[wasm_bindgen(js_name = "refresh")]
-    pub fn refresh(&mut self) -> PromiseVoid {
+    pub fn refresh(&mut self, clock: &ClockWithOffset) -> PromiseVoid {
         let inner = self.inner.clone();
+        let clock = clock.as_const();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
-            contract.refresh().await.handle_error()?;
+            contract.refresh(&clock).await.handle_error()?;
             Ok(JsValue::undefined())
         }))
     }

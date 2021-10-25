@@ -122,6 +122,12 @@ impl ClockWithOffset {
     }
 }
 
+impl ClockWithOffset {
+    pub fn as_const(&self) -> nt_utils::ConstClock {
+        nt_utils::ConstClock::from_millis(self.inner.lock().trust_me().offset_ms() + 1)
+    }
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const GENERAL_STUFF: &str = r#"
 export type EnumItem<T extends string, D> = { type: T, data: D };

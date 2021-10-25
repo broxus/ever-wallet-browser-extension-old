@@ -408,7 +408,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requireOptional(req, req.params, 'cachedState', requireContractState)
     requireFunctionCall(req, req.params, 'functionCall')
 
-    const { connectionController } = ctx
+    const { clock, connectionController } = ctx
 
     let contractState = cachedState
 
@@ -427,7 +427,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
 
     try {
         const { output, code } = nt.runLocal(
-            contractState.genTimings,
+            clock,
             contractState.lastTransactionId,
             contractState.boc,
             functionCall.abi,

@@ -260,6 +260,7 @@ export class SubscriptionController extends BaseController<
         const handler = new ContractHandler(address, this)
 
         const subscription = await GenericContractSubscription.subscribe(
+            this.config.clock,
             this.config.connectionController,
             address,
             handler
@@ -377,6 +378,7 @@ export class SubscriptionController extends BaseController<
 
 class GenericContractSubscription extends ContractSubscription<nt.GenericContract> {
     public static async subscribe(
+        clock: nt.ClockWithOffset,
         connectionController: ConnectionController,
         address: string,
         handler: IContractHandler<nt.Transaction>
@@ -394,7 +396,7 @@ class GenericContractSubscription extends ContractSubscription<nt.GenericContrac
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, 'Failed to subscribe')
             }
 
-            return new GenericContractSubscription(connection, release, address, contract)
+            return new GenericContractSubscription(clock, connection, release, address, contract)
         } catch (e: any) {
             release()
             throw e
