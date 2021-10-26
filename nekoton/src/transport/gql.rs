@@ -19,18 +19,20 @@ use crate::external::{GqlConnectionImpl, GqlSender};
 use crate::utils::*;
 
 #[wasm_bindgen]
-#[derive(Clone)]
 pub struct GqlConnection {
     #[wasm_bindgen(skip)]
     pub inner: Arc<GqlConnectionImpl>,
+    #[wasm_bindgen(skip)]
+    pub clock: Arc<nt_utils::ClockWithOffset>,
 }
 
 #[wasm_bindgen]
 impl GqlConnection {
     #[wasm_bindgen(constructor)]
-    pub fn new(sender: GqlSender) -> GqlConnection {
+    pub fn new(clock: &ClockWithOffset, sender: GqlSender) -> GqlConnection {
         Self {
             inner: Arc::new(GqlConnectionImpl::new(sender)),
+            clock: clock.clone_inner(),
         }
     }
 
@@ -44,11 +46,13 @@ impl GqlConnection {
 
         let address = parse_address(address)?;
 
+        let clock = self.clock.clone();
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(GenericContractSubscriptionHandler::from(handler));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::generic_contract::GenericContract::subscribe(
+                clock,
                 transport.clone() as Arc<dyn nt::transport::Transport>,
                 address,
                 handler,
@@ -76,11 +80,13 @@ impl GqlConnection {
         let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
 
+        let clock = self.clock.clone();
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::ton_wallet::TonWallet::subscribe(
+                clock,
                 transport.clone() as Arc<dyn nt::transport::Transport>,
                 workchain,
                 public_key,
@@ -107,11 +113,13 @@ impl GqlConnection {
 
         let address = parse_address(address)?;
 
+        let clock = self.clock.clone();
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::ton_wallet::TonWallet::subscribe_by_address(
+                clock,
                 transport.clone() as Arc<dyn nt::transport::Transport>,
                 address,
                 handler,
@@ -138,11 +146,13 @@ impl GqlConnection {
         let owner = parse_address(owner)?;
         let root_token_contract = parse_address(root_token_contract)?;
 
+        let clock = self.clock.clone();
         let transport = Arc::new(self.make_transport());
         let handler = Arc::new(TokenWalletSubscriptionHandler::from(handler));
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let wallet = nt::core::token_wallet::TokenWallet::subscribe(
+                clock,
                 transport.clone() as Arc<dyn nt::transport::Transport>,
                 owner,
                 root_token_contract,
@@ -164,6 +174,7 @@ impl GqlConnection {
         address: &str,
     ) -> Result<PromiseTonWalletInitData, JsValue> {
         let address = parse_address(address)?;
+        let clock = self.clock.clone();
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
@@ -180,9 +191,13 @@ impl GqlConnection {
 
             let (public_key, wallet_type) =
                 nt::core::ton_wallet::extract_wallet_init_data(&contract).handle_error()?;
-            let custodians =
-                nt::core::ton_wallet::get_wallet_custodians(&contract, &public_key, wallet_type)
-                    .handle_error()?;
+            let custodians = nt::core::ton_wallet::get_wallet_custodians(
+                clock.as_ref(),
+                &contract,
+                &public_key,
+                wallet_type,
+            )
+            .handle_error()?;
 
             Ok(make_ton_wallet_init_data(
                 public_key,
@@ -201,10 +216,13 @@ impl GqlConnection {
     ) -> Result<RootTokenContractDetailsWithAddress, JsValue> {
         let root_token_contract = parse_address(root_token_contract)?;
         let owner = parse_address(owner_address)?;
+
+        let clock = self.clock.clone();
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             crate::core::token_wallet::get_token_root_details_with_user_token_wallet(
+                clock.as_ref(),
                 &transport,
                 &root_token_contract,
                 &owner,
@@ -217,13 +235,19 @@ impl GqlConnection {
     #[wasm_bindgen(js_name = "getTokenWalletBalance")]
     pub fn get_token_wallet_balance(&self, token_wallet: &str) -> Result<PromiseString, JsValue> {
         let token_wallet = parse_address(token_wallet)?;
+
+        let clock = self.clock.clone();
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            crate::core::token_wallet::get_token_wallet_balance(&transport, &token_wallet)
-                .await
-                .map(JsValue::from)
-                .map(JsCast::unchecked_into)
+            crate::core::token_wallet::get_token_wallet_balance(
+                clock.as_ref(),
+                &transport,
+                &token_wallet,
+            )
+            .await
+            .map(JsValue::from)
+            .map(JsCast::unchecked_into)
         })))
     }
 
@@ -233,11 +257,13 @@ impl GqlConnection {
         token_wallet_address: &str,
     ) -> Result<PromiseRootTokenContractDetails, JsValue> {
         let token_wallet_address = parse_address(token_wallet_address)?;
+        let clock = self.clock.clone();
         let transport = self.make_transport();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let (address, details) =
                 nt::core::token_wallet::get_token_root_details_from_token_wallet(
+                    clock.as_ref(),
                     &transport,
                     &token_wallet_address,
                 )

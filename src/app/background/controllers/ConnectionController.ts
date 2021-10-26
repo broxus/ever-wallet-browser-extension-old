@@ -376,7 +376,7 @@ export class ConnectionController extends BaseController<
             const { shouldTest, connection, connectionData } = await (params.type === 'graphql'
                 ? async () => {
                       const socket = new GqlSocket()
-                      const connection = await socket.connect(params.data)
+                      const connection = await socket.connect(this.config.clock, params.data)
 
                       return {
                           shouldTest: !params.data.local,
@@ -393,7 +393,7 @@ export class ConnectionController extends BaseController<
                   }
                 : async () => {
                       const socket = new JrpcSocket()
-                      const connection = await socket.connect(params.data)
+                      const connection = await socket.connect(this.config.clock, params.data)
 
                       return {
                           shouldTest: true,
@@ -484,7 +484,10 @@ function requireInitializedConnection(
 }
 
 export class GqlSocket {
-    public async connect(params: GqlSocketParams): Promise<nt.GqlConnection> {
+    public async connect(
+        clock: nt.ClockWithOffset,
+        params: GqlSocketParams
+    ): Promise<nt.GqlConnection> {
         class GqlSender {
             private readonly params: GqlSocketParams
 
@@ -514,12 +517,15 @@ export class GqlSocket {
             }
         }
 
-        return new nt.GqlConnection(new GqlSender(params))
+        return new nt.GqlConnection(clock, new GqlSender(params))
     }
 }
 
 export class JrpcSocket {
-    public async connect(params: JrpcSocketParams): Promise<nt.JrpcConnection> {
+    public async connect(
+        clock: nt.ClockWithOffset,
+        params: JrpcSocketParams
+    ): Promise<nt.JrpcConnection> {
         class JrpcSender {
             private readonly params: JrpcSocketParams
 
@@ -545,6 +551,6 @@ export class JrpcSocket {
             }
         }
 
-        return new nt.JrpcConnection(new JrpcSender(params))
+        return new nt.JrpcConnection(clock, new JrpcSender(params))
     }
 }

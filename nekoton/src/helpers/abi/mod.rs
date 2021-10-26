@@ -32,7 +32,7 @@ pub fn run_local(
 
     let output = method
         .run_local(
-            &*clock.inner.lock().trust_me(),
+            clock.inner.as_ref(),
             account_stuff,
             &last_transaction_id,
             &input,
@@ -178,7 +178,7 @@ pub fn create_external_message(
 
     Ok(crate::crypto::UnsignedMessage {
         inner: nt::core::utils::make_labs_unsigned_message(
-            &*clock.inner.lock().trust_me(),
+            clock.inner.as_ref(),
             message,
             nt::core::models::Expiration::Timeout(timeout),
             &public_key,

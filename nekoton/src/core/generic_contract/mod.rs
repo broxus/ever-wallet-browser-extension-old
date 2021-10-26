@@ -47,20 +47,15 @@ impl GenericContract {
     #[wasm_bindgen(js_name = "estimateFees")]
     pub fn estimate_fees(
         &self,
-        clock: &ClockWithOffset,
         signed_message: crate::crypto::JsSignedMessage,
     ) -> Result<PromiseString, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
-        let clock = clock.as_const();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
-            let res = contract
-                .estimate_fees(&clock, &message.boc)
-                .await
-                .handle_error()?;
+            let res = contract.estimate_fees(&message.boc).await.handle_error()?;
             Ok(JsValue::from(res.to_string()))
         })))
     }
@@ -68,18 +63,16 @@ impl GenericContract {
     #[wasm_bindgen(js_name = "sendMessageLocally")]
     pub fn send_message_locally(
         &self,
-        clock: &ClockWithOffset,
         signed_message: crate::crypto::JsSignedMessage,
     ) -> Result<PromiseTransaction, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
-        let clock = clock.as_const();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
             let res = contract
-                .execute_transaction_locally(&clock, &message.boc, Default::default())
+                .execute_transaction_locally(&message.boc, Default::default())
                 .await
                 .handle_error()?;
             Ok(crate::core::models::make_transaction(res).unchecked_into())
@@ -109,14 +102,13 @@ impl GenericContract {
     }
 
     #[wasm_bindgen(js_name = "refresh")]
-    pub fn refresh(&mut self, clock: &ClockWithOffset) -> PromiseVoid {
+    pub fn refresh(&mut self) -> PromiseVoid {
         let inner = self.inner.clone();
-        let clock = clock.as_const();
 
         JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
-            contract.refresh(&clock).await.handle_error()?;
+            contract.refresh().await.handle_error()?;
             Ok(JsValue::undefined())
         }))
     }

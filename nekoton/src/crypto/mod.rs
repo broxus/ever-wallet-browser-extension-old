@@ -7,7 +7,6 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 use nt::crypto;
-use nt_utils::TrustMe;
 
 use crate::utils::*;
 
@@ -55,7 +54,7 @@ pub struct UnsignedMessage {
 impl UnsignedMessage {
     #[wasm_bindgen(js_name = "refreshTimeout")]
     pub fn refresh_timeout(&mut self, clock: &ClockWithOffset) {
-        self.inner.refresh_timeout(&*clock.inner.lock().trust_me());
+        self.inner.refresh_timeout(clock.inner.as_ref());
     }
 
     #[wasm_bindgen(js_name = "expireAt")]

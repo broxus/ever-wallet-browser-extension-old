@@ -804,7 +804,6 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareTransfer(
-                this.config.clock,
                 contractState,
                 params.publicKey,
                 params.recipient,
@@ -822,7 +821,7 @@ export class AccountController extends BaseController<
 
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(this.config.clock, signedMessage)
+                return await wallet.estimateFees(signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -845,7 +844,6 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareConfirm(
-                this.config.clock,
                 contractState,
                 params.publicKey,
                 params.transactionId,
@@ -854,7 +852,7 @@ export class AccountController extends BaseController<
 
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(this.config.clock, signedMessage)
+                return await wallet.estimateFees(signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -876,10 +874,10 @@ export class AccountController extends BaseController<
                 )
             }
 
-            const unsignedMessage = wallet.prepareDeploy(this.config.clock, 60)
+            const unsignedMessage = wallet.prepareDeploy(60)
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(this.config.clock, signedMessage)
+                return await wallet.estimateFees(signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -919,7 +917,6 @@ export class AccountController extends BaseController<
             }
 
             const unsignedMessage = wallet.prepareTransfer(
-                this.config.clock,
                 contractState,
                 params.publicKey,
                 params.recipient,
@@ -965,7 +962,6 @@ export class AccountController extends BaseController<
             let unsignedMessage: nt.UnsignedMessage | undefined
             try {
                 unsignedMessage = wallet.prepareConfirm(
-                    this.config.clock,
                     contractState,
                     params.publicKey,
                     params.transactionId,
@@ -1000,10 +996,9 @@ export class AccountController extends BaseController<
 
             let unsignedMessage: nt.UnsignedMessage
             if (params.type === 'single_owner') {
-                unsignedMessage = wallet.prepareDeploy(this.config.clock, 60)
+                unsignedMessage = wallet.prepareDeploy(60)
             } else {
                 unsignedMessage = wallet.prepareDeployWithMultipleOwners(
-                    this.config.clock,
                     60,
                     params.custodians,
                     params.reqConfirms
@@ -1368,7 +1363,6 @@ export class AccountController extends BaseController<
 
         console.debug('_createTokenWalletSubscription -> subscribing to token wallet')
         const subscription = await TokenWalletSubscription.subscribe(
-            this.config.clock,
             this.config.connectionController,
             owner,
             rootTokenContract,

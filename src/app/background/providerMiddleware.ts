@@ -853,7 +853,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     requireString(req, req.params, 'amount')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
 
-    const { origin, clock, permissionsController, accountController } = ctx
+    const { origin, permissionsController, accountController } = ctx
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.address != sender) {
@@ -886,7 +886,6 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         let unsignedMessage: nt.UnsignedMessage | undefined = undefined
         try {
             unsignedMessage = wallet.prepareTransfer(
-                clock,
                 contractState,
                 wallet.publicKey,
                 repackedRecipient,
@@ -905,7 +904,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
 
         try {
             const signedMessage = unsignedMessage.signFake()
-            return await wallet.estimateFees(clock, signedMessage)
+            return await wallet.estimateFees(signedMessage)
         } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
@@ -930,7 +929,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     requireBoolean(req, req.params, 'bounce')
     requireOptional(req, req.params, 'payload', requireFunctionCall)
 
-    const { origin, clock, permissionsController, accountController, approvalController } = ctx
+    const { origin, permissionsController, accountController, approvalController } = ctx
 
     const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
     if (allowedAccount?.address != sender) {
@@ -978,7 +977,6 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         let unsignedMessage: nt.UnsignedMessage | undefined = undefined
         try {
             unsignedMessage = wallet.prepareTransfer(
-                clock,
                 contractState,
                 password.data.publicKey,
                 repackedRecipient,

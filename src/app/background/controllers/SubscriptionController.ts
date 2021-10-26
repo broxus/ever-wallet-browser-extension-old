@@ -164,7 +164,7 @@ export class SubscriptionController extends BaseController<
 
         return await subscription.use(async (contract) => {
             try {
-                return await contract.sendMessageLocally(this.config.clock, signedMessage)
+                return await contract.sendMessageLocally(signedMessage)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
