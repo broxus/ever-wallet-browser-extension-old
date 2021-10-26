@@ -113,7 +113,7 @@ impl ClockWithOffset {
 
     #[wasm_bindgen(js_name = "updateOffset")]
     pub fn update_offset(&self, offset_ms: f64) {
-        self.inner.lock().trust_me().update_offset(offset_ms as u64)
+        self.inner.lock().trust_me().update_offset(offset_ms as i64)
     }
 
     #[wasm_bindgen(js_name = "offsetMs")]
