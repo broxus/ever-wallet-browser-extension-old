@@ -737,7 +737,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2524caa543a7b4a08eef8fff10dc8d833f03c7a4"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#28fd7680f8bdfc8011fd010f92d49341b57c61a3"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -782,7 +782,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2524caa543a7b4a08eef8fff10dc8d833f03c7a4"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#28fd7680f8bdfc8011fd010f92d49341b57c61a3"
 dependencies = [
  "anyhow",
  "base64",
@@ -808,7 +808,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2524caa543a7b4a08eef8fff10dc8d833f03c7a4"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#28fd7680f8bdfc8011fd010f92d49341b57c61a3"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -818,7 +818,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2524caa543a7b4a08eef8fff10dc8d833f03c7a4"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#28fd7680f8bdfc8011fd010f92d49341b57c61a3"
 dependencies = [
  "either",
  "proc-macro2",
@@ -829,7 +829,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#2524caa543a7b4a08eef8fff10dc8d833f03c7a4"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#28fd7680f8bdfc8011fd010f92d49341b57c61a3"
 dependencies = [
  "anyhow",
  "base64",
@@ -1399,7 +1399,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "2.1.0"
-source = "git+https://github.com/broxus/ton-labs-abi.git#a5f3dc33b3531288b6ae428cfbd365d3e36e5ad0"
+source = "git+https://github.com/broxus/ton-labs-abi.git#731a6da544bd44d26bb387cfa16783536d1adfc0"
 dependencies = [
  "anyhow",
  "base64",
