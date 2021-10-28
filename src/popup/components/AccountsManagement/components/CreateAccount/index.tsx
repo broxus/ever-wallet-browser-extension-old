@@ -129,41 +129,33 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
 
                     case custodians.includes(currentPublicKey):
                         {
-                            const hasAccount = rpcState.state.accountEntries[address]
+                            const existingAccount = rpcState.state.accountEntries[address] as
+                                | nt.AssetsList
+                                | undefined
 
-                            if (!hasAccount) {
+                            if (existingAccount == null) {
                                 await rpc
-                                    .createAccount({
-                                        contractType,
-                                        publicKey,
-                                        name,
-                                        workchain,
-                                    })
+                                    .addExternalAccount(address, publicKey, currentPublicKey)
+                                    .then(async () =>
+                                        rpc.createAccount({
+                                            contractType,
+                                            publicKey,
+                                            name,
+                                            workchain,
+                                        })
+                                    )
                                     .then(async (account) => {
-                                        if (currentPublicKey) {
-                                            await rpc.addExternalAccount(
-                                                address,
-                                                publicKey,
-                                                currentPublicKey
-                                            )
-                                        }
                                         drawer.setPanel(Panel.MANAGE_SEEDS)
                                         accountability.onManageAccount(account)
                                         console.log('create and add account to externals')
                                     })
+                                    .catch(console.error)
                             } else {
-                                const account = rpcState.state.accountEntries[address]
-                                if (account !== undefined) {
-                                    await rpc.updateAccountVisibility(address, true)
-                                    await rpc.addExternalAccount(
-                                        address,
-                                        publicKey,
-                                        currentPublicKey
-                                    )
-                                    drawer.setPanel(Panel.MANAGE_SEEDS)
-                                    accountability.onManageAccount(account)
-                                    console.log('add to externals')
-                                }
+                                await rpc.addExternalAccount(address, publicKey, currentPublicKey)
+                                await rpc.updateAccountVisibility(address, true)
+                                drawer.setPanel(Panel.MANAGE_SEEDS)
+                                accountability.onManageAccount(existingAccount)
+                                console.log('add to externals')
                             }
                         }
                         break
