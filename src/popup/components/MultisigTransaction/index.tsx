@@ -8,7 +8,7 @@ import {
     extractTokenTransactionAddress,
     extractTransactionAddress,
 } from '@shared/utils'
-import { Fees, parseError } from '@popup/utils'
+import { parseError } from '@popup/utils'
 
 import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
@@ -148,7 +148,8 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         filteredSelectableKeys[0]
     )
 
-    const isExpired = transaction.createdAt + expirationTime <= currentUtime()
+    const isExpired =
+        transaction.createdAt + expirationTime <= currentUtime(rpcState.state.clockOffset)
 
     const txHash = multisigTransaction?.finalTransactionHash
 

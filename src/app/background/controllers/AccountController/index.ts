@@ -1102,7 +1102,7 @@ export class AccountController extends BaseController<
                         )
                         pendingTransactions[pendingTransaction.bodyHash] = {
                             ...info,
-                            createdAt: currentUtime(),
+                            createdAt: currentUtime(this.config.clock.offsetMs()),
                             messageHash: signedMessage.hash,
                         } as StoredBriefMessageInfo
 

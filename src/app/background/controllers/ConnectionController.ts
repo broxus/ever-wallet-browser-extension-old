@@ -111,12 +111,14 @@ export interface ConnectionConfig extends BaseConfig {
 }
 
 export interface ConnectionControllerState extends BaseState {
+    clockOffset: number
     selectedConnection: ConnectionDataItem
     pendingConnection: ConnectionDataItem | undefined
 }
 
 function makeDefaultState(): ConnectionControllerState {
     return {
+        clockOffset: 0,
         selectedConnection: getPreset(0)!,
         pendingConnection: undefined,
     }
@@ -315,6 +317,7 @@ export class ConnectionController extends BaseController<
             const clockOffset = await computeClockOffset()
             console.log(`Clock offset: ${clockOffset}`)
             this.config.clock.updateOffset(clockOffset)
+            this.update({ clockOffset })
         }
 
         // NOTE: Update clock offset twice because first request is always too long

@@ -85,7 +85,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
             : {}
     }, [transaction])
 
-    const now = currentUtime()
+    const now = currentUtime(rpcState.state.clockOffset)
 
     const expiresAt =
         transaction.createdAt + (accountability.contractTypeDetails?.expirationTime || 3600)
