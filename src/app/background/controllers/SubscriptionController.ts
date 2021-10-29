@@ -15,6 +15,7 @@ import { ContractSubscription, IContractHandler } from '../utils/ContractSubscri
 const DEFAULT_POLLING_INTERVAL = 10000 // 10s
 
 export interface SubscriptionControllerConfig extends BaseConfig {
+    clock: nt.ClockWithOffset
     connectionController: ConnectionController
     notifyTab?: <T extends ProviderEvent>(
         tabId: number,
@@ -164,7 +165,7 @@ export class SubscriptionController extends BaseController<
         return await subscription.use(async (contract) => {
             try {
                 return await contract.sendMessageLocally(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })
@@ -196,7 +197,7 @@ export class SubscriptionController extends BaseController<
                     try {
                         await contract.sendMessage(signedMessage)
                         subscription.skipRefreshTimer()
-                    } catch (e) {
+                    } catch (e: any) {
                         throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
                     }
                 })
@@ -259,6 +260,7 @@ export class SubscriptionController extends BaseController<
         const handler = new ContractHandler(address, this)
 
         const subscription = await GenericContractSubscription.subscribe(
+            this.config.clock,
             this.config.connectionController,
             address,
             handler
@@ -376,6 +378,7 @@ export class SubscriptionController extends BaseController<
 
 class GenericContractSubscription extends ContractSubscription<nt.GenericContract> {
     public static async subscribe(
+        clock: nt.ClockWithOffset,
         connectionController: ConnectionController,
         address: string,
         handler: IContractHandler<nt.Transaction>
@@ -393,8 +396,8 @@ class GenericContractSubscription extends ContractSubscription<nt.GenericContrac
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, 'Failed to subscribe')
             }
 
-            return new GenericContractSubscription(connection, release, address, contract)
-        } catch (e) {
+            return new GenericContractSubscription(clock, connection, release, address, contract)
+        } catch (e: any) {
             release()
             throw e
         }

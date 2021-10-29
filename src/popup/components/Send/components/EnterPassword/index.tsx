@@ -1,27 +1,40 @@
 import * as React from 'react'
 
 import * as nt from '@nekoton'
-import { convertFees, Fees, prepareKey } from '@popup/utils'
+import { prepareKey } from '@popup/utils'
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import { Select } from '@popup/components/Select'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
-import { convertPublicKey } from '@shared/utils'
+import { convertCurrency, convertPublicKey, convertTokenName, convertTons } from '@shared/utils'
 
 import './style.scss'
+import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
-export type Message = {
-    amount: string
-    comment?: string
-    recipient: string
-}
+export type MessageAmount =
+    | nt.EnumItem<
+          'ton_wallet',
+          {
+              amount: string
+          }
+      >
+    | nt.EnumItem<
+          'token_wallet',
+          {
+              amount: string
+              attachedAmount: string
+              symbol: string
+              decimals: number
+              rootTokenContract: string
+          }
+      >
 
 type Props = {
     keyEntries: nt.KeyStoreEntry[]
     keyEntry: nt.KeyStoreEntry
-    params?: Message
-    fees?: Fees
-    currencyName?: string
+    amount?: MessageAmount
+    recipient?: string
+    fees?: string
     error?: string
     disabled: boolean
     showHeading?: boolean
@@ -34,9 +47,9 @@ type Props = {
 export function EnterPassword({
     keyEntries,
     keyEntry,
-    params,
+    amount,
+    recipient,
     fees,
-    currencyName,
     error,
     disabled,
     showHeading = true,
@@ -50,8 +63,6 @@ export function EnterPassword({
     const [password, setPassword] = React.useState<string>('')
 
     const passwordRef = React.useRef<HTMLInputElement>(null)
-
-    const convertedFees = fees != null ? convertFees(fees) : undefined
 
     const keyEntriesOptions = keyEntries.map((key) => ({
         label: key.name,
@@ -73,7 +84,8 @@ export function EnterPassword({
     }
 
     const onKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
-        if (event.keyCode === 13) {
+        const keyCode = event.which || event.keyCode
+        if (keyCode === 13) {
             await trySubmit()
         }
     }
@@ -94,13 +106,13 @@ export function EnterPassword({
             <div className="enter-password__wrapper">
                 <div>
                     <div className="enter-password__confirm-details">
-                        {params?.recipient !== undefined && (
+                        {recipient != null && (
                             <div key="recipient" className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">
                                     Recipient
                                 </span>
                                 <span className="enter-password__confirm-details-param-value">
-                                    {params?.recipient}
+                                    {recipient}
                                 </span>
                             </div>
                         )}
@@ -117,24 +129,50 @@ export function EnterPassword({
                                 </span>
                             </div>
                         )}
-                        {params?.amount !== undefined && (
-                            <div key="amount" className="enter-password__confirm-details-param">
+                        {amount?.type == 'token_wallet' && (
+                            <div className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">
                                     Amount
                                 </span>
-                                <span className="enter-password__confirm-details-param-value">
-                                    {params?.amount} {currencyName}
+                                <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
+                                    <AssetIcon
+                                        type={'token_wallet'}
+                                        address={amount.data.rootTokenContract}
+                                        className="root-token-icon noselect"
+                                    />
+                                    {convertCurrency(amount.data.amount, amount.data.decimals)}
+                                    &nbsp;
+                                    <span className="root-token-name">
+                                        {convertTokenName(amount.data.symbol)}
+                                    </span>
                                 </span>
                             </div>
                         )}
+
+                        {amount != null && (
+                            <div className="enter-password__confirm-details-param">
+                                <span className="enter-password__confirm-details-param-desc">
+                                    {amount.type == 'ton_wallet' ? 'Amount' : 'Attached amount'}
+                                </span>
+                                <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
+                                    <TonAssetIcon className="root-token-icon noselect" />
+                                    {convertTons(
+                                        amount.type == 'ton_wallet'
+                                            ? amount.data.amount
+                                            : amount.data.attachedAmount
+                                    )}
+                                    &nbsp;TON
+                                </span>
+                            </div>
+                        )}
+
                         <div key="convertedFees" className="enter-password__confirm-details-param">
                             <span className="enter-password__confirm-details-param-desc">
                                 Blockchain fee
                             </span>
-                            <span className="enter-password__confirm-details-param-value">
-                                {convertedFees?.total !== undefined
-                                    ? `~${convertedFees.total} TON`
-                                    : 'calculating...'}
+                            <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
+                                <TonAssetIcon className="root-token-icon noselect" />
+                                {fees != null ? `~${convertTons(fees)} TON` : 'calculating...'}
                             </span>
                         </div>
                     </div>
@@ -155,8 +193,8 @@ export function EnterPassword({
                                 disabled={disabled}
                                 value={password}
                                 onKeyDown={onKeyDown}
-                                onChange={setPassword}
-                                register={passwordRef}
+                                onChange={(e) => setPassword(e.target.value)}
+                                ref={passwordRef}
                             />
                             <div className="enter-password__field-hint">
                                 Enter password for seed:{' '}

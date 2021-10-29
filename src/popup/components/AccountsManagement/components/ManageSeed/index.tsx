@@ -73,9 +73,7 @@ export function ManageSeed(): JSX.Element {
             {step == ManageSeedStep.INDEX && (
                 <div key="index" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">
-                            Manage seed phrase
-                        </h2>
+                        <h2 className="accounts-management__header-title">Manage seed phrase</h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
@@ -87,27 +85,30 @@ export function ManageSeed(): JSX.Element {
                                     label="Enter seed name"
                                     type="text"
                                     value={name || ''}
-                                    onChange={setName}
+                                    onChange={(e) => setName(e.target.value)}
                                 />
                                 {accountability.currentMasterKey !== undefined &&
-                                (accountability.masterKeysNames[
+                                    (accountability.masterKeysNames[
                                         accountability.currentMasterKey.masterKey
-                                        ] !== undefined ||
-                                    name) &&
-                                accountability.masterKeysNames[
-                                    accountability.currentMasterKey.masterKey
+                                    ] !== undefined ||
+                                        name) &&
+                                    accountability.masterKeysNames[
+                                        accountability.currentMasterKey.masterKey
                                     ] !== name && (
-                                    <a
-                                        role="button"
-                                        className="accounts-management__name-button"
-                                        onMouseDown={saveName}
-                                    >
-                                        Save
-                                    </a>
-                                )}
+                                        <a
+                                            role="button"
+                                            className="accounts-management__name-button"
+                                            onMouseDown={saveName}
+                                        >
+                                            Save
+                                        </a>
+                                    )}
                             </div>
 
-                            <div className="accounts-management__content-header" style={{ marginTop: 16 }}>
+                            <div
+                                className="accounts-management__content-header"
+                                style={{ marginTop: 16 }}
+                            >
                                 Keys
                                 {accountability.currentMasterKey?.signerName !== 'encrypted_key' ? (
                                     <a role="button" className="extra" onClick={addKey}>
@@ -132,7 +133,8 @@ export function ManageSeed(): JSX.Element {
                                                     className={classNames(
                                                         'accounts-management__list-item',
                                                         {
-                                                            'accounts-management__list-item--active': isActive,
+                                                            'accounts-management__list-item--active':
+                                                                isActive,
                                                         }
                                                     )}
                                                     onClick={onManageDerivedKey(key)}

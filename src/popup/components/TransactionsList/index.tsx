@@ -91,7 +91,7 @@ export function TransactionsList({
                 console.log('Preloading transactions')
                 await preloadTransactions(continuation)
                 setLatestContinuation(continuation)
-            } catch (e) {
+            } catch (e: any) {
                 console.error(e)
                 loading = false
             }
@@ -103,7 +103,7 @@ export function TransactionsList({
             current.removeEventListener('scroll', onScroll)
         }
     }, [scrollArea, transactions, preloadTransactions])
-    const now = currentUtime()
+    const now = currentUtime(rpcState.state.clockOffset)
 
     if (pendingTransactions != null) {
         for (let i = 0; i < pendingTransactions.length; ++i) {

@@ -15,7 +15,7 @@ use crate::utils::*;
 
 #[wasm_bindgen(js_name = "runLocal")]
 pub fn run_local(
-    gen_timings: crate::core::models::GenTimings,
+    clock: &ClockWithOffset,
     last_transaction_id: crate::core::models::LastTransactionId,
     account_stuff_boc: &str,
     contract_abi: &str,
@@ -24,7 +24,6 @@ pub fn run_local(
 ) -> Result<ExecutionOutput, JsValue> {
     use crate::core::models::*;
 
-    let gen_timings = parse_gen_timings(gen_timings)?;
     let last_transaction_id = parse_last_transaction_id(last_transaction_id)?;
     let account_stuff = parse_account_stuff(account_stuff_boc)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
@@ -32,7 +31,12 @@ pub fn run_local(
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
     let output = method
-        .run_local(account_stuff, gen_timings, &last_transaction_id, &input)
+        .run_local(
+            clock.inner.as_ref(),
+            account_stuff,
+            &last_transaction_id,
+            &input,
+        )
         .handle_error()?;
 
     make_execution_output(&output)
@@ -143,6 +147,7 @@ pub fn create_external_message_without_signature(
 
 #[wasm_bindgen(js_name = "createExternalMessage")]
 pub fn create_external_message(
+    clock: &ClockWithOffset,
     dst: &str,
     contract_abi: &str,
     method: &str,
@@ -173,6 +178,7 @@ pub fn create_external_message(
 
     Ok(crate::crypto::UnsignedMessage {
         inner: nt::core::utils::make_labs_unsigned_message(
+            clock.inner.as_ref(),
             message,
             nt::core::models::Expiration::Timeout(timeout),
             &public_key,
@@ -468,9 +474,7 @@ fn read_input_function_id(
     mut body: ton_types::SliceData,
     internal: bool,
 ) -> Result<u32, JsValue> {
-    if internal {
-        read_function_id(&body).handle_error()
-    } else {
+    if !internal {
         if body.get_next_bit().handle_error()? {
             body.move_by(ed25519_dalek::SIGNATURE_LENGTH * 8)
                 .handle_error()?
@@ -488,8 +492,8 @@ fn read_input_function_id(
                 _ => return Err(AbiError::UnsupportedHeader).handle_error(),
             }
         }
-        read_function_id(&body).handle_error()
     }
+    read_function_id(&body).handle_error()
 }
 
 pub enum MethodName {
@@ -888,6 +892,9 @@ fn parse_token_value(
                 ton_abi::TokenValue::Optional(*param.clone(), Some(value))
             }
         }
+        ton_abi::ParamType::Ref(param) => {
+            ton_abi::TokenValue::Ref(Box::new(parse_token_value(param, value)?))
+        }
     };
 
     Ok(value)
@@ -950,6 +957,7 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
             Some(value) => make_token_value(value)?,
             None => JsValue::null(),
         },
+        ton_abi::TokenValue::Ref(value) => make_token_value(value)?,
     })
 }
 
@@ -1029,7 +1037,7 @@ fn insert_init_data(
 
             let builder = parse_token_value(&param.value.kind, value)
                 .handle_error()?
-                .pack_into_chain(2)
+                .pack_into_chain(&ton_abi::contract::ABI_VERSION_2_0)
                 .handle_error()?;
 
             map.set_builder(param.key.write_to_new_cell().trust_me().into(), &builder)
@@ -1053,6 +1061,7 @@ export type AbiParamKindGram = 'gram';
 export type AbiParamKindTime = 'time';
 export type AbiParamKindExpire = 'expire';
 export type AbiParamKindPublicKey = 'pubkey';
+export type AbiParamKindString = 'string';
 export type AbiParamKindArray = `${AbiParamKind}[]`;
 
 export type AbiParamKindMap = `map(${AbiParamKindInt | AbiParamKindUint | AbiParamKindAddress},${AbiParamKind | `${AbiParamKind}[]`})`;
@@ -1068,7 +1077,8 @@ export type AbiParamKind =
   | AbiParamKindGram
   | AbiParamKindTime
   | AbiParamKindExpire
-  | AbiParamKindPublicKey;
+  | AbiParamKindPublicKey
+  | AbiParamKindString;
 
 export type AbiParam = {
   name: string;
@@ -1206,9 +1216,13 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         "expire" => ton_abi::ParamType::Expire,
         "pubkey" => ton_abi::ParamType::PublicKey,
         "string" => ton_abi::ParamType::String,
-        s if s.starts_with("optional(") && s.ends_with(")") => {
+        s if s.starts_with("optional(") && s.ends_with(')') => {
             let inner_type = parse_param_type(&s[9..s.len() - 1])?;
             ton_abi::ParamType::Optional(Box::new(inner_type))
+        }
+        s if s.starts_with("ref(") && s.ends_with(')') => {
+            let inner_type = parse_param_type(&s[4..s.len() - 1])?;
+            ton_abi::ParamType::Ref(Box::new(inner_type))
         }
         _ => return Err(AbiError::ExpectedParamType),
     };

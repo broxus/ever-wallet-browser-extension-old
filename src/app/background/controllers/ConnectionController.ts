@@ -42,20 +42,20 @@ const NETWORK_PRESETS = {
             local: false,
         },
     } as ConnectionData,
-    [3]: ({
+    [3]: {
         name: 'Mainnet (ADNL)',
         group: 'mainnet',
         type: 'jrpc',
         data: {
             endpoint: 'https://jrpc.broxus.com/rpc',
         },
-    } as unknown) as ConnectionData,
+    } as unknown as ConnectionData,
     [4]: {
         name: 'Testnet',
         group: 'testnet',
         type: 'graphql',
         data: {
-            endpoint: 'https://net.ton.dev/graphql',
+            endpoint: 'https://net5.ton.dev/graphql',
             timeout: 60000,
             local: false,
         },
@@ -106,15 +106,19 @@ export type InitializedConnection = { group: string } & (
       >
 )
 
-export interface ConnectionConfig extends BaseConfig {}
+export interface ConnectionConfig extends BaseConfig {
+    clock: nt.ClockWithOffset
+}
 
 export interface ConnectionControllerState extends BaseState {
+    clockOffset: number
     selectedConnection: ConnectionDataItem
     pendingConnection: ConnectionDataItem | undefined
 }
 
 function makeDefaultState(): ConnectionControllerState {
     return {
+        clockOffset: 0,
         selectedConnection: getPreset(0)!,
         pendingConnection: undefined,
     }
@@ -148,6 +152,8 @@ export class ConnectionController extends BaseController<
         if (this._initializedConnection != null) {
             throw new Error('Must not sync twice')
         }
+
+        await this._prepareTimeSync()
 
         while (true) {
             let loadedConnectionId = await this._loadSelectedConnectionId()
@@ -279,12 +285,53 @@ export class ConnectionController extends BaseController<
                 await this.startSwitchingNetwork(connection).then((handle) => handle.switch())
                 console.log(`Successfully connected to ${this.state.selectedConnection.name}`)
                 return
-            } catch (e) {
+            } catch (e: any) {
                 console.error('Connection failed:', e)
             }
         }
 
         throw new Error('Failed to find suitable connection')
+    }
+
+    private async _prepareTimeSync() {
+        const computeClockOffset = (): Promise<number> => {
+            return new Promise<number>((resolve, reject) => {
+                const now = Date.now()
+                fetch('https://jrpc.broxus.com')
+                    .then((body) => {
+                        const then = Date.now()
+                        body.text().then((timestamp) => {
+                            const server = parseInt(timestamp, undefined)
+                            resolve(server - (now + then) / 2)
+                        })
+                    })
+                    .catch(reject)
+                setTimeout(() => reject(new Error('Clock offset resolution timeout')), 5000)
+            }).catch((e) => {
+                console.warn('Failed to compute clock offset:', e)
+                return 0
+            })
+        }
+
+        const updateClockOffset = async () => {
+            const clockOffset = await computeClockOffset()
+            console.log(`Clock offset: ${clockOffset}`)
+            this.config.clock.updateOffset(clockOffset)
+            this.update({ clockOffset })
+        }
+
+        // NOTE: Update clock offset twice because first request is always too long
+        await updateClockOffset()
+        await updateClockOffset()
+
+        let lastTime = Date.now()
+        setInterval(() => {
+            const currentTime = Date.now()
+            if (Math.abs(currentTime - lastTime) > 2000) {
+                updateClockOffset().catch(console.error)
+            }
+            lastTime = currentTime
+        }, 1000)
     }
 
     private async _connect(params: ConnectionDataItem) {
@@ -332,7 +379,7 @@ export class ConnectionController extends BaseController<
             const { shouldTest, connection, connectionData } = await (params.type === 'graphql'
                 ? async () => {
                       const socket = new GqlSocket()
-                      const connection = await socket.connect(params.data)
+                      const connection = await socket.connect(this.config.clock, params.data)
 
                       return {
                           shouldTest: !params.data.local,
@@ -342,14 +389,14 @@ export class ConnectionController extends BaseController<
                               type: 'graphql',
                               data: {
                                   socket,
-                                  connection: await socket.connect(params.data),
+                                  connection,
                               },
                           } as InitializedConnection,
                       }
                   }
                 : async () => {
                       const socket = new JrpcSocket()
-                      const connection = await socket.connect(params.data)
+                      const connection = await socket.connect(this.config.clock, params.data)
 
                       return {
                           shouldTest: true,
@@ -375,7 +422,7 @@ export class ConnectionController extends BaseController<
 
             this._initializedConnection = connectionData
             await this._saveSelectedConnectionId(params.id)
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(
                 RpcErrorCode.INTERNAL,
                 `Failed to create connection: ${e.toString()}`
@@ -413,22 +460,18 @@ export class ConnectionController extends BaseController<
     }
 
     private async _loadSelectedConnectionId(): Promise<number | undefined> {
-        return new Promise<number | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedConnectionId'], ({ selectedConnectionId }) => {
-                if (typeof selectedConnectionId !== 'number') {
-                    return resolve(undefined)
-                }
-                resolve(selectedConnectionId)
-            })
-        })
+        const { selectedConnectionId } = await window.browser.storage.local.get([
+            'selectedConnectionId',
+        ])
+        if (typeof selectedConnectionId === 'number') {
+            return selectedConnectionId
+        } else {
+            return undefined
+        }
     }
 
     private async _saveSelectedConnectionId(connectionId: number): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ selectedConnectionId: connectionId }, () => {
-                resolve()
-            })
-        })
+        await window.browser.storage.local.set({ selectedConnectionId: connectionId })
     }
 }
 
@@ -444,7 +487,10 @@ function requireInitializedConnection(
 }
 
 export class GqlSocket {
-    public async connect(params: GqlSocketParams): Promise<nt.GqlConnection> {
+    public async connect(
+        clock: nt.ClockWithOffset,
+        params: GqlSocketParams
+    ): Promise<nt.GqlConnection> {
         class GqlSender {
             private readonly params: GqlSocketParams
 
@@ -467,19 +513,22 @@ export class GqlSocket {
                             body: data,
                         }).then((response) => response.text())
                         handler.onReceive(response)
-                    } catch (e) {
+                    } catch (e: any) {
                         handler.onError(e)
                     }
                 })()
             }
         }
 
-        return new nt.GqlConnection(new GqlSender(params))
+        return new nt.GqlConnection(clock, new GqlSender(params))
     }
 }
 
 export class JrpcSocket {
-    public async connect(params: JrpcSocketParams): Promise<nt.JrpcConnection> {
+    public async connect(
+        clock: nt.ClockWithOffset,
+        params: JrpcSocketParams
+    ): Promise<nt.JrpcConnection> {
         class JrpcSender {
             private readonly params: JrpcSocketParams
 
@@ -498,13 +547,13 @@ export class JrpcSocket {
                             body: data,
                         }).then((response) => response.text())
                         handler.onReceive(response)
-                    } catch (e) {
+                    } catch (e: any) {
                         handler.onError(e)
                     }
                 })()
             }
         }
 
-        return new nt.JrpcConnection(new JrpcSender(params))
+        return new nt.JrpcConnection(clock, new JrpcSender(params))
     }
 }

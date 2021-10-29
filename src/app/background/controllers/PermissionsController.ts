@@ -58,25 +58,20 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
 
     public async initialSync() {
         try {
-            await new Promise<void>((resolve) => {
-                chrome.storage.local.get(['permissions'], ({ permissions }) => {
-                    if (typeof permissions === 'object') {
-                        this.update({
-                            permissions,
-                        })
-
-                        for (const origin of Object.keys(permissions)) {
-                            this.config.notifyDomain?.(origin, {
-                                method: 'permissionsChanged',
-                                params: { permissions: {} },
-                            })
-                        }
-                    }
-
-                    resolve()
+            const { permissions } = await window.browser.storage.local.get(['permissions'])
+            if (typeof permissions === 'object') {
+                this.update({
+                    permissions,
                 })
-            })
-        } catch (e) {
+
+                for (const origin of Object.keys(permissions)) {
+                    this.config.notifyDomain?.(origin, {
+                        method: 'permissionsChanged',
+                        params: { permissions: {} },
+                    })
+                }
+            }
+        } catch (e: any) {
             console.warn('Failed to load permissions', e)
         }
     }
@@ -96,15 +91,14 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
 
         if (hasNewPermissions) {
-            const originPermissions: Partial<RawPermissions> = await this.config.approvalController.addAndShowApprovalRequest(
-                {
+            const originPermissions: Partial<RawPermissions> =
+                await this.config.approvalController.addAndShowApprovalRequest({
                     origin,
                     type: 'requestPermissions',
                     requestData: {
                         permissions: uniquePermissions,
                     },
-                }
-            )
+                })
 
             const newPermissions = {
                 ...this.state.permissions,
@@ -198,10 +192,6 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     }
 
     private async _savePermissions(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ permissions: this.state.permissions }, () => {
-                resolve()
-            })
-        })
+        await window.browser.storage.local.set({ permissions: this.state.permissions })
     }
 }

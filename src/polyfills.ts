@@ -15,3 +15,9 @@ window.objectFromEntries = <T = any>(
         return obj
     }, {})
 }
+
+// @ts-ignore
+if (globalThis.browser != null) {
+    // @ts-ignore
+    window.browser = globalThis.browser
+}

@@ -49,9 +49,14 @@ type ContextConsumer = {
 }
 
 export const closeCurrentWindow = () => {
-    chrome.windows.getCurrent((windowDetails) => {
-        chrome.windows.remove(windowDetails.id)
-    })
+    window.browser.windows
+        .getCurrent()
+        .then(async (windowDetails) => {
+            if (windowDetails.id != null) {
+                await window.browser.windows.remove(windowDetails.id)
+            }
+        })
+        .catch(console.error)
 }
 
 export const Context = React.createContext<ContextConsumer>({
@@ -73,7 +78,7 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
     React.useEffect(() => {
         ;(async () => {
             const [, state] = await Promise.all([
-                init('index_bg.wasm'),
+                init(),
                 (async () => {
                     rpc.onNotification((data) => {
                         const stateToUpdate = data.params
@@ -81,7 +86,7 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
                         try {
                             console.log('Got state', stateToUpdate)
                             setState(stateToUpdate as ControllerState)
-                        } catch (e) {
+                        } catch (e: any) {
                             console.log(e.toString())
                         }
                     })

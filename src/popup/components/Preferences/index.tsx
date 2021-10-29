@@ -36,7 +36,6 @@ const Send: React.FC<IAddNewToken> = ({ account, onReturn }) => {
                 options={options}
                 placeholder={'USDT'}
                 styles={selectStyles}
-                w
                 // onChange={(token) => {
                 //     setToken(token)
                 // }}

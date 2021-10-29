@@ -21,7 +21,7 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext }) => {
     //     try {
     //         let ledgerFirstPage = await getLedgerFirstPage()
     //         console.log(ledgerFirstPage)
-    //     } catch (e) {
+    //     } catch (e: any) {
     //
     //     }
     // }
@@ -37,7 +37,7 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext }) => {
     //         })
     //
     //         await createAccount({ name: "Ledger " + accountId, publicKey: key.publicKey, contractType })
-    //     } catch (e) {
+    //     } catch (e: any) {
     //         key && removeKey({ publicKey: key.publicKey }).catch(console.error)
     //     }
     // }
@@ -46,7 +46,7 @@ const ConnectLedger: React.FC<ISelectWallet> = ({ onNext }) => {
     //     try {
     //         const mockAddr = '0:aafa193fdf6c11cd20a0831ae2a33f7ff4a5add95db7b7b30e7ceef6538e2621'
     //         await selectAccount(mockAddr)
-    //     } catch (e) {
+    //     } catch (e: any) {
     //
     //     }
     // }

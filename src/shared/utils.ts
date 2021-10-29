@@ -77,7 +77,8 @@ export const getOrInsertDefault = <M extends {}, K extends keyof M>(
     return result
 }
 
-export const currentUtime = () => (new Date().getTime() / 1000) | 0
+export const currentUtime = (clockOffset: number) =>
+    ((new Date().getTime() + clockOffset) / 1000) | 0
 
 export class SafeEventEmitter extends EventEmitter {
     emit(type: string, ...args: any[]): boolean {
@@ -138,8 +139,8 @@ export const nodeifyAsync = <C extends {}, M extends keyof C>(
     context: C,
     method: M
 ): NodeifyAsyncResult<C[M]> => {
-    const fn = (context[method] as unknown) as (...args: any[]) => Promise<any>
-    return (function (...args: any[]) {
+    const fn = context[method] as unknown as (...args: any[]) => Promise<any>
+    return function (...args: any[]) {
         const lastArg = args[args.length - 1]
         const lastArgIsCallback = typeof lastArg === 'function'
 
@@ -152,7 +153,7 @@ export const nodeifyAsync = <C extends {}, M extends keyof C>(
         }
 
         promiseToCallback(fn.apply(context, args))(callback)
-    } as unknown) as NodeifyAsyncResult<C[M]>
+    } as unknown as NodeifyAsyncResult<C[M]>
 }
 
 type NodeifyResult<F> = F extends (
@@ -167,8 +168,8 @@ export const nodeify = <C extends {}, M extends keyof C>(
     context: C,
     method: M
 ): NodeifyResult<C[M]> => {
-    const fn = (context[method] as unknown) as Function
-    return (function (...args: any[]) {
+    const fn = context[method] as unknown as Function
+    return function (...args: any[]) {
         const lastArg = args[args.length - 1]
         const lastArgIsCallback = typeof lastArg === 'function'
 
@@ -183,17 +184,17 @@ export const nodeify = <C extends {}, M extends keyof C>(
         let result
         try {
             result = Promise.resolve(fn.apply(context, args))
-        } catch (e) {
+        } catch (e: any) {
             result = Promise.reject(e)
         }
         promiseToCallback(result)(callback)
-    } as unknown) as NodeifyResult<C[M]>
+    } as unknown as NodeifyResult<C[M]>
 }
 
 export class PortDuplexStream extends Duplex {
-    private port: chrome.runtime.Port
+    private port: browser.Runtime.Port
 
-    constructor(port: chrome.runtime.Port) {
+    constructor(port: browser.Runtime.Port) {
         super({ objectMode: true })
         this.port = port
         this.port.onMessage.addListener((msg: unknown) => this._onMessage(msg))
@@ -229,7 +230,7 @@ export class PortDuplexStream extends Duplex {
             } else {
                 this.port.postMessage(message)
             }
-        } catch (e) {
+        } catch (e: any) {
             return callback(new Error('PortDuplexStream - disconnected'))
         }
         return callback()
@@ -237,7 +238,7 @@ export class PortDuplexStream extends Duplex {
 }
 
 export const checkForError = () => {
-    const { lastError } = chrome.runtime
+    const { lastError } = window.browser.runtime
     if (!lastError) {
         return undefined
     }
@@ -263,17 +264,15 @@ export const logStreamDisconnectWarning = (
     }
 }
 
-export const getRpcPromiseCallback = (
-    resolve: (value?: any) => void,
-    reject: (error?: Error) => void,
-    unwrapResult = true
-) => (error: Error, response: PendingJsonRpcResponse<unknown>) => {
-    if (error || response.error) {
-        reject(error || response.error)
-    } else {
-        !unwrapResult || Array.isArray(response) ? resolve(response) : resolve(response.result)
+export const getRpcPromiseCallback =
+    (resolve: (value?: any) => void, reject: (error?: Error) => void, unwrapResult = true) =>
+    (error: Error, response: PendingJsonRpcResponse<unknown>) => {
+        if (error || response.error) {
+            reject(error || response.error)
+        } else {
+            !unwrapResult || Array.isArray(response) ? resolve(response) : resolve(response.result)
+        }
     }
-}
 
 interface EngineStreamOptions {
     engine: JsonRpcEngine
@@ -334,7 +333,7 @@ export const createStreamMiddleware = () => {
 
     const middleware: JsonRpcMiddleware<unknown, unknown> = (req, res, next, end) => {
         stream.push(req)
-        idMap[(req.id as unknown) as string] = { req, res, next, end }
+        idMap[req.id as unknown as string] = { req, res, next, end }
     }
 
     return { events, middleware, stream }
@@ -348,27 +347,27 @@ export const createStreamMiddleware = () => {
         _encoding: unknown,
         cb: (error?: Error | null) => void
     ) {
-        let err
+        let err: any
         try {
             const isNotification = !res.id
             if (isNotification) {
-                processNotification((res as unknown) as JsonRpcNotification<unknown>)
+                processNotification(res as unknown as JsonRpcNotification<unknown>)
             } else {
                 processResponse(res)
             }
-        } catch (_err) {
+        } catch (_err: any) {
             err = _err
         }
         cb(err)
     }
 
     function processResponse(res: PendingJsonRpcResponse<unknown>) {
-        const context = idMap[(res.id as unknown) as string]
+        const context = idMap[res.id as unknown as string]
         if (!context) {
             throw new Error(`StreamMiddleware: Unknown response id "${res.id}"`)
         }
 
-        delete idMap[(res.id as unknown) as string]
+        delete idMap[res.id as unknown as string]
         Object.assign(context.res, res)
         setTimeout(context.end)
     }

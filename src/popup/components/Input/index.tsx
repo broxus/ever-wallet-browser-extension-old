@@ -18,7 +18,6 @@ interface ISimpleInput {
         | 'search'
         | 'password'
         | undefined
-    register?: any
     name?: string
     autocomplete?: string
     pattern?: string
@@ -37,54 +36,34 @@ interface ISimpleInput {
     value?: string
     readOnly?: boolean
     id?: string
-    onChange?: (value: string) => void
+    onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void
+    onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void
     onKeyDown?: (event: React.KeyboardEvent<HTMLInputElement>) => void
 }
 
-const Input: React.FC<ISimpleInput> = ({
-    className,
-    label,
-    autoFocus = false,
-    disabled,
-    type = 'number',
-    register,
-    name = '',
-    autocomplete = 'off',
-    pattern = undefined,
-    inputMode = undefined,
-    min = undefined,
-    max,
-    value = undefined,
-    readOnly = false,
-    id,
-    onChange,
-    onKeyDown,
-}) => {
-    return (
-        <input
-            className={`simple-input ${className || ''}`}
-            readOnly={readOnly}
-            spellCheck={false}
-            name={name}
-            id={id}
-            ref={register}
-            autoFocus={autoFocus}
-            disabled={disabled}
-            placeholder={label}
-            type={type}
-            autoComplete={autocomplete}
-            pattern={pattern}
-            inputMode={inputMode}
-            min={min}
-            max={max}
-            step={0.000000000000000001}
-            value={value}
-            onChange={(e) => {
-                onChange?.(e.target.value)
-            }}
-            onKeyDown={onKeyDown}
-        />
-    )
-}
+const Input = React.forwardRef<HTMLInputElement, ISimpleInput>((props, ref) => (
+    <input
+        className={`simple-input ${props.className || ''}`}
+        readOnly={props.readOnly}
+        spellCheck={false}
+        name={props.name}
+        id={props.id}
+        ref={ref}
+        autoFocus={props.autoFocus}
+        disabled={props.disabled}
+        placeholder={props.label}
+        type={props.type}
+        autoComplete={props.autocomplete}
+        pattern={props.pattern}
+        inputMode={props.inputMode}
+        min={props.min}
+        max={props.max}
+        step={0.000000000000000001}
+        value={props.value}
+        onBlur={props.onBlur}
+        onChange={props.onChange}
+        onKeyDown={props.onKeyDown}
+    />
+))
 
 export default Input

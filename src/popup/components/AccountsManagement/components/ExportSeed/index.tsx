@@ -24,7 +24,7 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
     const accountability = useAccountability()
     const rpc = useRpc()
 
-    const { register, handleSubmit, errors } = useForm<{ password: string }>()
+    const { register, handleSubmit, formState } = useForm<{ password: string }>()
 
     const [error, setError] = React.useState<string>()
     const [inProcess, setInProcess] = React.useState(false)
@@ -78,7 +78,7 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                 .finally(() => {
                     setInProcess(false)
                 })
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)
@@ -98,8 +98,7 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                             <div className="accounts-management__content-form-rows">
                                 <div className="accounts-management__content-form-row">
                                     <Input
-                                        name="password"
-                                        register={register({
+                                        {...register('password', {
                                             required: true,
                                             minLength: 6,
                                         })}
@@ -108,9 +107,10 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                                         type="password"
                                     />
 
-                                    {(errors.password || error) && (
+                                    {(formState.errors.password || error) && (
                                         <div className="accounts-management__content-error">
-                                            {errors.password && 'The password is required'}
+                                            {formState.errors.password &&
+                                                'The password is required'}
                                             {error}
                                         </div>
                                     )}

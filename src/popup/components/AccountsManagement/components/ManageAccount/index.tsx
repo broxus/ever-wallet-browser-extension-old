@@ -123,7 +123,7 @@ export function ManageAccount(): JSX.Element {
                             label="Enter key name"
                             type="text"
                             value={name || ''}
-                            onChange={setName}
+                            onChange={(e) => setName(e.target.value)}
                         />
 
                         {accountability.currentAccount !== undefined &&

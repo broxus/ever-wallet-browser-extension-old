@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.18 (2021-10-29)
+
+Features
+
+* Reworked internal application clock. It now can work with incorrect system time.
+* Optimized WASM bundle size
+
+Bugfixes
+
+* Fixed incorrect start behaviour after unsuccessful addition of an external account.
+
 ### 0.2.17 (2021-10-12)
 
 Bugfixes

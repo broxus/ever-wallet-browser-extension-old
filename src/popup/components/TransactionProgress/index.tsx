@@ -23,12 +23,8 @@ const TransactionExpired: React.FC<ITransactionExpired> = ({ onBack }) => {
         <>
             <h2 className="send-screen__form-title">Message expired</h2>
             <div className="send-screen__tx-sending">
-                <Lottie
-                    loop
-                    animationData={FailedAnimation}
-                    play
-                    style={{ width: 150, height: 150 }}
-                />
+                {/*@ts-ignore*/}
+                <Lottie loop path={FailedAnimation} play style={{ width: 150, height: 150 }} />
             </div>
             <Button text={'OK'} type={'button'} onClick={onBack} />
         </>
@@ -44,12 +40,8 @@ const TransactionSent: React.FC<ITransactionSent> = ({ onBack }) => {
         <>
             <h2 className="send-screen__form-title">Message has been sent</h2>
             <div className="send-screen__tx-sending">
-                <Lottie
-                    loop
-                    animationData={DoneAnimation}
-                    play
-                    style={{ width: 150, height: 150 }}
-                />
+                {/*@ts-ignore*/}
+                <Lottie loop path={DoneAnimation} play style={{ width: 150, height: 150 }} />
             </div>
             <Button text={'OK'} type={'button'} onClick={onBack} />
         </>
@@ -65,12 +57,8 @@ const TransactionSending: React.FC<ITransactionSending> = ({ onBack }) => {
         <>
             <h2 className="send-screen__form-title">Message is sending...</h2>
             <div className="send-screen__tx-sending">
-                <Lottie
-                    loop
-                    animationData={MoneyAnimation}
-                    play
-                    style={{ width: 150, height: 150 }}
-                />
+                {/*@ts-ignore*/}
+                <Lottie loop path={MoneyAnimation} play style={{ width: 150, height: 150 }} />
             </div>
             <Button text={'OK'} type={'button'} onClick={onBack} />
         </>

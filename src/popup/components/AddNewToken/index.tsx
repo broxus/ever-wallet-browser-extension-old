@@ -131,7 +131,7 @@ type ICustomToken = {
 }
 
 const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack }) => {
-    const { register, handleSubmit, errors } = useForm<NewToken>()
+    const { register, handleSubmit, formState } = useForm<NewToken>()
 
     const trySubmit = async ({ rootTokenContract }: NewToken) => {
         onSubmit({
@@ -145,20 +145,20 @@ const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack
                 label={'Root token contract...'}
                 className="add-new-token__search-form"
                 type="text"
-                name="rootTokenContract"
                 disabled={disabled}
-                register={register({
+                {...register('rootTokenContract', {
                     required: true,
                     pattern: /^(?:-1|0):[0-9a-fA-F]{64}$/,
                     validate: (value: string) => value != null && nt.checkAddress(value),
                 })}
             />
             {error && <div className="check-seed__content-error">{error}</div>}
-            {errors.rootTokenContract && (
+            {formState.errors.rootTokenContract && (
                 <div className="check-seed__content-error">
-                    {errors.rootTokenContract.type == 'required' && 'This field is required'}
-                    {(errors.rootTokenContract.type == 'pattern' ||
-                        errors.rootTokenContract.type == 'validate') &&
+                    {formState.errors.rootTokenContract.type == 'required' &&
+                        'This field is required'}
+                    {(formState.errors.rootTokenContract.type == 'pattern' ||
+                        formState.errors.rootTokenContract.type == 'validate') &&
                         'Invalid address'}
                 </div>
             )}
@@ -215,7 +215,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
         try {
             await onSubmit(params)
             onBack()
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
             setInProcess(false)
         }

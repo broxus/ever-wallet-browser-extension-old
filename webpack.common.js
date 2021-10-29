@@ -31,16 +31,8 @@ module.exports = {
                 use: ['style-loader', 'css-loader', 'sass-loader'],
             },
             {
-                test: /\.(woff(2)?|ttf|eot)(\?v=\d+\.\d+\.\d+)?$/,
-                use: [
-                    {
-                        loader: 'file-loader',
-                        options: {
-                            name: '[name].[ext]',
-                            outputPath: 'fonts/',
-                        },
-                    },
-                ],
+                test: /\.(woff|woff2|eot|ttf|otf)$/i,
+                type: 'asset/resource',
             },
             {
                 test: /\.(png|jpe?g|gif|svg)$/i,
@@ -65,17 +57,19 @@ module.exports = {
         },
     },
     plugins: [
-        new IgnorePlugin({
-            resourceRegExp: /^wbg$/,
-        }),
         new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
         new CopyWebpackPlugin({
             patterns: [
-                { from: path.resolve(__dirname, './nekoton/pkg/index_bg.wasm') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon16.png') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon48.png') },
                 { from: path.resolve(__dirname, './src/popup/icons/icon128.png') },
                 { from: path.resolve(__dirname, './src/manifest.json') },
+                {
+                    from: path.resolve(
+                        __dirname,
+                        'node_modules/webextension-polyfill/dist/browser-polyfill.min.js'
+                    ),
+                },
             ],
         }),
         new DefinePlugin({

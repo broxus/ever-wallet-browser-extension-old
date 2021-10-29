@@ -6,3 +6,6 @@ members = ["nekoton"]
 opt-level = 3
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+hmac-drbg = { git = "https://github.com/Rexagon/rust-hmac-drbg" }

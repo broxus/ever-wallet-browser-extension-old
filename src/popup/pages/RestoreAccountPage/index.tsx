@@ -53,7 +53,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
 
             key = await createMasterKey({ select: true, seed, password })
             await createAccount({ name, contractType, publicKey: key.publicKey, workchain: 0 })
-        } catch (e) {
+        } catch (e: any) {
             key && removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
             setError(parseError(e))
@@ -91,7 +91,7 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
                             validateMnemonic(phrase, mnemonicType)
                             setSeed({ phrase, mnemonicType })
                             setLocalStep(LocalStep.ENTER_PASSWORD)
-                        } catch (e) {
+                        } catch (e: any) {
                             setError(parseError(e))
                         }
                     }}

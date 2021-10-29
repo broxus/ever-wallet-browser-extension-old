@@ -117,11 +117,8 @@ export class JsonRpcEngine extends SafeEventEmitter {
     asMiddleware(): JsonRpcMiddleware<unknown, unknown> {
         return async (req, res, next, end) => {
             try {
-                const [
-                    middlewareError,
-                    isComplete,
-                    returnHandlers,
-                ] = await JsonRpcEngine._runAllMiddleware(req, res, this._middleware)
+                const [middlewareError, isComplete, returnHandlers] =
+                    await JsonRpcEngine._runAllMiddleware(req, res, this._middleware)
 
                 if (isComplete) {
                     await JsonRpcEngine._runReturnHandlers(returnHandlers)
@@ -131,12 +128,12 @@ export class JsonRpcEngine extends SafeEventEmitter {
                 return next(async (handlerCallback) => {
                     try {
                         await JsonRpcEngine._runReturnHandlers(returnHandlers)
-                    } catch (e) {
+                    } catch (e: any) {
                         return handlerCallback(e)
                     }
                     return handlerCallback()
                 })
-            } catch (e) {
+            } catch (e: any) {
                 return end(e)
             }
         }
@@ -161,7 +158,7 @@ export class JsonRpcEngine extends SafeEventEmitter {
             }
 
             return responses
-        } catch (e) {
+        } catch (e: any) {
             if (callback) {
                 return callback(e)
             }
@@ -209,7 +206,7 @@ export class JsonRpcEngine extends SafeEventEmitter {
 
         try {
             await this._processRequest(request, response)
-        } catch (e) {
+        } catch (e: any) {
             error = e
         }
 
@@ -305,7 +302,7 @@ export class JsonRpcEngine extends SafeEventEmitter {
 
             try {
                 middleware(request, response, next, end)
-            } catch (e) {
+            } catch (e: any) {
                 end(e)
             }
         })

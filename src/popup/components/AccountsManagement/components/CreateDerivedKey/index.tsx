@@ -57,7 +57,7 @@ export function CreateDerivedKey(): JSX.Element {
                     setPasswordError(parseError(e))
                     setInProcess(false)
                 })
-        } catch (e) {
+        } catch (e: any) {
             setPasswordError(parseError(e))
             setInProcess(false)
         }
@@ -99,7 +99,7 @@ export function CreateDerivedKey(): JSX.Element {
             if (paramsToRemove.length) {
                 await rpc.removeKeys(paramsToRemove)
             }
-        } catch (e) {
+        } catch (e: any) {
             setSelectKeysError(parseError(e))
         }
 

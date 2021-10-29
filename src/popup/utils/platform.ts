@@ -1,5 +1,5 @@
-import { checkForError } from '@shared/utils'
 import { memoize } from 'lodash'
+import type browser from 'webextension-polyfill'
 import {
     Environment,
     ENVIRONMENT_TYPE_BACKGROUND,
@@ -11,101 +11,35 @@ import {
 const NOTIFICATION_HEIGHT = 620
 const NOTIFICATION_WIDTH = 400
 
-export const focusTab = (tabId: number): Promise<chrome.tabs.Tab | undefined> => {
-    return new Promise<chrome.tabs.Tab | undefined>((resolve, reject) => {
-        chrome.tabs.update(+tabId, { active: true }, (tab) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(tab)
-            }
-        })
-    })
-}
+export const focusTab = (tabId: number): Promise<browser.Tabs.Tab | undefined> =>
+    window.browser.tabs.update(+tabId, { active: true })
 
-export const focusWindow = (id: number): Promise<chrome.windows.Window> => {
-    return new Promise<chrome.windows.Window>((resolve, reject) => {
-        chrome.windows.update(id, { focused: true }, (window) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(window)
-            }
-        })
-    })
-}
+export const focusWindow = (id: number): Promise<browser.Windows.Window> =>
+    window.browser.windows.update(id, { focused: true })
 
-export const getLastFocused = (): Promise<chrome.windows.Window> => {
-    return new Promise<chrome.windows.Window>((resolve, reject) => {
-        chrome.windows.getLastFocused((window) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(window)
-            }
-        })
-    })
-}
+export const getLastFocused = (): Promise<browser.Windows.Window> =>
+    window.browser.windows.getLastFocused()
 
-export const getAllWindows = (): Promise<chrome.windows.Window[]> => {
-    return new Promise<chrome.windows.Window[]>((resolve, reject) => {
-        chrome.windows.getAll((windows) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(windows)
-            }
-        })
-    })
-}
+export const getAllWindows = (): Promise<browser.Windows.Window[]> =>
+    window.browser.windows.getAll()
 
 export const openWindow = (
-    options: chrome.windows.CreateData
-): Promise<chrome.windows.Window | undefined> => {
-    return new Promise<chrome.windows.Window | undefined>((resolve, reject) => {
-        chrome.windows.create(options, (window) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(window)
-            }
-        })
-    })
-}
+    options: browser.Windows.CreateCreateDataType
+): Promise<browser.Windows.Window | undefined> => window.browser.windows.create(options)
 
-export const getCurrentWindow = (): Promise<chrome.windows.Window> => {
-    return new Promise<chrome.windows.Window>((resolve, reject) => {
-        chrome.windows.getCurrent((windowDetails) => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve(windowDetails)
-            }
-        })
-    })
-}
+export const getCurrentWindow = (): Promise<browser.Windows.Window> =>
+    window.browser.windows.getCurrent()
 
-export const updateWindowPosition = (id: number, left: number, top: number): Promise<void> => {
-    return new Promise<void>((resolve, reject) => {
-        chrome.windows.update(id, { left, top }, () => {
-            const error = checkForError()
-            if (error) {
-                reject(error)
-            } else {
-                resolve()
-            }
-        })
-    })
+export const updateWindowPosition = async (
+    id: number,
+    left: number,
+    top: number
+): Promise<void> => {
+    await window.browser.windows.update(id, { left, top })
 }
 
 export const openExtensionInBrowser = async (route?: string, query?: string) => {
-    let extensionUrl = chrome.runtime.getURL('home.html')
+    let extensionUrl = window.browser.runtime.getURL('home.html')
     if (query) {
         extensionUrl += `?${query}`
     }
@@ -113,31 +47,20 @@ export const openExtensionInBrowser = async (route?: string, query?: string) => 
         extensionUrl += `#${route}`
     }
 
-    await new Promise<chrome.tabs.Tab>((resolve, reject) => {
-        chrome.tabs.create({ url: extensionUrl }, (newTab) => {
-            const error = checkForError()
-            if (error != null) {
-                reject(error)
-            } else {
-                resolve(newTab)
-            }
-        })
-    })
+    await window.browser.tabs.create({ url: extensionUrl })
 }
 
-const getEnvironmentTypeCached = memoize(
-    (url): Environment => {
-        const parseUrl = new URL(url)
-        if (parseUrl.pathname === '/popup.html') {
-            return ENVIRONMENT_TYPE_POPUP
-        } else if (parseUrl.pathname === '/notification.html') {
-            return ENVIRONMENT_TYPE_NOTIFICATION
-        } else if (parseUrl.pathname === '/home.html') {
-            return ENVIRONMENT_TYPE_FULLSCREEN
-        }
-        return ENVIRONMENT_TYPE_BACKGROUND
+const getEnvironmentTypeCached = memoize((url): Environment => {
+    const parseUrl = new URL(url)
+    if (parseUrl.pathname === '/popup.html') {
+        return ENVIRONMENT_TYPE_POPUP
+    } else if (parseUrl.pathname === '/notification.html') {
+        return ENVIRONMENT_TYPE_NOTIFICATION
+    } else if (parseUrl.pathname === '/home.html') {
+        return ENVIRONMENT_TYPE_FULLSCREEN
     }
-)
+    return ENVIRONMENT_TYPE_BACKGROUND
+})
 
 export const getEnvironmentType = (url = window.location.href) => getEnvironmentTypeCached(url)
 
@@ -160,7 +83,7 @@ export class WindowManager {
     public async showPopup(params: ShowPopupParams) {
         const popup = await this._getPopup(params.group)
 
-        if (popup != null) {
+        if (popup != null && popup.id != null) {
             await focusWindow(popup.id)
             return
         } else {
@@ -192,25 +115,27 @@ export class WindowManager {
                 throw Error('NotificationManager: Failed to create popup window')
             }
 
-            if (popupWindow.left !== left && popupWindow.state !== 'fullscreen') {
-                await updateWindowPosition(popupWindow.id, left, top)
-            }
+            if (popupWindow.id != null) {
+                if (popupWindow.left !== left && popupWindow.state !== 'fullscreen') {
+                    await updateWindowPosition(popupWindow.id, left, top)
+                }
 
-            this._groups[params.group] = popupWindow.id
-            this._popups[popupWindow.id] = params.group
+                this._groups[params.group] = popupWindow.id
+                this._popups[popupWindow.id] = params.group
+            }
         }
     }
 
     private async _getPopup(group: string) {
         const popupId = this._groups[group] as number | undefined
-        let result: chrome.windows.Window | undefined = undefined
+        let result: browser.Windows.Window | undefined = undefined
 
         let newGroups: { [group: string]: number } = {}
         let newPopups: { [popup: number]: string } = {}
 
         const windows = await getAllWindows()
         for (const window of windows) {
-            if (window.type !== 'popup') {
+            if (window.type !== 'popup' || window.id == null) {
                 continue
             }
 

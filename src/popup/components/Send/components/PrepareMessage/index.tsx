@@ -3,14 +3,13 @@ import Decimal from 'decimal.js'
 import { useForm } from 'react-hook-form'
 
 import * as nt from '@nekoton'
-import { Fees, parseError } from '@popup/utils'
+import { parseError } from '@popup/utils'
 import { Checkbox } from '@popup/components/Checkbox'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
 import { Select } from '@popup/components/Select'
-import { Message, EnterPassword } from '@popup/components/Send/components'
+import { MessageAmount, EnterPassword } from '@popup/components/Send/components'
 import UserAvatar from '@popup/components/UserAvatar'
-import { selectStyles } from '@popup/constants/selectStyle'
 import {
     TransferMessageToPrepare,
     TokenMessageToPrepare,
@@ -19,7 +18,6 @@ import {
 import {
     amountPattern,
     convertCurrency,
-    currentUtime,
     parseCurrency,
     parseTons,
     SelectedAsset,
@@ -34,9 +32,16 @@ enum PrepareStep {
 }
 
 type MessageParams = {
+    amount: MessageAmount
+    originalAmount: string
     recipient: string
+    comment?: string
+}
+
+type MessageFromData = {
     amount: string
     comment?: string
+    recipient: string
 }
 
 type Props = {
@@ -80,8 +85,8 @@ export function PrepareMessage({
     const [localStep, setLocalStep] = React.useState(PrepareStep.ENTER_ADDRESS)
     const [inProcess, setInProcess] = React.useState(false)
     const [error, setError] = React.useState<string>()
-    const [fees, setFees] = React.useState<Fees>()
-    const [messageParams, setMessageParams] = React.useState<Message>()
+    const [fees, setFees] = React.useState<string>()
+    const [messageParams, setMessageParams] = React.useState<MessageParams>()
     const [messageToPrepare, setMessageToPrepare] = React.useState<TransferMessageToPrepare>()
     const [notifyReceiver, setNotifyReceiver] = React.useState<boolean>(false)
     const [selectedAsset, setSelectedAsset] = React.useState<string>(
@@ -89,7 +94,7 @@ export function PrepareMessage({
     )
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(keyEntries[0])
 
-    const { register, setValue, handleSubmit, errors } = useForm<MessageParams>()
+    const { register, setValue, handleSubmit, formState } = useForm<MessageFromData>()
 
     let defaultValue: { value: string; label: string } = {
         value: '',
@@ -129,21 +134,27 @@ export function PrepareMessage({
 
     const walletInfo = nt.getContractTypeDetails(tonWalletAsset.contractType)
 
-    const submitMessageParams = async (data: MessageParams) => {
+    const submitMessageParams = async (data: MessageFromData) => {
         if (selectedKey == null) {
             setError('Signer key not selected')
             return
         }
 
-        let attachedAmount: string | undefined = undefined
-
+        let messageParams: MessageParams
         let messageToPrepare: TransferMessageToPrepare
+
         if (selectedAsset.length == 0) {
             messageToPrepare = {
                 publicKey: selectedKey.publicKey,
-                recipient: nt.repackAddress(data.recipient), //shouldn't throw exceptions due to higher level validation
-                amount: parseTons(data.amount),
+                recipient: nt.repackAddress(data.recipient.trim()), //shouldn't throw exceptions due to higher level validation
+                amount: parseTons(data.amount.trim()),
                 payload: data.comment ? nt.encodeComment(data.comment) : undefined,
+            }
+            messageParams = {
+                amount: { type: 'ton_wallet', data: { amount: messageToPrepare.amount } },
+                originalAmount: data.amount,
+                recipient: messageToPrepare.recipient,
+                comment: data.comment,
             }
         } else {
             if (decimals == null) {
@@ -151,18 +162,19 @@ export function PrepareMessage({
                 return
             }
 
+            let tokenAmount = parseCurrency(data.amount.trim(), decimals)
+            let tokenRecipient = nt.repackAddress(data.recipient.trim())
+
             const internalMessage = await prepareTokenMessage(
                 tonWalletAsset.address,
                 selectedAsset,
                 {
-                    amount: parseCurrency(data.amount, decimals),
-                    recipient: nt.repackAddress(data.recipient),
+                    amount: tokenAmount,
+                    recipient: tokenRecipient,
                     payload: data.comment ? nt.encodeComment(data.comment) : undefined,
                     notifyReceiver,
                 }
             )
-
-            attachedAmount = internalMessage.amount
 
             messageToPrepare = {
                 publicKey: selectedKey.publicKey,
@@ -170,20 +182,30 @@ export function PrepareMessage({
                 amount: internalMessage.amount,
                 payload: internalMessage.body,
             }
+            messageParams = {
+                amount: {
+                    type: 'token_wallet',
+                    data: {
+                        amount: tokenAmount,
+                        attachedAmount: internalMessage.amount,
+                        symbol: currencyName || '',
+                        decimals,
+                        rootTokenContract: selectedAsset,
+                    },
+                },
+                originalAmount: data.amount,
+                recipient: tokenRecipient,
+                comment: data.comment,
+            }
         }
 
         setFees(undefined)
         estimateFees(messageToPrepare)
-            .then((transactionFees) => {
-                setFees({
-                    transactionFees,
-                    attachedAmount,
-                })
-            })
+            .then((fees) => setFees(fees))
             .catch(console.error)
 
         setMessageToPrepare(messageToPrepare)
-        setMessageParams(data)
+        setMessageParams(messageParams)
         setLocalStep(PrepareStep.ENTER_PASSWORD)
     }
 
@@ -206,7 +228,7 @@ export function PrepareMessage({
                     },
                 },
             })
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)
@@ -221,7 +243,7 @@ export function PrepareMessage({
 
     React.useEffect(() => {
         if (messageParams && localStep === PrepareStep.ENTER_ADDRESS) {
-            setValue('amount', messageParams.amount)
+            setValue('amount', messageParams.originalAmount)
             setValue('recipient', messageParams.recipient)
             setValue('comment', messageParams.comment)
         }
@@ -229,7 +251,11 @@ export function PrepareMessage({
 
     React.useEffect(() => {
         if (messageParams != null) {
-            submitMessageParams(messageParams).catch(() => {})
+            submitMessageParams({
+                amount: messageParams.originalAmount,
+                recipient: messageParams.recipient,
+                comment: messageParams.comment,
+            }).catch(() => {})
         }
     }, [selectedKey])
 
@@ -267,12 +293,10 @@ export function PrepareMessage({
                             </div>
                         )}
                         <Input
-                            name="amount"
                             type="text"
                             className="prepare-message__field-input"
                             label="Amount..."
-                            onChange={(value) => setValue('amount', value.trim())}
-                            register={register({
+                            {...register('amount', {
                                 required: true,
                                 pattern: decimals != null ? amountPattern(decimals) : /^\d$/,
                                 validate: {
@@ -292,7 +316,7 @@ export function PrepareMessage({
                                             } else {
                                                 return current.greaterThan(0)
                                             }
-                                        } catch (e) {
+                                        } catch (e: any) {
                                             return false
                                         }
                                     },
@@ -305,7 +329,7 @@ export function PrepareMessage({
                                                 parseCurrency(value || '', decimals)
                                             )
                                             return current.lessThanOrEqualTo(balance)
-                                        } catch (e) {
+                                        } catch (e: any) {
                                             return false
                                         }
                                     },
@@ -313,44 +337,44 @@ export function PrepareMessage({
                             })}
                         />
 
-                        {errors.amount && (
+                        {formState.errors.amount && (
                             <div className="prepare-message__error-message">
-                                {errors.amount.type == 'required' && 'This field is required'}
-                                {errors.amount.type == 'invalidAmount' && 'Invalid amount'}
-                                {errors.amount.type == 'insufficientBalance' &&
+                                {formState.errors.amount.type == 'required' &&
+                                    'This field is required'}
+                                {formState.errors.amount.type == 'invalidAmount' &&
+                                    'Invalid amount'}
+                                {formState.errors.amount.type == 'insufficientBalance' &&
                                     'Insufficient balance'}
-                                {errors.amount.type == 'pattern' && 'Invalid format'}
+                                {formState.errors.amount.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
 
                         <Input
-                            name="recipient"
+                            type="text"
                             label="Recipient address..."
                             className="prepare-message__field-input"
-                            onChange={(value) => setValue('recipient', value)}
-                            register={register({
+                            {...register('recipient', {
                                 required: true,
                                 validate: (value: string) =>
                                     value != null && nt.checkAddress(value),
                             })}
-                            type="text"
                         />
 
-                        {errors.recipient && (
+                        {formState.errors.recipient && (
                             <div className="prepare-message__error-message">
-                                {errors.recipient.type == 'required' && 'This field is required'}
-                                {errors.recipient.type == 'validate' && 'Invalid recipient'}
-                                {errors.recipient.type == 'pattern' && 'Invalid format'}
+                                {formState.errors.recipient.type == 'required' &&
+                                    'This field is required'}
+                                {formState.errors.recipient.type == 'validate' &&
+                                    'Invalid recipient'}
+                                {formState.errors.recipient.type == 'pattern' && 'Invalid format'}
                             </div>
                         )}
 
                         <Input
-                            name="comment"
                             label="Comment..."
                             className="prepare-message__field-input"
-                            onChange={(value) => setValue('comment', value)}
-                            register={register()}
                             type="text"
+                            {...register('comment')}
                         />
 
                         {selectedAsset.length > 0 && (
@@ -381,8 +405,8 @@ export function PrepareMessage({
                 <EnterPassword
                     keyEntries={keyEntries}
                     keyEntry={selectedKey}
-                    currencyName={currencyName}
-                    params={messageParams}
+                    amount={messageParams?.amount}
+                    recipient={messageParams?.recipient}
                     fees={fees}
                     error={error}
                     disabled={inProcess}

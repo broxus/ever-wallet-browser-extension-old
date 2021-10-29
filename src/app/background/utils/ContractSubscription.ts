@@ -22,7 +22,7 @@ export interface IContractHandler<T extends nt.Transaction> {
 export interface IContract {
     readonly pollingMethod: 'manual' | 'reliable'
 
-    refresh(): Promise<void>
+    refresh(clock: nt.ClockWithOffset): Promise<void>
 
     handleBlock(blockId: string): Promise<void>
 
@@ -30,6 +30,7 @@ export interface IContract {
 }
 
 export class ContractSubscription<C extends IContract> {
+    private readonly _clock: nt.ClockWithOffset
     private readonly _connection: nt.GqlConnection | nt.JrpcConnection
     private readonly _address: string
     protected readonly _contract: C
@@ -44,11 +45,13 @@ export class ContractSubscription<C extends IContract> {
     private _suggestedBlockId?: string
 
     protected constructor(
+        clock: nt.ClockWithOffset,
         connection: nt.GqlConnection | nt.JrpcConnection,
         release: () => void,
         address: string,
         contract: C
     ) {
+        this._clock = clock
         this._releaseConnection = release
         this._connection = connection
         this._address = address
@@ -86,7 +89,7 @@ export class ContractSubscription<C extends IContract> {
 
                 try {
                     await this.onBeforeRefresh()
-                } catch (e) {
+                } catch (e: any) {
                     console.error(`Error before refresh for ${this._address}`, e)
                 }
 
@@ -118,10 +121,10 @@ export class ContractSubscription<C extends IContract> {
 
                     try {
                         this._currentPollingMethod = await this._contractMutex.use(async () => {
-                            await this._contract.refresh()
+                            await this._contract.refresh(this._clock)
                             return this._contract.pollingMethod
                         })
-                    } catch (e) {
+                    } catch (e: any) {
                         console.error(`Error during account refresh (${this._address})`, e)
                     }
 
@@ -145,7 +148,7 @@ export class ContractSubscription<C extends IContract> {
                             const latestBlock = await connection.getLatestBlock(this._address)
                             this._currentBlockId = latestBlock.id
                             nextBlockId = this._currentBlockId
-                        } catch (e) {
+                        } catch (e: any) {
                             console.error(`Failed to get latest block for ${this._address}`, e)
                             continue
                         }
@@ -156,7 +159,7 @@ export class ContractSubscription<C extends IContract> {
                                 this._address,
                                 NEXT_BLOCK_TIMEOUT
                             )
-                        } catch (e) {
+                        } catch (e: any) {
                             console.error(`Failed to wait for next block for ${this._address}`)
                             continue // retry
                         }
@@ -168,7 +171,7 @@ export class ContractSubscription<C extends IContract> {
                             return this._contract.pollingMethod
                         })
                         this._currentBlockId = nextBlockId
-                    } catch (e) {
+                    } catch (e: any) {
                         console.error(`Failed to handle block for ${this._address}`, e)
                     }
                 }
@@ -218,7 +221,7 @@ export class ContractSubscription<C extends IContract> {
             if (this._connection instanceof nt.GqlConnection) {
                 this._suggestedBlockId = (await this._connection.getLatestBlock(this._address)).id
             }
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
         }
     }

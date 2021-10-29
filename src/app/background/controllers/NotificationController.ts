@@ -25,11 +25,11 @@ export class NotificationController extends BaseController<
 
         this.initialize()
 
-        chrome.notifications.onClicked.addListener((notificationId) => {
+        window.browser.notifications.onClicked.addListener((notificationId) => {
             const link = this._notificationLinks[notificationId] as string | undefined
             if (link != null) {
                 window.open(link, '_blank')
-                chrome.notifications.clear(notificationId)
+                window.browser.notifications.clear(notificationId).catch(console.error)
             }
             delete this._notificationLinks[notificationId]
         })
@@ -50,27 +50,26 @@ export class NotificationController extends BaseController<
             return
         }
 
-        chrome.notifications.create(
-            {
+        window.browser.notifications
+            .create(undefined, {
                 type: 'basic',
                 title,
                 message: body,
-                iconUrl: `${chrome.extension.getURL('icon128.png')}`,
-                requireInteraction: true,
+                iconUrl: `${window.browser.runtime.getURL('icon128.png')}`,
                 eventTime,
-            },
-            (notificationId) => {
+            } as any)
+            .then((notificationId) => {
                 if (link) {
                     this._notificationLinks[notificationId] = link
                 }
 
                 if (timeout > 0) {
                     setTimeout(() => {
-                        chrome.notifications.clear(notificationId)
+                        window.browser.notifications.clear(notificationId).catch(console.error)
                         delete this._notificationLinks[notificationId]
                     }, timeout)
                 }
-            }
-        )
+            })
+            .catch(console.error)
     }
 }

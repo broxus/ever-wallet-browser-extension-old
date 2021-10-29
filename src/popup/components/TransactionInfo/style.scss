@@ -3,7 +3,7 @@
 a {
     text-decoration: none;
 
-    font-family: PT Root UI;
+    font-family: 'PT Root UI', sans-serif;
     font-style: normal;
     font-weight: bold;
     font-size: 16px;
@@ -58,6 +58,24 @@ a {
                 line-height: 20px;
                 letter-spacing: 0.75px;
                 word-break: break-all;
+
+                &--amount {
+                    display: flex;
+                    flex-direction: row;
+                    align-items: center;
+                    word-break: normal;
+
+                    .root-token-icon {
+                        width: 20px;
+                        height: 20px;
+                        margin-right: 0.5rem;
+                    }
+
+                    .root-token-name {
+                        width: 100%;
+                        text-overflow: ellipsis;
+                    }
+                }
             }
 
             &-initiator,

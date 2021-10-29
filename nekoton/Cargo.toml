@@ -11,14 +11,14 @@ license-file = "../LICENSE"
 crate-type = ["cdylib"]
 
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-Oz", "--enable-mutable-globals"]
+wasm-opt = ["-O3", "--enable-mutable-globals"]
 
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
 hex = "0.4"
 base64 = "0.13"
-chrono = "0.4"
+chrono = { version = "0.4", features = ["wasmbind"] }
 console_error_panic_hook = "0.1"
 dyn-clone = "1.0"
 futures = "0.3"
@@ -33,7 +33,7 @@ serde_json = "1.0"
 sha2 = "0.9"
 syn = "=1.0.72"
 thiserror = "1.0"
-wasm-bindgen = { version = "=0.2.76", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
 wasm-logger = "0.2"
@@ -59,8 +59,3 @@ branch = "master"
 package = "nekoton-abi"
 git = "https://github.com/broxus/nekoton.git"
 branch = "master"
-
-[dev-dependencies]
-wasm-bindgen-test = "0.3"
-js-sys = "0.3"
-wasm-bindgen-futures = "0.4"

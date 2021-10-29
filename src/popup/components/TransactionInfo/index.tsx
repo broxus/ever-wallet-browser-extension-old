@@ -10,11 +10,11 @@ import {
     extractTokenTransactionAddress,
     extractTokenTransactionValue,
     extractTransactionAddress,
-    extractTransactionValue, trimTokenName,
+    extractTransactionValue,
+    trimTokenName,
 } from '@shared/utils'
 
 import './style.scss'
-
 
 type Props = {
     symbol?: nt.Symbol
@@ -44,19 +44,20 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
         if (symbol == null) {
             return extractTransactionValue(transaction)
         } else {
-            return extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) || new Decimal(0)
+            return (
+                extractTokenTransactionValue(transaction as nt.TokenWalletTransaction) ||
+                new Decimal(0)
+            )
         }
     }, [transaction])
 
-    let direction: string | undefined,
-        address: string | undefined
+    let direction: string | undefined, address: string | undefined
 
     if (symbol == null) {
         const txAddress = extractTransactionAddress(transaction)
         direction = TRANSACTION_NAMES[txAddress.direction]
         address = txAddress.address
-    }
-    else {
+    } else {
         const tokenTransaction = transaction as nt.TokenWalletTransaction
 
         const txAddress = extractTokenTransactionAddress(tokenTransaction)
@@ -131,7 +132,7 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
             <Button
                 white
                 onClick={() =>
-                    chrome.tabs.create({
+                    window.browser.tabs.create({
                         url: `https://ton-explorer.com/transactions/${txHash}`,
                         active: false,
                     })

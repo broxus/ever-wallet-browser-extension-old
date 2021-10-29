@@ -152,7 +152,7 @@ impl TokenWallet {
         let inner = self.inner.clone();
 
         JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().trust_me();
+            let wallet = inner.wallet.lock().trust_me();
 
             let address = wallet.get_proxy_address().await.handle_error()?;
             Ok(JsValue::from(address.to_string()))
@@ -395,6 +395,7 @@ extern "C" {
 }
 
 pub async fn get_token_root_details_with_user_token_wallet(
+    clock: &dyn nt_utils::Clock,
     transport: &dyn nt::transport::Transport,
     root_token_contract: &ton_block::MsgAddressInt,
     owner: &ton_block::MsgAddressInt,
@@ -411,9 +412,9 @@ pub async fn get_token_root_details_with_user_token_wallet(
     };
     let root_contract_state = nt::core::token_wallet::RootTokenContractState(&root_contract_state);
 
-    let details = root_contract_state.guess_details().handle_error()?;
+    let details = root_contract_state.guess_details(clock).handle_error()?;
     let token_wallet = root_contract_state
-        .get_wallet_address(details.version, owner, None)
+        .get_wallet_address(clock, details.version, owner, None)
         .handle_error()?;
 
     Ok(
@@ -423,6 +424,7 @@ pub async fn get_token_root_details_with_user_token_wallet(
 }
 
 pub async fn get_token_wallet_balance(
+    clock: &dyn nt_utils::Clock,
     transport: &dyn nt::transport::Transport,
     token_wallet: &ton_block::MsgAddressInt,
 ) -> Result<String, JsValue> {
@@ -436,8 +438,10 @@ pub async fn get_token_wallet_balance(
     };
     let token_wallet_state = nt::core::token_wallet::TokenWalletContractState(&token_wallet_state);
 
-    let version = token_wallet_state.get_version().handle_error()?;
-    let balance = token_wallet_state.get_balance(version).handle_error()?;
+    let version = token_wallet_state.get_version(clock).handle_error()?;
+    let balance = token_wallet_state
+        .get_balance(clock, version)
+        .handle_error()?;
     Ok(balance.to_string())
 }
 

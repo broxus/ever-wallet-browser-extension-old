@@ -53,8 +53,8 @@ pub struct UnsignedMessage {
 #[wasm_bindgen]
 impl UnsignedMessage {
     #[wasm_bindgen(js_name = "refreshTimeout")]
-    pub fn refresh_timeout(&mut self) {
-        self.inner.refresh_timeout();
+    pub fn refresh_timeout(&mut self, clock: &ClockWithOffset) {
+        self.inner.refresh_timeout(clock.inner.as_ref());
     }
 
     #[wasm_bindgen(js_name = "expireAt")]

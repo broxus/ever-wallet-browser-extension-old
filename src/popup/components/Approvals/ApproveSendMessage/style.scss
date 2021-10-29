@@ -1,7 +1,25 @@
 @import 'src/popup/styles/colors';
 
-.approve-send-message {
+.approval--send-message {
 	.enter-password {
 		padding: 0;
+	}
+
+	&__amount {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		word-break: normal;
+
+		.root-token-icon {
+			width: 20px;
+			height: 20px;
+			margin-right: 0.5rem;
+		}
+
+		.root-token-name {
+			width: 100%;
+			text-overflow: ellipsis;
+		}
 	}
 }

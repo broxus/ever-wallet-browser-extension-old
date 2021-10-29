@@ -1,8 +1,10 @@
 import React from 'react'
-import './style.scss'
 import moment from 'moment'
+
 import Button from '@popup/components/Button'
 import Modal from '@popup/components/Modal'
+
+import './style.scss'
 
 const testNotifications = [
     {
@@ -41,7 +43,7 @@ const Notifications: React.FC<INotifications> = ({ onClose }) => (
                             <Button
                                 text="Update"
                                 onClick={() =>
-                                    chrome.tabs.create({
+                                    window.browser.tabs.create({
                                         url: 'https://broxus.com',
                                         active: false,
                                     })

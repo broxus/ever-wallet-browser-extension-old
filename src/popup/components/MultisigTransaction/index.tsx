@@ -8,7 +8,7 @@ import {
     extractTokenTransactionAddress,
     extractTransactionAddress,
 } from '@shared/utils'
-import { Fees, parseError } from '@popup/utils'
+import { parseError } from '@popup/utils'
 
 import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
@@ -20,6 +20,7 @@ import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { ConfirmMessageToPrepare } from '@shared/backgroundApi'
 
 import './style.scss'
+import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
 type Props = {
     symbol?: nt.Symbol
@@ -60,12 +61,13 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(LocalStep.PREVIEW)
     const [error, setError] = React.useState<string>()
-    const [fees, setFees] = React.useState<Fees>()
+    const [fees, setFees] = React.useState<string>()
 
     const [parsedTokenTransaction, setParsedTokenTransaction] = React.useState<{
         amount: string
         symbol: string
         decimals: number
+        rootTokenContract: string
     }>()
 
     React.useEffect(() => {
@@ -84,6 +86,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     amount: knownPayload.data.tokens,
                     symbol: details.symbol,
                     decimals: details.decimals,
+                    rootTokenContract: details.address,
                 })
             })
             .catch(() => {
@@ -145,7 +148,8 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         filteredSelectableKeys[0]
     )
 
-    const isExpired = transaction.createdAt + expirationTime <= currentUtime()
+    const isExpired =
+        transaction.createdAt + expirationTime <= currentUtime(rpcState.state.clockOffset)
 
     const txHash = multisigTransaction?.finalTransactionHash
 
@@ -156,11 +160,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                 publicKey: selectedKey.publicKey,
                 transactionId,
             })
-                .then((transactionFees) =>
-                    setFees({
-                        transactionFees,
-                    })
-                )
+                .then((fees) => setFees(fees))
                 .catch(console.error)
         }
 
@@ -197,7 +197,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
             }).catch(console.error)
 
             drawer.setPanel(undefined)
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)
@@ -214,17 +214,28 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                 {selectedKey != null && (
                     <EnterPassword
                         showHeading={false}
-                        currencyName={currencyName}
                         disabled={inProcess}
                         transactionId={transactionId}
                         keyEntries={filteredSelectableKeys}
                         keyEntry={selectedKey}
-                        params={{
-                            recipient: address as string,
-                            amount: convertCurrency(value.toString(), decimals),
-                        }}
-                        error={error}
+                        amount={
+                            parsedTokenTransaction == null
+                                ? { type: 'ton_wallet', data: { amount: value } }
+                                : {
+                                      type: 'token_wallet',
+                                      data: {
+                                          amount: parsedTokenTransaction.amount,
+                                          attachedAmount: value,
+                                          symbol: parsedTokenTransaction.symbol,
+                                          decimals: parsedTokenTransaction.decimals,
+                                          rootTokenContract:
+                                              parsedTokenTransaction.rootTokenContract,
+                                      },
+                                  }
+                        }
+                        recipient={address as string}
                         fees={fees}
+                        error={error}
                         onChangeKeyEntry={setKey}
                         onSubmit={onSubmit}
                         onBack={onBack}
@@ -297,12 +308,20 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                 <span className="transaction-info-tx-details-param-desc">
                                     Amount
                                 </span>
-                                <span className="transaction-info-tx-details-param-value">
+                                <span className="transaction-info-tx-details-param-value transaction-info-tx-details-param-value--amount">
+                                    <AssetIcon
+                                        type={'token_wallet'}
+                                        address={parsedTokenTransaction.rootTokenContract}
+                                        className="root-token-icon noselect"
+                                    />
                                     {convertCurrency(
                                         parsedTokenTransaction.amount,
                                         parsedTokenTransaction.decimals
-                                    )}{' '}
-                                    {convertTokenName(parsedTokenTransaction.symbol)}
+                                    )}
+                                    &nbsp;
+                                    <span className="root-token-name">
+                                        {convertTokenName(parsedTokenTransaction.symbol)}
+                                    </span>
                                 </span>
                             </div>
                         </>
@@ -315,7 +334,8 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                 ? 'Attached amount'
                                 : 'Amount'}
                         </span>
-                        <span className="transaction-info-tx-details-param-value">
+                        <span className="transaction-info-tx-details-param-value transaction-info-tx-details-param-value--amount">
+                            <TonAssetIcon className="root-token-icon noselect" />
                             {convertCurrency(value.toString(), decimals)}{' '}
                             {convertTokenName(currencyName)}
                         </span>
@@ -391,12 +411,12 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     <footer className="multisig-transaction__footer">
                         <Button
                             white
-                            onClick={() => {
-                                chrome.tabs.create({
+                            onClick={() =>
+                                window.browser.tabs.create({
                                     url: `https://ton-explorer.com/transactions/${txHash}`,
                                     active: false,
                                 })
-                            }}
+                            }
                             text="Open in explorer"
                         />
                     </footer>

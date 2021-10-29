@@ -53,13 +53,8 @@ export function MainPage(): JSX.Element | null {
         accountability.reset()
     }
 
-    const {
-        externalAccounts,
-        knownTokens,
-        selectedAccount,
-        selectedConnection,
-        storedKeys,
-    } = rpcState.state
+    const { externalAccounts, knownTokens, selectedAccount, selectedConnection, storedKeys } =
+        rpcState.state
 
     const accountName = selectedAccount?.name as string
     const accountAddress = selectedAccount?.tonWallet.address as string
@@ -75,10 +70,6 @@ export function MainPage(): JSX.Element | null {
 
         return keys.filter((e) => e)
     }, [accountability.selectedAccount, externalAccounts, storedKeys])
-
-    if (selectedKeys[0] === undefined) {
-        return null
-    }
 
     const tonWalletAsset = accountability.selectedAccount.tonWallet
     const tokenWalletAssets =

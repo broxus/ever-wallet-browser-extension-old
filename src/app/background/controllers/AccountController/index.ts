@@ -32,7 +32,6 @@ import {
     TokenWalletsToUpdate,
     ConfirmMessageToPrepare,
     WalletMessageToSend,
-    BriefMessageInfo,
     StoredBriefMessageInfo,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
@@ -51,6 +50,7 @@ export interface AccountControllerConfig extends BaseConfig {
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
+    clock: nt.ClockWithOffset
     connectionController: ConnectionController
     notificationController: NotificationController
     ledgerBridge: LedgerBridge
@@ -109,10 +109,8 @@ export class AccountController extends BaseController<
     AccountControllerState
 > {
     private readonly _tonWalletSubscriptions: Map<string, TonWalletSubscription> = new Map()
-    private readonly _tokenWalletSubscriptions: Map<
-        string,
-        Map<string, TokenWalletSubscription>
-    > = new Map()
+    private readonly _tokenWalletSubscriptions: Map<string, Map<string, TokenWalletSubscription>> =
+        new Map()
     private readonly _sendMessageRequests: Map<string, Map<string, SendMessageCallback>> = new Map()
     private readonly _accountsMutex = new Mutex()
 
@@ -251,7 +249,7 @@ export class AccountController extends BaseController<
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
                 return await connection.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
         })
@@ -264,7 +262,7 @@ export class AccountController extends BaseController<
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
                 return await connection.getTokenRootDetails(rootContract, ownerAddress)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
         })
@@ -274,7 +272,7 @@ export class AccountController extends BaseController<
         return this.config.connectionController.use(async ({ data: { connection } }) => {
             try {
                 return await connection.getTokenWalletBalance(tokenWallet)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
         })
@@ -306,9 +304,8 @@ export class AccountController extends BaseController<
                                     rootTokenContract
                                 )
                             } else {
-                                const tokenSubscriptions = this._tokenWalletSubscriptions.get(
-                                    address
-                                )
+                                const tokenSubscriptions =
+                                    this._tokenWalletSubscriptions.get(address)
                                 const subscription = tokenSubscriptions?.get(rootTokenContract)
                                 if (subscription != null) {
                                     tokenSubscriptions?.delete(rootTokenContract)
@@ -351,7 +348,7 @@ export class AccountController extends BaseController<
                 const assetsList = await accountsStorage.getAccount(address)
                 assetsList && this._updateAssetsList(assetsList)
             })
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -425,7 +422,7 @@ export class AccountController extends BaseController<
             }
 
             return entry
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -474,7 +471,7 @@ export class AccountController extends BaseController<
             const publicKeys = await keyStore.getPublicKeys(params)
 
             return publicKeys
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -579,7 +576,7 @@ export class AccountController extends BaseController<
             })
 
             return entry
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -658,7 +655,7 @@ export class AccountController extends BaseController<
 
             await this.startSubscriptions()
             return selectedAccount
-        } catch (e) {
+        } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
     }
@@ -825,7 +822,7 @@ export class AccountController extends BaseController<
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -856,7 +853,7 @@ export class AccountController extends BaseController<
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -881,7 +878,7 @@ export class AccountController extends BaseController<
             try {
                 const signedMessage = unsignedMessage.signFake()
                 return await wallet.estimateFees(signedMessage)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -896,7 +893,7 @@ export class AccountController extends BaseController<
         return subscription.use(async (wallet) => {
             try {
                 return await wallet.getMultisigPendingTransactions()
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
@@ -937,7 +934,7 @@ export class AccountController extends BaseController<
 
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -972,7 +969,7 @@ export class AccountController extends BaseController<
                 )
 
                 return await this.config.keyStore.sign(unsignedMessage, password)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage?.free()
@@ -1010,7 +1007,7 @@ export class AccountController extends BaseController<
 
             try {
                 return await this.config.keyStore.sign(unsignedMessage, password)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -1034,7 +1031,7 @@ export class AccountController extends BaseController<
                     params.payload || '',
                     params.notifyReceiver
                 )
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
@@ -1059,7 +1056,7 @@ export class AccountController extends BaseController<
                     params.amount,
                     params.proxyAddress
                 )
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             }
         })
@@ -1105,7 +1102,7 @@ export class AccountController extends BaseController<
                         )
                         pendingTransactions[pendingTransaction.bodyHash] = {
                             ...info,
-                            createdAt: currentUtime(),
+                            createdAt: currentUtime(this.config.clock.offsetMs()),
                             messageHash: signedMessage.hash,
                         } as StoredBriefMessageInfo
 
@@ -1115,7 +1112,7 @@ export class AccountController extends BaseController<
                     }
 
                     subscription.skipRefreshTimer()
-                } catch (e) {
+                } catch (e: any) {
                     throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
                 }
             }).catch((e) => {
@@ -1131,7 +1128,7 @@ export class AccountController extends BaseController<
         await subscription.use(async (wallet) => {
             try {
                 await wallet.preloadTransactions(lt, hash)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })
@@ -1154,7 +1151,7 @@ export class AccountController extends BaseController<
         await subscription.use(async (wallet) => {
             try {
                 await wallet.preloadTransactions(lt, hash)
-            } catch (e) {
+            } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })
@@ -1270,6 +1267,7 @@ export class AccountController extends BaseController<
 
         console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
         const subscription = await TonWalletSubscription.subscribe(
+            this.config.clock,
             this.config.connectionController,
             workchain,
             publicKey,
@@ -1750,162 +1748,121 @@ export class AccountController extends BaseController<
     }
 
     private async _loadSelectedAccountAddress(): Promise<string | undefined> {
-        return new Promise<string | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedAccountAddress'], ({ selectedAccountAddress }) => {
-                if (typeof selectedAccountAddress !== 'string') {
-                    return resolve(undefined)
-                }
-                resolve(selectedAccountAddress)
-            })
-        })
+        const { selectedAccountAddress } = await window.browser.storage.local.get([
+            'selectedAccountAddress',
+        ])
+        if (typeof selectedAccountAddress === 'string') {
+            return selectedAccountAddress
+        } else {
+            return undefined
+        }
     }
 
     private async _saveSelectedAccountAddress(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set(
-                { selectedAccountAddress: this.state.selectedAccount?.tonWallet.address },
-                () => resolve()
-            )
+        await window.browser.storage.local.set({
+            selectedAccountAddress: this.state.selectedAccount?.tonWallet.address,
         })
     }
 
     private async _removeSelectedAccountAddress(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('selectedAccountAddress', () => resolve())
-        })
+        await window.browser.storage.local.remove('selectedAccountAddress')
     }
 
     private async _loadSelectedMasterKey(): Promise<string | undefined> {
-        return new Promise<string | undefined>((resolve) => {
-            chrome.storage.local.get(['selectedMasterKey'], ({ selectedMasterKey }) => {
-                if (typeof selectedMasterKey !== 'string') {
-                    return resolve(undefined)
-                }
-                resolve(selectedMasterKey)
-            })
-        })
+        const { selectedMasterKey } = await window.browser.storage.local.get(['selectedMasterKey'])
+        if (typeof selectedMasterKey === 'string') {
+            return selectedMasterKey
+        } else {
+            return undefined
+        }
     }
 
     private async _saveSelectedMasterKey(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ selectedMasterKey: this.state.selectedMasterKey })
     }
 
     private async _removeSelectedMasterKey(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('selectedMasterKey', () => resolve())
-        })
+        await window.browser.storage.local.remove('selectedMasterKey')
     }
 
     private async _loadMasterKeysNames(): Promise<
         AccountControllerState['masterKeysNames'] | undefined
     > {
-        return new Promise<AccountControllerState['masterKeysNames'] | undefined>((resolve) => {
-            chrome.storage.local.get(['masterKeysNames'], ({ masterKeysNames }) => {
-                if (typeof masterKeysNames !== 'object') {
-                    return resolve(undefined)
-                }
-                resolve(masterKeysNames)
-            })
-        })
+        const { masterKeysNames } = await window.browser.storage.local.get(['masterKeysNames'])
+        if (typeof masterKeysNames === 'object') {
+            return masterKeysNames
+        } else {
+            return undefined
+        }
     }
 
     private async _clearMasterKeysNames(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('masterKeysNames', () => resolve())
-        })
+        await window.browser.storage.local.remove('masterKeysNames')
     }
 
     private async _saveMasterKeysNames(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ masterKeysNames: this.state.masterKeysNames }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ masterKeysNames: this.state.masterKeysNames })
     }
 
     private async _loadRecentMasterKeys(): Promise<
         AccountControllerState['recentMasterKeys'] | undefined
     > {
-        return new Promise<AccountControllerState['recentMasterKeys'] | undefined>((resolve) => {
-            chrome.storage.local.get(['recentMasterKeys'], ({ recentMasterKeys }) => {
-                if (!Array.isArray(recentMasterKeys)) {
-                    return resolve(undefined)
-                }
-                resolve(recentMasterKeys)
-            })
-        })
+        const { recentMasterKeys } = await window.browser.storage.local.get(['recentMasterKeys'])
+        if (Array.isArray(recentMasterKeys)) {
+            return recentMasterKeys
+        } else {
+            return undefined
+        }
     }
 
     private async _clearRecentMasterKeys(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('recentMasterKeys', () => resolve())
-        })
+        await window.browser.storage.local.remove('recentMasterKeys')
     }
 
     private async _saveRecentMasterKeys(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ recentMasterKeys: this.state.recentMasterKeys })
     }
 
     private async _loadAccountsVisibility(): Promise<
         AccountControllerState['accountsVisibility'] | undefined
     > {
-        return new Promise<AccountControllerState['accountsVisibility'] | undefined>((resolve) => {
-            chrome.storage.local.get(['accountsVisibility'], ({ accountsVisibility }) => {
-                if (typeof accountsVisibility !== 'object') {
-                    return resolve(undefined)
-                }
-                resolve(accountsVisibility)
-            })
-        })
+        const { accountsVisibility } = await window.browser.storage.local.get([
+            'accountsVisibility',
+        ])
+        if (typeof accountsVisibility === 'object') {
+            return accountsVisibility
+        } else {
+            return undefined
+        }
     }
 
     private async _clearAccountsVisibility(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('accountsVisibility', () => resolve())
-        })
+        await window.browser.storage.local.remove('accountsVisibility')
     }
 
     private async _saveAccountsVisibility(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ accountsVisibility: this.state.accountsVisibility }, () =>
-                resolve()
-            )
+        await window.browser.storage.local.set({
+            accountsVisibility: this.state.accountsVisibility,
         })
     }
 
     private async _loadExternalAccounts(): Promise<
         AccountControllerState['externalAccounts'] | undefined
     > {
-        return new Promise<AccountControllerState['externalAccounts'] | undefined>((resolve) => {
-            chrome.storage.local.get(['externalAccounts'], ({ externalAccounts }) => {
-                if (!Array.isArray(externalAccounts)) {
-                    return resolve(undefined)
-                }
-                resolve(externalAccounts)
-            })
-        })
+        const { externalAccounts } = await window.browser.storage.local.get(['externalAccounts'])
+        if (Array.isArray(externalAccounts)) {
+            return externalAccounts
+        } else {
+            return undefined
+        }
     }
 
     private async _clearExternalAccounts(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.remove('externalAccounts', () => resolve())
-        })
+        await window.browser.storage.local.remove('externalAccounts')
     }
 
     private async _saveExternalAccounts(): Promise<void> {
-        return new Promise<void>((resolve) => {
-            chrome.storage.local.set({ externalAccounts: this.state.externalAccounts }, () =>
-                resolve()
-            )
-        })
+        await window.browser.storage.local.set({ externalAccounts: this.state.externalAccounts })
     }
 }
 

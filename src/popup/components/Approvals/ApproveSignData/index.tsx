@@ -20,7 +20,7 @@ enum DisplayType {
 const base64ToUtf8 = (str: string) => {
     try {
         return nt.base64ToUtf8Lossy(str)
-    } catch (e) {
+    } catch (e: any) {
         return str
     }
 }
@@ -81,7 +81,7 @@ export function ApproveSignData({
             } else {
                 setError('Invalid password')
             }
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)

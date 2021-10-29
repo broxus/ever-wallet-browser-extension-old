@@ -3,11 +3,12 @@ import Decimal from 'decimal.js'
 
 import * as nt from '@nekoton'
 import Approval from '../Approval'
+import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 import Button from '@popup/components/Button'
 import { EnterPassword } from '@popup/components/Send/components'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { Fees, parseError } from '@popup/utils'
+import { parseError } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
 import { convertCurrency, convertTokenName, convertTons } from '@shared/utils'
 
@@ -56,12 +57,13 @@ export function ApproveSendMessage({
 
     const [localStep, setLocalStep] = React.useState(ApproveStep.MESSAGE_PREVIEW)
     const [error, setError] = React.useState<string>()
-    const [fees, setFees] = React.useState<Fees>()
+    const [fees, setFees] = React.useState<string>()
     const [selectedKey, setKey] = React.useState<nt.KeyStoreEntry | undefined>(keys[0])
     const [tokenTransaction, setTokenTransaction] = React.useState<{
         amount: string
         symbol: string
         decimals: number
+        rootTokenContract: string
     }>()
 
     React.useEffect(() => {
@@ -78,6 +80,7 @@ export function ApproveSendMessage({
                     amount: knownPayload.data.tokens,
                     symbol: details.symbol,
                     decimals: details.decimals,
+                    rootTokenContract: details.address,
                 })
             })
             .catch(() => {
@@ -99,12 +102,7 @@ export function ApproveSendMessage({
 
         await rpc
             .estimateFees(account.tonWallet.address, messageToPrepare)
-            .then((transactionFees) => {
-                setFees({
-                    transactionFees,
-                    attachedAmount: undefined,
-                })
-            })
+            .then((fees) => setFees(fees))
             .catch(console.error)
     }
 
@@ -120,7 +118,7 @@ export function ApproveSendMessage({
             } else {
                 setError('Invalid password')
             }
-        } catch (e) {
+        } catch (e: any) {
             setError(parseError(e))
         } finally {
             setInProcess(false)
@@ -157,7 +155,7 @@ export function ApproveSendMessage({
                     : 'Confirm message'
             }
             origin={origin}
-            className={'approve-send-message'}
+            className={'approval--send-message'}
         >
             {localStep === ApproveStep.MESSAGE_PREVIEW && (
                 <div className="approval__wrapper">
@@ -169,12 +167,20 @@ export function ApproveSendMessage({
                         {tokenTransaction != null && (
                             <div className="approval__spend-details-param">
                                 <span className="approval__spend-details-param-desc">Amount</span>
-                                <span className="approval__spend-details-param-value">
+                                <span className="approval__spend-details-param-value approval--send-message__amount">
+                                    <AssetIcon
+                                        type={'token_wallet'}
+                                        address={tokenTransaction.rootTokenContract}
+                                        className="root-token-icon noselect"
+                                    />
                                     {convertCurrency(
                                         tokenTransaction.amount,
                                         tokenTransaction.decimals
-                                    )}{' '}
-                                    {convertTokenName(tokenTransaction.symbol)}
+                                    )}
+                                    &nbsp;
+                                    <span className="root-token-name">
+                                        {convertTokenName(tokenTransaction.symbol)}
+                                    </span>
                                 </span>
                             </div>
                         )}
@@ -182,7 +188,8 @@ export function ApproveSendMessage({
                             <span className="approval__spend-details-param-desc">
                                 {tokenTransaction == null ? 'Amount' : 'Attached amount'}
                             </span>
-                            <span className="approval__spend-details-param-value">
+                            <span className="approval__spend-details-param-value approval--send-message__amount">
+                                <TonAssetIcon className="root-token-icon noselect" />
                                 {convertTons(amount)} TON
                             </span>
                             {balance.lessThan(amount) && (
@@ -198,10 +205,9 @@ export function ApproveSendMessage({
                             <span className="approval__spend-details-param-desc">
                                 Blockchain fee
                             </span>
-                            <span className="approval__spend-details-param-value">
-                                {fees?.transactionFees !== undefined
-                                    ? `~${convertTons(fees.transactionFees)} TON`
-                                    : 'calculating...'}
+                            <span className="approval__spend-details-param-value approval--send-message__amount">
+                                <TonAssetIcon className="root-token-icon noselect" />
+                                {fees != null ? `~${convertTons(fees)} TON` : 'calculating...'}
                             </span>
                         </div>
                         {payload && (
@@ -236,9 +242,22 @@ export function ApproveSendMessage({
                 <EnterPassword
                     keyEntries={keys}
                     keyEntry={selectedKey}
-                    currencyName="TON"
+                    amount={
+                        tokenTransaction == null
+                            ? { type: 'ton_wallet', data: { amount } }
+                            : {
+                                  type: 'token_wallet',
+                                  data: {
+                                      amount: tokenTransaction.amount,
+                                      attachedAmount: amount,
+                                      symbol: tokenTransaction.symbol,
+                                      decimals: tokenTransaction.decimals,
+                                      rootTokenContract: tokenTransaction.rootTokenContract,
+                                  },
+                              }
+                    }
+                    recipient={recipient}
                     fees={fees}
-                    params={{ recipient, amount: convertTons(amount) }}
                     error={error}
                     disabled={inProcess}
                     showHeading={false}

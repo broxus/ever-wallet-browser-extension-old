@@ -28,6 +28,7 @@ interface CreateProviderMiddlewareOptions {
     origin: string
     tabId?: number
     isInternal: boolean
+    clock: nt.ClockWithOffset
     approvalController: ApprovalController
     accountController: AccountController
     permissionsController: PermissionsController
@@ -159,7 +160,7 @@ function requireTabid<T>(
 
 function requireTransactionId<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as nt.TransactionId
+    const property = object[key] as unknown as nt.TransactionId
     requireString(req, property, 'lt')
     requireString(req, property, 'hash')
 }
@@ -170,7 +171,7 @@ function requireLastTransactionId<T, O, P extends keyof O>(
     key: P
 ) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as nt.LastTransactionId
+    const property = object[key] as unknown as nt.LastTransactionId
     requireBoolean(req, property, 'isExact')
     requireString(req, property, 'lt')
     requireOptionalString(req, property, 'hash')
@@ -178,14 +179,14 @@ function requireLastTransactionId<T, O, P extends keyof O>(
 
 function requireGenTimings<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as GenTimings
+    const property = object[key] as unknown as GenTimings
     requireString(req, property, 'genLt')
     requireNumber(req, property, 'genUtime')
 }
 
 function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as FullContractState
+    const property = object[key] as unknown as FullContractState
     requireString(req, property, 'balance')
     requireGenTimings(req, property, 'genTimings')
     requireOptional(req, property, 'lastTransactionId', requireLastTransactionId)
@@ -194,7 +195,7 @@ function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, o
 
 function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as RawFunctionCall
+    const property = object[key] as unknown as RawFunctionCall
     requireString(req, property, 'abi')
     requireString(req, property, 'method')
     requireObject(req, property, 'params')
@@ -214,7 +215,7 @@ function requireAssetTypeParams<T, O, P extends keyof O>(
     assetType: AssetType
 ) {
     requireObject(req, object, key)
-    const property = (object[key] as unknown) as AssetTypeParams<AssetType>
+    const property = object[key] as unknown as AssetTypeParams<AssetType>
     switch (assetType) {
         case 'tip3_token': {
             requireString(req, property, 'rootContract')
@@ -341,6 +342,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
         version,
         numericVersion: convertVersionToInt32(version),
         selectedConnection: selectedConnection.group,
+        supportedPermissions: ['tonClient', 'accountInteraction'],
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
@@ -369,7 +371,7 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
             ),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -392,7 +394,7 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
         )
 
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -406,7 +408,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requireOptional(req, req.params, 'cachedState', requireContractState)
     requireFunctionCall(req, req.params, 'functionCall')
 
-    const { connectionController } = ctx
+    const { clock, connectionController } = ctx
 
     let contractState = cachedState
 
@@ -425,7 +427,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
 
     try {
         const { output, code } = nt.runLocal(
-            contractState.genTimings,
+            clock,
             contractState.lastTransactionId,
             contractState.boc,
             functionCall.abi,
@@ -438,7 +440,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
             code,
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -464,7 +466,7 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
             address: nt.getExpectedAddress(tvc, abi, workchain || 0, publicKey, initParams),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -481,7 +483,7 @@ const packIntoCell: ProviderMethod<'packIntoCell'> = async (req, res, _next, end
             boc: nt.packIntoCell(structure as nt.AbiParam[], data),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -500,7 +502,7 @@ const unpackFromCell: ProviderMethod<'unpackFromCell'> = async (req, res, _next,
             data: nt.unpackFromCell(structure as nt.AbiParam[], boc, allowPartial),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -517,7 +519,7 @@ const extractPublicKey: ProviderMethod<'extractPublicKey'> = async (req, res, _n
             publicKey: nt.extractPublicKey(boc),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -534,7 +536,7 @@ const codeToTvc: ProviderMethod<'codeToTvc'> = async (req, res, _next, end, ctx)
             tvc: nt.codeToTvc(code),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -549,7 +551,7 @@ const splitTvc: ProviderMethod<'splitTvc'> = async (req, res, _next, end, ctx) =
     try {
         res.result = nt.splitTvc(tvc)
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -572,7 +574,7 @@ const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
             boc: nt.encodeInternalInput(abi, method, params),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -590,7 +592,7 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
     try {
         res.result = nt.decodeInput(body, abi, method, internal) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -607,7 +609,7 @@ const decodeEvent: ProviderMethod<'decodeEvent'> = async (req, res, _next, end, 
     try {
         res.result = nt.decodeEvent(body, abi, event) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -624,7 +626,7 @@ const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end
     try {
         res.result = nt.decodeOutput(body, abi, method) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -646,7 +648,7 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
     try {
         res.result = nt.decodeTransaction(transaction, abi, method) || null
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -669,7 +671,7 @@ const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async
             events: nt.decodeTransactionEvents(transaction, abi),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -688,7 +690,7 @@ const verifySignature: ProviderMethod<'verifySignature'> = async (req, res, _nex
             isValid: nt.verifySignature(publicKey, dataHash, signature),
         }
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -715,7 +717,7 @@ const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'>
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -729,7 +731,7 @@ const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'>
             payload.params,
             60
         )
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -783,7 +785,7 @@ const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) =
             let rootContract: string
             try {
                 rootContract = nt.repackAddress(rawRootContract)
-            } catch (e) {
+            } catch (e: any) {
                 throw invalidRequest(req, e.toString())
             }
 
@@ -836,7 +838,7 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
     try {
         res.result = await accountController.signData(data, password)
         end()
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 }
@@ -862,7 +864,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -870,7 +872,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     if (payload != null) {
         try {
             body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         }
     }
@@ -903,7 +905,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
         try {
             const signedMessage = unsignedMessage.signFake()
             return await wallet.estimateFees(signedMessage)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
             unsignedMessage.free()
@@ -938,7 +940,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -948,7 +950,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         try {
             body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
             knownPayload = nt.parseKnownPayload(body)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         }
     }
@@ -993,7 +995,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
 
         try {
             return await accountController.signPreparedMessage(unsignedMessage, password)
-        } catch (e) {
+        } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
             unsignedMessage.free()
@@ -1041,6 +1043,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     const {
         tabId,
         origin,
+        clock,
         permissionsController,
         approvalController,
         accountController,
@@ -1057,13 +1060,14 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     let repackedRecipient: string
     try {
         repackedRecipient = nt.repackAddress(recipient)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
     let unsignedMessage: nt.UnsignedMessage
     try {
         unsignedMessage = nt.createExternalMessage(
+            clock,
             repackedRecipient,
             payload.abi,
             payload.method,
@@ -1072,7 +1076,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
             selectedPublicKey,
             60
         )
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     }
 
@@ -1088,9 +1092,9 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
 
     let signedMessage: nt.SignedMessage
     try {
-        unsignedMessage.refreshTimeout()
+        unsignedMessage.refreshTimeout(clock)
         signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
-    } catch (e) {
+    } catch (e: any) {
         throw invalidRequest(req, e.toString())
     } finally {
         unsignedMessage.free()
