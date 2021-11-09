@@ -841,7 +841,11 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
     requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'data')
 
-    const { origin, approvalController, accountController } = ctx
+    const { origin, approvalController, accountController, permissionsController } = ctx
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified signer is not allowed')
+    }
 
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
@@ -868,7 +872,11 @@ const signDataRaw: ProviderMethod<'signDataRaw'> = async (req, res, _next, end, 
     requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'data')
 
-    const { origin, approvalController, accountController } = ctx
+    const { origin, approvalController, accountController, permissionsController } = ctx
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified signer is not allowed')
+    }
 
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
