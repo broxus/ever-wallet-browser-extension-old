@@ -587,6 +587,7 @@ fn make_execution_output(data: &nt_abi::ExecutionOutput) -> Result<ExecutionOutp
 #[wasm_bindgen(typescript_custom_section)]
 const TOKEN: &str = r#"
 export type AbiToken =
+    | null
     | boolean
     | string
     | number
@@ -1229,6 +1230,15 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
 
     Ok(result)
 }
+
+#[wasm_bindgen(js_name = "getBocHash")]
+pub fn get_boc_hash(boc: &str) -> Result<String, JsValue> {
+    let body = base64::decode(boc).handle_error()?;
+    let cell =
+        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    Ok(cell.repr_hash().to_hex_string())
+}
+
 #[wasm_bindgen(js_name = "packIntoCell")]
 pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String, JsValue> {
     let params = parse_params_list(params).handle_error()?;
