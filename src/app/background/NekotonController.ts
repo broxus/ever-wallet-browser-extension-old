@@ -33,7 +33,7 @@ import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
-import { focusTab, focusWindow, WindowManager, openExtensionInBrowser } from '@popup/utils/platform'
+import { WindowManager, focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
 
 import LedgerBridge from './ledger/LedgerBridge'
 
@@ -51,6 +51,7 @@ export interface NekotonControllerOptions {
 }
 
 interface NekotonControllerComponents {
+    counters: Counters
     storage: nt.Storage
     accountsStorage: nt.AccountsStorage
     keyStore: nt.KeyStore
@@ -72,8 +73,12 @@ interface SetupProviderEngineOptions {
     isInternal: boolean
 }
 
+class Counters {
+    activeControllerConnections: number = 0
+    reservedControllerConnections: number = 0
+}
+
 export class NekotonController extends EventEmitter {
-    private _activeControllerConnections: number = 0
     private readonly _connections: { [id: string]: { engine: JsonRpcEngine } } = {}
     private readonly _originToConnectionIds: { [origin: string]: Set<string> } = {}
     private readonly _originToTabIds: { [origin: string]: Set<number> } = {}
@@ -92,6 +97,7 @@ export class NekotonController extends EventEmitter {
     }
 
     public static async load(options: NekotonControllerOptions) {
+        const counters = new Counters()
         const storage = new nt.Storage(new StorageConnector())
         const accountsStorage = await nt.AccountsStorage.load(storage)
 
@@ -125,6 +131,9 @@ export class NekotonController extends EventEmitter {
                     group: 'approval',
                     force: false,
                 }),
+            reserveControllerConnection: () => {
+                counters.reservedControllerConnections += 1
+            },
         })
         const permissionsController = new PermissionsController({
             approvalController,
@@ -142,6 +151,7 @@ export class NekotonController extends EventEmitter {
         notificationController.setHidden(false)
 
         return new NekotonController(options, {
+            counters,
             storage,
             accountsStorage,
             keyStore,
@@ -374,8 +384,13 @@ export class NekotonController extends EventEmitter {
     private _setupControllerConnection<T extends Duplex>(outStream: T) {
         const api = this.getApi()
 
-        this._activeControllerConnections += 1
-        this.emit('controllerConnectionChanged', this._activeControllerConnections)
+        this._components.counters.activeControllerConnections += 1
+        this.emit(
+            'controllerConnectionChanged',
+            this._components.counters.activeControllerConnections +
+                this._components.counters.reservedControllerConnections
+        )
+        this._components.counters.reservedControllerConnections = 0
 
         outStream.on('data', createMetaRPCHandler(api, outStream))
 
@@ -394,8 +409,12 @@ export class NekotonController extends EventEmitter {
         this.on('update', handleUpdate)
 
         outStream.on('end', () => {
-            this._activeControllerConnections -= 1
-            this.emit('controllerConnectionChanged', this._activeControllerConnections)
+            this._components.counters.activeControllerConnections -= 1
+            this.emit(
+                'controllerConnectionChanged',
+                this._components.counters.activeControllerConnections +
+                    this._components.counters.reservedControllerConnections
+            )
             this.removeListener('update', handleUpdate)
         })
     }
