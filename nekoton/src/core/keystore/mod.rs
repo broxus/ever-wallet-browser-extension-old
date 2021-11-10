@@ -335,6 +335,24 @@ impl KeyStore {
         })))
     }
 
+    #[wasm_bindgen(js_name = "signDataRaw")]
+    pub fn sign_data_raw(
+        &self,
+        data: &str,
+        key_password: JsKeyPassword,
+    ) -> Result<PromiseSignedDataRaw, JsValue> {
+        let data = base64::decode(data).handle_error()?;
+        let inner = self.inner.clone();
+        let key_password =
+            JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let signature = sign_data(&inner, key_password, &data).await?;
+
+            Ok(crate::crypto::make_signed_data_raw(signature).unchecked_into())
+        })))
+    }
+
     #[wasm_bindgen(js_name = "removeKey")]
     pub fn remove_key(&self, public_key: &str) -> Result<PromiseOptionKeyStoreEntry, JsValue> {
         let public_key = parse_public_key(public_key)?;
@@ -424,6 +442,9 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<SignedData>")]
     pub type PromiseSignedData;
+
+    #[wasm_bindgen(typescript_type = "Promise<SignedDataRaw>")]
+    pub type PromiseSignedDataRaw;
 
     #[wasm_bindgen(typescript_type = "Promise<Array<KeyStoreEntry>>")]
     pub type PromiseKeyStoreEntries;

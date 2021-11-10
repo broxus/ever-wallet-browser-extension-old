@@ -471,6 +471,23 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
     }
 }
 
+const getBocHash: ProviderMethod<'getBocHash'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['tonClient'])
+    requireParams(req)
+
+    const { boc } = req.params
+    requireString(req, req.params, 'boc')
+
+    try {
+        res.result = {
+            hash: nt.getBocHash(boc),
+        }
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const packIntoCell: ProviderMethod<'packIntoCell'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['tonClient'])
     requireParams(req)
@@ -824,7 +841,11 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
     requireString(req, req.params, 'publicKey')
     requireString(req, req.params, 'data')
 
-    const { origin, approvalController, accountController } = ctx
+    const { origin, approvalController, accountController, permissionsController } = ctx
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified signer is not allowed')
+    }
 
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
@@ -837,6 +858,37 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
 
     try {
         res.result = await accountController.signData(data, password)
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const signDataRaw: ProviderMethod<'signDataRaw'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { publicKey, data } = req.params
+    requireString(req, req.params, 'publicKey')
+    requireString(req, req.params, 'data')
+
+    const { origin, approvalController, accountController, permissionsController } = ctx
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified signer is not allowed')
+    }
+
+    const password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        type: 'signData',
+        requestData: {
+            publicKey,
+            data,
+        },
+    })
+
+    try {
+        res.result = await accountController.signDataRaw(data, password)
         end()
     } catch (e: any) {
         throw invalidRequest(req, e.toString())
@@ -1139,6 +1191,7 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     getTransactions,
     runLocal,
     getExpectedAddress,
+    getBocHash,
     packIntoCell,
     unpackFromCell,
     extractPublicKey,
@@ -1154,6 +1207,7 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     sendUnsignedExternalMessage,
     addAsset,
     signData,
+    signDataRaw,
     estimateFees,
     sendMessage,
     sendExternalMessage,

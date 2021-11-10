@@ -87,22 +87,33 @@ const setupController = async () => {
 }
 
 const triggerUi = async (params: TriggerUiParams) => {
-    const tabs = await window.browser.tabs.query({ active: true })
+    let firstAttempt = true
+    while (true) {
+        const tabs = await window.browser.tabs.query({ active: true })
 
-    const currentlyActiveNekotonTab = Boolean(
-        tabs.find((tab) => tab.id != null && openNekotonTabsIDs[tab.id])
-    )
+        const currentlyActiveNekotonTab = Boolean(
+            tabs.find((tab) => tab.id != null && openNekotonTabsIDs[tab.id])
+        )
 
-    if (!uiIsTriggering && (params.force || !popupIsOpen) && !currentlyActiveNekotonTab) {
-        uiIsTriggering = true
-        try {
-            await windowManager.showPopup({
-                group: params.group,
-                width: params.width,
-                height: params.height,
-            })
-        } finally {
-            uiIsTriggering = false
+        if (!uiIsTriggering && (params.force || !popupIsOpen) && !currentlyActiveNekotonTab) {
+            uiIsTriggering = true
+            try {
+                return await windowManager.showPopup({
+                    group: params.group,
+                    width: params.width,
+                    height: params.height,
+                })
+            } catch (e) {
+                if (firstAttempt) {
+                    firstAttempt = false
+                } else {
+                    throw e
+                }
+            } finally {
+                uiIsTriggering = false
+            }
+        } else {
+            return
         }
     }
 }

@@ -1066,6 +1066,10 @@ export class AccountController extends BaseController<
         return this.config.keyStore.signData(data, password)
     }
 
+    public async signDataRaw(data: string, password: nt.KeyPassword) {
+        return this.config.keyStore.signDataRaw(data, password)
+    }
+
     public async signPreparedMessage(
         unsignedMessage: nt.UnsignedMessage,
         password: nt.KeyPassword

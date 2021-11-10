@@ -103,8 +103,41 @@ pub fn make_signed_data(hash: [u8; 32], signature: [u8; 64]) -> JsSignedData {
         .set(
             "signatureParts",
             ObjectBuilder::new()
-                .set("high", format!("0x{}", hex::encode(&signature[32..])))
-                .set("low", format!("0x{}", hex::encode(&signature[..32])))
+                .set("high", format!("0x{}", hex::encode(&signature[..32])))
+                .set("low", format!("0x{}", hex::encode(&signature[32..])))
+                .build(),
+        )
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const SIGNED_DATA_RAW: &str = r#"
+export type SignedDataRaw = {
+    signature: string,
+    signatureHex: string,
+    signatureParts: {
+        high: string,
+        low: string,
+    }
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "SignedDataRaw")]
+    pub type JsSignedDataRaw;
+}
+
+pub fn make_signed_data_raw(signature: [u8; 64]) -> JsSignedDataRaw {
+    ObjectBuilder::new()
+        .set("signature", base64::encode(signature))
+        .set("signatureHex", hex::encode(signature))
+        .set(
+            "signatureParts",
+            ObjectBuilder::new()
+                .set("high", format!("0x{}", hex::encode(&signature[..32])))
+                .set("low", format!("0x{}", hex::encode(&signature[32..])))
                 .build(),
         )
         .build()

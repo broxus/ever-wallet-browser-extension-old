@@ -16,6 +16,7 @@ interface ApprovalCallbacks<T> {
 
 export interface ApprovalConfig extends BaseConfig {
     showApprovalRequest: () => void
+    reserveControllerConnection: () => void
 }
 
 export interface ApprovalControllerState extends BaseState {
@@ -57,22 +58,9 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
             options.id,
             options.requestData
         )
+        this.config.reserveControllerConnection()
         this._showApprovalRequest()
         return promise
-    }
-
-    public add<T extends keyof ApprovalApi>(options: {
-        id?: string
-        origin: string
-        type: T
-        requestData: ApprovalApi[T]['input']
-    }): Promise<ApprovalApi[T]['output']> {
-        return this._add<T, ApprovalApi[T]['input'], ApprovalApi[T]['output']>(
-            options.origin,
-            options.type,
-            options.id,
-            options.requestData
-        )
     }
 
     public get(id: string): Approval<string, unknown> | undefined {
