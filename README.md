@@ -42,6 +42,7 @@ Bugfixes
 
 * Fixed white screen for invalid public key on `signData`.
 * Fixed consecutive approval windows.
+* Swap high and low bytes in signed data.
 
 ### 0.2.18 (2021-10-29)
 

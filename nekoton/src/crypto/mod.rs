@@ -103,8 +103,8 @@ pub fn make_signed_data(hash: [u8; 32], signature: [u8; 64]) -> JsSignedData {
         .set(
             "signatureParts",
             ObjectBuilder::new()
-                .set("high", format!("0x{}", hex::encode(&signature[32..])))
-                .set("low", format!("0x{}", hex::encode(&signature[..32])))
+                .set("high", format!("0x{}", hex::encode(&signature[..32])))
+                .set("low", format!("0x{}", hex::encode(&signature[32..])))
                 .build(),
         )
         .build()
@@ -136,8 +136,8 @@ pub fn make_signed_data_raw(signature: [u8; 64]) -> JsSignedDataRaw {
         .set(
             "signatureParts",
             ObjectBuilder::new()
-                .set("high", format!("0x{}", hex::encode(&signature[32..])))
-                .set("low", format!("0x{}", hex::encode(&signature[..32])))
+                .set("high", format!("0x{}", hex::encode(&signature[..32])))
+                .set("low", format!("0x{}", hex::encode(&signature[32..])))
                 .build(),
         )
         .build()
