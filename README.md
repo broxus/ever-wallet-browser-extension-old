@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.19 (2021-11-10)
+
+Features
+
+* Added `getBocHash` and `signDataRaw` methods to provider api.
+
+Bugfixes
+
+* Fixed white screen for invalid public key on `signData`.
+* Fixed consecutive approval windows.
+
 ### 0.2.18 (2021-10-29)
 
 Features
