@@ -93,6 +93,7 @@ export function ApprovalPage(): JSX.Element | null {
             )}
             {approval.type === 'requestPermissions' ? (
                 <ApproveRequestPermissions
+                    key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
                     accountContractStates={rpcState.state.accountContractStates}
@@ -101,6 +102,7 @@ export function ApprovalPage(): JSX.Element | null {
                 />
             ) : approval.type === 'addTip3Token' ? (
                 <ApproveAddAsset
+                    key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
                     onSubmit={resolvePendingApproval}
@@ -108,6 +110,7 @@ export function ApprovalPage(): JSX.Element | null {
                 />
             ) : approval.type === 'signData' ? (
                 <ApproveSignData
+                    key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
                     storedKeys={rpcState.state.storedKeys}
@@ -117,6 +120,7 @@ export function ApprovalPage(): JSX.Element | null {
                 />
             ) : approval.type === 'sendMessage' ? (
                 <ApproveSendMessage
+                    key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
                     accountContractStates={rpcState.state.accountContractStates}
@@ -127,6 +131,7 @@ export function ApprovalPage(): JSX.Element | null {
                 />
             ) : approval.type === 'callContractMethod' ? (
                 <ApproveContractInteraction
+                    key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
                     storedKeys={rpcState.state.storedKeys}
