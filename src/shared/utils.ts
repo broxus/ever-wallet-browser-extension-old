@@ -40,6 +40,11 @@ interface EventMap {
     [k: string]: Handler | Handler[] | undefined
 }
 
+export type DomainMetadata = {
+    name: string
+    icon: string
+}
+
 function safeApply<T, A extends any[]>(
     handler: (this: T, ...args: A) => void,
     context: T,

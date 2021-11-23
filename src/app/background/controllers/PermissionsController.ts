@@ -5,7 +5,7 @@ import {
     ProviderEvent,
     RawProviderEventData,
 } from 'ton-inpage-provider'
-import { NekotonRpcError } from '@shared/utils'
+import { DomainMetadata, NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 
 import { BaseConfig, BaseController, BaseState } from './BaseController'
@@ -15,6 +15,8 @@ const POSSIBLE_PERMISSIONS: { [K in Permission]: true } = {
     tonClient: true,
     accountInteraction: true,
 }
+
+const MAX_TEMP_ORIGINS = 100
 
 export function validatePermission(permission: string): asserts permission is Permission {
     if (typeof (permission as any) !== 'string') {
@@ -42,15 +44,19 @@ export interface PermissionsConfig extends BaseConfig {
 
 export interface PermissionsState extends BaseState {
     permissions: { [origin: string]: Partial<RawPermissions> }
+    domainMetadata: { [origin: string]: DomainMetadata }
 }
 
 function makeDefaultState(): PermissionsState {
     return {
         permissions: {},
+        domainMetadata: {},
     }
 }
 
 export class PermissionsController extends BaseController<PermissionsConfig, PermissionsState> {
+    private pendingMetadataOrigins: Set<string> = new Set()
+
     constructor(config: PermissionsConfig, state?: PermissionsState) {
         super(config, state || makeDefaultState())
         this.initialize()
@@ -58,18 +64,28 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
 
     public async initialSync() {
         try {
-            const { permissions } = await window.browser.storage.local.get(['permissions'])
-            if (typeof permissions === 'object') {
-                this.update({
-                    permissions,
-                })
+            let { permissions, domainMetadata } = await window.browser.storage.local.get([
+                'permissions',
+                'domainMetadata',
+            ])
 
-                for (const origin of Object.keys(permissions)) {
-                    this.config.notifyDomain?.(origin, {
-                        method: 'permissionsChanged',
-                        params: { permissions: {} },
-                    })
-                }
+            if (typeof permissions !== 'object') {
+                permissions = {}
+            }
+            if (typeof domainMetadata !== 'object') {
+                domainMetadata = {}
+            }
+
+            this.update({
+                permissions,
+                domainMetadata,
+            })
+
+            for (const origin of Object.keys(permissions)) {
+                this.config.notifyDomain?.(origin, {
+                    method: 'permissionsChanged',
+                    params: { permissions: {} },
+                })
             }
         } catch (e: any) {
             console.warn('Failed to load permissions', e)
@@ -129,18 +145,11 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     }
 
     public async removeOrigin(origin: string) {
-        const permissions = this.state.permissions
+        const permissions = { ...this.state.permissions }
         const originPermissions = permissions[origin]
+        delete permissions[origin]
 
-        const newPermissions = { ...permissions }
-        delete newPermissions[origin]
-
-        this.update(
-            {
-                permissions: newPermissions,
-            },
-            true
-        )
+        this.update({ permissions, domainMetadata: this.state.domainMetadata }, true)
 
         await this._savePermissions()
 
@@ -155,12 +164,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     public async clear() {
         const permissions = this.state.permissions
 
-        this.update(
-            {
-                permissions: {},
-            },
-            true
-        )
+        this.update({ permissions: {}, domainMetadata: this.state.domainMetadata }, true)
 
         await this._savePermissions()
 
@@ -191,7 +195,38 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
     }
 
+    public async addDomainMetadata(origin: string, metadata: DomainMetadata) {
+        const domainMetadata = { ...this.state.domainMetadata }
+
+        if (this.pendingMetadataOrigins.size >= MAX_TEMP_ORIGINS) {
+            const oldOrigin = this.pendingMetadataOrigins.values().next().value
+            this.pendingMetadataOrigins.delete(oldOrigin)
+
+            if (this.state.permissions[oldOrigin] == null) {
+                delete domainMetadata[oldOrigin]
+            }
+        }
+
+        this.pendingMetadataOrigins.add(origin)
+        domainMetadata[origin] = {
+            icon: metadata.icon,
+            name: metadata.name,
+        }
+
+        await this._saveDomainMetadata()
+
+        this.update({
+            domainMetadata,
+        })
+    }
+
     private async _savePermissions(): Promise<void> {
         await window.browser.storage.local.set({ permissions: this.state.permissions })
+    }
+
+    private async _saveDomainMetadata(): Promise<void> {
+        await window.browser.storage.local.set({
+            domainMetadata: this.state.domainMetadata,
+        })
     }
 }

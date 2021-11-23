@@ -532,7 +532,6 @@ pub fn parse_gen_timings(data: GenTimings) -> Result<abi::GenTimings, JsValue> {
 const PENDING_TRANSACTION: &str = r#"
 export type PendingTransaction = {
     messageHash: string,
-    bodyHash: string,
     src?: string,
     expireAt: number,
 };
@@ -547,7 +546,6 @@ extern "C" {
 pub fn make_pending_transaction(data: models::PendingTransaction) -> PendingTransaction {
     ObjectBuilder::new()
         .set("messageHash", data.message_hash.to_hex_string())
-        .set("bodyHash", data.body_hash.to_hex_string())
         .set("src", data.src.as_ref().map(ToString::to_string))
         .set("expireAt", data.expire_at)
         .build()
@@ -654,6 +652,7 @@ pub fn make_multisig_pending_transaction(
 #[wasm_bindgen(typescript_custom_section)]
 const MESSAGE: &str = r#"
 export type Message = {
+    hash: string,
     src?: string,
     dst?: string,
     value: string,
@@ -679,6 +678,7 @@ pub fn make_message(data: models::Message) -> Message {
     };
 
     ObjectBuilder::new()
+        .set("hash", data.hash.to_hex_string())
         .set("src", data.src.as_ref().map(ToString::to_string))
         .set("dst", data.dst.as_ref().map(ToString::to_string))
         .set("value", data.value.to_string())

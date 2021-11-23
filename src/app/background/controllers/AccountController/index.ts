@@ -70,9 +70,11 @@ export interface AccountControllerState extends BaseState {
         [address: string]: { [rootTokenContract: string]: nt.TokenWalletTransaction[] }
     }
     accountPendingTransactions: {
-        [address: string]: { [bodyHash: string]: StoredBriefMessageInfo }
+        [address: string]: { [messageHash: string]: StoredBriefMessageInfo }
     }
-    accountFailedTransactions: { [address: string]: { [bodyHash: string]: StoredBriefMessageInfo } }
+    accountFailedTransactions: {
+        [address: string]: { [messageHash: string]: StoredBriefMessageInfo }
+    }
     accountsVisibility: { [address: string]: boolean }
     externalAccounts: { address: string; externalIn: string[]; publicKey: string }[]
     knownTokens: { [rootTokenContract: string]: nt.Symbol }
@@ -1088,7 +1090,7 @@ export class AccountController extends BaseController<
         }
 
         return new Promise<nt.Transaction>(async (resolve, reject) => {
-            const id = signedMessage.bodyHash
+            const id = signedMessage.hash
             accountMessageRequests!.set(id, { resolve, reject })
 
             await subscription.prepareReliablePolling()
@@ -1104,7 +1106,7 @@ export class AccountController extends BaseController<
                             accountPendingTransactions,
                             address
                         )
-                        pendingTransactions[pendingTransaction.bodyHash] = {
+                        pendingTransactions[pendingTransaction.messageHash] = {
                             ...info,
                             createdAt: currentUtime(this.config.clock.offsetMs()),
                             messageHash: signedMessage.hash,
@@ -1214,12 +1216,12 @@ export class AccountController extends BaseController<
             onMessageExpired(pendingTransaction: nt.PendingTransaction) {
                 this._controller._clearPendingTransaction(
                     this._address,
-                    pendingTransaction.bodyHash,
+                    pendingTransaction.messageHash,
                     false
                 )
                 this._controller._rejectMessageRequest(
                     this._address,
-                    pendingTransaction.bodyHash,
+                    pendingTransaction.messageHash,
                     new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
                 )
             }
@@ -1227,12 +1229,12 @@ export class AccountController extends BaseController<
             onMessageSent(pendingTransaction: nt.PendingTransaction, transaction: nt.Transaction) {
                 this._controller._clearPendingTransaction(
                     this._address,
-                    pendingTransaction.bodyHash,
+                    pendingTransaction.messageHash,
                     true
                 )
                 this._controller._resolveMessageRequest(
                     this._address,
-                    pendingTransaction.bodyHash,
+                    pendingTransaction.messageHash,
                     transaction
                 )
             }
@@ -1484,7 +1486,7 @@ export class AccountController extends BaseController<
         }
     }
 
-    private _clearPendingTransaction(address: string, bodyHash: string, sent: boolean) {
+    private _clearPendingTransaction(address: string, messageHash: string, sent: boolean) {
         const { accountPendingTransactions, accountFailedTransactions } = this.state
 
         const update = {
@@ -1492,16 +1494,16 @@ export class AccountController extends BaseController<
         } as Partial<AccountControllerState>
 
         const pendingTransactions = getOrInsertDefault(accountPendingTransactions, address)
-        const info = pendingTransactions[bodyHash] as StoredBriefMessageInfo | undefined
+        const info = pendingTransactions[messageHash] as StoredBriefMessageInfo | undefined
         if (info == null) {
             return
         }
 
-        delete pendingTransactions[bodyHash]
+        delete pendingTransactions[messageHash]
 
         if (!sent) {
             const failedTransactions = getOrInsertDefault(accountFailedTransactions, address)
-            failedTransactions[bodyHash] = info
+            failedTransactions[messageHash] = info
             update.accountFailedTransactions = accountFailedTransactions
         }
 

@@ -232,7 +232,7 @@ pub fn make_full_contract_state(
                     "isDeployed",
                     matches!(
                         &state.account.storage.state,
-                        ton_block::AccountState::AccountActive(_)
+                        ton_block::AccountState::AccountActive { .. }
                     ),
                 )
                 .set("boc", boc)
