@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.20 (2021-11-23)
+
+Features
+
+* Extended message model in provider API
+
+Bugfixes
+
+* Fixed account state decoding 
+* Fixed origin metadata
+
 ### 0.2.19 (2021-11-10)
 
 Features
@@ -113,7 +124,7 @@ Minor fixes
 Features
 
 * Added support for ABI 2.1
-* Reworked key creation window 
+* Reworked key creation window
 
 Bugfixes
 
@@ -129,7 +140,7 @@ Bugfixes
 
 Security
 
-* Fixed CVE-2021-23343 in dependencies 
+* Fixed CVE-2021-23343 in dependencies
 
 ### 0.2.7 (2021-08-19)
 
@@ -212,7 +223,7 @@ Bugfixes
 Bugfixes
 
 * Fixed initial migration.
-* Fixed initial account selection. 
+* Fixed initial account selection.
 
 ### 0.1.9 (2021-06-04)
 
@@ -225,7 +236,7 @@ Bugfixes
 Features
 
 * Added waiting for background script in the popup.
-* Iterate over all possible transports in selected network group until a working one is found. 
+* Iterate over all possible transports in selected network group until a working one is found.
 
 Bugfixes
 
@@ -261,8 +272,7 @@ Bugfixes:
 
 Features:
 
-* Added support
-  for [TIP3v4](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/4.0)
+* Added support for [TIP3v4](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/4.0)
 
 Bugfixes:
 
@@ -316,7 +326,5 @@ Initial release
 
 * Single account.
 * TON wallet support.
-* TIP-3 tokens
-  support ([Broxus TIP3v3.1](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/3.1))
-* Web3-like
-  interface ([ton-inpage-provider](https://github.com/broxus/ton-inpage-provider))
+* TIP-3 tokens support ([Broxus TIP3v3.1](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/3.1))
+* Web3-like interface ([ton-inpage-provider](https://github.com/broxus/ton-inpage-provider))
