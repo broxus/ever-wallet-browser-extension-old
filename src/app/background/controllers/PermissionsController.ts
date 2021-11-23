@@ -124,6 +124,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             this.update(
                 {
                     permissions: newPermissions,
+                    domainMetadata: this.state.domainMetadata,
                 },
                 true
             )
