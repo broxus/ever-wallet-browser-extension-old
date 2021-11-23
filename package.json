@@ -1,6 +1,6 @@
 {
   "name": "ton-crystal-wallet",
-  "version": "0.2.19",
+  "version": "0.2.20",
   "description": "TON Crystal Wallet browser extension",
   "scripts": {
     "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js",
@@ -83,7 +83,7 @@
     "redux": "^4.1.1",
     "redux-thunk": "^2.3.0",
     "reselect": "^4.0.0",
-    "ton-inpage-provider": "^0.2.3",
+    "ton-inpage-provider": "^0.2.4",
     "util": "^0.12.4"
   }
 }

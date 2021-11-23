@@ -179,7 +179,7 @@ export class SubscriptionController extends BaseController<
         }
 
         return new Promise<nt.Transaction>(async (resolve, reject) => {
-            const id = signedMessage.bodyHash
+            const id = signedMessage.hash
             messageRequests!.set(id, { resolve, reject })
 
             await this.subscribeToContract(tabId, address, { state: true })
@@ -227,7 +227,7 @@ export class SubscriptionController extends BaseController<
                     this._controller
                         ._rejectMessageRequest(
                             this._address,
-                            pendingTransaction.bodyHash,
+                            pendingTransaction.messageHash,
                             new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
                         )
                         .catch(console.error)
@@ -238,7 +238,7 @@ export class SubscriptionController extends BaseController<
                     this._controller
                         ._resolveMessageRequest(
                             this._address,
-                            pendingTransaction.bodyHash,
+                            pendingTransaction.messageHash,
                             transaction
                         )
                         .catch(console.error)

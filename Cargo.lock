@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.45"
+version = "1.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee10e43ae4a853c0a3591d4e2ada1719e553be18199d9da9d4a83f5927c2f5c7"
+checksum = "62e1f47f7dc0422027a4e370dd4548d4d66b26782e513e98dca1e689e058a80e"
 
 [[package]]
 name = "arrayref"
@@ -159,9 +159,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "cc"
-version = "1.0.71"
+version = "1.0.72"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79c2681d6594606957bbb8631c4b90a7fcaaa72cdb714743a437b156d6a7eedd"
+checksum = "22a9137b95ea06864e018375b72adfb7db6e6f68cfc8df5a04d00288050485ee"
 
 [[package]]
 name = "cfg-if"
@@ -339,9 +339,9 @@ checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
 
 [[package]]
 name = "ed25519"
-version = "1.2.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4620d40f6d2601794401d6dd95a5cf69b6c157852539470eeda433a99b3c0efc"
+checksum = "74e1069e39f1454367eb2de793ed062fac4c35c2934b76a81d90dd9abcd28816"
 dependencies = [
  "signature",
 ]
@@ -389,9 +389,9 @@ dependencies = [
 
 [[package]]
 name = "futures"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a12aa0eb539080d55c3f2d45a67c3b58b6b0773c1a3ca2dfec66d58c97fd66ca"
+checksum = "8cd0210d8c325c245ff06fd95a3b13689a1a276ac8cfa8e8720cb840bfb84b9e"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -404,9 +404,9 @@ dependencies = [
 
 [[package]]
 name = "futures-channel"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5da6ba8c3bb3c165d3c7319fc1cc8304facf1fb8db99c5de877183c08a273888"
+checksum = "7fc8cd39e3dbf865f7340dce6a2d401d24fd37c6fe6c4f0ee0de8bfca2252d27"
 dependencies = [
  "futures-core",
  "futures-sink",
@@ -414,15 +414,15 @@ dependencies = [
 
 [[package]]
 name = "futures-core"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "88d1c26957f23603395cd326b0ffe64124b818f4449552f960d815cfba83a53d"
+checksum = "629316e42fe7c2a0b9a65b47d159ceaa5453ab14e8f0a3c5eedbb8cd55b4a445"
 
 [[package]]
 name = "futures-executor"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "45025be030969d763025784f7f355043dc6bc74093e4ecc5000ca4dc50d8745c"
+checksum = "7b808bf53348a36cab739d7e04755909b9fcaaa69b7d7e588b37b6ec62704c97"
 dependencies = [
  "futures-core",
  "futures-task",
@@ -431,18 +431,16 @@ dependencies = [
 
 [[package]]
 name = "futures-io"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "522de2a0fe3e380f1bc577ba0474108faf3f6b18321dbf60b3b9c39a75073377"
+checksum = "e481354db6b5c353246ccf6a728b0c5511d752c08da7260546fc0933869daa11"
 
 [[package]]
 name = "futures-macro"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18e4a4b95cea4b4ccbcf1c5675ca7c4ee4e9e75eb79944d07defde18068f79bb"
+checksum = "a89f17b21645bc4ed773c69af9c9a0effd4a3f1a3876eadd453469f8854e7fdd"
 dependencies = [
- "autocfg",
- "proc-macro-hack",
  "proc-macro2",
  "quote",
  "syn",
@@ -450,23 +448,22 @@ dependencies = [
 
 [[package]]
 name = "futures-sink"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36ea153c13024fe480590b3e3d4cad89a0cfacecc24577b68f86c6ced9c2bc11"
+checksum = "996c6442437b62d21a32cd9906f9c41e7dc1e19a9579843fad948696769305af"
 
 [[package]]
 name = "futures-task"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d3d00f4eddb73e498a54394f228cd55853bdf059259e8e7bc6e69d408892e99"
+checksum = "dabf1872aaab32c886832f2276d2f5399887e2bd613698a02359e4ea83f8de12"
 
 [[package]]
 name = "futures-util"
-version = "0.3.17"
+version = "0.3.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "36568465210a3a6ee45e1f165136d68671471a501e632e9a98d96872222b5481"
+checksum = "41d22213122356472061ac0f1ab2cee28d2bac8491410fd68c2af53d1cedb83e"
 dependencies = [
- "autocfg",
  "futures-channel",
  "futures-core",
  "futures-io",
@@ -476,8 +473,6 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "pin-utils",
- "proc-macro-hack",
- "proc-macro-nested",
  "slab",
 ]
 
@@ -638,9 +633,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.107"
+version = "0.2.108"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fbe5e23404da5b4f555ef85ebed98fb4083e55a00c317800bc2a50ede9f3d219"
+checksum = "8521a1b57e76b1ec69af7599e75e38e7b7fad6610f037db8c79b127201b5d119"
 
 [[package]]
 name = "libsecp256k1"
@@ -737,7 +732,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e05b4b2a68022354a1f88fae2a78cc65a5ddc18c"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#470dd4244263833c12e573905d155630ff1aa228"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -781,8 +776,8 @@ dependencies = [
 
 [[package]]
 name = "nekoton-abi"
-version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e05b4b2a68022354a1f88fae2a78cc65a5ddc18c"
+version = "0.9.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#470dd4244263833c12e573905d155630ff1aa228"
 dependencies = [
  "anyhow",
  "base64",
@@ -807,8 +802,8 @@ dependencies = [
 
 [[package]]
 name = "nekoton-contracts"
-version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e05b4b2a68022354a1f88fae2a78cc65a5ddc18c"
+version = "0.9.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#470dd4244263833c12e573905d155630ff1aa228"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -817,8 +812,8 @@ dependencies = [
 
 [[package]]
 name = "nekoton-derive"
-version = "0.8.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e05b4b2a68022354a1f88fae2a78cc65a5ddc18c"
+version = "0.9.0"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#470dd4244263833c12e573905d155630ff1aa228"
 dependencies = [
  "either",
  "proc-macro2",
@@ -829,7 +824,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git?branch=master#e05b4b2a68022354a1f88fae2a78cc65a5ddc18c"
+source = "git+https://github.com/broxus/nekoton.git?branch=master#470dd4244263833c12e573905d155630ff1aa228"
 dependencies = [
  "anyhow",
  "base64",
@@ -1041,18 +1036,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed0cfbc8191465bed66e1718596ee0b0b35d5ee1f41c5df2189d0fe8bde535ba"
 
 [[package]]
-name = "proc-macro-hack"
-version = "0.5.19"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dbf0c48bc1d91375ae5c3cd81e3722dff1abcf81a30960240640d223f59fe0e5"
-
-[[package]]
-name = "proc-macro-nested"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc881b2c22681370c6a780e47af9840ef841837bc98118431d4e1868bd0c1086"
-
-[[package]]
 name = "proc-macro2"
 version = "1.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1217,9 +1200,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.69"
+version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e466864e431129c7e0d3476b92f20458e5879919a0596c6472738d9fa2d342f8"
+checksum = "063bf466a64011ac24040a49009724ee60a57da1b437617ceb32e53ad61bfb19"
 dependencies = [
  "itoa",
  "ryu",
@@ -1388,9 +1371,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.13.0"
+version = "1.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "588b2d10a336da58d877567cd8fb8a14b463e2104910f8132cd054b4b96e29ee"
+checksum = "70e992e41e0d2fb9f755b37446f20900f64446ef54874f40a60c78f021ac6144"
 dependencies = [
  "autocfg",
  "pin-project-lite",
@@ -1422,7 +1405,7 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.7.14"
-source = "git+https://github.com/broxus/ton-labs-block.git#226fc3e158762aa3852c5ef681a027c6a676cd1b"
+source = "git+https://github.com/broxus/ton-labs-block.git#7d7a06ae90c7602a3544b720aac472307b820346"
 dependencies = [
  "anyhow",
  "base64",
@@ -1443,8 +1426,8 @@ dependencies = [
 
 [[package]]
 name = "ton_executor"
-version = "1.0.0"
-source = "git+https://github.com/broxus/ton-labs-executor.git#34a25d80d0a7fa8bb5ed4b3e71684198322ad2ea"
+version = "1.15.34"
+source = "git+https://github.com/broxus/ton-labs-executor.git#dbdf43da28045abf41fe11d817bb89e7c2739c00"
 dependencies = [
  "anyhow",
  "base64",
@@ -1461,7 +1444,7 @@ dependencies = [
 [[package]]
 name = "ton_types"
 version = "1.10.2"
-source = "git+https://github.com/broxus/ton-labs-types.git#7f6c82071b3d7976b1fef628c4129fc3775ec765"
+source = "git+https://github.com/broxus/ton-labs-types.git#002e2eaffa29f5f7c3a829bfd70e8e7a90e4efde"
 dependencies = [
  "anyhow",
  "base64",
@@ -1480,13 +1463,14 @@ dependencies = [
 
 [[package]]
 name = "ton_vm"
-version = "1.0.0"
-source = "git+https://github.com/broxus/ton-labs-vm.git#c9b4644a2aca3b50c74bd4cf8b68c02638235f3a"
+version = "1.8.20"
+source = "git+https://github.com/broxus/ton-labs-vm.git#b4d9455e9a3cc781f6649a2b15e98f84abde576e"
 dependencies = [
  "anyhow",
  "ed25519",
  "ed25519-dalek",
  "hex",
+ "lazy_static",
  "log",
  "num",
  "num-traits",

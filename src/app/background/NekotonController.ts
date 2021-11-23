@@ -335,6 +335,7 @@ export class NekotonController extends EventEmitter {
             ...this._components.approvalController.state,
             ...this._components.accountController.state,
             ...this._components.connectionController.state,
+            domainMetadata: this._components.permissionsController.state.domainMetadata,
         }
     }
 
@@ -478,6 +479,12 @@ export class NekotonController extends EventEmitter {
         if (tabId) {
             engine.push(createTabIdMiddleware({ tabId }))
         }
+        engine.push(
+            createDomainMetadataMiddleware({
+                origin,
+                permissionsController: this._components.permissionsController,
+            })
+        )
 
         engine.push(
             createProviderMiddleware({
@@ -721,8 +728,47 @@ const createTabIdMiddleware = ({
     }
 }
 
-interface CreateLoggerMiddlewareOptions {
+interface CreateDomainMetadataMiddlewareOptions {
     origin: string
+    permissionsController: PermissionsController
+}
+
+const createDomainMetadataMiddleware = ({
+    origin,
+    permissionsController,
+}: CreateDomainMetadataMiddlewareOptions): JsonRpcMiddleware<unknown, unknown> => {
+    return (req, res, next, end) => {
+        if (req.method !== 'sendDomainMetadata') {
+            return next()
+        }
+
+        const params = req.params
+
+        if (
+            typeof params !== 'object' ||
+            typeof params == null ||
+            typeof (params as any).name !== 'string' ||
+            typeof (params as any).icon !== 'string'
+        ) {
+            res.error = new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, 'Invalid domain metadata')
+            return end()
+        }
+
+        permissionsController
+            .addDomainMetadata(origin, {
+                name: (params as any).name,
+                icon: (params as any).icon,
+            })
+            .then(() => {
+                res.result = {}
+            })
+            .catch((e) => {
+                res.error = new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
+            })
+            .finally(() => {
+                end()
+            })
+    }
 }
 
 const setupMultiplex = <T extends Duplex>(connectionStream: T) => {

@@ -6,7 +6,6 @@ import pump from 'pump'
 
 import { PortDuplexStream } from '@shared/utils'
 import { CONTENT_SCRIPT, INPAGE_SCRIPT, NEKOTON_PROVIDER } from '@shared/constants'
-import browser from 'webextension-polyfill'
 
 const logStreamDisconnectWarning = (remoteLabel: string, error?: Error) => {
     console.debug(`Nekoton: Content script lost connection to "${remoteLabel}"`, error)

@@ -148,7 +148,6 @@ pub fn make_signed_data_raw(signature: [u8; 64]) -> JsSignedDataRaw {
 const SIGNED_MESSAGE: &str = r#"
 export type SignedMessage = {
     hash: string,
-    bodyHash: string,
     expireAt: number,
     boc: string,
 };
@@ -171,14 +170,6 @@ pub fn make_signed_message(data: nt::crypto::SignedMessage) -> Result<JsSignedMe
 
     Ok(ObjectBuilder::new()
         .set("hash", hash.to_hex_string())
-        .set(
-            "bodyHash",
-            data.message
-                .body()
-                .map(|body| body.into_cell().repr_hash())
-                .unwrap_or_default()
-                .to_hex_string(),
-        )
         .set("expireAt", data.expire_at)
         .set("boc", boc)
         .build()
