@@ -335,6 +335,7 @@ export class NekotonController extends EventEmitter {
             ...this._components.approvalController.state,
             ...this._components.accountController.state,
             ...this._components.connectionController.state,
+            domainMetadata: this._components.permissionsController.state.domainMetadata,
         }
     }
 
@@ -757,6 +758,9 @@ const createDomainMetadataMiddleware = ({
             .addDomainMetadata(origin, {
                 name: (params as any).name,
                 icon: (params as any).icon,
+            })
+            .then(() => {
+                res.result = {}
             })
             .catch((e) => {
                 res.error = new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())

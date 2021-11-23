@@ -114,7 +114,7 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
             }
         })
 
-        if (document.readyState === 'complete') {
+        if (document.readyState !== 'loading') {
             sendSiteMetadata(this._rpcEngine, this._log).catch(() => {})
         } else {
             const domContentLoadedHandler = () => {
