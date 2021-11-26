@@ -132,6 +132,10 @@ export type ApprovalApi = {
         }
         output: Partial<RawPermissions>
     }
+    changeAccount: {
+        input: {}
+        output: RawPermissions['accountInteraction']
+    }
     addTip3Token: {
         input: {
             account: string

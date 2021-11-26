@@ -249,6 +249,15 @@ const requestPermissions: ProviderMethod<'requestPermissions'> = async (
     end()
 }
 
+const changeAccount: ProviderMethod<'changeAccount'> = async (_req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+
+    const { origin, permissionsController } = ctx
+
+    res.result = await permissionsController.changeAccount(origin)
+    end()
+}
+
 const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, ctx) => {
     const { origin, tabId, permissionsController, subscriptionsController } = ctx
 
@@ -1182,6 +1191,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
 
 const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     requestPermissions,
+    changeAccount,
     disconnect,
     subscribe,
     unsubscribe,
