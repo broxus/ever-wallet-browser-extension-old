@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 
 ## Changelog
 
+### 0.2.21 (2021-11-26)
+
+Features
+
+* Added `changeAccount` method to provider api.
+
 ### 0.2.20 (2021-11-23)
 
 Features

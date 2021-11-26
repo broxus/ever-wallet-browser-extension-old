@@ -1,6 +1,6 @@
 {
   "name": "ton-crystal-wallet",
-  "version": "0.2.20",
+  "version": "0.2.21",
   "description": "TON Crystal Wallet browser extension",
   "scripts": {
     "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js",
