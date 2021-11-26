@@ -92,6 +92,36 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
     }
 
+    public async changeAccount(origin: string) {
+        const existingPermissions = { ...this.getPermissions(origin) }
+        existingPermissions.accountInteraction =
+            await this.config.approvalController.addAndShowApprovalRequest({
+                origin,
+                type: 'changeAccount',
+                requestData: {},
+            })
+
+        const newPermissions = {
+            ...this.state.permissions,
+            [origin]: existingPermissions,
+        }
+
+        this.update(
+            {
+                permissions: newPermissions,
+                domainMetadata: this.state.domainMetadata,
+            },
+            true
+        )
+        await this._savePermissions()
+
+        this.config.notifyDomain?.(origin, {
+            method: 'permissionsChanged',
+            params: { permissions: existingPermissions },
+        })
+        return existingPermissions
+    }
+
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
 

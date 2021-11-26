@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import { ApproveContractInteraction } from '@popup/components/Approvals/ApproveContractInteraction'
 import { ApproveRequestPermissions } from '@popup/components/Approvals/ApproveRequestPermissions'
+import { ApproveChangeAccount } from '@popup/components/Approvals/ApproveChangeAccount'
 import { ApproveSendMessage } from '@popup/components/Approvals/ApproveSendMessage'
 import { ApproveSignData } from '@popup/components/Approvals/ApproveSignData'
 import ApproveAddAsset from '@popup/components/Approvals/ApproveAddAsset'
@@ -93,6 +94,15 @@ export function ApprovalPage(): JSX.Element | null {
             )}
             {approval.type === 'requestPermissions' ? (
                 <ApproveRequestPermissions
+                    key={approval.id}
+                    approval={approval}
+                    accountEntries={rpcState.state.accountEntries}
+                    accountContractStates={rpcState.state.accountContractStates}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
+                />
+            ) : approval.type === 'changeAccount' ? (
+                <ApproveChangeAccount
                     key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}
