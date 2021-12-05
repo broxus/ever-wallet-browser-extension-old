@@ -55,7 +55,7 @@ const NETWORK_PRESETS = {
         group: 'testnet',
         type: 'graphql',
         data: {
-            endpoint: 'https://net5.ton.dev/graphql',
+            endpoint: 'https://net.ton.dev/graphql',
             timeout: 60000,
             local: false,
         },
