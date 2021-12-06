@@ -44,14 +44,6 @@ pub fn make_transaction_additional_info(
             "token_wallet_deployed",
             make_token_wallet_deployment_notification(notification).unchecked_into(),
         ),
-        models::TransactionAdditionalInfo::EthEventStatusChanged(status) => (
-            "eth_event_status_changed",
-            JsValue::from(status.to_string()),
-        ),
-        models::TransactionAdditionalInfo::TonEventStatusChanged(status) => (
-            "ton_event_status_changed",
-            JsValue::from(status.to_string()),
-        ),
         models::TransactionAdditionalInfo::WalletInteraction(data) => (
             "wallet_interaction",
             make_wallet_interaction_info(data).unchecked_into(),
