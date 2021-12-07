@@ -12,3 +12,5 @@ export type Environment =
 export const CONTENT_SCRIPT = 'nekoton-contentscript'
 export const INPAGE_SCRIPT = 'nekoton-inpage'
 export const NEKOTON_PROVIDER = 'nekoton-provider'
+
+export const NATIVE_CURRENCY = 'EVER'

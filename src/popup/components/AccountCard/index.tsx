@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { NATIVE_CURRENCY } from '@shared/constants'
 
 import { CopyText } from '@popup/components/CopyText'
 import { convertAddress, convertPublicKey } from '@shared/utils'
@@ -6,7 +7,6 @@ import { convertAddress, convertPublicKey } from '@shared/utils'
 import Pattern from '@popup/img/ton-pattern.svg'
 
 import './style.scss'
-
 
 type Props = {
     accountName: string
@@ -55,7 +55,7 @@ export function AccountCard({ accountName, address, balance, publicKey }: Props)
                 </div>
                 <div className="account-card__info-balance">
                     {wholePart}
-                    {`.${decimals || '00'} TON`}
+                    {`.${decimals || '00'} ${NATIVE_CURRENCY}`}
                 </div>
             </div>
 

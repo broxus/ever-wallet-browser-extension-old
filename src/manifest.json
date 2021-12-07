@@ -1,10 +1,10 @@
 {
   "manifest_version": 2,
-  "name": "TON Crystal Wallet",
-  "version": "0.2.22",
-  "description": "Manage Free TON wallets and access dApps directly from your Chrome browser",
+  "name": "EVER Wallet",
+  "version": "0.2.23",
+  "description": "Manage Everscale wallets and access dApps directly from your Chrome browser",
   "browser_action": {
-    "default_title": "TON Crystal Wallet",
+    "default_title": "EVER Wallet",
     "default_popup": "popup.html"
   },
   "background": {

@@ -1,6 +1,7 @@
 import * as React from 'react'
-
 import * as nt from '@nekoton'
+import { NATIVE_CURRENCY } from '@shared/constants'
+
 import { createRipple, removeRipple } from '@popup/common'
 import { DeployWallet } from '@popup/components/DeployWallet'
 import { TransactionsList } from '@popup/components/TransactionsList'
@@ -40,11 +41,7 @@ enum Panel {
     TRANSACTION,
 }
 
-export function AssetFull({
-    tokenWalletStates,
-    selectedAsset,
-    selectedKeys,
-}: Props) {
+export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Props) {
     const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -62,17 +59,20 @@ export function AssetFull({
     const accountName = account.name
     const accountAddress = account.tonWallet.address
     const tonWalletAsset = account.tonWallet
-    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as | nt.ContractState | undefined
-    const tokenWalletAssets = account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
+    const tonWalletState = rpcState.state.accountContractStates[accountAddress] as
+        | nt.ContractState
+        | undefined
+    const tokenWalletAssets =
+        account.additionalAssets[rpcState.state.selectedConnection.group]?.tokenWallets || []
 
     const scrollWidth = React.useMemo(() => getScrollWidth(), [])
     const shouldDeploy = React.useMemo(() => {
         if (selectedAsset.type == 'ton_wallet') {
             return (
-                tonWalletState == null
-                || (
-                    !tonWalletState.isDeployed
-                    && nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
+                tonWalletState == null ||
+                (!tonWalletState.isDeployed &&
+                    nt.getContractTypeDetails(account.tonWallet.contractType)
+                        .requiresSeparateDeploy)
             )
         }
         return false
@@ -83,28 +83,22 @@ export function AssetFull({
         }
         const rootTokenContract = selectedAsset.data.rootTokenContract
         return rpcState.state.accountTokenStates[accountAddress]?.[rootTokenContract]?.balance
-    }, [
-        selectedAsset,
-        rpcState.state.accountTokenStates,
-        tonWalletState
-    ])
+    }, [selectedAsset, rpcState.state.accountTokenStates, tonWalletState])
     const transactions = React.useMemo(() => {
         if (selectedAsset.type == 'ton_wallet') {
             return rpcState.state.accountTransactions[accountAddress] || []
         }
-        const tokenTransactions = rpcState.state.accountTokenTransactions[accountAddress]?.[
-            selectedAsset.data.rootTokenContract
-        ]
-        return tokenTransactions?.filter((transaction) => {
-            const tokenTransaction = transaction as nt.TokenWalletTransaction
-            return tokenTransaction.info != null
-        }) || []
-
-    }, [
-        selectedAsset,
-        rpcState.state.accountTransactions,
-        rpcState.state.accountTokenTransactions,
-    ])
+        const tokenTransactions =
+            rpcState.state.accountTokenTransactions[accountAddress]?.[
+                selectedAsset.data.rootTokenContract
+            ]
+        return (
+            tokenTransactions?.filter((transaction) => {
+                const tokenTransaction = transaction as nt.TokenWalletTransaction
+                return tokenTransaction.info != null
+            }) || []
+        )
+    }, [selectedAsset, rpcState.state.accountTransactions, rpcState.state.accountTokenTransactions])
     const symbol = React.useMemo(() => {
         if (selectedAsset.type == 'ton_wallet') {
             return undefined
@@ -113,7 +107,7 @@ export function AssetFull({
         return rpcState.state.knownTokens[rootTokenContract]
     }, [])
 
-    const currencyName = selectedAsset.type === 'ton_wallet' ? 'TON' : symbol?.name
+    const currencyName = selectedAsset.type === 'ton_wallet' ? NATIVE_CURRENCY : symbol?.name
     const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
 
     const preloadTransactions = React.useCallback(
@@ -156,10 +150,9 @@ export function AssetFull({
     }
 
     React.useEffect(() => {
-        const transactionToUpdate = (transactions as (
-            | nt.TonWalletTransaction
-            | nt.TokenWalletTransaction
-        )[]).find((transaction) => {
+        const transactionToUpdate = (
+            transactions as (nt.TonWalletTransaction | nt.TokenWalletTransaction)[]
+        ).find((transaction) => {
             return transaction.id === selectedTransaction?.id
         })
         if (transactionToUpdate !== undefined) {

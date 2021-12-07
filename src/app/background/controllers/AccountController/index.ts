@@ -34,6 +34,7 @@ import {
     WalletMessageToSend,
     StoredBriefMessageInfo,
 } from '@shared/backgroundApi'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
@@ -235,7 +236,7 @@ export class AccountController extends BaseController<
         if (!subscription) {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `There is no ton wallet subscription for address ${address}`
+                `There is no EVER wallet subscription for address ${address}`
             )
         }
         return subscription.use(f)
@@ -1271,7 +1272,7 @@ export class AccountController extends BaseController<
 
         const workchain = nt.extractAddressWorkchain(address)
 
-        console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
+        console.debug('_createTonWalletSubscription -> subscribing to EVER wallet')
         const subscription = await TonWalletSubscription.subscribe(
             this.config.clock,
             this.config.connectionController,
@@ -1280,7 +1281,7 @@ export class AccountController extends BaseController<
             contractType,
             new TonWalletHandler(address, contractType, this)
         )
-        console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
+        console.debug('_createTonWalletSubscription -> subscribed to EVER wallet')
 
         this._tonWalletSubscriptions.set(address, subscription)
         subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
@@ -1559,14 +1560,14 @@ export class AccountController extends BaseController<
                 const value = extractTransactionValue(transaction)
                 const { address, direction } = extractTransactionAddress(transaction)
 
-                const body = `${convertTons(value.toString())} TON ${direction} ${convertAddress(
-                    address
-                )}`
+                const body = `${convertTons(
+                    value.toString()
+                )} ${NATIVE_CURRENCY} ${direction} ${convertAddress(address)}`
 
                 this.config.notificationController.showNotification({
                     title: `New transaction found`,
                     body,
-                    link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                    link: `https://tonscan.com/transactions/${transaction.id.hash}`,
                 })
             }
         }

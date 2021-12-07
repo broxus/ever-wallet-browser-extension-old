@@ -1,6 +1,6 @@
 <p align="center">
-    <h3 align="center">TON Crystal Wallet</h3>
-    <p align="center">TON Wallet browser extension. Manage Free TON wallets and access dApps directly from your Chrome browser.</p>
+    <h3 align="center">EVER Wallet</h3>
+    <p align="center">A browser extension to manage Everscale wallets and access dApps directly from your Chrome browser.</p>
     <p align="center">
         <a href="/LICENSE">
             <img alt="GitHub" src="https://img.shields.io/github/license/broxus/ton-wallet-crystal-browser-extension" />
@@ -15,10 +15,10 @@
 
 ```bash
 # Prepare builder container
-docker build --tag ton-crystal-extension .
+docker build --tag ever-wallet-extension .
 
 # Build extension
-docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-extension
+docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-extension
 
 # Extension output will be at $(pwd)/dist 
 ```
@@ -31,6 +31,16 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ton-crystal-exte
 - Node.js 14+
 
 ## Changelog
+
+### 0.2.23 (2021-12-04)
+
+Rename TON to EVER. `TON Crystal Wallet` is now `EVER Wallet`
+
+### 0.2.22 (2021-12-04)
+
+Bugfixes
+
+* Minor endpoints fixes
 
 ### 0.2.21 (2021-11-26)
 

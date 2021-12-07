@@ -1,7 +1,8 @@
 import * as React from 'react'
 import Decimal from 'decimal.js'
-
 import * as nt from '@nekoton'
+import { NATIVE_CURRENCY } from '@shared/constants'
+
 import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
 import {
@@ -72,7 +73,7 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
     const txHash = transaction.id.hash
 
     let info: nt.TokenWalletTransactionInfo | undefined
-    const currencyName = symbol == null ? 'TON' : symbol.name
+    const currencyName = symbol == null ? NATIVE_CURRENCY : symbol.name
 
     if (symbol) {
         info = (transaction as nt.TokenWalletTransaction).info
