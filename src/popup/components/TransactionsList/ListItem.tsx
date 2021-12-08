@@ -134,7 +134,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span className="transactions-list-item__description transactions-list-item__fees">
-                                Fees: {convertTons(transaction.totalFees)} TON
+                                Fees: {convertTons(transaction.totalFees)} {NATIVE_CURRENCY}
                             </span>
                         </div>
                     </div>

@@ -2,13 +2,15 @@ import * as React from 'react'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
+import { NATIVE_CURRENCY } from '@shared/constants'
+import { ApprovalOutput, PendingApproval } from '@shared/backgroundApi'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { convertTons } from '@shared/utils'
+
 import Button from '@popup/components/Button'
 import { Checkbox } from '@popup/components/Checkbox'
 import WebsiteIcon from '@popup/components/WebsiteIcon'
 import UserAvatar from '@popup/components/UserAvatar'
-import { ApprovalOutput, PendingApproval } from '@shared/backgroundApi'
-import { useAccountability } from '@popup/providers/AccountabilityProvider'
-import { convertTons } from '@shared/utils'
 
 import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
 
@@ -84,7 +86,7 @@ export function ApproveRequestPermissions({
                                         accountContractStates[selectedAccount.tonWallet.address]
                                             ?.balance) ||
                                         '0'
-                                )} TON`}
+                                )} ${NATIVE_CURRENCY}`}
                             </div>
                         </>
                     )}
@@ -120,7 +122,7 @@ export function ApproveRequestPermissions({
                                         {`${convertTons(
                                             accountContractStates[account.tonWallet.address]
                                                 ?.balance || '0'
-                                        )} TON`}
+                                        )} ${NATIVE_CURRENCY}`}
                                     </div>
                                 </label>
                             </div>

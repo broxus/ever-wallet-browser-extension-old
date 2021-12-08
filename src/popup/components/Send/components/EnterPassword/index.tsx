@@ -1,15 +1,17 @@
 import * as React from 'react'
 
 import * as nt from '@nekoton'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import { prepareKey } from '@popup/utils'
+
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import { Select } from '@popup/components/Select'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { convertCurrency, convertPublicKey, convertTokenName, convertTons } from '@shared/utils'
+import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
 import './style.scss'
-import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
 export type MessageAmount =
     | nt.EnumItem<
@@ -161,7 +163,7 @@ export function EnterPassword({
                                             ? amount.data.amount
                                             : amount.data.attachedAmount
                                     )}
-                                    &nbsp;TON
+                                    &nbsp;${NATIVE_CURRENCY}
                                 </span>
                             </div>
                         )}
@@ -172,7 +174,9 @@ export function EnterPassword({
                             </span>
                             <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
                                 <TonAssetIcon className="root-token-icon noselect" />
-                                {fees != null ? `~${convertTons(fees)} TON` : 'calculating...'}
+                                {fees != null
+                                    ? `~${convertTons(fees)} ${NATIVE_CURRENCY}`
+                                    : 'calculating...'}
                             </span>
                         </div>
                     </div>

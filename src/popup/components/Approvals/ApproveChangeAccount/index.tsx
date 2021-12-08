@@ -1,6 +1,7 @@
 import * as React from 'react'
 import classNames from 'classnames'
 
+import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import { Checkbox } from '@popup/components/Checkbox'
@@ -92,7 +93,7 @@ export function ApproveChangeAccount({
                                             {`${convertTons(
                                                 accountContractStates[account.tonWallet.address]
                                                     ?.balance || '0'
-                                            )} TON`}
+                                            )} ${NATIVE_CURRENCY}`}
                                         </div>
                                     </label>
                                 </div>

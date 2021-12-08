@@ -3,16 +3,18 @@ import Decimal from 'decimal.js'
 import QRCode from 'react-qr-code'
 
 import * as nt from '@nekoton'
-import Button from '@popup/components/Button'
-import { Select } from '@popup/components/Select'
-import { CopyButton } from '@popup/components/CopyButton'
-import { PreparedMessage } from '@popup/components/DeployWallet/components'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import { useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { parseError, prepareKey } from '@popup/utils'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
+
+import Button from '@popup/components/Button'
+import { Select } from '@popup/components/Select'
+import { CopyButton } from '@popup/components/CopyButton'
+import { PreparedMessage } from '@popup/components/DeployWallet/components'
 
 import './style.scss'
 
@@ -197,10 +199,11 @@ export function DeployWallet(): JSX.Element | null {
             <div className="deploy-wallet__wrapper">
                 <div className="deploy-wallet__content">
                     <p className="deploy-wallet__comment noselect">
-                        You need to have at least 0.1 TON on your account balance to deploy.
+                        You need to have at least 0.1 {NATIVE_CURRENCY} on your account balance to
+                        deploy.
                     </p>
                     <h3 className="deploy-wallet__content-header--lead noselect">
-                        Your address to receive TON
+                        Your address to receive {NATIVE_CURRENCY}
                     </h3>
                     <div className="deploy-wallet__qr-address-placeholder">
                         <div className="deploy-wallet__qr-address-code">
