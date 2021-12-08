@@ -192,7 +192,7 @@ export function ApproveSendMessage({
                             </span>
                             <span className="approval__spend-details-param-value approval--send-message__amount">
                                 <TonAssetIcon className="root-token-icon noselect" />
-                                {convertTons(amount)} ${NATIVE_CURRENCY}
+                                {convertTons(amount)} {NATIVE_CURRENCY}
                             </span>
                             {balance.lessThan(amount) && (
                                 <div

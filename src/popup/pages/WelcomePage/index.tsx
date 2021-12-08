@@ -35,7 +35,7 @@ export function WelcomePage(): JSX.Element {
                     <div className="welcome-page__content">
                         <div>
                             <h1 className="welcome-page__content-header-xl">
-                                Welcome to Crystal Wallet
+                                Welcome to EVER Wallet
                             </h1>
                             <h3 className="welcome-page__content-header-s">
                                 Create a new wallet or sign in

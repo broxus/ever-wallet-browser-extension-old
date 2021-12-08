@@ -163,7 +163,7 @@ export function EnterPassword({
                                             ? amount.data.amount
                                             : amount.data.attachedAmount
                                     )}
-                                    &nbsp;${NATIVE_CURRENCY}
+                                    &nbsp;{NATIVE_CURRENCY}
                                 </span>
                             </div>
                         )}

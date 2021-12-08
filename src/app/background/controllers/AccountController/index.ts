@@ -344,12 +344,22 @@ export class AccountController extends BaseController<
                     accountTokenTransactions[address] = ownerTokenTransactions
                 }
 
-                this.update({
+                const updatedState: Partial<AccountControllerState> = {
                     accountTokenTransactions,
-                })
+                }
 
                 const assetsList = await accountsStorage.getAccount(address)
-                assetsList && this._updateAssetsList(assetsList)
+                if (assetsList != null) {
+                    const { accountEntries, selectedAccount } = this.state
+                    accountEntries[assetsList.tonWallet.address] = assetsList
+
+                    updatedState.accountEntries = accountEntries
+                    if (selectedAccount?.tonWallet.address == assetsList.tonWallet.address) {
+                        updatedState.selectedAccount = assetsList
+                    }
+                }
+
+                this.update(updatedState)
             })
         } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
@@ -1425,20 +1435,6 @@ export class AccountController extends BaseController<
             accountUnconfirmedTransactions: {},
             accountPendingTransactions: {},
             accountFailedTransactions: {},
-        })
-    }
-
-    private _updateAssetsList(assetsList: nt.AssetsList) {
-        const { accountEntries } = this.state
-        accountEntries[assetsList.tonWallet.address] = assetsList
-        const selectedAccount =
-            this.state.selectedAccount?.tonWallet.address == assetsList.tonWallet.address
-                ? assetsList
-                : undefined
-
-        this.update({
-            selectedAccount,
-            accountEntries,
         })
     }
 

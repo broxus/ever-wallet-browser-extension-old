@@ -61,7 +61,7 @@ export function ApproveChangeAccount({
                             key="select-account-heading"
                             className="change-account__header-title noselect"
                         >
-                            Select account to connect with Crystal wallet
+                            Select account to connect with EVER Wallet
                         </h2>
                     </header>
                     <div className="change-account__wrapper">

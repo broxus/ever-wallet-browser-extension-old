@@ -69,7 +69,7 @@ export function ApproveRequestPermissions({
                             key="select-account-heading"
                             className="connect-wallet__header-title noselect"
                         >
-                            Select account to connect with Crystal wallet
+                            Select account to connect with EVER Wallet
                         </h2>
                     )}
                     {localStep === LocalStep.CONFIRM && (

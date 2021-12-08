@@ -31,7 +31,7 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
                         >
                             the decentralization policy
                         </span>{' '}
-                        of Crystal Wallet
+                        of EVER Wallet
                     </span>
                 </div>
                 <div>
