@@ -20,13 +20,19 @@ function App(): JSX.Element | null {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
+    const accountAddresses = Object.keys(rpcState.state.accountEntries)
+
     const hasActiveTab = rpcState.activeTab != null
-    const hasAccount = rpcState.state.selectedAccount != null
+    const hasAccount = accountAddresses.length > 0
     const hasTabData = rpcState.activeTab?.data != null
     const isFullscreen = rpcState.activeTab?.type === 'fullscreen'
     const isNotification = rpcState.activeTab?.type === 'notification'
     // @ts-ignore
     const isLedgerConnectRoute = rpcState.activeTab?.data?.route === 'connect-ledger'
+
+    if (accountAddresses.length > 0 && rpcState.state.selectedAccount == null) {
+        return null
+    }
 
     if (!hasActiveTab || (hasAccount && isFullscreen && !hasTabData)) {
         window.close()
