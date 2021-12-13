@@ -1,7 +1,7 @@
 {
-  "name": "ton-crystal-wallet",
-  "version": "0.2.21",
-  "description": "TON Crystal Wallet browser extension",
+  "name": "ever-wallet",
+  "version": "0.2.23",
+  "description": "EVER Wallet browser extension",
   "scripts": {
     "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js",
     "build": "webpack --config webpack.prod.js"

@@ -1,6 +1,6 @@
 import * as React from 'react'
-
 import * as nt from '@nekoton'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import {
     convertCurrency,
     convertTokenName,
@@ -115,7 +115,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     }
 
     const decimals = symbol == null ? 9 : symbol.decimals
-    const currencyName = symbol == null ? 'TON' : symbol.name
+    const currencyName = symbol == null ? NATIVE_CURRENCY : symbol.name
     const transactionId = transaction.info?.data.method.data.data.transactionId as string
     const creator = transaction.info.data.method.data.data.custodian
 

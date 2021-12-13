@@ -1,9 +1,10 @@
 import * as React from 'react'
 import Decimal from 'decimal.js'
 import { useForm } from 'react-hook-form'
-
+import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
 import { parseError } from '@popup/utils'
+
 import { Checkbox } from '@popup/components/Checkbox'
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
@@ -98,7 +99,7 @@ export function PrepareMessage({
 
     let defaultValue: { value: string; label: string } = {
         value: '',
-        label: 'TON',
+        label: NATIVE_CURRENCY,
     }
     const options: { value: string; label: string }[] = [defaultValue]
     for (const { rootTokenContract } of tokenWalletAssets) {
@@ -123,7 +124,7 @@ export function PrepareMessage({
     if (selectedAsset.length == 0) {
         balance = new Decimal(tonWalletState?.balance || '0')
         decimals = 9
-        currencyName = 'TON'
+        currencyName = NATIVE_CURRENCY
     } else {
         balance = new Decimal(tokenWalletStates[selectedAsset]?.balance || '0')
 

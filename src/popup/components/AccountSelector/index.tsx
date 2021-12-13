@@ -12,10 +12,10 @@ interface IAccount {
     preselected?: boolean
     checked?: boolean
     setChecked: (checked: boolean) => void
-    publicKey: string,
-    keyName?: string,
-    index?: string,
-    disabled?: boolean,
+    publicKey: string
+    keyName?: string
+    index?: string
+    disabled?: boolean
     // balance: string
 }
 
@@ -45,9 +45,7 @@ const AccountSelector = ({
             address={nt.computeTonWalletAddress(publicKey, 'SafeMultisigWallet', 0)}
         />
 
-        {index && (
-            <span className="account-selector__index">{index}</span>
-        )}
+        {index && <span className="account-selector__index">{index}</span>}
 
         {/*<div>*/}
         <span
@@ -59,7 +57,7 @@ const AccountSelector = ({
             {keyName || convertAddress(publicKey)}
         </span>
         {/*<div className="account-selector__grey">*/}
-        {/*    {convertTons(balance)} TON*/}
+        {/*    {convertTons(balance)} EVER*/}
         {/*</div>*/}
         {/*</div>*/}
     </div>

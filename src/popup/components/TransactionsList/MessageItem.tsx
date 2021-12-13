@@ -1,9 +1,10 @@
 import * as React from 'react'
-
 import * as nt from '@nekoton'
-import AssetIcon from '@popup/components/AssetIcon'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import { StoredBriefMessageInfo } from '@shared/backgroundApi'
 import { convertAddress, convertCurrency } from '@shared/utils'
+
+import AssetIcon from '@popup/components/AssetIcon'
 
 import './style.scss'
 
@@ -40,7 +41,7 @@ export function MessageItem({ tonWalletAsset, message, style }: Props): JSX.Elem
                         <div>
                             <div className="transactions-list-item__description transactions-list-item__expense">
                                 -{convertCurrency(amount, 9)}
-                                {' TON'}
+                                {` ${NATIVE_CURRENCY}`}
                             </div>
                         </div>
                     </div>

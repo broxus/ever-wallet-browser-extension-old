@@ -1,6 +1,7 @@
 import * as React from 'react'
 import classNames from 'classnames'
 
+import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
 import { Checkbox } from '@popup/components/Checkbox'
@@ -60,7 +61,7 @@ export function ApproveChangeAccount({
                             key="select-account-heading"
                             className="change-account__header-title noselect"
                         >
-                            Select account to connect with Crystal wallet
+                            Select account to connect with EVER Wallet
                         </h2>
                     </header>
                     <div className="change-account__wrapper">
@@ -92,7 +93,7 @@ export function ApproveChangeAccount({
                                             {`${convertTons(
                                                 accountContractStates[account.tonWallet.address]
                                                     ?.balance || '0'
-                                            )} TON`}
+                                            )} ${NATIVE_CURRENCY}`}
                                         </div>
                                     </label>
                                 </div>

@@ -1,4 +1,5 @@
-import React, { Dispatch, SetStateAction } from 'react'
+import React from 'react'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import { selectStyles } from '@popup/constants/selectStyle'
 import * as nt from '@nekoton'
 
@@ -11,7 +12,7 @@ import './send.scss'
 
 const options = [
     { value: '1', label: 'USDT' },
-    { value: '60', label: 'TON' },
+    { value: '60', label: NATIVE_CURRENCY },
     { value: '60', label: 'BTC' },
     { value: '60', label: 'ETH' },
 ]

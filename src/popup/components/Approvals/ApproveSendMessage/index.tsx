@@ -2,15 +2,17 @@ import * as React from 'react'
 import Decimal from 'decimal.js'
 
 import * as nt from '@nekoton'
-import Approval from '../Approval'
-import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
-import Button from '@popup/components/Button'
-import { EnterPassword } from '@popup/components/Send/components'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { parseError } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
 import { convertCurrency, convertTokenName, convertTons } from '@shared/utils'
+
+import Approval from '../Approval'
+import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
+import Button from '@popup/components/Button'
+import { EnterPassword } from '@popup/components/Send/components'
 
 import './style.scss'
 
@@ -190,7 +192,7 @@ export function ApproveSendMessage({
                             </span>
                             <span className="approval__spend-details-param-value approval--send-message__amount">
                                 <TonAssetIcon className="root-token-icon noselect" />
-                                {convertTons(amount)} TON
+                                {convertTons(amount)} {NATIVE_CURRENCY}
                             </span>
                             {balance.lessThan(amount) && (
                                 <div
@@ -207,7 +209,9 @@ export function ApproveSendMessage({
                             </span>
                             <span className="approval__spend-details-param-value approval--send-message__amount">
                                 <TonAssetIcon className="root-token-icon noselect" />
-                                {fees != null ? `~${convertTons(fees)} TON` : 'calculating...'}
+                                {fees != null
+                                    ? `~${convertTons(fees)} ${NATIVE_CURRENCY}`
+                                    : 'calculating...'}
                             </span>
                         </div>
                         {payload && (

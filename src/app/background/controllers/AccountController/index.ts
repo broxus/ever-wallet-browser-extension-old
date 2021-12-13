@@ -34,6 +34,7 @@ import {
     WalletMessageToSend,
     StoredBriefMessageInfo,
 } from '@shared/backgroundApi'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
@@ -235,7 +236,7 @@ export class AccountController extends BaseController<
         if (!subscription) {
             throw new NekotonRpcError(
                 RpcErrorCode.RESOURCE_UNAVAILABLE,
-                `There is no ton wallet subscription for address ${address}`
+                `There is no EVER wallet subscription for address ${address}`
             )
         }
         return subscription.use(f)
@@ -343,12 +344,22 @@ export class AccountController extends BaseController<
                     accountTokenTransactions[address] = ownerTokenTransactions
                 }
 
-                this.update({
+                const updatedState: Partial<AccountControllerState> = {
                     accountTokenTransactions,
-                })
+                }
 
                 const assetsList = await accountsStorage.getAccount(address)
-                assetsList && this._updateAssetsList(assetsList)
+                if (assetsList != null) {
+                    const { accountEntries, selectedAccount } = this.state
+                    accountEntries[assetsList.tonWallet.address] = assetsList
+
+                    updatedState.accountEntries = accountEntries
+                    if (selectedAccount?.tonWallet.address == assetsList.tonWallet.address) {
+                        updatedState.selectedAccount = assetsList
+                    }
+                }
+
+                this.update(updatedState)
             })
         } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
@@ -1271,7 +1282,7 @@ export class AccountController extends BaseController<
 
         const workchain = nt.extractAddressWorkchain(address)
 
-        console.debug('_createTonWalletSubscription -> subscribing to ton wallet')
+        console.debug('_createTonWalletSubscription -> subscribing to EVER wallet')
         const subscription = await TonWalletSubscription.subscribe(
             this.config.clock,
             this.config.connectionController,
@@ -1280,7 +1291,7 @@ export class AccountController extends BaseController<
             contractType,
             new TonWalletHandler(address, contractType, this)
         )
-        console.debug('_createTonWalletSubscription -> subscribed to ton wallet')
+        console.debug('_createTonWalletSubscription -> subscribed to EVER wallet')
 
         this._tonWalletSubscriptions.set(address, subscription)
         subscription?.setPollingInterval(BACKGROUND_POLLING_INTERVAL)
@@ -1427,20 +1438,6 @@ export class AccountController extends BaseController<
         })
     }
 
-    private _updateAssetsList(assetsList: nt.AssetsList) {
-        const { accountEntries } = this.state
-        accountEntries[assetsList.tonWallet.address] = assetsList
-        const selectedAccount =
-            this.state.selectedAccount?.tonWallet.address == assetsList.tonWallet.address
-                ? assetsList
-                : undefined
-
-        this.update({
-            selectedAccount,
-            accountEntries,
-        })
-    }
-
     private _clearSendMessageRequests() {
         const rejectionError = new NekotonRpcError(
             RpcErrorCode.RESOURCE_UNAVAILABLE,
@@ -1559,14 +1556,14 @@ export class AccountController extends BaseController<
                 const value = extractTransactionValue(transaction)
                 const { address, direction } = extractTransactionAddress(transaction)
 
-                const body = `${convertTons(value.toString())} TON ${direction} ${convertAddress(
-                    address
-                )}`
+                const body = `${convertTons(
+                    value.toString()
+                )} ${NATIVE_CURRENCY} ${direction} ${convertAddress(address)}`
 
                 this.config.notificationController.showNotification({
                     title: `New transaction found`,
                     body,
-                    link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                    link: `https://tonscan.com/transactions/${transaction.id.hash}`,
                 })
             }
         }

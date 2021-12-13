@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import * as nt from '@nekoton'
 import AssetIcon from '@popup/components/AssetIcon'
+import { NATIVE_CURRENCY } from '@shared/constants'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import {
@@ -50,7 +51,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
     const rpcState = useRpcState()
 
     const decimals = symbol == null ? 9 : symbol.decimals
-    const currencyName = symbol == null ? 'TON' : symbol.name
+    const currencyName = symbol == null ? NATIVE_CURRENCY : symbol.name
 
     const isSubmit = isSubmitTransaction(transaction)
 
@@ -133,7 +134,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span className="transactions-list-item__description transactions-list-item__fees">
-                                Fees: {convertTons(transaction.totalFees)} TON
+                                Fees: {convertTons(transaction.totalFees)} {NATIVE_CURRENCY}
                             </span>
                         </div>
                     </div>

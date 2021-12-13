@@ -45,15 +45,6 @@ impl TokenWallet {
 
 #[wasm_bindgen]
 impl TokenWallet {
-    #[wasm_bindgen(js_name = "makeCollectTokensCall")]
-    pub fn make_collect_tokens_call(
-        eth_event_address: &str,
-    ) -> Result<crate::core::InternalMessage, JsValue> {
-        let eth_event_address = parse_address(eth_event_address)?;
-        let internal_message = token_wallet::make_collect_tokens_call(eth_event_address);
-        crate::core::make_internal_message(internal_message)
-    }
-
     #[wasm_bindgen(getter)]
     pub fn version(&self) -> String {
         self.version.clone()

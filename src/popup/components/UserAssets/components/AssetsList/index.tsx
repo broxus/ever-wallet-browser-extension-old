@@ -1,6 +1,7 @@
 import * as React from 'react'
-
+import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
+
 import AddNewToken from '@popup/components/AddNewToken'
 import { AssetsListItem } from '@popup/components/UserAssets/components'
 import Button from '@popup/components/Button'
@@ -41,7 +42,7 @@ export function AssetsList({
                 type={'ton_wallet'}
                 address={tonWalletAsset.address}
                 balance={tonWalletState?.balance}
-                name={'TON'}
+                name={NATIVE_CURRENCY}
                 decimals={9}
                 onClick={() =>
                     onViewAsset({

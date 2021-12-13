@@ -1,4 +1,5 @@
 import React from 'react'
+import { NATIVE_CURRENCY } from '@shared/constants'
 
 import QRCode from 'react-qr-code'
 import { CopyButton } from '@popup/components/CopyButton'
@@ -22,7 +23,7 @@ const Receive: React.FC<IReceive> = ({ accountName, address, currencyName }) => 
         </div>
 
         <h3 className="receive-screen__form-title noselect">
-            Your address to receive {currencyName || 'TON'}
+            Your address to receive {currencyName || NATIVE_CURRENCY}
         </h3>
         <div className="receive-screen__qr-code">
             <div className="receive-screen__qr-code-code">
