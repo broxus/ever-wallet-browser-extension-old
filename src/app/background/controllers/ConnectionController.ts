@@ -47,7 +47,7 @@ const NETWORK_PRESETS = {
         group: 'mainnet',
         type: 'jrpc',
         data: {
-            endpoint: 'https://jrpc.broxus.com/rpc',
+            endpoint: 'https://extension-api.broxus.com/rpc',
         },
     } as unknown as ConnectionData,
     [4]: {
