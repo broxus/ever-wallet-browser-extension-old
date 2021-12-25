@@ -297,7 +297,7 @@ export class ConnectionController extends BaseController<
         const computeClockOffset = (): Promise<number> => {
             return new Promise<number>((resolve, reject) => {
                 const now = Date.now()
-                fetch('https://jrpc.broxus.com')
+                fetch('https://extension-api.broxus.com')
                     .then((body) => {
                         const then = Date.now()
                         body.text().then((timestamp) => {
