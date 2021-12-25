@@ -32,6 +32,14 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.24 (2021-12-26)
+
+Features
+
+* Replace API for `ADNL RPC` to work with Rust nodes
+
+## Changelog
+
 ### 0.2.23 (2021-12-04)
 
 Rename TON to EVER. `TON Crystal Wallet` is now `EVER Wallet`
