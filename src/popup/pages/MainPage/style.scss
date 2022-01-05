@@ -2,8 +2,10 @@
 @import '../../styles/shared/animations';
 
 .main-page {
-  &__content {
-    height: 100vh;
-    overflow-y: scroll;
-  }
+    background-color: $windowBg;
+
+    &__content {
+        height: 100vh;
+        overflow-y: scroll;
+    }
 }

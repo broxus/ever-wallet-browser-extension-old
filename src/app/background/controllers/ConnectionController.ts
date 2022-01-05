@@ -119,7 +119,7 @@ export interface ConnectionControllerState extends BaseState {
 function makeDefaultState(): ConnectionControllerState {
     return {
         clockOffset: 0,
-        selectedConnection: getPreset(0)!,
+        selectedConnection: getPreset(3)!,
         pendingConnection: undefined,
     }
 }

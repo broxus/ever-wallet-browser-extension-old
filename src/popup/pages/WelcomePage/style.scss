@@ -6,6 +6,7 @@
     display: flex;
     align-items: center;
     flex-direction: column;
+    background-color: $windowBg;
 
     &__bg {
         background-color: $illustrationBg;

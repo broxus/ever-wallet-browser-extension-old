@@ -18,8 +18,12 @@ html {
     box-sizing: border-box;
 }
 
-*:not(.initial-scroll)::-webkit-scrollbar {
-    width: 0;
+*:not(.initial-scroll) {
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        width: 0;
+    }
 }
 
 body {
@@ -32,13 +36,15 @@ body {
     flex-direction: row;
     justify-content: center;
 
-    background-color: $windowBg;
+    background-color: $mainDarkBg;
 }
 
 #root {
     min-height: 100%;
     min-width: 360px;
     width: 100%;
+
+    background-color: $windowBg;
 }
 
 .popup-view #root {
@@ -49,6 +55,7 @@ body.fullscreen {
     width: 100%;
     height: 100%;
     align-items: center;
+    background-color: $windowBg;
 
     #root {
         width: min(90vw, 600px);
@@ -56,6 +63,7 @@ body.fullscreen {
         min-height: auto;
         display: flex;
         align-items: center;
+        background-color: unset;
     }
 }
 
