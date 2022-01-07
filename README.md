@@ -38,6 +38,7 @@ Features
 
 * Finally, rework GQL transport
 * Add Firefox browser support
+* Additionally inject `__ever` object into pages. (`ton` object will be removed soon due to blockchain renaming).
 
 ### 0.2.24 (2021-12-26)
 
