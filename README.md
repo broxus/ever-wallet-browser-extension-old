@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.25 (2022-01-08)
+
+Features
+
+* Finally, rework GQL transport
+* Add Firefox browser support
+
 ### 0.2.24 (2021-12-26)
 
 Features

@@ -1,6 +1,6 @@
 {
   "name": "ever-wallet",
-  "version": "0.2.24",
+  "version": "0.2.25",
   "description": "EVER Wallet browser extension",
   "scripts": {
     "start": "NEKOTON_DEBUG=1 webpack --watch --config webpack.dev.js",
