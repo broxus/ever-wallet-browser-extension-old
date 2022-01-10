@@ -1,3 +1,6 @@
+;(window as Record<string, any>).__hasEverscaleProvider = true
+
+// TODO: remove in future
 ;(window as Record<string, any>).hasTonProvider = true
 
 let __define: Define | undefined
