@@ -279,6 +279,8 @@ export class NekotonController extends EventEmitter {
                 cb(null)
             },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
+            importStorage: nodeifyAsync(this, 'importStorage'),
+            exportStorage: nodeifyAsync(this, 'exportStorage'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
             selectMasterKey: nodeifyAsync(accountController, 'selectMasterKey'),
@@ -368,6 +370,22 @@ export class NekotonController extends EventEmitter {
 
             this._sendUpdate()
         }
+    }
+
+    public async importStorage() {
+        // TODO
+    }
+
+    public async exportStorage(): Promise<string> {
+        const result = await window.browser.storage.local.get([
+            'masterKeysNames',
+            'recentMasterKeys',
+            'accountsVisibility',
+            'externalAccounts',
+            '__core__accounts',
+            '__core__keystore',
+        ])
+        return JSON.stringify(result, undefined, 2)
     }
 
     public async logOut() {
