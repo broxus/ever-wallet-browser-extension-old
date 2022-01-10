@@ -372,8 +372,52 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    public async importStorage() {
-        // TODO
+    public async importStorage(storage: string) {
+        const parsedStorage = JSON.parse(storage)
+        if (typeof parsedStorage !== 'object' || parsedStorage == null) {
+            return false
+        }
+
+        const masterKeyNames = parsedStorage['masterKeysNames']
+        if (masterKeyNames != null && typeof masterKeyNames !== 'object') {
+            return false
+        }
+
+        const recentMasterKeys = parsedStorage['recentMasterKeys']
+        if (recentMasterKeys != null && !Array.isArray(recentMasterKeys)) {
+            return false
+        }
+
+        const accountsVisibility = parsedStorage['accountsVisibility']
+        if (accountsVisibility != null && typeof accountsVisibility !== 'object') {
+            return false
+        }
+
+        const externalAccounts = parsedStorage['externalAccounts']
+        if (externalAccounts != null && !Array.isArray(externalAccounts)) {
+            return false
+        }
+
+        const accounts = parsedStorage['__core__accounts']
+        if (typeof accounts !== 'string' || !nt.AccountsStorage.verify(accounts)) {
+            return false
+        }
+
+        const keystore = parsedStorage['__core__keystore']
+        if (typeof keystore !== 'string' || !nt.KeyStore.verify(keystore)) {
+            return false
+        }
+
+        const result = {
+            masterKeyNames: masterKeyNames != null ? masterKeyNames : {},
+            recentMasterKeys: recentMasterKeys != null ? recentMasterKeys : [],
+            accountsVisibility: accountsVisibility != null ? accountsVisibility : {},
+            externalAccounts: externalAccounts != null ? externalAccounts : [],
+            __core__accounts: accounts,
+            __core__keystore: keystore,
+        }
+        await window.browser.storage.local.set(result)
+        return true
     }
 
     public async exportStorage(): Promise<string> {

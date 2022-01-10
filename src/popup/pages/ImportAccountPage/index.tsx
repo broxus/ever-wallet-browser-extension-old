@@ -28,7 +28,7 @@ interface IRestoreAccountPage {
     onBack: () => void
 }
 
-const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
+const ImportAccountPage: React.FC<IRestoreAccountPage> = ({
     name,
     createMasterKey,
     removeKey,
@@ -127,4 +127,4 @@ const RestoreAccountPage: React.FC<IRestoreAccountPage> = ({
     )
 }
 
-export default RestoreAccountPage
+export default ImportAccountPage

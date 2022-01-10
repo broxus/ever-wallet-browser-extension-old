@@ -17,6 +17,42 @@ pub struct KeyStore {
 #[wasm_bindgen]
 impl KeyStore {
     #[wasm_bindgen]
+    pub fn verify(data: &str) -> bool {
+        struct StubLedgerConnection;
+
+        #[async_trait::async_trait]
+        impl nt::external::LedgerConnection for StubLedgerConnection {
+            async fn get_public_key(
+                &self,
+                _: u16,
+            ) -> anyhow::Result<[u8; ed25519_dalek::PUBLIC_KEY_LENGTH]> {
+                unreachable!()
+            }
+
+            async fn sign(
+                &self,
+                _: u16,
+                _: &[u8],
+            ) -> anyhow::Result<[u8; ed25519_dalek::SIGNATURE_LENGTH]> {
+                unreachable!()
+            }
+        }
+
+        fn try_verify(data: &str) -> anyhow::Result<()> {
+            nt::core::keystore::KeyStore::builder()
+                .with_signer(DERIVED_SIGNER, nt::crypto::DerivedKeySigner::new())?
+                .with_signer(ENCRYPTED_SIGNER, nt::crypto::EncryptedKeySigner::new())?
+                .with_signer(
+                    LEDGER_SIGNER,
+                    nt::crypto::LedgerKeySigner::new(Arc::new(StubLedgerConnection)),
+                )?
+                .verify(data)
+        }
+
+        try_verify(data).is_ok()
+    }
+
+    #[wasm_bindgen]
     pub fn load(
         storage: &crate::external::Storage,
         ledger_connection: &crate::external::LedgerConnection,
@@ -26,7 +62,7 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
-                nt::core::keystore::KeyStore::builder(storage as Arc<dyn nt::external::Storage>)
+                nt::core::keystore::KeyStore::builder()
                     .with_signer(DERIVED_SIGNER, nt::crypto::DerivedKeySigner::new())
                     .handle_error()?
                     .with_signer(ENCRYPTED_SIGNER, nt::crypto::EncryptedKeySigner::new())
@@ -36,7 +72,7 @@ impl KeyStore {
                         nt::crypto::LedgerKeySigner::new(ledger_connection),
                     )
                     .handle_error()?
-                    .load()
+                    .load(storage as Arc<dyn nt::external::Storage>)
                     .await
                     .handle_error()?,
             );

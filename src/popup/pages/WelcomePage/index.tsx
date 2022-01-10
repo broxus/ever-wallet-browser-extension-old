@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
-import RestoreAccountPage from '@popup/pages/RestoreAccountPage'
+import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 
@@ -13,7 +13,7 @@ import './style.scss'
 enum Step {
     WELCOME,
     CREATE_ACCOUNT,
-    RESTORE_ACCOUNT,
+    IMPORT_ACCOUNT,
 }
 
 const FIRST_ACCOUNT_NAME = 'Account 1'
@@ -31,17 +31,14 @@ export function WelcomePage(): JSX.Element {
         <>
             {localStep == Step.WELCOME && (
                 <div className="welcome-page">
-                    <div className="welcome-page__bg" />
                     <div className="welcome-page__content">
                         <div>
                             <h1 className="welcome-page__content-header-xl">
                                 Welcome to EVER Wallet
                             </h1>
-                            <h3 className="welcome-page__content-header-s">
-                                Create a new wallet or sign in
-                            </h3>
                             <img src={SittingMan} alt="" />
                         </div>
+                        <br />
                         <div>
                             <div className="welcome-page__content-button">
                                 <Button
@@ -51,11 +48,21 @@ export function WelcomePage(): JSX.Element {
                                     }}
                                 />
                             </div>
+                            <div className="welcome-page__content-button">
+                                <Button
+                                    text="Sign in with seed phrase"
+                                    white
+                                    onClick={() => {
+                                        setStep(Step.IMPORT_ACCOUNT)
+                                    }}
+                                />
+                            </div>
+                            <hr />
                             <Button
-                                text="Sign in with seed phrase"
+                                text="Restore from backup"
                                 white
                                 onClick={() => {
-                                    setStep(Step.RESTORE_ACCOUNT)
+                                    setStep(Step.IMPORT_ACCOUNT)
                                 }}
                             />
                         </div>
@@ -75,8 +82,8 @@ export function WelcomePage(): JSX.Element {
                 />
             )}
 
-            {localStep == Step.RESTORE_ACCOUNT && (
-                <RestoreAccountPage
+            {localStep == Step.IMPORT_ACCOUNT && (
+                <ImportAccountPage
                     name={FIRST_ACCOUNT_NAME}
                     createAccount={createAccount}
                     createMasterKey={createMasterKey}
