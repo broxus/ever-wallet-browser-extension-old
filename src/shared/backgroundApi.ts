@@ -3,7 +3,7 @@ import {
     RawPermissions,
     Permission,
     RawFunctionCall,
-} from 'ton-inpage-provider'
+} from 'everscale-inpage-provider'
 import * as nt from '@nekoton'
 
 export type WindowInfo = {

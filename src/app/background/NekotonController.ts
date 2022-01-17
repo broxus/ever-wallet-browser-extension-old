@@ -4,7 +4,7 @@ import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
 import type browser from 'webextension-polyfill'
-import { ProviderEvent, RawProviderEventData } from 'ton-inpage-provider'
+import { ProviderEvent, RawProviderEventData } from 'everscale-inpage-provider'
 import * as nt from '@nekoton'
 
 import {

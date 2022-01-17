@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
-import { mergeTransactions } from 'ton-inpage-provider'
+import { mergeTransactions } from 'everscale-inpage-provider'
 import {
     AggregatedMultisigTransactionInfo,
     AggregatedMultisigTransactions,

@@ -359,4 +359,4 @@ Initial release
 * Single account.
 * TON wallet support.
 * TIP-3 tokens support ([Broxus TIP3v3.1](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/3.1))
-* Web3-like interface ([ton-inpage-provider](https://github.com/broxus/ton-inpage-provider))
+* Web3-like interface ([everscale-inpage-provider](https://github.com/broxus/everscale-inpage-provider))

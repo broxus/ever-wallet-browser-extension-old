@@ -181,8 +181,8 @@ export function ApproveRequestPermissions({
                                     }
                                 }
 
-                                if (permissions.includes('tonClient')) {
-                                    originPermissions.tonClient = true
+                                if (permissions.includes('basic')) {
+                                    originPermissions.basic = true
                                 }
 
                                 onSubmit(originPermissions)
