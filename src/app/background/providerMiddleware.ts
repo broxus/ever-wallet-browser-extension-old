@@ -385,6 +385,34 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
     }
 }
 
+const getAccountsByCodeHash: ProviderMethod<'getAccountsByCodeHash'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['basic'])
+    requireParams(req)
+
+    const { codeHash, limit, continuation } = req.params
+    requireString(req, req.params, 'codeHash')
+    requireOptionalNumber(req, req.params, 'limit')
+    requireOptionalString(req, req.params, 'continuation')
+
+    const { connectionController } = ctx
+
+    try {
+        res.result = await connectionController.use(
+            async ({ data: { connection } }) =>
+                await connection.getAccountsByCodeHash(codeHash, limit || 50, continuation)
+        )
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['basic'])
     requireParams(req)
@@ -401,6 +429,28 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
             async ({ data: { connection } }) =>
                 await connection.getTransactions(address, continuation, limit || 50)
         )
+
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const getTransaction: ProviderMethod<'getTransaction'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['basic'])
+    requireParams(req)
+
+    const { hash } = req.params
+    requireString(req, req.params, 'hash')
+
+    const { connectionController } = ctx
+
+    try {
+        res.result = {
+            transaction: await connectionController.use(
+                async ({ data: { connection } }) => await connection.getTransaction(hash)
+            ),
+        }
 
         end()
     } catch (e: any) {
@@ -1198,7 +1248,9 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     unsubscribeAll,
     getProviderState,
     getFullContractState,
+    getAccountsByCodeHash,
     getTransactions,
+    getTransaction,
     runLocal,
     getExpectedAddress,
     getBocHash,
