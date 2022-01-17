@@ -29,6 +29,7 @@ const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
                 <TagsInput setWords={setWords} words={words} wordCount={wordCount} />
                 <div className="words-count">{`${words.length}/${wordCount} words`}</div>
             </div>
+            <br />
             <div className="enter-seed__buttons">
                 <Button
                     onClick={() => onSubmit(words)}

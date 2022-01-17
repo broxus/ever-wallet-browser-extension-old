@@ -81,6 +81,16 @@ impl KeyStore {
         }))
     }
 
+    #[wasm_bindgen]
+    pub fn reload(&self) -> PromiseVoid {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            inner.reload().await.handle_error()?;
+            Ok(JsValue::undefined())
+        }))
+    }
+
     #[wasm_bindgen(js_name = "addKey")]
     pub fn add_key(&self, new_key: JsNewKey) -> Result<PromiseKeyStoreEntry, JsValue> {
         use nt::crypto::*;

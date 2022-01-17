@@ -341,9 +341,11 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    public async changeNetwork(params: ConnectionDataItem) {
+    public async changeNetwork(params?: ConnectionDataItem) {
         const currentNetwork = this._components.connectionController.state.selectedConnection
-        if (currentNetwork.id == params.id) {
+        if (params == null) {
+            params = currentNetwork
+        } else if (currentNetwork.id == params.id) {
             return
         }
 
@@ -413,10 +415,21 @@ export class NekotonController extends EventEmitter {
             recentMasterKeys: recentMasterKeys != null ? recentMasterKeys : [],
             accountsVisibility: accountsVisibility != null ? accountsVisibility : {},
             externalAccounts: externalAccounts != null ? externalAccounts : [],
+            selectedAccountAddress: undefined,
+            selectedMasterKey: undefined,
+            permissions: {},
+            domainMetadata: {},
             __core__accounts: accounts,
             __core__keystore: keystore,
         }
         await window.browser.storage.local.set(result)
+
+        await this._components.accountsStorage.reload()
+        await this._components.keyStore.reload()
+
+        await this._components.accountController.initialSync()
+        await this.changeNetwork()
+
         return true
     }
 
