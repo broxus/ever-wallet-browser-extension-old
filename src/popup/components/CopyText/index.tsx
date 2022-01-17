@@ -4,7 +4,6 @@ import ReactTooltip from 'react-tooltip'
 
 import './style.scss'
 
-
 type Place = 'top' | 'right' | 'bottom' | 'left'
 
 type Props = {
@@ -46,7 +45,7 @@ export function CopyText({ children, className, id, place = 'top', text }: Props
                 type="dark"
                 effect="solid"
                 place={place}
-                getContent={() => isCopied ? 'Copied!' : 'Click to copy'}
+                getContent={() => (isCopied ? 'Copied!' : 'Click to copy')}
             />
         </>
     )

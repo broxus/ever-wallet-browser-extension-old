@@ -31,7 +31,6 @@ function App(): JSX.Element | null {
     const isLedgerConnectRoute = rpcState.activeTab?.data?.route === 'connect-ledger'
 
     if (accountAddresses.length > 0 && rpcState.state.selectedAccount == null) {
-        console.log('Addresses:', accountAddresses, rpcState.state.selectedAccount)
         return null
     }
 
