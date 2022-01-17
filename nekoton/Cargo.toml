@@ -31,7 +31,6 @@ rand = { version = "0.8", features = ["getrandom"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 sha2 = "0.9"
-syn = "=1.0.72"
 thiserror = "1.0"
 wasm-bindgen = { version = "0.2.78", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
@@ -47,15 +46,12 @@ ton_types = { git = "https://github.com/broxus/ton-labs-types.git" }
 [dependencies.nt]
 package = "nekoton"
 git = "https://github.com/broxus/nekoton.git"
-branch = "master"
 features = ["web", "gql_transport", "jrpc_transport"]
 
 [dependencies.nt_utils]
 package = "nekoton-utils"
 git = "https://github.com/broxus/nekoton.git"
-branch = "master"
 
 [dependencies.nt_abi]
 package = "nekoton-abi"
 git = "https://github.com/broxus/nekoton.git"
-branch = "master"
