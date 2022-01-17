@@ -37,8 +37,9 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 Features
 
 * Finally, rework GQL transport
-* Add Firefox browser support
-* Additionally inject `__ever` object into pages. (`ton` object will be removed soon due to blockchain renaming).
+* Added Firefox browser support
+* Additionally inject `__ever` object into pages. (`ton` object will be removed soon due to blockchain renaming)
+* Added `getTransaction` and `getAccountsByCodeHash` methods to provider api
 
 ### 0.2.24 (2021-12-26)
 
