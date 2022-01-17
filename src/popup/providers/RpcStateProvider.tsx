@@ -84,7 +84,9 @@ function Provider({ children, group, activeTab, fetchManifest }: Props): JSX.Ele
                         const stateToUpdate = data.params
 
                         try {
-                            console.log('Got state', stateToUpdate)
+                            if (process.env.NODE_ENV !== 'production') {
+                                console.log('Got state', stateToUpdate)
+                            }
                             setState(stateToUpdate as ControllerState)
                         } catch (e: any) {
                             console.log(e.toString())

@@ -140,7 +140,9 @@ const queryCurrentActiveTab = async (windowType: Environment) => {
                 const [activeTab] = tabs
                 const { id, title, url } = activeTab
                 const { origin, protocol } = url
-                    ? new URL(url)
+                    ? !url.startsWith('about:')
+                        ? new URL(url)
+                        : { origin: 'about', protocol: undefined }
                     : { origin: undefined, protocol: undefined }
 
                 if (!origin || origin == 'null') {
