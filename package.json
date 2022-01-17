@@ -17,7 +17,7 @@
   },
   "homepage": "https://github.com/broxus/ton-wallet-crystal-browser-extension#readme",
   "devDependencies": {
-    "@broxus/wasm-pack-plugin": "^1.5.0",
+    "@broxus/wasm-pack-plugin": "^1.5.1",
     "@types/classnames": "^2.3.1",
     "@types/end-of-stream": "^1.4.1",
     "@types/lodash": "^4.14.175",
