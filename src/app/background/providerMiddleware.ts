@@ -1015,7 +1015,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
 
         try {
             const signedMessage = unsignedMessage.signFake()
-            return await wallet.estimateFees(signedMessage)
+            return await wallet.estimateFees(signedMessage, {})
         } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {

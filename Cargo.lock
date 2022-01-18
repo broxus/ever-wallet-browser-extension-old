@@ -731,7 +731,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git#802ec6e605da289e7288d224b69947aca8d3817f"
+source = "git+https://github.com/broxus/nekoton.git#01c50e7bd5d505f62e308cf23752019838bc3ed6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -776,7 +776,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git#802ec6e605da289e7288d224b69947aca8d3817f"
+source = "git+https://github.com/broxus/nekoton.git#01c50e7bd5d505f62e308cf23752019838bc3ed6"
 dependencies = [
  "anyhow",
  "base64",
@@ -802,7 +802,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git#802ec6e605da289e7288d224b69947aca8d3817f"
+source = "git+https://github.com/broxus/nekoton.git#01c50e7bd5d505f62e308cf23752019838bc3ed6"
 dependencies = [
  "once_cell",
  "ton_abi",
@@ -812,7 +812,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git#802ec6e605da289e7288d224b69947aca8d3817f"
+source = "git+https://github.com/broxus/nekoton.git#01c50e7bd5d505f62e308cf23752019838bc3ed6"
 dependencies = [
  "either",
  "proc-macro2",
@@ -823,7 +823,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.9.0"
-source = "git+https://github.com/broxus/nekoton.git#802ec6e605da289e7288d224b69947aca8d3817f"
+source = "git+https://github.com/broxus/nekoton.git#01c50e7bd5d505f62e308cf23752019838bc3ed6"
 dependencies = [
  "anyhow",
  "base64",
@@ -1402,12 +1402,11 @@ dependencies = [
 
 [[package]]
 name = "ton_executor"
-version = "1.15.34"
-source = "git+https://github.com/broxus/ton-labs-executor.git#dbdf43da28045abf41fe11d817bb89e7c2739c00"
+version = "1.15.50"
+source = "git+https://github.com/broxus/ton-labs-executor.git#595ae53b7b4e08e38790098e6df9c82efae2c5af"
 dependencies = [
  "anyhow",
  "base64",
- "clear_on_drop",
  "log",
  "num",
  "num-traits",
@@ -1439,8 +1438,8 @@ dependencies = [
 
 [[package]]
 name = "ton_vm"
-version = "1.8.20"
-source = "git+https://github.com/broxus/ton-labs-vm.git#b4d9455e9a3cc781f6649a2b15e98f84abde576e"
+version = "1.8.29"
+source = "git+https://github.com/broxus/ton-labs-vm.git#a484c0becf58e831d6d3a843bee77ccbc3cd8772"
 dependencies = [
  "anyhow",
  "ed25519",

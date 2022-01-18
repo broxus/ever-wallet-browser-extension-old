@@ -103,7 +103,7 @@ export function ApproveSendMessage({
         }
 
         await rpc
-            .estimateFees(account.tonWallet.address, messageToPrepare)
+            .estimateFees(account.tonWallet.address, messageToPrepare, {})
             .then((fees) => setFees(fees))
             .catch(console.error)
     }

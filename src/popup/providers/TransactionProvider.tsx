@@ -47,7 +47,7 @@ const Context = React.createContext<TransactionContext>({
     selectableKeys: { deployer: undefined, keys: [] },
     tokenWalletAssets: [],
     tokenWalletStates: {},
-    tonWalletAsset: (undefined as unknown) as nt.TonWalletAsset,
+    tonWalletAsset: undefined as unknown as nt.TonWalletAsset,
     tonWalletState: undefined,
     estimateFees() {
         return Promise.reject()
@@ -93,7 +93,7 @@ export function TransactionProvider({ children, defaultAsset }: Props): JSX.Elem
         | undefined
 
     const estimateFees: TransactionContext['estimateFees'] = (params) => {
-        return rpc.estimateFees(accountAddress as string, params)
+        return rpc.estimateFees(accountAddress as string, params, {})
     }
 
     const prepareMessage: TransactionContext['prepareMessage'] = (params, password) => {

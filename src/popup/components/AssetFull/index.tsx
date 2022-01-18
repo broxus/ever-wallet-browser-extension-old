@@ -276,7 +276,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                             knownTokens={rpcState.state.knownTokens}
                             onBack={closePanel}
                             estimateFees={async (params) =>
-                                await rpc.estimateFees(accountAddress, params)
+                                await rpc.estimateFees(accountAddress, params, {})
                             }
                             prepareMessage={async (params, password) =>
                                 rpc.prepareTransferMessage(accountAddress, params, password)
