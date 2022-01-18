@@ -145,6 +145,7 @@ const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack
                 label={'Root token contract...'}
                 className="add-new-token__search-form"
                 type="text"
+                autocomplete="off"
                 disabled={disabled}
                 {...register('rootTokenContract', {
                     required: true,

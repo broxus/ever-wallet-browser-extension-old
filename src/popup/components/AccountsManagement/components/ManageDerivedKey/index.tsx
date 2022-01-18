@@ -68,6 +68,7 @@ export function ManageDerivedKey(): JSX.Element {
                             name="seed_name"
                             label="Enter key name"
                             type="text"
+                            autocomplete="off"
                             value={name || ''}
                             onChange={(e) => setName(e.target.value)}
                         />

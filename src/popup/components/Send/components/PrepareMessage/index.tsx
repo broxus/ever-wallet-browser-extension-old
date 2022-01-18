@@ -297,6 +297,7 @@ export function PrepareMessage({
                             type="text"
                             className="prepare-message__field-input"
                             label="Amount..."
+                            autocomplete="off"
                             {...register('amount', {
                                 required: true,
                                 pattern: decimals != null ? amountPattern(decimals) : /^\d$/,
@@ -353,6 +354,7 @@ export function PrepareMessage({
                         <Input
                             type="text"
                             label="Recipient address..."
+                            autocomplete="off"
                             className="prepare-message__field-input"
                             {...register('recipient', {
                                 required: true,
@@ -374,6 +376,7 @@ export function PrepareMessage({
                         <Input
                             label="Comment..."
                             className="prepare-message__field-input"
+                            autocomplete="off"
                             type="text"
                             {...register('comment')}
                         />

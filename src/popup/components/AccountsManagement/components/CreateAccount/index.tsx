@@ -250,6 +250,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         name="name"
                                         label="Enter account name..."
                                         autoFocus
+                                        autocomplete="off"
                                         type="text"
                                         value={name || ''}
                                         onChange={(e) => setName(e.target.value)}
@@ -261,6 +262,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                             name="name"
                                             label="Enter a multisig address..."
                                             autoFocus
+                                            autocomplete="off"
                                             type="text"
                                             value={address || ''}
                                             onChange={(e) => setAddress(e.target.value)}

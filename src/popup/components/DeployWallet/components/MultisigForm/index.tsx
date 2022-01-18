@@ -47,6 +47,7 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                         </div>
                         <div className="deploy-wallet__field-confirms">
                             <Input
+                                autocomplete="off"
                                 autoFocus
                                 {...register('reqConfirms', {
                                     required: true,
@@ -92,6 +93,7 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                                     })}
                                 >
                                     <Input
+                                        autocomplete="off"
                                         {...register(name, {
                                             required: true,
                                             pattern: /^[a-fA-F0-9]{64}$/,

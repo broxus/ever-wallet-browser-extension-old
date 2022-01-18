@@ -41,10 +41,10 @@ const Send: React.FC<IAddNewToken> = ({ account, onReturn }) => {
                 //     setToken(token)
                 // }}
             />
-            <Input label={'Amount...'} />
+            <Input autocomplete="off" label={'Amount...'} />
             <div className="send-screen__form-balance">Your balance: 1,100.00 USDT</div>
-            <Input label={'Receiver address...'} />
-            <Input className="send-screen__form-comment" label={'Comment...'} />
+            <Input autocomplete="off" label={'Receiver address...'} />
+            <Input autocomplete="off" className="send-screen__form-comment" label={'Comment...'} />
             <div style={{ display: 'flex' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
                     <Button text={'Back'} onClick={onReturn} white />
