@@ -380,8 +380,8 @@ export class NekotonController extends EventEmitter {
             return false
         }
 
-        const masterKeyNames = parsedStorage['masterKeysNames']
-        if (masterKeyNames != null && typeof masterKeyNames !== 'object') {
+        const masterKeysNames = parsedStorage['masterKeysNames']
+        if (masterKeysNames != null && typeof masterKeysNames !== 'object') {
             return false
         }
 
@@ -411,7 +411,7 @@ export class NekotonController extends EventEmitter {
         }
 
         const result = {
-            masterKeyNames: masterKeyNames != null ? masterKeyNames : {},
+            masterKeysNames: masterKeysNames != null ? masterKeysNames : {},
             recentMasterKeys: recentMasterKeys != null ? recentMasterKeys : [],
             accountsVisibility: accountsVisibility != null ? accountsVisibility : {},
             externalAccounts: externalAccounts != null ? externalAccounts : [],
