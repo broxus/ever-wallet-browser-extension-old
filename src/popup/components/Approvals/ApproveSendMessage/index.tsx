@@ -111,6 +111,10 @@ export function ApproveSendMessage({
     const contractState = accountContractStates[account.tonWallet.address]
     const balance = new Decimal(contractState?.balance || '0')
 
+    const isDeployed =
+        contractState.isDeployed ||
+        !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy
+
     const trySubmit = async (keyPassword: nt.KeyPassword) => {
         setInProcess(true)
         try {
@@ -207,12 +211,19 @@ export function ApproveSendMessage({
                             <span className="approval__spend-details-param-desc">
                                 Blockchain fee
                             </span>
-                            <span className="approval__spend-details-param-value approval--send-message__amount">
-                                <TonAssetIcon className="root-token-icon noselect" />
-                                {fees != null
-                                    ? `~${convertTons(fees)} ${NATIVE_CURRENCY}`
-                                    : 'calculating...'}
-                            </span>
+                            {isDeployed && (
+                                <span className="approval__spend-details-param-value approval--send-message__amount">
+                                    <TonAssetIcon className="root-token-icon noselect" />
+                                    {fees != null
+                                        ? `~${convertTons(fees)} ${NATIVE_CURRENCY}`
+                                        : 'calculating...'}
+                                </span>
+                            )}
+                            {!isDeployed && (
+                                <div className="check-seed__content-error">
+                                    Operation not possible. Wallet is not deployed
+                                </div>
+                            )}
                         </div>
                         {payload && (
                             <div className="approval__spend-details-param">
