@@ -1563,14 +1563,34 @@ export class AccountController extends BaseController<
                 const value = extractTransactionValue(transaction)
                 const { address, direction } = extractTransactionAddress(transaction)
 
+                let title = 'New transaction found'
+                if (
+                    transaction.info?.type === 'wallet_interaction' &&
+                    transaction.info.data.method.type == 'multisig'
+                ) {
+                    switch (transaction.info.data.method.data.type) {
+                        case 'confirm': {
+                            title = 'Multisig transaction confirmation'
+                            break
+                        }
+                        case 'submit': {
+                            title = 'New multisig transaction found'
+                            break
+                        }
+                        default: {
+                            break
+                        }
+                    }
+                }
+
                 const body = `${convertTons(
                     value.toString()
                 )} ${NATIVE_CURRENCY} ${direction} ${convertAddress(address)}`
 
                 this.config.notificationController.showNotification({
-                    title: `New transaction found`,
+                    title,
                     body,
-                    link: `https://tonscan.com/transactions/${transaction.id.hash}`,
+                    link: `https://tonscan.io/transactions/${transaction.id.hash}`,
                 })
             }
         }
