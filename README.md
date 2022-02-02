@@ -1,6 +1,6 @@
 <p align="center">
     <h3 align="center">EVER Wallet</h3>
-    <p align="center">A browser extension to manage Everscale wallets and access dApps directly from your Chrome browser.</p>
+    <p align="center">A browser extension to manage Everscale wallets and access dApps directly from your browser.</p>
     <p align="center">
         <a href="/LICENSE">
             <img alt="GitHub" src="https://img.shields.io/github/license/broxus/ton-wallet-crystal-browser-extension" />
@@ -25,7 +25,7 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Dev build requirements
 
-- Rust 1.50+ with installed target `wasm32-unknown-unknown`
+- Rust 1.58+ with installed target `wasm32-unknown-unknown`
 - wasm-pack
 - binaryen 99+ (for `wasm-opt`)
 - Node.js 14+

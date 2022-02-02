@@ -590,7 +590,7 @@ dependencies = [
 [[package]]
 name = "hmac-drbg"
 version = "0.3.0"
-source = "git+https://github.com/Rexagon/rust-hmac-drbg#c8634165e88fafdda5f0702fcad878516a1d1e76"
+source = "git+https://github.com/Rexagon/rust-hmac-drbg.git#c8634165e88fafdda5f0702fcad878516a1d1e76"
 dependencies = [
  "digest",
  "generic-array",
