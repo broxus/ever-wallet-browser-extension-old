@@ -160,6 +160,13 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
         }
     }, [transactions])
 
+    const showSendButton =
+        tonWalletState &&
+        (balance || '0') != '0' &&
+        (selectedAsset.type === 'ton_wallet' ||
+            tonWalletState.isDeployed ||
+            !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
+
     return (
         <>
             <div className="asset-full">
@@ -199,7 +206,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                         </div>
                     </button>
 
-                    {tonWalletState && (balance || '0') != '0' && (
+                    {showSendButton && (
                         <button
                             className="asset-full__controls__button"
                             onClick={() => {}}
@@ -269,7 +276,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                             knownTokens={rpcState.state.knownTokens}
                             onBack={closePanel}
                             estimateFees={async (params) =>
-                                await rpc.estimateFees(accountAddress, params)
+                                await rpc.estimateFees(accountAddress, params, {})
                             }
                             prepareMessage={async (params, password) =>
                                 rpc.prepareTransferMessage(accountAddress, params, password)

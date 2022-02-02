@@ -1,3 +1,6 @@
+#![allow(clippy::enum_variant_names)]
+#![allow(clippy::too_many_arguments)]
+
 pub mod core;
 pub mod crypto;
 pub mod external;

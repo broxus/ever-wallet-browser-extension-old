@@ -4,7 +4,7 @@ import ObjectMultiplex from 'obj-multiplex'
 import pump from 'pump'
 import { nanoid } from 'nanoid'
 import type browser from 'webextension-polyfill'
-import { ProviderEvent, RawProviderEventData } from 'ton-inpage-provider'
+import { ProviderEvent, RawProviderEventData } from 'everscale-inpage-provider'
 import * as nt from '@nekoton'
 
 import {
@@ -279,6 +279,8 @@ export class NekotonController extends EventEmitter {
                 cb(null)
             },
             changeNetwork: nodeifyAsync(this, 'changeNetwork'),
+            importStorage: nodeifyAsync(this, 'importStorage'),
+            exportStorage: nodeifyAsync(this, 'exportStorage'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
             createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
             selectMasterKey: nodeifyAsync(accountController, 'selectMasterKey'),
@@ -339,9 +341,11 @@ export class NekotonController extends EventEmitter {
         }
     }
 
-    public async changeNetwork(params: ConnectionDataItem) {
+    public async changeNetwork(params?: ConnectionDataItem) {
         const currentNetwork = this._components.connectionController.state.selectedConnection
-        if (currentNetwork.id == params.id) {
+        if (params == null) {
+            params = currentNetwork
+        } else if (currentNetwork.id == params.id) {
             return
         }
 
@@ -368,6 +372,77 @@ export class NekotonController extends EventEmitter {
 
             this._sendUpdate()
         }
+    }
+
+    public async importStorage(storage: string) {
+        const parsedStorage = JSON.parse(storage)
+        if (typeof parsedStorage !== 'object' || parsedStorage == null) {
+            return false
+        }
+
+        const masterKeysNames = parsedStorage['masterKeysNames']
+        if (masterKeysNames != null && typeof masterKeysNames !== 'object') {
+            return false
+        }
+
+        const recentMasterKeys = parsedStorage['recentMasterKeys']
+        if (recentMasterKeys != null && !Array.isArray(recentMasterKeys)) {
+            return false
+        }
+
+        const accountsVisibility = parsedStorage['accountsVisibility']
+        if (accountsVisibility != null && typeof accountsVisibility !== 'object') {
+            return false
+        }
+
+        const externalAccounts = parsedStorage['externalAccounts']
+        if (externalAccounts != null && !Array.isArray(externalAccounts)) {
+            return false
+        }
+
+        const accounts = parsedStorage['__core__accounts']
+        if (typeof accounts !== 'string' || !nt.AccountsStorage.verify(accounts)) {
+            return false
+        }
+
+        const keystore = parsedStorage['__core__keystore']
+        if (typeof keystore !== 'string' || !nt.KeyStore.verify(keystore)) {
+            return false
+        }
+
+        const result = {
+            masterKeysNames: masterKeysNames != null ? masterKeysNames : {},
+            recentMasterKeys: recentMasterKeys != null ? recentMasterKeys : [],
+            accountsVisibility: accountsVisibility != null ? accountsVisibility : {},
+            externalAccounts: externalAccounts != null ? externalAccounts : [],
+            selectedAccountAddress: undefined,
+            selectedMasterKey: undefined,
+            permissions: {},
+            domainMetadata: {},
+            __core__accounts: accounts,
+            __core__keystore: keystore,
+        }
+        await window.browser.storage.local.set(result)
+
+        await this._components.accountsStorage.reload()
+        await this._components.keyStore.reload()
+
+        await this._components.accountController.initialSync()
+        await this.changeNetwork()
+
+        return true
+    }
+
+    public async exportStorage(): Promise<string> {
+        const result = await window.browser.storage.local.get([
+            'masterKeysNames',
+            'recentMasterKeys',
+            'accountsVisibility',
+            'externalAccounts',
+            '__core__accounts',
+            '__core__keystore',
+        ])
+        return JSON.stringify(result, undefined, 2)
     }
 
     public async logOut() {

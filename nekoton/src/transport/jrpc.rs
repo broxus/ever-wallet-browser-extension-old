@@ -1,4 +1,4 @@
-use std::convert::TryInto;
+use std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -10,10 +10,11 @@ use nt::transport::jrpc;
 use nt::transport::Transport;
 
 use super::{
-    make_root_token_contract_details, make_ton_wallet_init_data, make_transactions_list,
-    IntoHandle, PromiseGenericContract, PromiseOptionFullContractState,
-    PromiseRootTokenContractDetails, PromiseTokenWallet, PromiseTonWallet,
-    PromiseTonWalletInitData, PromiseTransactionsList, TransportError, TransportHandle,
+    make_accounts_list, make_root_token_contract_details, make_ton_wallet_init_data,
+    make_transactions_list, IntoHandle, PromiseAccountsList, PromiseGenericContract,
+    PromiseOptionFullContractState, PromiseOptionTransaction, PromiseRootTokenContractDetails,
+    PromiseTokenWallet, PromiseTonWallet, PromiseTonWalletInitData, PromiseTransactionsList,
+    TransportError, TransportHandle,
 };
 use crate::core::token_wallet::RootTokenContractDetailsWithAddress;
 use crate::external::{JrpcConnector, JrpcSender};
@@ -292,6 +293,28 @@ impl JrpcConnection {
         })))
     }
 
+    #[wasm_bindgen(js_name = "getAccountsByCodeHash")]
+    pub fn get_accounts_by_code_hash(
+        &self,
+        code_hash: &str,
+        limit: u8,
+        continuation: Option<String>,
+    ) -> Result<PromiseAccountsList, JsValue> {
+        let code_hash = parse_hash(code_hash)?;
+        let continuation = continuation.map(|addr| parse_address(&addr)).transpose()?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(make_accounts_list(
+                transport
+                    .get_accounts_by_code_hash(&code_hash, limit, &continuation)
+                    .await
+                    .handle_error()?,
+            )
+            .unchecked_into())
+        })))
+    }
+
     #[wasm_bindgen(js_name = "getTransactions")]
     pub fn get_transactions(
         &self,
@@ -318,6 +341,27 @@ impl JrpcConnection {
                 .handle_error()?;
 
             Ok(make_transactions_list(transactions).unchecked_into())
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTransaction")]
+    pub fn get_transaction(&self, hash: &str) -> Result<PromiseOptionTransaction, JsValue> {
+        let hash = parse_hash(hash)?;
+        let transport = self.make_transport();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(
+                match transport.get_transaction(&hash).await.handle_error()? {
+                    Some(transaction) => nt::core::models::Transaction::try_from((
+                        transaction.hash,
+                        transaction.data,
+                    ))
+                    .map(crate::core::models::make_transaction)
+                    .handle_error()?
+                    .unchecked_into(),
+                    None => JsValue::undefined(),
+                },
+            )
         })))
     }
 }

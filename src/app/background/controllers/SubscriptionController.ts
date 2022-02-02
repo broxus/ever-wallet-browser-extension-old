@@ -3,7 +3,7 @@ import {
     ContractUpdatesSubscription,
     ProviderEvent,
     RawProviderEventData,
-} from 'ton-inpage-provider'
+} from 'everscale-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
 import { Mutex } from '@broxus/await-semaphore'
 import * as nt from '@nekoton'

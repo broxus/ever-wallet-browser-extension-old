@@ -10,6 +10,7 @@ import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { parseError, prepareKey } from '@popup/utils'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
+import { convertTons } from '@shared/utils'
 
 import Button from '@popup/components/Button'
 import { Select } from '@popup/components/Select'
@@ -139,7 +140,10 @@ export function DeployWallet(): JSX.Element | null {
     }, [tonWalletState, selectedAccount])
 
     const balance = new Decimal(tonWalletState?.balance || '0')
-    const totalAmount = new Decimal('0.1').add(fees || '0')
+    const totalAmount = Decimal.max(
+        '100000000',
+        new Decimal('10000000').add(fees || '0')
+    ).toString()
 
     if (balance.greaterThanOrEqualTo(totalAmount)) {
         return (
@@ -199,8 +203,8 @@ export function DeployWallet(): JSX.Element | null {
             <div className="deploy-wallet__wrapper">
                 <div className="deploy-wallet__content">
                     <p className="deploy-wallet__comment noselect">
-                        You need to have at least 0.1 {NATIVE_CURRENCY} on your account balance to
-                        deploy.
+                        You need to have at least {convertTons(totalAmount)} {NATIVE_CURRENCY} on
+                        your account balance to deploy.
                     </p>
                     <h3 className="deploy-wallet__content-header--lead noselect">
                         Your address to receive {NATIVE_CURRENCY}

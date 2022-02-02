@@ -32,6 +32,15 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.25 (2022-01-08)
+
+Features
+
+* Finally, rework GQL transport
+* Added Firefox browser support
+* Additionally inject `__ever` object into pages. (`ton` object will be removed soon due to blockchain renaming)
+* Added `getTransaction` and `getAccountsByCodeHash` methods to provider api
+
 ### 0.2.24 (2021-12-26)
 
 Features
@@ -355,4 +364,4 @@ Initial release
 * Single account.
 * TON wallet support.
 * TIP-3 tokens support ([Broxus TIP3v3.1](https://github.com/broxus/ton-eth-bridge-token-contracts/releases/tag/3.1))
-* Web3-like interface ([ton-inpage-provider](https://github.com/broxus/ton-inpage-provider))
+* Web3-like interface ([everscale-inpage-provider](https://github.com/broxus/everscale-inpage-provider))

@@ -77,6 +77,10 @@ impl Default for ObjectBuilder {
     }
 }
 
+pub fn parse_hash(hash: &str) -> Result<ton_types::UInt256, JsValue> {
+    ton_types::UInt256::from_str(hash).handle_error()
+}
+
 pub fn parse_public_key(public_key: &str) -> Result<ed25519_dalek::PublicKey, JsValue> {
     ed25519_dalek::PublicKey::from_bytes(&hex::decode(&public_key).handle_error()?).handle_error()
 }

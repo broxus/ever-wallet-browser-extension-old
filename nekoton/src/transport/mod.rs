@@ -111,6 +111,28 @@ extern "C" {
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const ACCOUNTS_LIST: &'static str = r#"
+export type AccountsList = {
+  accounts: string[];
+  continuation: string | undefined;
+}
+"#;
+
+pub fn make_accounts_list(accounts: Vec<ton_block::MsgAddressInt>) -> AccountsList {
+    ObjectBuilder::new()
+        .set("continuation", accounts.last().map(ToString::to_string))
+        .set(
+            "accounts",
+            accounts
+                .into_iter()
+                .map(|account| JsValue::from(account.to_string()))
+                .collect::<js_sys::Array>(),
+        )
+        .build()
+        .unchecked_into()
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const TRANSACTIONS_LIST: &'static str = r#"
 export type TransactionsList = {
     transactions: Transaction[];
@@ -162,6 +184,12 @@ pub fn make_transactions_list(
 
 #[wasm_bindgen]
 extern "C" {
+    #[wasm_bindgen(typescript_type = "AccountsList")]
+    pub type AccountsList;
+
+    #[wasm_bindgen(typescript_type = "Promise<AccountsList>")]
+    pub type PromiseAccountsList;
+
     #[wasm_bindgen(typescript_type = "TransactionsList")]
     pub type TransactionsList;
 
@@ -170,6 +198,9 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<Transaction>")]
     pub type PromiseTransaction;
+
+    #[wasm_bindgen(typescript_type = "Promise<Transaction | undefined>")]
+    pub type PromiseOptionTransaction;
 }
 
 #[wasm_bindgen(typescript_custom_section)]

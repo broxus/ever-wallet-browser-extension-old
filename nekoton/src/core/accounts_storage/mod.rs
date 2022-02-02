@@ -17,6 +17,11 @@ pub struct AccountsStorage {
 #[wasm_bindgen]
 impl AccountsStorage {
     #[wasm_bindgen]
+    pub fn verify(data: &str) -> bool {
+        nt::core::accounts_storage::AccountsStorage::verify(data).is_ok()
+    }
+
+    #[wasm_bindgen]
     pub fn load(storage: &crate::external::Storage) -> PromiseAccountsStorage {
         let storage = storage.inner.clone();
 
@@ -30,6 +35,16 @@ impl AccountsStorage {
             );
 
             Ok(JsValue::from(Self { inner }))
+        }))
+    }
+
+    #[wasm_bindgen]
+    pub fn reload(&self) -> PromiseVoid {
+        let inner = self.inner.clone();
+
+        JsCast::unchecked_into(future_to_promise(async move {
+            inner.reload().await.handle_error()?;
+            Ok(JsValue::undefined())
         }))
     }
 
@@ -197,7 +212,7 @@ const ADDITIONAL_ASSETS: &str = r#"
 export type AdditionalAssets = {
     tokenWallets: TokenWalletAsset[],
     depools: DePoolAsset[],
-}; 
+};
 "#;
 
 #[wasm_bindgen]

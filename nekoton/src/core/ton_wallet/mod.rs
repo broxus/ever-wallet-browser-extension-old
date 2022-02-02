@@ -226,15 +226,30 @@ impl TonWallet {
     pub fn estimate_fees(
         &self,
         signed_message: crate::crypto::JsSignedMessage,
+        execution_options: crate::core::models::TransactionExecutionOptions,
     ) -> Result<PromiseString, JsValue> {
         let inner = self.inner.clone();
         let message = crate::crypto::parse_signed_message(signed_message)?;
+        let execution_options =
+            crate::core::models::parse_transaction_executor_options(execution_options)?;
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let mut wallet = inner.wallet.lock().trust_me();
+            let wallet = inner.wallet.lock().trust_me();
 
-            let res = wallet.estimate_fees(&message.boc).await.handle_error()?;
-            Ok(JsValue::from(res.to_string()))
+            let transaction = wallet
+                .contract_subscription()
+                .execute_transaction_locally(&message.boc, execution_options)
+                .await
+                .handle_error()?;
+
+            let descr = transaction.read_description().handle_error()?;
+            let fees = if let ton_block::TransactionDescr::Ordinary(descr) = descr {
+                nt_utils::compute_total_transaction_fees(&transaction, &descr)
+            } else {
+                transaction.total_fees.grams.0
+            };
+
+            Ok(JsValue::from(fees.to_string()))
         })))
     }
 

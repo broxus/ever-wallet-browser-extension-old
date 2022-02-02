@@ -1,28 +1,21 @@
 @import '../../styles/colors';
 
 .welcome-page {
-    height: 100%;
     width: 100%;
     display: flex;
     align-items: center;
     flex-direction: column;
 
-    &__bg {
-        background-color: $illustrationBg;
-
-        left: 0;
-        top: 0;
-        position: absolute;
-        z-index: -1;
-
-        height: 60vh;
-        min-height: 360px;
-        width: 60%;
+    hr {
+        height: 1px;
+        background: $whiteButtonBorder;
+        border: 0;
+        margin-top: 0;
+        margin-bottom: 12px;
     }
 
     &__content {
         width: 100%;
-        height: 100%;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -30,11 +23,8 @@
 
         &-header-xl {
             top: 12px;
-            margin-bottom: 20px;
-        }
-
-        &-header-s {
-            margin-bottom: 40px;
+            margin-bottom: 60px;
+            text-align: center;
         }
 
         &-button {

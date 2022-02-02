@@ -170,6 +170,7 @@ export function CreateSeed(): JSX.Element {
                                 <Input
                                     label="Enter seed name..."
                                     type="text"
+                                    autocomplete="off"
                                     value={name || ''}
                                     onChange={(e) => setName(e.target.value)}
                                 />

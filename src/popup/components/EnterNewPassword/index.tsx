@@ -67,7 +67,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
                 </div>
                 <div className="enter-new-password__content-buttons">
                     <Button
-                        text={'Sign in the wallet'}
+                        text={'Confirm'}
                         disabled={disabled}
                         onClick={handleSubmit(trySubmit)}
                         form="password"

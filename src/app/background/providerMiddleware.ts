@@ -7,7 +7,7 @@ import {
     RawTokensObject,
     AssetType,
     AssetTypeParams,
-} from 'ton-inpage-provider'
+} from 'everscale-inpage-provider'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
@@ -268,7 +268,7 @@ const disconnect: ProviderMethod<'disconnect'> = async (_req, res, _next, end, c
 }
 
 const subscribe: ProviderMethod<'subscribe'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { address, subscriptions } = req.params
@@ -351,7 +351,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
         version,
         numericVersion: convertVersionToInt32(version),
         selectedConnection: selectedConnection.group,
-        supportedPermissions: ['tonClient', 'accountInteraction'],
+        supportedPermissions: ['basic', 'accountInteraction'],
         permissions,
         subscriptions: tabId ? subscriptionsController.getTabSubscriptions(tabId) : {},
     }
@@ -365,7 +365,7 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
     end,
     ctx
 ) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { address } = req.params
@@ -385,8 +385,36 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
     }
 }
 
+const getAccountsByCodeHash: ProviderMethod<'getAccountsByCodeHash'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['basic'])
+    requireParams(req)
+
+    const { codeHash, limit, continuation } = req.params
+    requireString(req, req.params, 'codeHash')
+    requireOptionalNumber(req, req.params, 'limit')
+    requireOptionalString(req, req.params, 'continuation')
+
+    const { connectionController } = ctx
+
+    try {
+        res.result = await connectionController.use(
+            async ({ data: { connection } }) =>
+                await connection.getAccountsByCodeHash(codeHash, limit || 50, continuation)
+        )
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { address, continuation, limit } = req.params
@@ -408,8 +436,30 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
     }
 }
 
+const getTransaction: ProviderMethod<'getTransaction'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['basic'])
+    requireParams(req)
+
+    const { hash } = req.params
+    requireString(req, req.params, 'hash')
+
+    const { connectionController } = ctx
+
+    try {
+        res.result = {
+            transaction: await connectionController.use(
+                async ({ data: { connection } }) => await connection.getTransaction(hash)
+            ),
+        }
+
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { address, cachedState, functionCall } = req.params
@@ -461,7 +511,7 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
     end,
     ctx
 ) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { tvc, abi, workchain, publicKey, initParams } = req.params
@@ -481,7 +531,7 @@ const getExpectedAddress: ProviderMethod<'getExpectedAddress'> = async (
 }
 
 const getBocHash: ProviderMethod<'getBocHash'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { boc } = req.params
@@ -498,7 +548,7 @@ const getBocHash: ProviderMethod<'getBocHash'> = async (req, res, _next, end, ct
 }
 
 const packIntoCell: ProviderMethod<'packIntoCell'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { structure, data } = req.params
@@ -515,7 +565,7 @@ const packIntoCell: ProviderMethod<'packIntoCell'> = async (req, res, _next, end
 }
 
 const unpackFromCell: ProviderMethod<'unpackFromCell'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { structure, boc, allowPartial } = req.params
@@ -534,7 +584,7 @@ const unpackFromCell: ProviderMethod<'unpackFromCell'> = async (req, res, _next,
 }
 
 const extractPublicKey: ProviderMethod<'extractPublicKey'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { boc } = req.params
@@ -551,7 +601,7 @@ const extractPublicKey: ProviderMethod<'extractPublicKey'> = async (req, res, _n
 }
 
 const codeToTvc: ProviderMethod<'codeToTvc'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { code } = req.params
@@ -568,7 +618,7 @@ const codeToTvc: ProviderMethod<'codeToTvc'> = async (req, res, _next, end, ctx)
 }
 
 const splitTvc: ProviderMethod<'splitTvc'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { tvc } = req.params
@@ -589,7 +639,7 @@ const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
     end,
     ctx
 ) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     requireFunctionCall(req, req, 'params')
@@ -606,7 +656,7 @@ const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
 }
 
 const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { body, abi, method, internal } = req.params
@@ -624,7 +674,7 @@ const decodeInput: ProviderMethod<'decodeInput'> = async (req, res, _next, end, 
 }
 
 const decodeEvent: ProviderMethod<'decodeEvent'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { body, abi, event } = req.params
@@ -641,7 +691,7 @@ const decodeEvent: ProviderMethod<'decodeEvent'> = async (req, res, _next, end, 
 }
 
 const decodeOutput: ProviderMethod<'decodeOutput'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { body, abi, method } = req.params
@@ -664,7 +714,7 @@ const decodeTransaction: ProviderMethod<'decodeTransaction'> = async (
     end,
     ctx
 ) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { transaction, abi, method } = req.params
@@ -686,7 +736,7 @@ const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async
     end,
     ctx
 ) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { transaction, abi } = req.params
@@ -703,7 +753,7 @@ const decodeTransactionEvents: ProviderMethod<'decodeTransactionEvents'> = async
 }
 
 const verifySignature: ProviderMethod<'verifySignature'> = async (req, res, _next, end, ctx) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { publicKey, dataHash, signature } = req.params
@@ -728,7 +778,7 @@ const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'>
     end,
     ctx
 ) => {
-    requirePermissions(ctx, ['tonClient'])
+    requirePermissions(ctx, ['basic'])
     requireParams(req)
 
     const { recipient, stateInit, payload, local } = req.params
@@ -965,7 +1015,7 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
 
         try {
             const signedMessage = unsignedMessage.signFake()
-            return await wallet.estimateFees(signedMessage)
+            return await wallet.estimateFees(signedMessage, {})
         } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
@@ -1198,7 +1248,9 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     unsubscribeAll,
     getProviderState,
     getFullContractState,
+    getAccountsByCodeHash,
     getTransactions,
+    getTransaction,
     runLocal,
     getExpectedAddress,
     getBocHash,

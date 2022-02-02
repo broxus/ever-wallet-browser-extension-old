@@ -4,7 +4,7 @@ import {
     Permission,
     ProviderEvent,
     RawProviderEventData,
-} from 'ton-inpage-provider'
+} from 'everscale-inpage-provider'
 import { DomainMetadata, NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 
@@ -12,7 +12,7 @@ import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
 
 const POSSIBLE_PERMISSIONS: { [K in Permission]: true } = {
-    tonClient: true,
+    basic: true,
     accountInteraction: true,
 }
 
@@ -124,6 +124,7 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
 
     public async requestPermissions(origin: string, permissions: Permission[]) {
         const uniquePermissions = _.uniq(permissions)
+        this.fixPermissions(uniquePermissions)
 
         let existingPermissions = this.getPermissions(origin)
 
@@ -172,7 +173,25 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
     }
 
     public getPermissions(origin: string): Partial<RawPermissions> {
-        return this.state.permissions[origin] || {}
+        const result = this.state.permissions[origin] || {}
+        for (const key of Object.keys(result)) {
+            if (key === 'tonClient') {
+                const descriptor = Object.getOwnPropertyDescriptor(result, key)
+                if (descriptor != null) {
+                    Object.defineProperty(result, 'basic', descriptor)
+                }
+                delete (result as any)[key]
+            }
+        }
+        return result
+    }
+
+    public fixPermissions(permissions: Permission[]) {
+        for (let i = 0; i < permissions.length; ++i) {
+            if ((permissions[i] as any) === 'tonClient') {
+                permissions[i] = 'basic'
+            }
+        }
     }
 
     public async removeOrigin(origin: string) {

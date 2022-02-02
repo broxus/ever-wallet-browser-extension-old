@@ -3,7 +3,7 @@ import {
     RawPermissions,
     Permission,
     RawFunctionCall,
-} from 'ton-inpage-provider'
+} from 'everscale-inpage-provider'
 import * as nt from '@nekoton'
 
 export type WindowInfo = {
@@ -105,10 +105,12 @@ export interface Approval<T extends string, D> {
 }
 
 export type GqlSocketParams = {
-    // Path to graphql api endpoint, e.g. `https://main.ton.dev`
-    endpoint: string
-    // Request timeout in milliseconds
-    timeout: number
+    // Path to graphql api endpoints, e.g. `https://main.ton.dev`
+    endpoints: string[]
+    // Frequency of sync latency detection
+    latencyDetectionInterval: number
+    // Maximum value for the endpoint's blockchain data sync latency
+    maxLatency: number
     // Gql node type
     local: boolean
 }

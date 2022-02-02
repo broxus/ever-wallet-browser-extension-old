@@ -84,6 +84,7 @@ export function ManageSeed(): JSX.Element {
                                     name="seed_name"
                                     label="Enter seed name"
                                     type="text"
+                                    autocomplete="off"
                                     value={name || ''}
                                     onChange={(e) => setName(e.target.value)}
                                 />

@@ -1,5 +1,3 @@
-;(window as Record<string, any>).hasTonProvider = true
-
 import '../../polyfills'
 
 import endOfStream from 'end-of-stream'
@@ -30,16 +28,17 @@ const initialize = async () => {
 const setupController = async () => {
     console.log('Setup controller')
 
-    const controller = await NekotonController.load({
+    window.browser.runtime.onConnect.addListener(connectRemote)
+    window.browser.runtime.onConnectExternal.addListener(connectExternal)
+
+    let controller: NekotonController | undefined
+    const controllerPromise = NekotonController.load({
         windowManager,
         openExternalWindow: triggerUi,
         getOpenNekotonTabIds: () => {
             return openNekotonTabsIDs
         },
-    })
-
-    window.browser.runtime.onConnect.addListener(connectRemote)
-    window.browser.runtime.onConnectExternal.addListener(connectExternal)
+    }).then((createdController) => (controller = createdController))
 
     const nekotonInternalProcessHash: { [type: string]: true } = {
         [ENVIRONMENT_TYPE_POPUP]: true,
@@ -57,21 +56,34 @@ const setupController = async () => {
         if (isNekotonInternalProcess) {
             const portStream = new PortDuplexStream(remotePort)
 
-            remotePort.sender && controller.setupTrustedCommunication(portStream, remotePort.sender)
-
-            if (processName === ENVIRONMENT_TYPE_POPUP) {
-                popupIsOpen = true
-                endOfStream(portStream, () => (popupIsOpen = false))
-            } else if (processName === ENVIRONMENT_TYPE_NOTIFICATION) {
-                notificationIsOpen = true
-                endOfStream(portStream, () => (notificationIsOpen = false))
-            } else if (processName === ENVIRONMENT_TYPE_FULLSCREEN) {
-                const tabId = remotePort.sender?.tab?.id
-                if (tabId != null) {
-                    openNekotonTabsIDs[tabId] = true
+            const proceedConnect = () => {
+                if (processName === ENVIRONMENT_TYPE_POPUP) {
+                    popupIsOpen = true
+                    endOfStream(portStream, () => (popupIsOpen = false))
+                } else if (processName === ENVIRONMENT_TYPE_NOTIFICATION) {
+                    notificationIsOpen = true
+                    endOfStream(portStream, () => (notificationIsOpen = false))
+                } else if (processName === ENVIRONMENT_TYPE_FULLSCREEN) {
+                    const tabId = remotePort.sender?.tab?.id
+                    if (tabId != null) {
+                        openNekotonTabsIDs[tabId] = true
+                    }
+                    endOfStream(portStream, () => {
+                        tabId != null && delete openNekotonTabsIDs[tabId]
+                    })
                 }
-                endOfStream(portStream, () => {
-                    tabId != null && delete openNekotonTabsIDs[tabId]
+            }
+
+            if (remotePort.sender == null) {
+                proceedConnect()
+            } else if (controller) {
+                controller.setupTrustedCommunication(portStream, remotePort.sender)
+                proceedConnect()
+            } else {
+                const sender = remotePort.sender
+                controllerPromise.then((controller) => {
+                    controller.setupTrustedCommunication(portStream, sender)
+                    proceedConnect()
                 })
             }
         } else {
@@ -82,7 +94,14 @@ const setupController = async () => {
     function connectExternal(remotePort: browser.Runtime.Port) {
         console.debug('connectExternal')
         const portStream = new PortDuplexStream(remotePort)
-        remotePort.sender && controller.setupUntrustedCommunication(portStream, remotePort.sender)
+        if (remotePort.sender && controller) {
+            controller.setupUntrustedCommunication(portStream, remotePort.sender)
+        } else if (remotePort.sender) {
+            const sender = remotePort.sender
+            controllerPromise.then((controller) => {
+                controller.setupUntrustedCommunication(portStream, sender)
+            })
+        }
     }
 }
 

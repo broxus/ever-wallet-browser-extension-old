@@ -1,6 +1,6 @@
 import _ from 'lodash'
 import { Mutex } from '@broxus/await-semaphore'
-import { mergeTransactions } from 'ton-inpage-provider'
+import { mergeTransactions } from 'everscale-inpage-provider'
 import {
     AggregatedMultisigTransactionInfo,
     AggregatedMultisigTransactions,
@@ -803,7 +803,11 @@ export class AccountController extends BaseController<
         return this.config.keyStore.check_password(password)
     }
 
-    public async estimateFees(address: string, params: TransferMessageToPrepare) {
+    public async estimateFees(
+        address: string,
+        params: TransferMessageToPrepare,
+        executionOptions: nt.TransactionExecutionOptions
+    ) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -834,7 +838,7 @@ export class AccountController extends BaseController<
 
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(signedMessage)
+                return await wallet.estimateFees(signedMessage, executionOptions)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -865,7 +869,7 @@ export class AccountController extends BaseController<
 
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(signedMessage)
+                return await wallet.estimateFees(signedMessage, {})
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
@@ -874,7 +878,7 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async estimateDeploymentFees(address: string) {
+    public async estimateDeploymentFees(address: string): Promise<string> {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -890,8 +894,11 @@ export class AccountController extends BaseController<
             const unsignedMessage = wallet.prepareDeploy(60)
             try {
                 const signedMessage = unsignedMessage.signFake()
-                return await wallet.estimateFees(signedMessage)
+                return await wallet.estimateFees(signedMessage, {
+                    overrideBalance: '100000000000',
+                })
             } catch (e: any) {
+                console.error(e)
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
             } finally {
                 unsignedMessage.free()
@@ -1556,14 +1563,34 @@ export class AccountController extends BaseController<
                 const value = extractTransactionValue(transaction)
                 const { address, direction } = extractTransactionAddress(transaction)
 
+                let title = 'New transaction found'
+                if (
+                    transaction.info?.type === 'wallet_interaction' &&
+                    transaction.info.data.method.type == 'multisig'
+                ) {
+                    switch (transaction.info.data.method.data.type) {
+                        case 'confirm': {
+                            title = 'Multisig transaction confirmation'
+                            break
+                        }
+                        case 'submit': {
+                            title = 'New multisig transaction found'
+                            break
+                        }
+                        default: {
+                            break
+                        }
+                    }
+                }
+
                 const body = `${convertTons(
                     value.toString()
                 )} ${NATIVE_CURRENCY} ${direction} ${convertAddress(address)}`
 
                 this.config.notificationController.showNotification({
-                    title: `New transaction found`,
+                    title,
                     body,
-                    link: `https://tonscan.com/transactions/${transaction.id.hash}`,
+                    link: `https://tonscan.io/transactions/${transaction.id.hash}`,
                 })
             }
         }

@@ -47,6 +47,10 @@
                     cursor: pointer;
                     opacity: 0.64;
                     padding-left: 16px;
+
+                    &:active {
+                        cursor: copy;
+                    }
                 }
             }
         }

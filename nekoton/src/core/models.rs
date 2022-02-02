@@ -793,6 +793,70 @@ pub fn parse_last_transaction_id(
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const TRANSACTION_EXECUTOR_OPTIONS: &str = r#"
+export type TransactionExecutionOptions = {
+    disableSignatureCheck?: boolean;
+    overrideBalance?: string;
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TransactionExecutionOptions")]
+    pub type TransactionExecutionOptions;
+}
+
+pub fn make_transaction_executor_options(
+    data: nt::core::TransactionExecutionOptions,
+) -> TransactionExecutionOptions {
+    ObjectBuilder::new()
+        .set("disableSignatureCheck", data.disable_signature_check)
+        .set(
+            "overrideBalance",
+            data.override_balance.as_ref().map(ToString::to_string),
+        )
+        .build()
+        .unchecked_into()
+}
+
+pub fn parse_transaction_executor_options(
+    data: TransactionExecutionOptions,
+) -> Result<nt::core::TransactionExecutionOptions, JsValue> {
+    let disable_signature_check =
+        match js_sys::Reflect::get(&data, &JsValue::from_str("disableSignatureCheck")) {
+            Ok(value) => {
+                if let Some(value) = value.as_bool() {
+                    value
+                } else if value.is_undefined() || value.is_null() {
+                    true
+                } else {
+                    return Err(ModelError::InvalidTransactionExecutionOptions).handle_error();
+                }
+            }
+            _ => return Err(ModelError::InvalidTransactionExecutionOptions).handle_error(),
+        };
+
+    let override_balance = match js_sys::Reflect::get(&data, &JsValue::from_str("overrideBalance"))
+    {
+        Ok(value) => {
+            if let Some(value) = value.as_string() {
+                Some(u64::from_str(&value).handle_error()?)
+            } else if value.is_undefined() || value.is_null() {
+                None
+            } else {
+                return Err(ModelError::InvalidTransactionExecutionOptions).handle_error();
+            }
+        }
+        _ => return Err(ModelError::InvalidTransactionExecutionOptions).handle_error(),
+    };
+
+    Ok(nt::core::TransactionExecutionOptions {
+        disable_signature_check,
+        override_balance,
+    })
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const TRANSACTION_ID: &str = r#"
 export type TransactionId = {
     lt: string,
@@ -854,4 +918,6 @@ enum ModelError {
     InvalidLastTransactionId,
     #[error("Invalid transaction id")]
     InvalidTransactionId,
+    #[error("Invalid transaction execution options")]
+    InvalidTransactionExecutionOptions,
 }

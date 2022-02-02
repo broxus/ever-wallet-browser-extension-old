@@ -78,7 +78,7 @@ export function SendPage(): JSX.Element | null {
                 tonWalletState={tonWalletState}
                 tokenWalletStates={tokenWalletStates}
                 knownTokens={knownTokens}
-                estimateFees={async (params) => await rpc.estimateFees(accountAddress, params)}
+                estimateFees={async (params) => await rpc.estimateFees(accountAddress, params, {})}
                 prepareMessage={async (params, password) =>
                     rpc.prepareTransferMessage(accountAddress, params, password)
                 }

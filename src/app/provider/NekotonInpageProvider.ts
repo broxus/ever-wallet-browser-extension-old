@@ -42,14 +42,8 @@ export interface RequestArguments {
     params?: unknown[] | Record<string, unknown>
 }
 
-interface InternalState {
-    isConnected: boolean
-    isPermanentlyDisconnected: boolean
-}
-
 export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
     private readonly _log: ConsoleLike
-    private _state: InternalState
     private _rpcEngine: JsonRpcEngine
 
     constructor(
@@ -71,11 +65,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
 
         this.setMaxListeners(maxEventListeners)
 
-        this._state = {
-            isConnected: false,
-            isPermanentlyDisconnected: false,
-        }
-
         const mux = new ObjectMultiplex()
         pump(
             connectionStream,
@@ -83,10 +72,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
             connectionStream,
             this._handleStreamDisconnect.bind(this, 'Nekoton')
         )
-
-        this.on('connect', () => {
-            this._state.isConnected = true
-        })
 
         const jsonRpcConnection = createStreamMiddleware()
         pump(
@@ -123,10 +108,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
             }
             window.addEventListener('DOMContentLoaded', domContentLoadedHandler)
         }
-    }
-
-    get isConnected(): boolean {
-        return this._state.isConnected
     }
 
     public async request<T>(args: RequestArguments): Promise<Maybe<T>> {
@@ -194,9 +175,6 @@ export class NekotonInpageProvider<S extends Duplex> extends SafeEventEmitter {
             if (!payload.jsonrpc) {
                 payload.jsonrpc = '2.0'
             }
-
-            // TODO: handle static request
-
             return this._rpcEngine.handle(payload as JsonRpcRequest<unknown>, cb)
         }
         return this._rpcEngine.handle(payload as JsonRpcRequest<unknown>[], cb)

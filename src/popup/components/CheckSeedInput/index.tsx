@@ -21,6 +21,7 @@ const CheckSeedInput = React.forwardRef<HTMLInputElement, Props>(
                     label="Enter the word"
                     className="check-seed__input-placeholder"
                     autoFocus={autoFocus}
+                    autocomplete="off"
                     type="text"
                     name={name}
                     ref={ref}
