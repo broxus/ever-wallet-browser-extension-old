@@ -20,15 +20,22 @@ pub fn run_local(
     contract_abi: &str,
     method: &str,
     input: TokensObject,
+    responsible: bool,
 ) -> Result<ExecutionOutput, JsValue> {
     let account_stuff = parse_account_stuff(account_stuff_boc)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
     let method = contract_abi.function(method).handle_error()?;
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
-    let output = method
-        .run_local(clock.inner.as_ref(), account_stuff, &input)
-        .handle_error()?;
+    let output = if responsible {
+        method
+            .run_local_responsible(clock.inner.as_ref(), account_stuff, &input)
+            .handle_error()?
+    } else {
+        method
+            .run_local(clock.inner.as_ref(), account_stuff, &input)
+            .handle_error()?
+    };
 
     make_execution_output(&output)
 }

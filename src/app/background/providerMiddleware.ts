@@ -462,9 +462,10 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requirePermissions(ctx, ['basic'])
     requireParams(req)
 
-    const { address, cachedState, functionCall } = req.params
+    const { address, cachedState, responsible, functionCall } = req.params
     requireString(req, req.params, 'address')
     requireOptional(req, req.params, 'cachedState', requireContractState)
+    requireOptionalBoolean(req, req.params, 'responsible')
     requireFunctionCall(req, req.params, 'functionCall')
 
     const { clock, connectionController } = ctx
@@ -490,7 +491,8 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
             contractState.boc,
             functionCall.abi,
             functionCall.method,
-            functionCall.params
+            functionCall.params,
+            responsible || false
         )
 
         res.result = {
