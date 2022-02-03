@@ -487,7 +487,6 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     try {
         const { output, code } = nt.runLocal(
             clock,
-            contractState.lastTransactionId,
             contractState.boc,
             functionCall.abi,
             functionCall.method,

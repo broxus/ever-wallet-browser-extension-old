@@ -323,7 +323,6 @@ export class NekotonController extends EventEmitter {
             prepareConfirmMessage: nodeifyAsync(accountController, 'prepareConfirmMessage'),
             prepareDeploymentMessage: nodeifyAsync(accountController, 'prepareDeploymentMessage'),
             prepareTokenMessage: nodeifyAsync(accountController, 'prepareTokenMessage'),
-            prepareSwapBackMessage: nodeifyAsync(accountController, 'prepareSwapBackMessage'),
             sendMessage: nodeifyAsync(accountController, 'sendMessage'),
             preloadTransactions: nodeifyAsync(accountController, 'preloadTransactions'),
             preloadTokenTransactions: nodeifyAsync(accountController, 'preloadTokenTransactions'),

@@ -1057,31 +1057,6 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async prepareSwapBackMessage(
-        owner: string,
-        rootTokenContract: string,
-        params: SwapBackMessageToPrepare
-    ) {
-        const subscription = await this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
-        requireTokenWalletSubscription(owner, rootTokenContract, subscription)
-
-        return subscription.use(async (wallet) => {
-            if (params.proxyAddress == null) {
-                params.proxyAddress = await wallet.getProxyAddress()
-            }
-
-            try {
-                return await wallet.prepareSwapBack(
-                    params.ethAddress,
-                    params.amount,
-                    params.proxyAddress
-                )
-            } catch (e: any) {
-                throw new NekotonRpcError(RpcErrorCode.INTERNAL, e.toString())
-            }
-        })
-    }
-
     public async signData(data: string, password: nt.KeyPassword) {
         return this.config.keyStore.signData(data, password)
     }

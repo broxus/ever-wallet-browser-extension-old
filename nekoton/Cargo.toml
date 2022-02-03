@@ -46,12 +46,15 @@ ton_types = { git = "https://github.com/broxus/ton-labs-types.git" }
 [dependencies.nt]
 package = "nekoton"
 git = "https://github.com/broxus/nekoton.git"
+branch = "feature/new-tip3"
 features = ["web", "gql_transport", "jrpc_transport"]
 
 [dependencies.nt_utils]
 package = "nekoton-utils"
+branch = "feature/new-tip3"
 git = "https://github.com/broxus/nekoton.git"
 
 [dependencies.nt_abi]
 package = "nekoton-abi"
+branch = "feature/new-tip3"
 git = "https://github.com/broxus/nekoton.git"

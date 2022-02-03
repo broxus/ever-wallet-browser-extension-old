@@ -71,15 +71,6 @@ impl TokenWallet {
         self.inner.wallet.lock().trust_me().balance().to_string()
     }
 
-    #[wasm_bindgen(js_name = "prepareDeploy")]
-    pub fn prepare_deploy(&self) -> Result<crate::core::InternalMessage, JsValue> {
-        let wallet = self.inner.wallet.lock().trust_me();
-        wallet
-            .prepare_deploy()
-            .handle_error()
-            .and_then(crate::core::make_internal_message)
-    }
-
     #[wasm_bindgen(js_name = "prepareTransfer")]
     pub fn prepare_transfer(
         &self,
@@ -113,41 +104,6 @@ impl TokenWallet {
 
             crate::core::make_internal_message(message).map(JsValue::from)
         })))
-    }
-
-    #[wasm_bindgen(js_name = "prepareSwapBack")]
-    pub fn prepare_swap_back(
-        &self,
-        dest: String,
-        tokens: &str,
-        proxy_address: &str,
-    ) -> Result<PromiseInternalMessage, JsValue> {
-        let tokens = BigUint::from_str(tokens).handle_error()?;
-        let proxy_address = parse_address(proxy_address)?;
-
-        let inner = self.inner.clone();
-
-        Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let wallet = inner.wallet.lock().trust_me();
-
-            let message = wallet
-                .prepare_swap_back(dest, tokens, proxy_address)
-                .handle_error()?;
-
-            crate::core::make_internal_message(message).map(JsValue::from)
-        })))
-    }
-
-    #[wasm_bindgen(js_name = "getProxyAddress")]
-    pub fn get_proxy_address(&self) -> PromiseString {
-        let inner = self.inner.clone();
-
-        JsCast::unchecked_into(future_to_promise(async move {
-            let wallet = inner.wallet.lock().trust_me();
-
-            let address = wallet.get_proxy_address().await.handle_error()?;
-            Ok(JsValue::from(address.to_string()))
-        }))
     }
 
     #[wasm_bindgen(js_name = "refresh")]
@@ -405,7 +361,7 @@ pub async fn get_token_root_details_with_user_token_wallet(
 
     let details = root_contract_state.guess_details(clock).handle_error()?;
     let token_wallet = root_contract_state
-        .get_wallet_address(clock, details.version, owner, None)
+        .get_wallet_address(clock, details.version, owner)
         .handle_error()?;
 
     Ok(
