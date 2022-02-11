@@ -13,6 +13,12 @@ use nt_utils::TrustMe;
 
 use crate::utils::*;
 
+#[wasm_bindgen(js_name = "checkPublicKey")]
+pub fn check_public_key(public_key: &str) -> Result<(), JsValue> {
+    parse_public_key(public_key)?;
+    Ok(())
+}
+
 #[wasm_bindgen(js_name = "runLocal")]
 pub fn run_local(
     clock: &ClockWithOffset,

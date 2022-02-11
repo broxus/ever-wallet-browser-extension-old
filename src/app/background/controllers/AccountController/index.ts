@@ -1072,6 +1072,19 @@ export class AccountController extends BaseController<
         return this.config.keyStore.sign(unsignedMessage, password)
     }
 
+    public async encryptData(
+        data: string,
+        recipientPublicKeys: string[],
+        algorithm: nt.EncryptionAlgorithm,
+        password: nt.KeyPassword
+    ) {
+        return this.config.keyStore.encryptData(data, recipientPublicKeys, algorithm, password)
+    }
+
+    public async decryptData(data: nt.EncryptedData, password: nt.KeyPassword) {
+        return this.config.keyStore.decryptData(data, password)
+    }
+
     public async sendMessage(address: string, { signedMessage, info }: WalletMessageToSend) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)

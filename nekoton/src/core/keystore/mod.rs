@@ -341,6 +341,52 @@ impl KeyStore {
         })))
     }
 
+    #[wasm_bindgen(js_name = "encryptData")]
+    pub fn encrypt_data(
+        &self,
+        data: &str,
+        public_keys: PublicKeysList,
+        algorithm: &str,
+        key_password: JsKeyPassword,
+    ) -> Result<PromiseEncryptedData, JsValue> {
+        use std::str::FromStr;
+
+        let inner = self.inner.clone();
+        let data = base64::decode(data).handle_error()?;
+        let public_keys = parse_public_key_list(public_keys)?;
+        let algorithm = nt::crypto::EncryptionAlgorithm::from_str(algorithm).handle_error()?;
+        let key_password =
+            JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(
+                encrypt_data(&inner, &data, key_password, &public_keys, algorithm)
+                    .await?
+                    .into_iter()
+                    .map(|data| make_encrypted_data(data).unchecked_into::<JsValue>())
+                    .collect::<js_sys::Array>()
+                    .unchecked_into(),
+            )
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "decryptData")]
+    pub fn decrypt_data(
+        &self,
+        data: EncryptedData,
+        key_password: JsKeyPassword,
+    ) -> Result<PromiseString, JsValue> {
+        let inner = self.inner.clone();
+        let data = parse_encrypted_data(data)?;
+        let key_password =
+            JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let data = decrypt_data(&inner, data, key_password).await?;
+            Ok(JsValue::from(base64::encode(data)).unchecked_into())
+        })))
+    }
+
     #[wasm_bindgen]
     pub fn sign(
         &self,
@@ -481,8 +527,105 @@ async fn sign_data(
     .handle_error()
 }
 
+async fn encrypt_data(
+    key_store: &nt::core::keystore::KeyStore,
+    data: &[u8],
+    key_password: ParsedKeyPassword,
+    public_keys: &[ed25519_dalek::PublicKey],
+    algorithm: nt::crypto::EncryptionAlgorithm,
+) -> Result<Vec<nt::crypto::EncryptedData>, JsValue> {
+    use nt::crypto::*;
+
+    match key_password {
+        ParsedKeyPassword::MasterKey {
+            master_key,
+            public_key,
+            password,
+        } => {
+            let input = DerivedKeySignParams::ByPublicKey {
+                master_key: parse_public_key(&public_key)?,
+                public_key: parse_public_key(&master_key)?,
+                password: explicit_password(password),
+            };
+            key_store
+                .encrypt::<DerivedKeySigner>(data, public_keys, algorithm, input)
+                .await
+        }
+        ParsedKeyPassword::EncryptedKey {
+            public_key,
+            password,
+        } => {
+            let input = EncryptedKeyPassword {
+                public_key: parse_public_key(&public_key)?,
+                password: explicit_password(password),
+            };
+            key_store
+                .encrypt::<EncryptedKeySigner>(data, public_keys, algorithm, input)
+                .await
+        }
+        ParsedKeyPassword::LedgerKey { public_key } => {
+            let input = LedgerKeyPublic {
+                public_key: parse_public_key(&public_key)?,
+            };
+            key_store
+                .encrypt::<LedgerKeySigner>(data, public_keys, algorithm, input)
+                .await
+        }
+    }
+    .handle_error()
+}
+
+async fn decrypt_data(
+    key_store: &nt::core::keystore::KeyStore,
+    data: nt::crypto::EncryptedData,
+    key_password: ParsedKeyPassword,
+) -> Result<Vec<u8>, JsValue> {
+    use nt::crypto::*;
+
+    match key_password {
+        ParsedKeyPassword::MasterKey {
+            master_key,
+            public_key,
+            password,
+        } => {
+            let input = DerivedKeySignParams::ByPublicKey {
+                master_key: parse_public_key(&public_key)?,
+                public_key: parse_public_key(&master_key)?,
+                password: explicit_password(password),
+            };
+            key_store.decrypt::<DerivedKeySigner>(&data, input).await
+        }
+        ParsedKeyPassword::EncryptedKey {
+            public_key,
+            password,
+        } => {
+            let input = EncryptedKeyPassword {
+                public_key: parse_public_key(&public_key)?,
+                password: explicit_password(password),
+            };
+            key_store.decrypt::<EncryptedKeySigner>(&data, input).await
+        }
+        ParsedKeyPassword::LedgerKey { public_key } => {
+            let input = LedgerKeyPublic {
+                public_key: parse_public_key(&public_key)?,
+            };
+            key_store.decrypt::<LedgerKeySigner>(&data, input).await
+        }
+    }
+    .handle_error()
+}
+
 #[wasm_bindgen]
 extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<Array<EncryptedData>>")]
+    pub type PromiseEncryptedData;
+
+    #[wasm_bindgen(typescript_type = "EncryptedData")]
+    pub type EncryptedData;
+
+    #[wasm_bindgen(typescript_type = "Array<string>")]
+    pub type PublicKeysList;
+
     #[wasm_bindgen(typescript_type = "Promise<SignedMessage>")]
     pub type PromiseSignedMessage;
 
@@ -503,6 +646,69 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<KeyStore>")]
     pub type PromiseKeyStore;
+}
+
+fn parse_public_key_list(
+    public_keys: PublicKeysList,
+) -> Result<Vec<ed25519_dalek::PublicKey>, JsValue> {
+    let public_keys: JsValue = public_keys.unchecked_into();
+    if !js_sys::Array::is_array(&public_keys) {
+        return Err("Public keys array expected").handle_error()?;
+    }
+    let public_keys: js_sys::Array = public_keys.unchecked_into();
+
+    let mut result = Vec::with_capacity(public_keys.length() as usize);
+    for public_key in public_keys.iter() {
+        match public_key.as_string() {
+            Some(public_key) => result.push(parse_public_key(&public_key)?),
+            None => return Err("Invalid public key").handle_error(),
+        }
+    }
+
+    Ok(result)
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const ENCRYPTION_ALGORITHM: &str = r#"
+export type EncryptionAlgorithm =
+    | 'ChaCha20Poly1305';
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+const ENCRYPTED_DATA: &str = r#"
+export type EncryptedData = {
+    algorithm: EncryptionAlgorithm;
+    sourcePublicKey: string;
+    recipientPublicKey: string;
+    data: string;
+    nonce: string;
+};
+"#;
+
+pub fn parse_encrypted_data(data: EncryptedData) -> Result<nt::crypto::EncryptedData, JsValue> {
+    JsValue::into_serde::<nt::crypto::EncryptedData>(&data).handle_error()
+}
+
+pub fn make_encrypted_data(encrypted_data: nt::crypto::EncryptedData) -> EncryptedData {
+    ObjectBuilder::new()
+        .set(
+            "algorithm",
+            match encrypted_data.algorithm {
+                nt::crypto::EncryptionAlgorithm::ChaCha20Poly1305 => "ChaCha20Poly1305",
+            },
+        )
+        .set(
+            "sourcePublicKey",
+            hex::encode(encrypted_data.source_public_key.as_bytes()),
+        )
+        .set(
+            "recipientPublicKey",
+            hex::encode(encrypted_data.recipient_public_key.as_bytes()),
+        )
+        .set("data", base64::encode(encrypted_data.data))
+        .set("nonce", base64::encode(encrypted_data.nonce))
+        .build()
+        .unchecked_into()
 }
 
 const DERIVED_SIGNER: &str = "master_key";

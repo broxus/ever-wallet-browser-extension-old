@@ -152,6 +152,20 @@ export type ApprovalApi = {
         }
         output: nt.KeyPassword
     }
+    encryptData: {
+        input: {
+            publicKey: string
+            data: string
+        }
+        output: nt.KeyPassword
+    }
+    decryptData: {
+        input: {
+            publicKey: string
+            sourcePublicKey: string
+        }
+        output: nt.KeyPassword
+    }
     callContractMethod: {
         input: {
             publicKey: string
