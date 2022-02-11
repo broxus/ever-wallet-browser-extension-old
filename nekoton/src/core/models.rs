@@ -454,6 +454,7 @@ export type ContractState = {
     genTimings: GenTimings,
     lastTransactionId?: LastTransactionId,
     isDeployed: boolean,
+    codeHash?: string,
 };
 "#;
 
@@ -472,6 +473,12 @@ pub fn make_contract_state(data: models::ContractState) -> ContractState {
             data.last_transaction_id.map(make_last_transaction_id),
         )
         .set("isDeployed", data.is_deployed)
+        .set(
+            "codeHash",
+            data.code_hash
+                .as_ref()
+                .map(ton_types::UInt256::to_hex_string),
+        )
         .build()
         .unchecked_into()
 }

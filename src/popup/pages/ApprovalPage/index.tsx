@@ -4,6 +4,7 @@ import { ApproveContractInteraction } from '@popup/components/Approvals/ApproveC
 import { ApproveRequestPermissions } from '@popup/components/Approvals/ApproveRequestPermissions'
 import { ApproveChangeAccount } from '@popup/components/Approvals/ApproveChangeAccount'
 import { ApproveSendMessage } from '@popup/components/Approvals/ApproveSendMessage'
+import { ApproveEncryptData } from '@popup/components/Approvals/ApproveEncryptData'
 import { ApproveSignData } from '@popup/components/Approvals/ApproveSignData'
 import ApproveAddAsset from '@popup/components/Approvals/ApproveAddAsset'
 import { useRpc } from '@popup/providers/RpcProvider'
@@ -16,6 +17,7 @@ import Right from '@popup/img/right-arrow-blue.svg'
 import Left from '@popup/img/left-arrow-blue.svg'
 
 import './style.scss'
+import { ApproveDecryptData } from '@popup/components/Approvals/ApproveDecryptData'
 
 const rejectedByUser = serializeError(
     new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, 'Rejected by user')
@@ -120,6 +122,26 @@ export function ApprovalPage(): JSX.Element | null {
                 />
             ) : approval.type === 'signData' ? (
                 <ApproveSignData
+                    key={approval.id}
+                    approval={approval}
+                    accountEntries={rpcState.state.accountEntries}
+                    storedKeys={rpcState.state.storedKeys}
+                    checkPassword={rpc.checkPassword}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
+                />
+            ) : approval.type === 'encryptData' ? (
+                <ApproveEncryptData
+                    key={approval.id}
+                    approval={approval}
+                    accountEntries={rpcState.state.accountEntries}
+                    storedKeys={rpcState.state.storedKeys}
+                    checkPassword={rpc.checkPassword}
+                    onSubmit={resolvePendingApproval}
+                    onReject={rejectPendingApproval}
+                />
+            ) : approval.type === 'decryptData' ? (
+                <ApproveDecryptData
                     key={approval.id}
                     approval={approval}
                     accountEntries={rpcState.state.accountEntries}

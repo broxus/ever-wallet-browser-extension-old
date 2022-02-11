@@ -462,9 +462,10 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     requirePermissions(ctx, ['basic'])
     requireParams(req)
 
-    const { address, cachedState, functionCall } = req.params
+    const { address, cachedState, responsible, functionCall } = req.params
     requireString(req, req.params, 'address')
     requireOptional(req, req.params, 'cachedState', requireContractState)
+    requireOptionalBoolean(req, req.params, 'responsible')
     requireFunctionCall(req, req.params, 'functionCall')
 
     const { clock, connectionController } = ctx
@@ -487,11 +488,11 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
     try {
         const { output, code } = nt.runLocal(
             clock,
-            contractState.lastTransactionId,
             contractState.boc,
             functionCall.abi,
             functionCall.method,
-            functionCall.params
+            functionCall.params,
+            responsible || false
         )
 
         res.result = {
@@ -954,6 +955,89 @@ const signDataRaw: ProviderMethod<'signDataRaw'> = async (req, res, _next, end, 
     }
 }
 
+const encryptData: ProviderMethod<'encryptData'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { publicKey, recipientPublicKeys, algorithm, data } = req.params
+    requireString(req, req.params, 'publicKey')
+    requireArray(req, req.params, 'recipientPublicKeys')
+    requireString(req, req.params, 'algorithm')
+    requireString(req, req.params, 'data')
+
+    const { origin, approvalController, accountController, permissionsController } = ctx
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified encryptor public key is not allowed')
+    }
+
+    const password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        type: 'encryptData',
+        requestData: {
+            publicKey,
+            data,
+        },
+    })
+
+    try {
+        res.result = {
+            encryptedData: await accountController.encryptData(
+                data,
+                recipientPublicKeys,
+                algorithm,
+                password
+            ),
+        }
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
+const decryptData: ProviderMethod<'decryptData'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { encryptedData } = req.params
+    requireObject(req, req.params, 'encryptedData')
+    requireString(req, encryptedData, 'algorithm')
+    requireString(req, encryptedData, 'sourcePublicKey')
+    requireString(req, encryptedData, 'recipientPublicKey')
+    requireString(req, encryptedData, 'data')
+    requireString(req, encryptedData, 'nonce')
+
+    const { origin, approvalController, accountController, permissionsController } = ctx
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != encryptedData.recipientPublicKey) {
+        throw invalidRequest(req, 'Specified recipient public key is not allowed')
+    }
+
+    try {
+        nt.checkPublicKey(encryptedData.sourcePublicKey)
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    const password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        type: 'decryptData',
+        requestData: {
+            publicKey: allowedAccount.publicKey,
+            sourcePublicKey: encryptedData.sourcePublicKey,
+        },
+    })
+
+    try {
+        res.result = {
+            data: await accountController.decryptData(encryptedData, password),
+        }
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
@@ -1270,6 +1354,8 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     addAsset,
     signData,
     signDataRaw,
+    encryptData,
+    decryptData,
     estimateFees,
     sendMessage,
     sendExternalMessage,
