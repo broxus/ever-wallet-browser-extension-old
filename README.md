@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.26 (2022-02-11)
+
+Features
+
+* Added support for new TIP3.1 tokens standard
+* Added `encryptData` and `decryptData` methods to provider api
+
 ### 0.2.25 (2022-01-08)
 
 Features
