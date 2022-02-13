@@ -109,6 +109,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
 
     const currencyName = selectedAsset.type === 'ton_wallet' ? NATIVE_CURRENCY : symbol?.name
     const decimals = selectedAsset.type === 'ton_wallet' ? 9 : symbol?.decimals
+    const old = selectedAsset.type === 'token_wallet' && symbol?.version != 'Tip3'
 
     const preloadTransactions = React.useCallback(
         ({ lt, hash }) => {
@@ -179,6 +180,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                                 ? selectedAsset.data.address
                                 : selectedAsset.data.rootTokenContract
                         }
+                        old={old}
                         className="asset-full__info__icon"
                     />
                     <div className="asset-full__info-token">

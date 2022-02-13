@@ -152,6 +152,7 @@ const ApproveAddAsset: React.FC<Props> = ({
                                 <AssetIcon
                                     type={'token_wallet'}
                                     address={details.address}
+                                    old={details.version != 'Tip3'}
                                     className="root-token-icon noselect"
                                 />
                                 <div className="root-token-name">{details.name}</div>

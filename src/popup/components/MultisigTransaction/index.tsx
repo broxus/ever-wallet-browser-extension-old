@@ -68,6 +68,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
         symbol: string
         decimals: number
         rootTokenContract: string
+        old: boolean
     }>()
 
     React.useEffect(() => {
@@ -87,6 +88,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     symbol: details.symbol,
                     decimals: details.decimals,
                     rootTokenContract: details.address,
+                    old: details.version != 'Tip3',
                 })
             })
             .catch(() => {
@@ -230,6 +232,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                           decimals: parsedTokenTransaction.decimals,
                                           rootTokenContract:
                                               parsedTokenTransaction.rootTokenContract,
+                                          old: parsedTokenTransaction.old,
                                       },
                                   }
                         }
@@ -312,6 +315,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                                     <AssetIcon
                                         type={'token_wallet'}
                                         address={parsedTokenTransaction.rootTokenContract}
+                                        old={parsedTokenTransaction.old}
                                         className="root-token-icon noselect"
                                     />
                                     {convertCurrency(

@@ -114,12 +114,12 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                 onViewTransaction(transaction)
             }}
         >
-            <div className="transactions-list-item__logo">
-                <AssetIcon
-                    type={symbol == null ? 'ton_wallet' : 'token_wallet'}
-                    address={symbol?.rootTokenContract || transaction.inMessage.dst!}
-                />
-            </div>
+            <AssetIcon
+                type={symbol == null ? 'ton_wallet' : 'token_wallet'}
+                address={symbol?.rootTokenContract || transaction.inMessage.dst!}
+                old={symbol != null && symbol.version != 'Tip3'}
+                className="transactions-list-item__logo"
+            />
 
             <div className="transactions-list-item__scope">
                 <div className="transactions-list-item__amount">

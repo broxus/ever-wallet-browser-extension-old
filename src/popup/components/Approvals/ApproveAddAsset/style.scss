@@ -9,6 +9,14 @@
             width: 24px;
             height: 24px;
             margin-right: 12px;
+
+            .outdated-asset-badge::before {
+                content: '';
+                height: 8px;
+                width: 8px;
+                top: -8px;
+                border-radius: 50%;
+            }
         }
 
         .root-token-name {

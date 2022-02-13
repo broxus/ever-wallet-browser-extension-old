@@ -13,7 +13,7 @@ import Modal from '@popup/components/Modal'
 import { parseError } from '@popup/utils'
 
 enum LocalStep {
-    SIGN_POLICY,
+    // SIGN_POLICY,
     SELECT_CONTRACT_TYPE,
     SHOW_PHRASE,
     CHECK_PHRASE,
@@ -36,7 +36,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
     onBack,
 }) => {
     const [inProcess, setInProcess] = useState<boolean>(false)
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SIGN_POLICY)
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_CONTRACT_TYPE) // LocalStep.SIGN_POLICY
     const [error, setError] = useState<string>()
 
     const seed = useState<nt.GeneratedMnemonic>(generateSeed())[0]
@@ -65,14 +65,14 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
 
     return (
         <>
-            {localStep == LocalStep.SIGN_POLICY && (
-                <SignPolicy
-                    onSubmit={() => {
-                        setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
-                    }}
-                    onBack={onBack}
-                />
-            )}
+            {/*{localStep == LocalStep.SIGN_POLICY && (*/}
+            {/*    <SignPolicy*/}
+            {/*        onSubmit={() => {*/}
+            {/*            setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)*/}
+            {/*        }}*/}
+            {/*        onBack={onBack}*/}
+            {/*    />*/}
+            {/*)}*/}
             {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
                 <SelectContractType
                     onSubmit={(contractType) => {

@@ -31,9 +31,7 @@ export function MessageItem({ tonWalletAsset, message, style }: Props): JSX.Elem
 
     return (
         <div className="transactions-list-item" style={style}>
-            <div className="transactions-list-item__logo">
-                <AssetIcon address={''} type="ton_wallet" />
-            </div>
+            <AssetIcon address={''} type="ton_wallet" className="transactions-list-item__logo" />
 
             <div className="transactions-list-item__scope">
                 {amount != null && (
