@@ -46,14 +46,14 @@ impl TokenWallet {
 #[wasm_bindgen]
 impl TokenWallet {
     #[wasm_bindgen(getter)]
-    pub fn version(&self) -> String {
-        self.version.clone()
+    pub fn version(&self) -> crate::core::models::TokenWalletVersion {
+        JsValue::from(&self.version).unchecked_into()
     }
 
     #[wasm_bindgen(getter)]
     pub fn symbol(&self) -> crate::core::models::Symbol {
         use crate::core::models::*;
-        make_symbol(self.symbol.clone())
+        make_symbol(self.symbol.clone(), &self.version)
     }
 
     #[wasm_bindgen(getter)]
@@ -314,6 +314,7 @@ export type RootTokenContractDetailsWithAddress = {
     name: string,
     symbol: string,
     decimals: number,
+    version: TokenWalletVersion,
     tokenWallet: string,
 };
 "#;
@@ -328,6 +329,7 @@ fn make_root_token_contract_details_with_address(
         .set("name", details.name)
         .set("symbol", details.symbol)
         .set("decimals", details.decimals)
+        .set("version", details.version.to_string())
         .set("tokenWallet", token_wallet.to_string())
         .build()
 }

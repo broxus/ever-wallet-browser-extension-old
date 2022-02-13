@@ -30,12 +30,8 @@
 
     &__logo {
         margin-right: 16px;
-
-        img, svg {
-            min-width: 36px;
-            width: 36px;
-            height: 36px;
-        }
+        width: 36px;
+        height: 36px;
     }
 
     &__amount {

@@ -1,0 +1,34 @@
+.asset-icon {
+    display: flex;
+    flex-direction: column;
+
+    .outdated-asset-badge {
+        position: relative;
+        width: 100%;
+
+        &::before {
+            content: 'old';
+            background: #cc0022;
+            color: white;
+            text-align: center;
+
+            position: absolute;
+
+            font-size: 12px;
+
+            border-radius: 10px;
+
+            width: 26px;
+            height: 16px;
+            right: 0;
+            top: -16px;
+
+            line-height: 16px;
+        }
+    }
+
+    img, svg {
+        width: 100%;
+        height: 100%;
+    }
+}

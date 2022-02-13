@@ -24,6 +24,7 @@ interface IToken {
     fullName: string
     rootTokenContract: string
     enabled?: boolean
+    old?: boolean
     onToggle?: (enabled: boolean) => void
 }
 
@@ -32,6 +33,7 @@ export const Token: React.FC<IToken> = ({
     fullName,
     rootTokenContract,
     enabled,
+    old,
     onToggle,
 }) => {
     return (
@@ -40,6 +42,7 @@ export const Token: React.FC<IToken> = ({
                 <AssetIcon
                     type={'token_wallet'}
                     address={rootTokenContract}
+                    old={old}
                     className="assets-list-item__icon noselect"
                 />
                 <div className="assets-list-item__balance">
@@ -55,16 +58,11 @@ export const Token: React.FC<IToken> = ({
 }
 
 type ISearchToken = {
-    tokens: { name: string; fullName: string; rootTokenContract: string }[]
+    tokens: { name: string; fullName: string; rootTokenContract: string; old: boolean }[]
     existingTokens: TokenWalletsToUpdate
     disabled?: boolean
     onSubmit: (params: TokenWalletsToUpdate) => void
     onBack: () => void
-}
-
-enum SelectTokenStep {
-    SELECT,
-    CONFIRM,
 }
 
 const SearchToken: React.FC<ISearchToken> = ({
@@ -81,7 +79,7 @@ const SearchToken: React.FC<ISearchToken> = ({
     return (
         <form>
             <div style={{ overflowY: 'scroll', maxHeight: '320px', paddingRight: '8px' }}>
-                {tokens.map(({ name, fullName, rootTokenContract }) => {
+                {tokens.map(({ name, fullName, rootTokenContract, old }) => {
                     const address = rootTokenContract
 
                     const existing = existingTokens[address] || false
@@ -94,6 +92,7 @@ const SearchToken: React.FC<ISearchToken> = ({
                             fullName={fullName}
                             rootTokenContract={address}
                             enabled={enabled}
+                            old={old}
                             onToggle={(enabled: boolean) => {
                                 let newResult = { ...result }
                                 if (!existing && enabled) {
@@ -227,6 +226,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
             name: token.symbol,
             fullName: token.name,
             rootTokenContract: token.address,
+            old: token.version != null && token.version < 5,
         })) || []
 
     const existingTokens: TokenWalletsToUpdate = {}
@@ -243,6 +243,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
                 name: symbol.name,
                 fullName: symbol.fullName,
                 rootTokenContract: symbol.rootTokenContract,
+                old: symbol.version != 'Tip3',
             })
         }
     }

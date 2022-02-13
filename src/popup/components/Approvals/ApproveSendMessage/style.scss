@@ -16,6 +16,14 @@
 			height: 20px;
 			margin-right: 0.5rem;
 			flex-shrink: 0;
+
+			.outdated-asset-badge::before {
+				content: '';
+				height: 8px;
+				width: 8px;
+				top: -8px;
+				border-radius: 50%;
+			}
 		}
 
 		.root-token-name {

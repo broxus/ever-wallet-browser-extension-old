@@ -422,12 +422,26 @@ pub fn make_transfer_recipient(data: models::TransferRecipient) -> TransferRecip
 }
 
 #[wasm_bindgen(typescript_custom_section)]
+const TOKEN_WALLET_VERSION: &str = r#"
+export type TokenWalletVersion =
+    | 'OldTip3v4'
+    | 'Tip3';
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "TokenWalletVersion")]
+    pub type TokenWalletVersion;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
 const SYMBOL: &str = r#"
 export type Symbol = {
     name: string,
     fullName: string,
     decimals: number,
     rootTokenContract: string,
+    version: TokenWalletVersion,
 };
 "#;
 
@@ -437,12 +451,13 @@ extern "C" {
     pub type Symbol;
 }
 
-pub fn make_symbol(data: models::Symbol) -> Symbol {
+pub fn make_symbol(data: models::Symbol, version: &str) -> Symbol {
     ObjectBuilder::new()
         .set("name", data.name)
         .set("fullName", data.full_name)
         .set("decimals", data.decimals)
         .set("rootTokenContract", data.root_token_contract.to_string())
+        .set("version", version)
         .build()
         .unchecked_into()
 }

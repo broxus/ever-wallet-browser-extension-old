@@ -64,6 +64,7 @@ export function AssetsList({
                         balance={balance}
                         name={symbol?.name}
                         decimals={symbol?.decimals}
+                        old={symbol?.version != 'Tip3'}
                         onClick={() => {
                             onViewAsset({
                                 type: 'token_wallet',

@@ -28,6 +28,7 @@ export type MessageAmount =
               symbol: string
               decimals: number
               rootTokenContract: string
+              old: boolean
           }
       >
 
@@ -140,6 +141,7 @@ export function EnterPassword({
                                     <AssetIcon
                                         type={'token_wallet'}
                                         address={amount.data.rootTokenContract}
+                                        old={amount.data.old}
                                         className="root-token-icon noselect"
                                     />
                                     {convertCurrency(amount.data.amount, amount.data.decimals)}

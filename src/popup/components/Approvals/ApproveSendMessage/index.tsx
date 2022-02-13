@@ -66,6 +66,7 @@ export function ApproveSendMessage({
         symbol: string
         decimals: number
         rootTokenContract: string
+        old: boolean
     }>()
 
     React.useEffect(() => {
@@ -83,6 +84,7 @@ export function ApproveSendMessage({
                     symbol: details.symbol,
                     decimals: details.decimals,
                     rootTokenContract: details.address,
+                    old: details.version != 'Tip3',
                 })
             })
             .catch(() => {
@@ -177,6 +179,7 @@ export function ApproveSendMessage({
                                     <AssetIcon
                                         type={'token_wallet'}
                                         address={tokenTransaction.rootTokenContract}
+                                        old={tokenTransaction.old}
                                         className="root-token-icon noselect"
                                     />
                                     {convertCurrency(
@@ -268,6 +271,7 @@ export function ApproveSendMessage({
                                       symbol: tokenTransaction.symbol,
                                       decimals: tokenTransaction.decimals,
                                       rootTokenContract: tokenTransaction.rootTokenContract,
+                                      old: tokenTransaction.old,
                                   },
                               }
                     }

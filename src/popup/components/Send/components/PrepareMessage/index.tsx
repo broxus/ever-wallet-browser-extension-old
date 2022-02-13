@@ -121,6 +121,7 @@ export function PrepareMessage({
     let balance: Decimal
     let decimals: number | undefined
     let currencyName: string | undefined
+    let old: boolean = false
     if (selectedAsset.length == 0) {
         balance = new Decimal(tonWalletState?.balance || '0')
         decimals = 9
@@ -131,6 +132,9 @@ export function PrepareMessage({
         const symbol = knownTokens[selectedAsset] as nt.Symbol | undefined
         decimals = symbol?.decimals
         currencyName = symbol?.name
+        if (symbol != null) {
+            old = symbol.version != 'Tip3'
+        }
     }
 
     const walletInfo = nt.getContractTypeDetails(tonWalletAsset.contractType)
@@ -192,6 +196,7 @@ export function PrepareMessage({
                         symbol: currencyName || '',
                         decimals,
                         rootTokenContract: selectedAsset,
+                        old,
                     },
                 },
                 originalAmount: data.amount,

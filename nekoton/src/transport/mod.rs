@@ -89,6 +89,7 @@ export type RootTokenContractDetails = {
     name: string,
     symbol: string,
     decimals: number,
+    version: TokenWalletVersion,
 };
 "#;
 
@@ -101,6 +102,7 @@ fn make_root_token_contract_details(
         .set("name", details.name)
         .set("symbol", details.symbol)
         .set("decimals", details.decimals)
+        .set("version", details.version.to_string())
         .build()
 }
 
