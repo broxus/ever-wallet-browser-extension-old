@@ -10,6 +10,7 @@ import SittingMan from '@popup/img/welcome.svg'
 
 import './style.scss'
 import { parseError } from '@popup/utils'
+import { Checkbox } from '@popup/components/Checkbox'
 
 enum Step {
     WELCOME,
@@ -69,6 +70,7 @@ export function WelcomePage(): JSX.Element {
     const [localStep, setStep] = React.useState(Step.WELCOME)
     const [restoreInProcess, setRestoreInProcess] = React.useState(false)
     const [restoreError, setRestoreError] = React.useState<string | undefined>()
+    const [checked, setChecked] = React.useState(false)
 
     const createAccount = (params: AccountToCreate) => rpc.createAccount(params)
     const createMasterKey = (params: MasterKeyToCreate) => rpc.createMasterKey(params)
@@ -122,6 +124,19 @@ export function WelcomePage(): JSX.Element {
                             </h1>
                             <img src={SittingMan} alt="" />
                         </div>
+                        <div className="welcome-page__content-checkbox">
+                            <Checkbox checked={checked} onChange={setChecked} />
+                            <span className="welcome-page__content-checkbox-label">
+                                I Agree to&nbsp;
+                                <a
+                                    className="welcome-page__content-checkbox-label--link"
+                                    href="https://l1.broxus.com/everscale/wallet/privacy"
+                                    target="_blank"
+                                >
+                                    Privacy Policy
+                                </a>
+                            </span>
+                        </div>
                         <br />
                         <div>
                             <div className="welcome-page__content-button">
@@ -130,6 +145,7 @@ export function WelcomePage(): JSX.Element {
                                     onClick={() => {
                                         setStep(Step.CREATE_ACCOUNT)
                                     }}
+                                    disabled={!checked}
                                 />
                             </div>
                             <div className="welcome-page__content-button">
@@ -139,13 +155,14 @@ export function WelcomePage(): JSX.Element {
                                     onClick={() => {
                                         setStep(Step.IMPORT_ACCOUNT)
                                     }}
+                                    disabled={!checked}
                                 />
                             </div>
                             <hr />
                             <Button
                                 text="Restore from backup"
                                 white
-                                disabled={restoreInProcess}
+                                disabled={restoreInProcess || !checked}
                                 onClick={restoreFromBackup}
                             />
                             {restoreError && (

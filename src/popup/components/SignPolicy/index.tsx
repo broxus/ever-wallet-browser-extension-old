@@ -24,14 +24,14 @@ const SignPolicy: React.FC<ISignPolicy> = ({ onSubmit, onBack }) => {
                 <div className="policy-sign-page__content-checkbox">
                     <Checkbox checked={checked} onChange={setChecked} />
                     <span className="policy-sign-page__content-checkbox-label">
-                        I accept{' '}
-                        <span
+                        I Agree to&nbsp;
+                        <a
                             className="policy-sign-page__content-checkbox-label--link"
-                            onClick={() => window.open('https://broxus.com', '_blank')}
+                            href="https://l1.broxus.com/everscale/wallet/privacy"
+                            target="_blank"
                         >
-                            the decentralization policy
-                        </span>{' '}
-                        of EVER Wallet
+                            Privacy Policy
+                        </a>
                     </span>
                 </div>
                 <br />
