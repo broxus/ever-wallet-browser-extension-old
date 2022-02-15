@@ -1,6 +1,6 @@
 const { EventEmitter } = require('events')
 
-const BRIDGE_URL = 'https://broxus.github.io/ton-ledger-bridge'
+const BRIDGE_URL = 'https://broxus.github.io/everscale-ledger-bridge'
 
 type IBridgeApi = {
     'ledger-get-public-key': {
