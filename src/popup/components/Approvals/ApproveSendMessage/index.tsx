@@ -110,11 +110,13 @@ export function ApproveSendMessage({
             .catch(console.error)
     }
 
-    const contractState = accountContractStates[account.tonWallet.address]
+    const contractState = accountContractStates[account.tonWallet.address] as
+        | nt.ContractState
+        | undefined
     const balance = new Decimal(contractState?.balance || '0')
 
     const isDeployed =
-        contractState.isDeployed ||
+        contractState?.isDeployed ||
         !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy
 
     const trySubmit = async (keyPassword: nt.KeyPassword) => {
