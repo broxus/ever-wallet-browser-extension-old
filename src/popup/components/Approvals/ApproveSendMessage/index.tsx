@@ -184,10 +184,12 @@ export function ApproveSendMessage({
                                         old={tokenTransaction.old}
                                         className="root-token-icon noselect"
                                     />
-                                    {convertCurrency(
-                                        tokenTransaction.amount,
-                                        tokenTransaction.decimals
-                                    )}
+                                    <span className="token-amount-text">
+                                        {convertCurrency(
+                                            tokenTransaction.amount,
+                                            tokenTransaction.decimals
+                                        )}
+                                    </span>
                                     &nbsp;
                                     <span className="root-token-name">
                                         {convertTokenName(tokenTransaction.symbol)}

@@ -10,6 +10,7 @@
 		flex-direction: row;
 		align-items: center;
 		word-break: normal;
+		margin-right: auto;
 
 		.root-token-icon {
 			width: 20px;
@@ -26,8 +27,12 @@
 			}
 		}
 
-		.root-token-name {
+		.token-amount-text {
 			width: 100%;
+			overflow-x: hidden;
+		}
+
+		.root-token-name {
 			text-overflow: ellipsis;
 		}
 	}
