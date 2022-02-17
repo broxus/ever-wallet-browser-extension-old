@@ -144,7 +144,9 @@ export function EnterPassword({
                                         old={amount.data.old}
                                         className="root-token-icon noselect"
                                     />
-                                    {convertCurrency(amount.data.amount, amount.data.decimals)}
+                                    <span className="token-amount-text ">
+                                        {convertCurrency(amount.data.amount, amount.data.decimals)}
+                                    </span>
                                     &nbsp;
                                     <span className="root-token-name">
                                         {convertTokenName(amount.data.symbol)}
