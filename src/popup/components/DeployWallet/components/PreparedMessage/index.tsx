@@ -1,4 +1,5 @@
 import * as React from 'react'
+import * as nt from '@nekoton'
 
 import { NATIVE_CURRENCY } from '@shared/constants'
 
@@ -8,6 +9,7 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import { convertTons } from '@shared/utils'
 
 type Props = {
+    keyEntry?: nt.KeyStoreEntry
     balance?: string
     custodians?: string[]
     fees?: string
@@ -18,6 +20,7 @@ type Props = {
 }
 
 export function PreparedMessage({
+    keyEntry,
     balance,
     custodians,
     disabled,
@@ -75,6 +78,7 @@ export function PreparedMessage({
                 onClose={() => setPasswordModalVisible(false)}
             >
                 <EnterPassword
+                    keyEntry={keyEntry}
                     disabled={disabled}
                     error={error}
                     handleNext={onSubmit}

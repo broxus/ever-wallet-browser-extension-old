@@ -9,7 +9,6 @@ import { DeployMultisigWallet } from '@popup/pages/DeployMultisigWallet'
 import { MainPage } from '@popup/pages/MainPage'
 import { SendPage } from '@popup/pages/SendPage'
 import { WelcomePage } from '@popup/pages/WelcomePage'
-import ConnectLedgerPage from '@popup/pages/ConnectLedgerPage'
 import { DrawerPanelProvider } from '@popup/providers/DrawerPanelProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
@@ -27,8 +26,6 @@ function App(): JSX.Element | null {
     const hasTabData = rpcState.activeTab?.data != null
     const isFullscreen = rpcState.activeTab?.type === 'fullscreen'
     const isNotification = rpcState.activeTab?.type === 'notification'
-    // @ts-ignore
-    const isLedgerConnectRoute = rpcState.activeTab?.data?.route === 'connect-ledger'
 
     if (accountAddresses.length > 0 && rpcState.state.selectedAccount == null) {
         return null
@@ -40,11 +37,7 @@ function App(): JSX.Element | null {
     }
 
     if (isFullscreen) {
-        if (hasAccount && isLedgerConnectRoute) {
-            return <ConnectLedgerPage controllerRpc={rpc} controllerState={rpcState.state} />
-        }
-        // @ts-ignore
-        else if (!hasAccount && rpcState.activeTab?.data?.route == null) {
+        if (!hasAccount || !rpcState.state.selectedMasterKey) {
             return <WelcomePage key="welcomePage" />
         } else {
             window.close()

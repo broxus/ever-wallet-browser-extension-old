@@ -5,6 +5,8 @@ import NewAccountPage from '@popup/pages/NewAccountPage'
 import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
+import LedgerSignIn from '@popup/components/Ledger/SignIn'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import SittingMan from '@popup/img/welcome.svg'
 
@@ -15,6 +17,7 @@ enum Step {
     WELCOME,
     CREATE_ACCOUNT,
     IMPORT_ACCOUNT,
+    LEDGER_ACCOUNT,
 }
 
 const FIRST_ACCOUNT_NAME = 'Account 1'
@@ -65,6 +68,7 @@ const updateFile = (): Promise<File | undefined> => {
 
 export function WelcomePage(): JSX.Element {
     const rpc = useRpc()
+    const rpcState = useRpcState()
 
     const [localStep, setStep] = React.useState(Step.WELCOME)
     const [restoreInProcess, setRestoreInProcess] = React.useState(false)
@@ -141,6 +145,15 @@ export function WelcomePage(): JSX.Element {
                                     }}
                                 />
                             </div>
+                            <div className="welcome-page__content-button">
+                                <Button
+                                    text="Sign in with ledger"
+                                    white
+                                    onClick={() => {
+                                        setStep(Step.LEDGER_ACCOUNT)
+                                    }}
+                                />
+                            </div>
                             <hr />
                             <Button
                                 text="Restore from backup"
@@ -174,6 +187,14 @@ export function WelcomePage(): JSX.Element {
                     createAccount={createAccount}
                     createMasterKey={createMasterKey}
                     removeKey={removeKey}
+                    onBack={() => {
+                        setStep(Step.WELCOME)
+                    }}
+                />
+            )}
+
+            {localStep == Step.LEDGER_ACCOUNT && (
+                <LedgerSignIn
                     onBack={() => {
                         setStep(Step.WELCOME)
                     }}

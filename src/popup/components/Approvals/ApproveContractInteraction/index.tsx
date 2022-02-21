@@ -32,6 +32,8 @@ export function ApproveContractInteraction({
     const [error, setError] = React.useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = React.useState(false)
 
+    const keyEntry = storedKeys[publicKey]
+
     const account = window.ObjectExt.values(accountEntries).find(
         (account) => account.tonWallet.publicKey == publicKey
     )
@@ -42,7 +44,6 @@ export function ApproveContractInteraction({
     }
 
     const trySubmit = async (password: string) => {
-        const keyEntry = storedKeys[publicKey]
         if (keyEntry == null) {
             setError('Key entry not found')
             return
@@ -121,6 +122,7 @@ export function ApproveContractInteraction({
                 onClose={() => setPasswordModalVisible(false)}
             >
                 <EnterPassword
+                    keyEntry={keyEntry}
                     disabled={inProcess}
                     error={error}
                     handleNext={trySubmit}

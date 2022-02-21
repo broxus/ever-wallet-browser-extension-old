@@ -112,6 +112,7 @@ export function DeployMultisigWallet(): JSX.Element {
                     case Step.DEPLOY_MESSAGE:
                         return (
                             <PreparedMessage
+                                keyEntry={selectedDerivedKeyEntry}
                                 balance={tonWalletState?.balance}
                                 fees={fees}
                                 custodians={multisigData?.custodians}

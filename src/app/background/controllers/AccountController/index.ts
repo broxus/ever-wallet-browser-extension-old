@@ -570,13 +570,14 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createLedgerKey({ accountId }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
+    public async createLedgerKey({ accountId, name }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
             const entry = await keyStore.addKey({
                 type: 'ledger_key',
                 data: {
+                    name,
                     accountId,
                 },
             })
@@ -621,6 +622,11 @@ export class AccountController extends BaseController<
         })
 
         return entries
+    }
+
+    public async getLedgerMasterKey() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getPublicKey(0)
     }
 
     public async getLedgerFirstPage() {

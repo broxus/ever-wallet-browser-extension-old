@@ -157,6 +157,7 @@ export function DeployWallet(): JSX.Element | null {
                         case DeployWalletStep.DEPLOY_MESSAGE:
                             return (
                                 <PreparedMessage
+                                    keyEntry={selectedDerivedKeyEntry}
                                     balance={tonWalletState?.balance}
                                     fees={fees}
                                     disabled={inProcess}

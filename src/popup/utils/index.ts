@@ -13,7 +13,11 @@ export const TOKENS_MANIFEST_URL =
 
 export const TOKENS_MANIFEST_REPO = 'https://github.com/broxus/ton-assets'
 
-export const prepareKey = (entry: nt.KeyStoreEntry, password: string): nt.KeyPassword => {
+export const prepareKey = (
+    entry: nt.KeyStoreEntry,
+    password: string,
+    context?: nt.LedgerSignatureContext,
+): nt.KeyPassword => {
     switch (entry.signerName) {
         case 'encrypted_key': {
             return {
@@ -39,6 +43,7 @@ export const prepareKey = (entry: nt.KeyStoreEntry, password: string): nt.KeyPas
                 type: entry.signerName,
                 data: {
                     publicKey: entry.publicKey,
+                    context,
                 },
             }
         }

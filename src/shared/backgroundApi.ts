@@ -35,6 +35,7 @@ export type KeyToRemove = {
 }
 
 export type LedgerKeyToCreate = {
+    name?: string;
     accountId: number
 }
 
