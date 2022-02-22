@@ -105,8 +105,8 @@ dependencies = [
  "js-sys",
  "log",
  "nekoton",
- "nekoton-abi",
- "nekoton-utils",
+ "nekoton-abi 0.10.0 (git+https://github.com/broxus/nekoton.git)",
+ "nekoton-utils 0.10.0 (git+https://github.com/broxus/nekoton.git)",
  "num-bigint",
  "num-traits",
  "pin-project-lite",
@@ -737,7 +737,6 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -752,9 +751,9 @@ dependencies = [
  "graphql_client",
  "hex",
  "log",
- "nekoton-abi",
+ "nekoton-abi 0.10.0",
  "nekoton-contracts",
- "nekoton-utils",
+ "nekoton-utils 0.10.0",
  "num-bigint",
  "num-traits",
  "once_cell",
@@ -782,7 +781,6 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
 dependencies = [
  "anyhow",
  "base64",
@@ -790,7 +788,32 @@ dependencies = [
  "hex",
  "log",
  "nekoton-derive",
- "nekoton-utils",
+ "nekoton-utils 0.10.0",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "serde_json",
+ "sha2",
+ "smallvec",
+ "thiserror",
+ "ton_abi",
+ "ton_block",
+ "ton_executor",
+ "ton_types",
+ "ton_vm",
+]
+
+[[package]]
+name = "nekoton-abi"
+version = "0.10.0"
+source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+dependencies = [
+ "anyhow",
+ "base64",
+ "ed25519-dalek",
+ "hex",
+ "log",
+ "nekoton-utils 0.10.0 (git+https://github.com/broxus/nekoton.git)",
  "num-bigint",
  "num-traits",
  "serde",
@@ -808,11 +831,10 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
 dependencies = [
  "anyhow",
- "nekoton-abi",
- "nekoton-utils",
+ "nekoton-abi 0.10.0",
+ "nekoton-utils 0.10.0",
  "once_cell",
  "thiserror",
  "ton_abi",
@@ -823,7 +845,6 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
 dependencies = [
  "either",
  "proc-macro2",
@@ -834,7 +855,6 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
 dependencies = [
  "anyhow",
  "base64",
@@ -853,6 +873,25 @@ dependencies = [
  "ton_block",
  "ton_types",
  "zeroize",
+]
+
+[[package]]
+name = "nekoton-utils"
+version = "0.10.0"
+source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+dependencies = [
+ "anyhow",
+ "base64",
+ "ed25519-dalek",
+ "hex",
+ "log",
+ "num-bigint",
+ "num-traits",
+ "serde",
+ "sha2",
+ "thiserror",
+ "ton_block",
+ "ton_types",
 ]
 
 [[package]]
