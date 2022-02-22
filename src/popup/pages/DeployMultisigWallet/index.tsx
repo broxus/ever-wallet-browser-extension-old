@@ -53,7 +53,10 @@ export function DeployMultisigWallet(): JSX.Element {
             return
         }
 
-        const keyPassword = prepareKey(selectedDerivedKeyEntry, password)
+        const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
+            address: selectedAccount.address,
+            amount: '0',
+        })
         const params: DeployMessageToPrepare = {
             type: 'multiple_owners',
             custodians: multisigData?.custodians || [],
