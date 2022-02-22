@@ -46,13 +46,15 @@ ton_types = { git = "https://github.com/broxus/ton-labs-types.git" }
 [dependencies.nt]
 package = "nekoton"
 git = "https://github.com/broxus/nekoton.git"
-rev = "eff04890524a886d83b2f49ae919eb01582a5360"
+rev = "f313bb5e640b09eb7fb759fe326b3c22ecb1df2e"
 features = ["web", "gql_transport", "jrpc_transport"]
 
 [dependencies.nt_utils]
 package = "nekoton-utils"
 git = "https://github.com/broxus/nekoton.git"
+rev = "f313bb5e640b09eb7fb759fe326b3c22ecb1df2e"
 
 [dependencies.nt_abi]
 package = "nekoton-abi"
 git = "https://github.com/broxus/nekoton.git"
+rev = "f313bb5e640b09eb7fb759fe326b3c22ecb1df2e"
