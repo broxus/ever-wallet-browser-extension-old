@@ -86,6 +86,8 @@ export function DeployWallet(): JSX.Element | null {
         const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
             address: selectedAccount.address,
             amount: '0',
+            asset: NATIVE_CURRENCY,
+            decimals: '9',
         })
         const params: DeployMessageToPrepare = { type: 'single_owner' }
 

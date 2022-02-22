@@ -83,19 +83,23 @@ export function EnterPassword({
     }
 
     const trySubmit = async () => {
-        let context
+        let context: nt.LedgerSignatureContext | undefined
 
         if (recipient && amount) {
             if (amount.type === 'token_wallet') {
                 context = {
                     address: recipient,
-                    amount: amount.data.attachedAmount,
+                    amount: amount.data.amount,
+                    asset: amount.data.symbol,
+                    decimals: amount.data.decimals.toString(),
                 }
             }
             else if (amount.type === 'ton_wallet') {
                 context = {
                     address: recipient,
                     amount: amount.data.amount,
+                    asset: NATIVE_CURRENCY,
+                    decimals: '9',
                 }
             }
         }
