@@ -87,7 +87,7 @@ export function DeployWallet(): JSX.Element | null {
             address: selectedAccount.address,
             amount: '0',
             asset: NATIVE_CURRENCY,
-            decimals: '9',
+            decimals: 9,
         })
         const params: DeployMessageToPrepare = { type: 'single_owner' }
 

@@ -58,7 +58,7 @@ export function DeployMultisigWallet(): JSX.Element {
             address: selectedAccount.address,
             amount: '0',
             asset: NATIVE_CURRENCY,
-            decimals: '9',
+            decimals: 9,
         })
         const params: DeployMessageToPrepare = {
             type: 'multiple_owners',

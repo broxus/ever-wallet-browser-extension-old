@@ -91,7 +91,7 @@ export function EnterPassword({
                     address: recipient,
                     amount: amount.data.amount,
                     asset: amount.data.symbol,
-                    decimals: amount.data.decimals.toString(),
+                    decimals: amount.data.decimals,
                 }
             } else if (amount.type === 'ton_wallet') {
                 context = {
