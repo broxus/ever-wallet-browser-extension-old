@@ -1,0 +1,28 @@
+.ledger-account-selector {
+    &__content {
+        position: relative;
+        flex-grow: 1;
+    }
+
+    &.sign-in {
+        background: transparent;
+
+        .accounts-management__header,
+        .accounts-management__footer {
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .accounts-management__footer {
+            flex-direction: column-reverse;
+            row-gap: 12px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .accounts-management__footer-button-back {
+            width: auto;
+            min-width: auto;
+        }
+    }
+}

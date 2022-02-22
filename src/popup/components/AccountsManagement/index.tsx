@@ -14,6 +14,8 @@ import Button from '@popup/components/Button'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { convertAddress } from '@shared/utils'
+import LedgerAccountManager from '@popup/components/Ledger/AccountManager'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import Arrow from '@popup/img/arrow.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
@@ -35,6 +37,9 @@ export function ManageSeeds(): JSX.Element {
 
     const accountability = useAccountability()
     const rpc = useRpc()
+    const rpcState = useRpcState()
+    const signerName = accountability.currentMasterKey?.signerName
+
 
     const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
         return () => accountability.onManageMasterKey(seed)
@@ -47,6 +52,10 @@ export function ManageSeeds(): JSX.Element {
 
     const onBackInCreateAccountIndex = () => {
         accountability.setStep(Step.MANAGE_DERIVED_KEY)
+    }
+
+    const backToManageSeed = () => {
+        accountability.setStep(Step.MANAGE_SEED)
     }
 
     const onBackup = () => {
@@ -128,8 +137,12 @@ export function ManageSeeds(): JSX.Element {
 
             {accountability.step === Step.MANAGE_SEED && <ManageSeed key="manageSeed" />}
 
-            {accountability.step === Step.CREATE_DERIVED_KEY && (
+            {accountability.step === Step.CREATE_DERIVED_KEY && signerName !== 'ledger_key' && (
                 <CreateDerivedKey key="createDerivedKey" />
+            )}
+
+            {accountability.step === Step.CREATE_DERIVED_KEY && signerName === 'ledger_key' && (
+                <LedgerAccountManager onBack={backToManageSeed} />
             )}
 
             {accountability.step === Step.MANAGE_DERIVED_KEY && (

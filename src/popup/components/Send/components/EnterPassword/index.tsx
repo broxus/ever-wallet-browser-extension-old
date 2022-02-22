@@ -83,7 +83,24 @@ export function EnterPassword({
     }
 
     const trySubmit = async () => {
-        onSubmit(prepareKey(keyEntry, password))
+        let context
+
+        if (recipient && amount) {
+            if (amount.type === 'token_wallet') {
+                context = {
+                    address: recipient,
+                    amount: amount.data.attachedAmount,
+                }
+            }
+            else if (amount.type === 'ton_wallet') {
+                context = {
+                    address: recipient,
+                    amount: amount.data.amount,
+                }
+            }
+        }
+
+        onSubmit(prepareKey(keyEntry, password, context))
     }
 
     const onKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
