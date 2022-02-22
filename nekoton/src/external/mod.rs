@@ -346,7 +346,7 @@ impl nt::external::LedgerConnection for LedgerConnectionImpl {
                 ObjectBuilder::new()
                     .set("amount", ctx.amount.to_string())
                     .set("decimals", ctx.decimals)
-                    .set("asset", ctx.decimals.to_string())
+                    .set("asset", ctx.asset.clone())
                     .set("address", ctx.address.to_string())
                     .build()
                     .unchecked_into()
