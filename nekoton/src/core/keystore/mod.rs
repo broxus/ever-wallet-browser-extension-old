@@ -932,7 +932,7 @@ const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
     | EnumItem<'master_key', { masterKey: string, publicKey: string, password: string }>
     | EnumItem<'encrypted_key', { publicKey: string, password: string }>
-    | EnumItem<'ledger_key', { publicKey: string, context?: { amount: string, decimals: string, asset: string, address: string } }>;
+    | EnumItem<'ledger_key', { publicKey: string, context?: { amount: string, decimals: number, asset: string, address: string } }>;
 "#;
 
 #[wasm_bindgen]

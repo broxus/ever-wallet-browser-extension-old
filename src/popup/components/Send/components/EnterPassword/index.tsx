@@ -93,13 +93,12 @@ export function EnterPassword({
                     asset: amount.data.symbol,
                     decimals: amount.data.decimals.toString(),
                 }
-            }
-            else if (amount.type === 'ton_wallet') {
+            } else if (amount.type === 'ton_wallet') {
                 context = {
                     address: recipient,
                     amount: amount.data.amount,
                     asset: NATIVE_CURRENCY,
-                    decimals: '9',
+                    decimals: 9,
                 }
             }
         }

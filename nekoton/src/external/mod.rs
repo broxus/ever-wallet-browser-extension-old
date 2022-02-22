@@ -235,7 +235,7 @@ pub enum GqlQueryError {
 pub const LEDGER_SIGNATURE_CONTEXT: &str = r#"
 export type LedgerSignatureContext = {
     amount: string,
-    decimals: string,
+    decimals: number,
     asset: string,
     address: string,
 }
@@ -345,7 +345,7 @@ impl nt::external::LedgerConnection for LedgerConnectionImpl {
             context.as_ref().map(|ctx| {
                 ObjectBuilder::new()
                     .set("amount", ctx.amount.to_string())
-                    .set("decimals", ctx.decimals.to_string())
+                    .set("decimals", ctx.decimals)
                     .set("asset", ctx.decimals.to_string())
                     .set("address", ctx.address.to_string())
                     .build()
