@@ -60,8 +60,8 @@ export function ApprovalPage(): JSX.Element | null {
         setApprovalIndex((approvalIndex + 1) % pendingApprovals.length)
     }
 
-    const resolvePendingApproval = async (value: unknown) => {
-        await rpc.resolvePendingApproval(approval.id, value)
+    const resolvePendingApproval = async (value: unknown, delayedDeletion: boolean = false) => {
+        await rpc.resolvePendingApproval(approval.id, value, delayedDeletion)
     }
 
     const rejectPendingApproval = async () => {

@@ -15,7 +15,7 @@ type Props = {
     accountEntries: { [address: string]: nt.AssetsList }
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
-    onSubmit: (password: nt.KeyPassword) => void
+    onSubmit: (password: nt.KeyPassword, delayedDeletion: boolean) => void
     onReject: () => void
 }
 
@@ -56,7 +56,7 @@ export function ApproveDecryptData({
             const keyPassword = prepareKey(keyEntry, password)
             const isValid = await checkPassword(keyPassword)
             if (isValid) {
-                onSubmit(keyPassword)
+                onSubmit(keyPassword, true)
             } else {
                 setError('Invalid password')
             }

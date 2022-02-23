@@ -68,12 +68,20 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         return info ? { ...info } : undefined
     }
 
-    public resolve<O>(id: string, value?: Exclude<O, Function>) {
-        this._deleteApprovalAndGetCallback(id).resolve(value)
+    public resolve<O>(id: string, value?: Exclude<O, Function>, delayedDeletion: boolean = false) {
+        if (!delayedDeletion) {
+            this._deleteApprovalAndGetCallback(id).resolve(value)
+        } else {
+            this._getCallbackOrThrow(id).resolve(value)
+        }
     }
 
     public reject(id: string, error: Error) {
         this._deleteApprovalAndGetCallback(id).reject(error)
+    }
+
+    public deleteApproval(id: string) {
+        this._delete(id)
     }
 
     public clear() {
@@ -157,12 +165,16 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         )
     }
 
-    private _deleteApprovalAndGetCallback<U>(id: string): ApprovalCallbacks<U> {
+    private _getCallbackOrThrow<U>(id: string): ApprovalCallbacks<U> {
         const callbacks = this._approvals.get(id)
         if (!callbacks) {
             throw new Error(`Approval with id "${id}" not found`)
         }
+        return callbacks
+    }
 
+    private _deleteApprovalAndGetCallback<U>(id: string): ApprovalCallbacks<U> {
+        const callbacks = this._getCallbackOrThrow(id)
         this._delete(id)
         return callbacks
     }
