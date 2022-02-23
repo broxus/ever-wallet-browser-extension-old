@@ -8,6 +8,7 @@ import {
     AssetType,
     AssetTypeParams,
 } from 'everscale-inpage-provider'
+import { nanoid } from 'nanoid'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
@@ -20,7 +21,6 @@ import { AccountController } from './controllers/AccountController'
 import { SubscriptionController } from './controllers/SubscriptionController'
 
 import manifest from '../../manifest.json'
-import { nanoid } from 'nanoid'
 
 const invalidRequest = (req: JsonRpcRequest<unknown>, message: string, data?: unknown) =>
     new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, `${req.method}: ${message}`, data)
@@ -874,17 +874,14 @@ const addAsset: ProviderMethod<'addAsset'> = async (req, res, _next, end, ctx) =
             }
 
             const details = await accountController.getTokenRootDetails(rootContract, account)
-            const approvalId = nanoid()
             await approvalController.addAndShowApprovalRequest({
                 origin,
-                id: approvalId,
                 type: 'addTip3Token',
                 requestData: {
                     account,
                     details,
                 },
             })
-            approvalController.deleteApproval(approvalId)
             await accountController.updateTokenWallets(account, {
                 [rootContract]: true,
             })

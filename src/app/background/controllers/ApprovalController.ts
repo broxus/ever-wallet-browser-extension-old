@@ -68,8 +68,12 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
         return info ? { ...info } : undefined
     }
 
-    public resolve<O>(id: string, value?: Exclude<O, Function>) {
-        this._getCallbackOrThrow(id).resolve(value)
+    public resolve<O>(id: string, value?: Exclude<O, Function>, delayedDeletion: boolean = false) {
+        if (!delayedDeletion) {
+            this._deleteApprovalAndGetCallback(id).resolve(value)
+        } else {
+            this._getCallbackOrThrow(id).resolve(value)
+        }
     }
 
     public reject(id: string, error: Error) {
@@ -103,7 +107,6 @@ export class ApprovalController extends BaseController<ApprovalConfig, ApprovalC
 
         return new Promise<O>((resolve, reject) => {
             this._approvals.set(id, { resolve: resolve as ApprovalPromiseResolve<unknown>, reject })
-
             this._addToStore<T, I>(id, origin, type, requestData)
         })
     }
