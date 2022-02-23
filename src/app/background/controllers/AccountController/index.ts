@@ -27,7 +27,6 @@ import {
     LedgerKeyToCreate,
     MasterKeyToCreate,
     TransferMessageToPrepare,
-    SwapBackMessageToPrepare,
     TokenMessageToPrepare,
     TokenWalletsToUpdate,
     ConfirmMessageToPrepare,
@@ -570,7 +569,10 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createLedgerKey({ accountId, name }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
+    public async createLedgerKey({
+        accountId,
+        name,
+    }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
