@@ -10,6 +10,7 @@ import { RpcErrorCode } from '@shared/errors'
 
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 import { ApprovalController } from './ApprovalController'
+import { nanoid } from 'nanoid'
 
 const POSSIBLE_PERMISSIONS: { [K in Permission]: true } = {
     basic: true,
@@ -94,9 +95,11 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
 
     public async changeAccount(origin: string) {
         const existingPermissions = { ...this.getPermissions(origin) }
+        const approvalId = nanoid()
         existingPermissions.accountInteraction =
             await this.config.approvalController.addAndShowApprovalRequest({
                 origin,
+                id: approvalId,
                 type: 'changeAccount',
                 requestData: {},
             })
@@ -114,6 +117,8 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             true
         )
         await this._savePermissions()
+
+        this.config.approvalController.deleteApproval(approvalId)
 
         this.config.notifyDomain?.(origin, {
             method: 'permissionsChanged',
@@ -138,9 +143,11 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
         }
 
         if (hasNewPermissions) {
+            const approvalId = nanoid()
             const originPermissions: Partial<RawPermissions> =
                 await this.config.approvalController.addAndShowApprovalRequest({
                     origin,
+                    id: approvalId,
                     type: 'requestPermissions',
                     requestData: {
                         permissions: uniquePermissions,
@@ -161,6 +168,8 @@ export class PermissionsController extends BaseController<PermissionsConfig, Per
             )
 
             await this._savePermissions()
+
+            this.config.approvalController.deleteApproval(approvalId)
 
             existingPermissions = originPermissions
         }
