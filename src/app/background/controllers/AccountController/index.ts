@@ -1733,6 +1733,8 @@ export class AccountController extends BaseController<
         transactions: nt.TokenWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
+        const network = this.config.connectionController.state.selectedConnection.group
+
         if (info.batchType == 'new') {
             const symbol = this.state.knownTokens[rootTokenContract]
             if (symbol != null) {
@@ -1751,7 +1753,10 @@ export class AccountController extends BaseController<
                     this.config.notificationController.showNotification({
                         title: `New token transaction found`,
                         body,
-                        link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                        link: transactionExplorerLink({
+                            network,
+                            hash: transaction.id.hash,
+                        }),
                     })
                 }
             }
