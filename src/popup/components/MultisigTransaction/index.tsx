@@ -7,6 +7,7 @@ import {
     currentUtime,
     extractTokenTransactionAddress,
     extractTransactionAddress,
+    transactionExplorerLink,
 } from '@shared/utils'
 import { parseError } from '@popup/utils'
 
@@ -417,7 +418,10 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                             white
                             onClick={() =>
                                 window.browser.tabs.create({
-                                    url: `https://ton-explorer.com/transactions/${txHash}`,
+                                    url: transactionExplorerLink({
+                                        network: rpcState.state.selectedConnection.group,
+                                        hash: txHash,
+                                    }),
                                     active: false,
                                 })
                             }

@@ -13,6 +13,7 @@ import {
     extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
+    transactionExplorerLink,
     getOrInsertDefault,
     NekotonRpcError,
     SendMessageCallback,
@@ -1554,6 +1555,8 @@ export class AccountController extends BaseController<
         transactions: nt.TonWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
+        const network = this.config.connectionController.state.selectedConnection.group
+
         if (info.batchType == 'new') {
             for (const transaction of transactions) {
                 const value = extractTransactionValue(transaction)
@@ -1586,7 +1589,10 @@ export class AccountController extends BaseController<
                 this.config.notificationController.showNotification({
                     title,
                     body,
-                    link: `https://tonscan.io/transactions/${transaction.id.hash}`,
+                    link: transactionExplorerLink({
+                        network,
+                        hash: transaction.id.hash,
+                    }),
                 })
             }
         }
