@@ -33,6 +33,7 @@ impl KeyStore {
                 &self,
                 _: u16,
                 _: &[u8],
+                _: &Option<nt::external::LedgerSignatureContext>,
             ) -> anyhow::Result<[u8; ed25519_dalek::SIGNATURE_LENGTH]> {
                 unreachable!()
             }
@@ -518,11 +519,7 @@ async fn sign_data(
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
         }
-        ParsedKeyPassword::LedgerKey { public_key } => {
-            let public_key = parse_public_key(&public_key)?;
-            let input = LedgerKeyPublic { public_key };
-            key_store.sign::<LedgerKeySigner>(data, input).await
-        }
+        ParsedKeyPassword::LedgerKey(input) => key_store.sign::<LedgerKeySigner>(data, input).await,
     }
     .handle_error()
 }
@@ -563,10 +560,7 @@ async fn encrypt_data(
                 .encrypt::<EncryptedKeySigner>(data, public_keys, algorithm, input)
                 .await
         }
-        ParsedKeyPassword::LedgerKey { public_key } => {
-            let input = LedgerKeyPublic {
-                public_key: parse_public_key(&public_key)?,
-            };
+        ParsedKeyPassword::LedgerKey(input) => {
             key_store
                 .encrypt::<LedgerKeySigner>(data, public_keys, algorithm, input)
                 .await
@@ -605,10 +599,7 @@ async fn decrypt_data(
             };
             key_store.decrypt::<EncryptedKeySigner>(&data, input).await
         }
-        ParsedKeyPassword::LedgerKey { public_key } => {
-            let input = LedgerKeyPublic {
-                public_key: parse_public_key(&public_key)?,
-            };
+        ParsedKeyPassword::LedgerKey(input) => {
             key_store.decrypt::<LedgerKeySigner>(&data, input).await
         }
     }
@@ -941,7 +932,7 @@ const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
     | EnumItem<'master_key', { masterKey: string, publicKey: string, password: string }>
     | EnumItem<'encrypted_key', { publicKey: string, password: string }>
-    | EnumItem<'ledger_key', { publicKey: string }>;
+    | EnumItem<'ledger_key', { publicKey: string, context?: { amount: string, address: string } }>;
 "#;
 
 #[wasm_bindgen]
@@ -965,8 +956,7 @@ enum ParsedKeyPassword {
         public_key: String,
         password: String,
     },
-    #[serde(rename_all = "camelCase")]
-    LedgerKey { public_key: String },
+    LedgerKey(nt::crypto::LedgerSignInput),
 }
 
 #[wasm_bindgen(typescript_custom_section)]

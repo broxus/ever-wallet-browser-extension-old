@@ -8,6 +8,7 @@ import {
     AssetType,
     AssetTypeParams,
 } from 'everscale-inpage-provider'
+import { nanoid } from 'nanoid'
 import { RpcErrorCode } from '@shared/errors'
 import { NekotonRpcError, UniqueArray } from '@shared/utils'
 import { JsonRpcMiddleware, JsonRpcRequest } from '@shared/jrpc'
@@ -907,8 +908,10 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
         throw invalidRequest(req, 'Specified signer is not allowed')
     }
 
+    const approvalId = nanoid()
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
+        id: approvalId,
         type: 'signData',
         requestData: {
             publicKey,
@@ -921,6 +924,8 @@ const signData: ProviderMethod<'signData'> = async (req, res, _next, end, ctx) =
         end()
     } catch (e: any) {
         throw invalidRequest(req, e.toString())
+    } finally {
+        approvalController.deleteApproval(approvalId)
     }
 }
 
@@ -938,8 +943,10 @@ const signDataRaw: ProviderMethod<'signDataRaw'> = async (req, res, _next, end, 
         throw invalidRequest(req, 'Specified signer is not allowed')
     }
 
+    const approvalId = nanoid()
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
+        id: approvalId,
         type: 'signData',
         requestData: {
             publicKey,
@@ -952,6 +959,8 @@ const signDataRaw: ProviderMethod<'signDataRaw'> = async (req, res, _next, end, 
         end()
     } catch (e: any) {
         throw invalidRequest(req, e.toString())
+    } finally {
+        approvalController.deleteApproval(approvalId)
     }
 }
 
@@ -971,8 +980,10 @@ const encryptData: ProviderMethod<'encryptData'> = async (req, res, _next, end, 
         throw invalidRequest(req, 'Specified encryptor public key is not allowed')
     }
 
+    const approvalId = nanoid()
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
+        id: approvalId,
         type: 'encryptData',
         requestData: {
             publicKey,
@@ -992,6 +1003,8 @@ const encryptData: ProviderMethod<'encryptData'> = async (req, res, _next, end, 
         end()
     } catch (e: any) {
         throw invalidRequest(req, e.toString())
+    } finally {
+        approvalController.deleteApproval(approvalId)
     }
 }
 
@@ -1019,8 +1032,10 @@ const decryptData: ProviderMethod<'decryptData'> = async (req, res, _next, end, 
         throw invalidRequest(req, e.toString())
     }
 
+    const approvalId = nanoid()
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
+        id: approvalId,
         type: 'decryptData',
         requestData: {
             publicKey: allowedAccount.publicKey,
@@ -1035,6 +1050,8 @@ const decryptData: ProviderMethod<'decryptData'> = async (req, res, _next, end, 
         end()
     } catch (e: any) {
         throw invalidRequest(req, e.toString())
+    } finally {
+        approvalController.deleteApproval(approvalId)
     }
 }
 
@@ -1150,7 +1167,9 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         }
     }
 
+    const approvalId = nanoid()
     const password = await approvalController.addAndShowApprovalRequest({
+        id: approvalId,
         origin,
         type: 'sendMessage',
         requestData: {
@@ -1193,6 +1212,7 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         } catch (e: any) {
             throw invalidRequest(req, e.toString())
         } finally {
+            approvalController.deleteApproval(approvalId)
             unsignedMessage.free()
         }
     })
@@ -1275,8 +1295,10 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         throw invalidRequest(req, e.toString())
     }
 
+    const approvalId = nanoid()
     const password = await approvalController.addAndShowApprovalRequest({
         origin,
+        id: approvalId,
         type: 'callContractMethod',
         requestData: {
             publicKey: selectedPublicKey,
@@ -1293,6 +1315,7 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
         throw invalidRequest(req, e.toString())
     } finally {
         unsignedMessage.free()
+        approvalController.deleteApproval(approvalId)
     }
 
     let transaction: nt.Transaction

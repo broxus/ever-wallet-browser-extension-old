@@ -14,6 +14,8 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import { generateSeed, validateMnemonic } from '@popup/store/app/actions'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { parseError } from '@popup/utils'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
+import AccountManager from '@popup/components/Ledger/AccountManager'
 
 enum AddSeedFlow {
     CREATE,
@@ -40,17 +42,14 @@ type OptionType = {
 const flowOptions: OptionType[] = [
     { key: AddSeedFlow.CREATE, label: 'Create new seed', value: AddSeedFlow.CREATE },
     { key: AddSeedFlow.IMPORT, label: 'Import seed', value: AddSeedFlow.IMPORT },
-    {
-        key: AddSeedFlow.IMPORT_LEGACY,
-        label: 'Import legacy seed',
-        value: AddSeedFlow.IMPORT_LEGACY,
-    },
-    // { label: 'Connect Ledger', value: AddSeedFlow.CONNECT_LEDGER },
+    { key: AddSeedFlow.IMPORT_LEGACY, label: 'Import legacy seed', value: AddSeedFlow.IMPORT_LEGACY, },
+    { key: AddSeedFlow.CONNECT_LEDGER, label: 'Connect Ledger', value: AddSeedFlow.CONNECT_LEDGER },
 ]
 
 export function CreateSeed(): JSX.Element {
     const accountability = useAccountability()
     const rpc = useRpc()
+    const rpcState = useRpcState()
 
     const [error, setError] = React.useState<string>()
     const [flow, setFlow] = React.useState<AddSeedFlow | undefined>(flowOptions[0].value)
@@ -232,6 +231,14 @@ export function CreateSeed(): JSX.Element {
                     onBack={onBack}
                 />
             )}
+
+            {step === FlowStep.CONNECT_LEDGER && (
+                <AccountManager
+                    name={name}
+                    onBack={onBack}
+                />
+            )}
+
         </>
     )
 }

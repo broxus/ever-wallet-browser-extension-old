@@ -13,6 +13,7 @@ import {
     extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
+    transactionExplorerLink,
     getOrInsertDefault,
     NekotonRpcError,
     SendMessageCallback,
@@ -27,7 +28,6 @@ import {
     LedgerKeyToCreate,
     MasterKeyToCreate,
     TransferMessageToPrepare,
-    SwapBackMessageToPrepare,
     TokenMessageToPrepare,
     TokenWalletsToUpdate,
     ConfirmMessageToPrepare,
@@ -570,13 +570,17 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async createLedgerKey({ accountId }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
+    public async createLedgerKey({
+        accountId,
+        name,
+    }: LedgerKeyToCreate): Promise<nt.KeyStoreEntry> {
         const { keyStore } = this.config
 
         try {
             const entry = await keyStore.addKey({
                 type: 'ledger_key',
                 data: {
+                    name,
                     accountId,
                 },
             })
@@ -621,6 +625,11 @@ export class AccountController extends BaseController<
         })
 
         return entries
+    }
+
+    public async getLedgerMasterKey() {
+        const { ledgerBridge } = this.config
+        return await ledgerBridge.getPublicKey(0)
     }
 
     public async getLedgerFirstPage() {
@@ -1546,6 +1555,8 @@ export class AccountController extends BaseController<
         transactions: nt.TonWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
+        const network = this.config.connectionController.state.selectedConnection.group
+
         if (info.batchType == 'new') {
             for (const transaction of transactions) {
                 const value = extractTransactionValue(transaction)
@@ -1578,7 +1589,10 @@ export class AccountController extends BaseController<
                 this.config.notificationController.showNotification({
                     title,
                     body,
-                    link: `https://tonscan.io/transactions/${transaction.id.hash}`,
+                    link: transactionExplorerLink({
+                        network,
+                        hash: transaction.id.hash,
+                    }),
                 })
             }
         }
@@ -1719,6 +1733,8 @@ export class AccountController extends BaseController<
         transactions: nt.TokenWalletTransaction[],
         info: nt.TransactionsBatchInfo
     ) {
+        const network = this.config.connectionController.state.selectedConnection.group
+
         if (info.batchType == 'new') {
             const symbol = this.state.knownTokens[rootTokenContract]
             if (symbol != null) {
@@ -1737,7 +1753,10 @@ export class AccountController extends BaseController<
                     this.config.notificationController.showNotification({
                         title: `New token transaction found`,
                         body,
-                        link: `https://ton-explorer.com/transactions/${transaction.id.hash}`,
+                        link: transactionExplorerLink({
+                            network,
+                            hash: transaction.id.hash,
+                        }),
                     })
                 }
             }

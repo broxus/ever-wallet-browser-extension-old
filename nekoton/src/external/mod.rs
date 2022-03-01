@@ -5,6 +5,7 @@ use anyhow::{Error, Result};
 use async_trait::async_trait;
 use futures::channel::oneshot;
 use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
 
 use crate::utils::*;
 
@@ -230,9 +231,18 @@ pub enum GqlQueryError {
     RequestFailed,
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+pub const LEDGER_SIGNATURE_CONTEXT: &str = r#"
+export type LedgerSignatureContext = {
+    amount: string,
+    address: string,
+}
+"#;
+
 #[wasm_bindgen]
 extern "C" {
     pub type LedgerConnector;
+    pub type LedgerSignatureContext;
 
     #[wasm_bindgen(method, js_name = "getPublicKey")]
     pub fn get_public_key(this: &LedgerConnector, account: u16, handler: LedgerQueryResultHandler);
@@ -242,6 +252,7 @@ extern "C" {
         this: &LedgerConnector,
         account: u16,
         message: &[u8],
+        context: Option<LedgerSignatureContext>,
         handler: LedgerQueryResultHandler,
     );
 }
@@ -323,11 +334,19 @@ impl nt::external::LedgerConnection for LedgerConnectionImpl {
         &self,
         account: u16,
         message: &[u8],
+        context: &Option<nt::external::LedgerSignatureContext>,
     ) -> Result<[u8; ed25519_dalek::SIGNATURE_LENGTH]> {
         let (tx, rx) = oneshot::channel();
         self.connector.sign(
             account,
             message,
+            context.as_ref().map(|ctx| {
+                ObjectBuilder::new()
+                    .set("amount", ctx.amount.to_string())
+                    .set("address", ctx.address.to_string())
+                    .build()
+                    .unchecked_into()
+            }),
             LedgerQueryResultHandler {
                 inner: QueryHandler::new(tx),
             },

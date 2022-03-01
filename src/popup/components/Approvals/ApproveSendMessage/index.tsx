@@ -27,7 +27,7 @@ type Props = {
     accountEntries: { [address: string]: nt.AssetsList }
     checkPassword: (password: nt.KeyPassword) => Promise<boolean>
     storedKeys: { [publicKey: string]: nt.KeyStoreEntry }
-    onSubmit: (password: nt.KeyPassword) => void
+    onSubmit: (password: nt.KeyPassword, delayedDeletion: boolean) => void
     onReject: () => void
 }
 
@@ -110,11 +110,13 @@ export function ApproveSendMessage({
             .catch(console.error)
     }
 
-    const contractState = accountContractStates[account.tonWallet.address]
+    const contractState = accountContractStates[account.tonWallet.address] as
+        | nt.ContractState
+        | undefined
     const balance = new Decimal(contractState?.balance || '0')
 
     const isDeployed =
-        contractState.isDeployed ||
+        contractState?.isDeployed ||
         !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy
 
     const trySubmit = async (keyPassword: nt.KeyPassword) => {
@@ -122,7 +124,7 @@ export function ApproveSendMessage({
         try {
             const isValid = await checkPassword(keyPassword)
             if (isValid) {
-                onSubmit(keyPassword)
+                onSubmit(keyPassword, true)
             } else {
                 setError('Invalid password')
             }
@@ -182,10 +184,12 @@ export function ApproveSendMessage({
                                         old={tokenTransaction.old}
                                         className="root-token-icon noselect"
                                     />
-                                    {convertCurrency(
-                                        tokenTransaction.amount,
-                                        tokenTransaction.decimals
-                                    )}
+                                    <span className="token-amount-text">
+                                        {convertCurrency(
+                                            tokenTransaction.amount,
+                                            tokenTransaction.decimals
+                                        )}
+                                    </span>
                                     &nbsp;
                                     <span className="root-token-name">
                                         {convertTokenName(tokenTransaction.symbol)}

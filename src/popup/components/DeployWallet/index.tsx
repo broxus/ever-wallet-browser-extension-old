@@ -83,7 +83,10 @@ export function DeployWallet(): JSX.Element | null {
             return
         }
 
-        const keyPassword = prepareKey(selectedDerivedKeyEntry, password)
+        const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
+            address: selectedAccount.address,
+            amount: '0',
+        })
         const params: DeployMessageToPrepare = { type: 'single_owner' }
 
         setError(undefined)
@@ -157,6 +160,7 @@ export function DeployWallet(): JSX.Element | null {
                         case DeployWalletStep.DEPLOY_MESSAGE:
                             return (
                                 <PreparedMessage
+                                    keyEntry={selectedDerivedKeyEntry}
                                     balance={tonWalletState?.balance}
                                     fees={fees}
                                     disabled={inProcess}

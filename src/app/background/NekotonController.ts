@@ -293,6 +293,7 @@ export class NekotonController extends EventEmitter {
             createLedgerKey: nodeifyAsync(accountController, 'createLedgerKey'),
             removeKey: nodeifyAsync(accountController, 'removeKey'),
             removeKeys: nodeifyAsync(accountController, 'removeKeys'),
+            getLedgerMasterKey: nodeifyAsync(accountController, 'getLedgerMasterKey'),
             getLedgerFirstPage: nodeifyAsync(accountController, 'getLedgerFirstPage'),
             getLedgerNextPage: nodeifyAsync(accountController, 'getLedgerNextPage'),
             getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
@@ -760,9 +761,14 @@ export class LedgerConnection {
             })
     }
 
-    async sign(account: number, message: Buffer, handler: nt.LedgerQueryResultHandler) {
+    async sign(
+        account: number,
+        message: Buffer,
+        context: nt.LedgerSignatureContext,
+        handler: nt.LedgerQueryResultHandler
+    ) {
         await this.bridge
-            .signHash(account, new Uint8Array(message))
+            .signHash(account, new Uint8Array(message), context)
             .then((signature) => {
                 handler.onResult(signature)
             })

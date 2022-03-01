@@ -2,6 +2,7 @@ import * as React from 'react'
 import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import Button from '@popup/components/Button'
 import { CopyText } from '@popup/components/CopyText'
@@ -12,6 +13,7 @@ import {
     extractTokenTransactionValue,
     extractTransactionAddress,
     extractTransactionValue,
+    transactionExplorerLink,
     trimTokenName,
 } from '@shared/utils'
 
@@ -41,6 +43,8 @@ const TransferTypeMapping = {
 }
 
 export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
+    const rpcState = useRpcState()
+
     const value = React.useMemo(() => {
         if (symbol == null) {
             return extractTransactionValue(transaction)
@@ -134,7 +138,10 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
                 white
                 onClick={() =>
                     window.browser.tabs.create({
-                        url: `https://ton-explorer.com/transactions/${txHash}`,
+                        url: transactionExplorerLink({
+                            network: rpcState.state.selectedConnection.group,
+                            hash: txHash,
+                        }),
                         active: false,
                     })
                 }

@@ -136,3 +136,10 @@ img {
 .__react_component_tooltip {
     white-space: nowrap !important;
 }
+
+.error-message {
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.4px;
+    color: darkred
+}

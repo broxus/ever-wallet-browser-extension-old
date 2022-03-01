@@ -774,6 +774,21 @@ export const parseCurrency = (amount: string, decimals: number) => {
     return new Decimal(amount).mul(multiplier(decimals)).ceil().toFixed(0)
 }
 
+export const transactionExplorerLink = ({ network, hash }: { network: string; hash: string }) => {
+    switch (network) {
+        case 'mainnet':
+            return `https://tonscan.io/transactions/${hash}`
+        case 'testnet':
+            return `https://dev.tonscan.io/transactions/${hash}`
+        case 'fld':
+            return `https://fld.ever.live/messages/messageDetails?id=${hash}`
+        case 'localnet':
+            return `https://127.0.0.1/messages/messageDetails?id=${hash}`
+        default:
+            return `https://tonscan.io/transactions/${hash}`
+    }
+}
+
 export interface SendMessageCallback {
     resolve: (transaction: nt.Transaction) => void
     reject: (error?: Error) => void

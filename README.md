@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.27 (2022-03-01)
+
+Features
+
+* Added initial Ledger support
+
+Bugfixes
+
+* Fixed token transfer transaction info
+* Fixed explorer links
+
 ### 0.2.26 (2022-02-11)
 
 Features

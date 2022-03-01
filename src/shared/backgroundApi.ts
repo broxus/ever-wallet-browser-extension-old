@@ -35,6 +35,7 @@ export type KeyToRemove = {
 }
 
 export type LedgerKeyToCreate = {
+    name?: string
     accountId: number
 }
 
@@ -70,12 +71,6 @@ export type TokenMessageToPrepare = {
     recipient: string
     payload?: string
     notifyReceiver: boolean
-}
-
-export type SwapBackMessageToPrepare = {
-    amount: string
-    ethAddress: string
-    proxyAddress?: string
 }
 
 export type WalletMessageToSend = {

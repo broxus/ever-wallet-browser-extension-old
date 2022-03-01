@@ -63,6 +63,7 @@ export function EnterPassword({
 }: Props): JSX.Element {
     const accountability = useAccountability()
 
+    const [submitted, setSubmitted] = React.useState(false)
     const [password, setPassword] = React.useState<string>('')
 
     const passwordRef = React.useRef<HTMLInputElement>(null)
@@ -83,7 +84,25 @@ export function EnterPassword({
     }
 
     const trySubmit = async () => {
-        onSubmit(prepareKey(keyEntry, password))
+        let context
+
+        if (recipient && amount) {
+            if (amount.type === 'token_wallet') {
+                context = {
+                    address: recipient,
+                    amount: amount.data.attachedAmount,
+                }
+            }
+            else if (amount.type === 'ton_wallet') {
+                context = {
+                    address: recipient,
+                    amount: amount.data.amount,
+                }
+            }
+        }
+
+        onSubmit(prepareKey(keyEntry, password, context))
+        setSubmitted(true)
     }
 
     const onKeyDown = async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -144,7 +163,9 @@ export function EnterPassword({
                                         old={amount.data.old}
                                         className="root-token-icon noselect"
                                     />
-                                    {convertCurrency(amount.data.amount, amount.data.decimals)}
+                                    <span className="token-amount-text ">
+                                        {convertCurrency(amount.data.amount, amount.data.decimals)}
+                                    </span>
                                     &nbsp;
                                     <span className="root-token-name">
                                         {convertTokenName(amount.data.symbol)}
@@ -209,7 +230,7 @@ export function EnterPassword({
                             </div>
                         </>
                     ) : (
-                        <div className="enter-password__confirm-details-param-desc">
+                        <div className="enter-password__ledger-confirm">
                             Please confirm the transaction with your Ledger
                         </div>
                     )}
@@ -217,14 +238,20 @@ export function EnterPassword({
                 </div>
                 <div className="enter-password__footer">
                     <div className="enter-password__footer-button-back">
-                        <Button text="Back" white onClick={onBack} />
+                        <Button
+                            white
+                            text="Back"
+                            onClick={onBack}
+                            disabled={submitted && !error}
+                        />
                     </div>
                     <Button
                         text="Confirm transaction"
                         onClick={trySubmit}
                         disabled={
-                            disabled ||
-                            (keyEntry.signerName != 'ledger_key' && password.length === 0)
+                            disabled
+                            || (keyEntry.signerName != 'ledger_key' && password.length === 0)
+                            || (submitted && !error)
                         }
                     />
                 </div>
