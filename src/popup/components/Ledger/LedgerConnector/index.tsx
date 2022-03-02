@@ -15,11 +15,7 @@ interface ISelectWallet {
     onBack?: () => void
 }
 
-const LedgerConnector: React.FC<ISelectWallet> = ({
-    onNext,
-    onBack,
-    theme,
-}) => {
+const LedgerConnector: React.FC<ISelectWallet> = ({ onNext, onBack, theme }) => {
     const rpc = useRpc()
     const ref = useRef<HTMLIFrameElement>(null)
     const [loading, setLoading] = useState(true)
@@ -32,14 +28,12 @@ const LedgerConnector: React.FC<ISelectWallet> = ({
         if (!reply.data?.success) {
             console.log('Ledger Bridge Error: ', reply.data?.error.message)
             setError(reply.data?.error.message)
-        }
-        else {
+        } else {
             try {
                 await rpc.getLedgerFirstPage()
                 console.log('Ledger Bridge Data: ', reply.data?.payload)
                 onNext && onNext()
-            }
-            catch (e) {
+            } catch (e) {
                 console.log('Ledger Bridge Error: ', e)
                 setError('Failed to connect to ledger')
             }
@@ -67,8 +61,8 @@ const LedgerConnector: React.FC<ISelectWallet> = ({
                 <div className="ledger-connector__content">
                     {loading && (
                         <PanelLoader
-                            paddings={theme === 'sign-in' ? false : true}
-                            transparent={theme === 'sign-in' ? true : false}
+                            paddings={theme !== 'sign-in'}
+                            transparent={theme === 'sign-in'}
                         />
                     )}
 
