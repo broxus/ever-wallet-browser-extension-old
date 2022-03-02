@@ -52,6 +52,7 @@ export function ApproveSignData({
     const { publicKey, data: rawData } = approval.requestData
 
     const [inProcess, setInProcess] = React.useState(false)
+    const [submitted, setSubmitted] = React.useState(false)
     const [error, setError] = React.useState<string>()
     const [passwordModalVisible, setPasswordModalVisible] = React.useState(false)
     const [displayType, setDisplayType] = React.useState(DisplayType.Base64)
@@ -79,6 +80,7 @@ export function ApproveSignData({
             const isValid = await checkPassword(keyPassword)
             if (isValid) {
                 onSubmit(keyPassword, true)
+                setSubmitted(true)
             } else {
                 setError('Invalid password')
             }
@@ -149,7 +151,7 @@ export function ApproveSignData({
             >
                 <EnterPassword
                     keyEntry={keyEntry}
-                    disabled={inProcess}
+                    disabled={inProcess || (submitted && !error)}
                     error={error}
                     handleNext={trySubmit}
                     handleBack={() => setPasswordModalVisible(false)}
