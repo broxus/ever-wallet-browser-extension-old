@@ -37,6 +37,7 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 Features
 
 * Added initial Ledger support
+* Added support for external `SetcodeMultisig24h`
 
 Bugfixes
 

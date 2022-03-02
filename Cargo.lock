@@ -28,9 +28,9 @@ dependencies = [
 
 [[package]]
 name = "anyhow"
-version = "1.0.53"
+version = "1.0.55"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94a45b455c14666b85fc40a019e8ab9eb75e3a124e05494f5397122bc9eb06e0"
+checksum = "159bb86af3a200e19a068f4224eae4c8bb2d0fa054c7e5d1cacd5cef95e684cd"
 
 [[package]]
 name = "arrayref"
@@ -152,9 +152,9 @@ checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
 
 [[package]]
 name = "cc"
-version = "1.0.72"
+version = "1.0.73"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22a9137b95ea06864e018375b72adfb7db6e6f68cfc8df5a04d00288050485ee"
+checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
 
 [[package]]
 name = "cfg-if"
@@ -344,9 +344,9 @@ checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
 
 [[package]]
 name = "ed25519"
-version = "1.3.0"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74e1069e39f1454367eb2de793ed062fac4c35c2934b76a81d90dd9abcd28816"
+checksum = "eed12bbf7b5312f8da1c2722bc06d8c6b12c2d86a7fb35a194c7f3e6fc2bbe39"
 dependencies = [
  "signature",
 ]
@@ -493,9 +493,9 @@ dependencies = [
 
 [[package]]
 name = "getrandom"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "418d37c8b1d42553c93648be529cb70f920d3baf8ef469b74b9638df426e0b4c"
+checksum = "d39cd93900197114fa1fcb7ae84ca742095eed9442088988ae74fa744e930e77"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -638,9 +638,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.117"
+version = "0.2.119"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e74d72e0f9b65b5b4ca49a346af3976df0f9c61d550727f349ecd559f251a26c"
+checksum = "1bf2e165bb3457c8e098ea76f3e3bc9db55f87aa90d52d0e6be741470916aaa4"
 
 [[package]]
 name = "libsecp256k1"
@@ -737,7 +737,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+source = "git+https://github.com/broxus/nekoton.git#58fe3ff115e5b5fe3c3c533b19d91e6782f53552"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -782,7 +782,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+source = "git+https://github.com/broxus/nekoton.git#58fe3ff115e5b5fe3c3c533b19d91e6782f53552"
 dependencies = [
  "anyhow",
  "base64",
@@ -808,7 +808,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+source = "git+https://github.com/broxus/nekoton.git#58fe3ff115e5b5fe3c3c533b19d91e6782f53552"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -823,7 +823,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+source = "git+https://github.com/broxus/nekoton.git#58fe3ff115e5b5fe3c3c533b19d91e6782f53552"
 dependencies = [
  "either",
  "proc-macro2",
@@ -834,7 +834,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#43823dfc71217bb993c65044242edce78cce48b5"
+source = "git+https://github.com/broxus/nekoton.git#58fe3ff115e5b5fe3c3c533b19d91e6782f53552"
 dependencies = [
  "anyhow",
  "base64",
@@ -1086,9 +1086,9 @@ dependencies = [
 
 [[package]]
 name = "redox_syscall"
-version = "0.2.10"
+version = "0.2.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8383f39639269cde97d255a32bdb68c047337295414940c68bdd30c2e13203ff"
+checksum = "8380fe0152551244f0747b1bf41737e0f8a74f97a14ccefd1148187271634f3c"
 dependencies = [
  "bitflags",
 ]
@@ -1153,9 +1153,9 @@ dependencies = [
 
 [[package]]
 name = "semver"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0486718e92ec9a68fbed73bb5ef687d71103b142595b406835649bebd33f72c7"
+checksum = "a4a3381e03edd24287172047536f20cabde766e2cd3e65e6b00fb3af51c4f38d"
 
 [[package]]
 name = "serde"
@@ -1349,9 +1349,9 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tokio"
-version = "1.16.1"
+version = "1.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0c27a64b625de6d309e8c57716ba93021dccf1b3b5c97edd6d3dd2d2135afc0a"
+checksum = "2af73ac49756f3f7c01172e34a23e5d0216f6c32333757c2c61feb2bbff5a5ee"
 dependencies = [
  "pin-project-lite",
 ]
@@ -1382,7 +1382,7 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.7.14"
-source = "git+https://github.com/broxus/ton-labs-block.git#61a782dafbcd07cad491abeaf005a834f92d3d10"
+source = "git+https://github.com/broxus/ton-labs-block.git#6167b7d9028f360ce60acbd9676ef23b53defee3"
 dependencies = [
  "anyhow",
  "base64",
@@ -1395,6 +1395,7 @@ dependencies = [
  "num",
  "num-traits",
  "rand",
+ "rustc-hash",
  "sha2",
  "smallvec",
  "thiserror",
@@ -1419,7 +1420,7 @@ dependencies = [
 [[package]]
 name = "ton_types"
 version = "1.10.2"
-source = "git+https://github.com/broxus/ton-labs-types.git#b9d706bd0dc59f3fbf6357abda20e021324d71fc"
+source = "git+https://github.com/broxus/ton-labs-types.git#80d196f04a26b398ebe93f7dd83ed8b6b953f0df"
 dependencies = [
  "anyhow",
  "base64",
@@ -1432,6 +1433,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "rand",
+ "rustc-hash",
  "sha2",
  "smallvec",
  "thiserror",
@@ -1649,9 +1651,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize_derive"
-version = "1.3.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81e8f13fef10b63c06356d65d416b070798ddabcadc10d3ece0c5be9b3c7eddb"
+checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
  "proc-macro2",
  "quote",
