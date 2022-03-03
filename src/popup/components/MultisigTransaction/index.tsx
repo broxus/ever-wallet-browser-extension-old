@@ -24,7 +24,6 @@ import './style.scss'
 import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
 type Props = {
-    symbol?: nt.Symbol
     transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
 }
 
@@ -42,7 +41,7 @@ const TRANSACTION_NAMES = {
     swap_back: 'Recipient',
 }
 
-export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Element | null {
+export function MultisigTransactionSign({ transaction }: Props): JSX.Element | null {
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -100,25 +99,24 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
     const source = transaction.inMessage.dst!
     const value = React.useMemo(() => {
         return transaction.info?.data.method.data.data.value
-    }, [symbol, transaction])
+    }, [transaction])
 
     let direction: string | undefined, address: string | undefined
 
-    if (symbol == null) {
+    if (
+        knownPayload == null ||
+        (knownPayload.type != 'token_outgoing_transfer' && knownPayload.type != 'token_swap_back')
+    ) {
         const txAddress = extractTransactionAddress(transaction)
         direction = TRANSACTION_NAMES[txAddress.direction]
         address = txAddress.address
     } else {
-        const tokenTransaction = transaction as nt.TokenWalletTransaction
-        const txAddress = extractTokenTransactionAddress(tokenTransaction)
-        if (txAddress && tokenTransaction.info) {
-            direction = (TRANSACTION_NAMES as any)[tokenTransaction.info.type]
-            address = txAddress?.address
+        direction = TRANSACTION_NAMES.outgoing_transfer
+        if (knownPayload.type === 'token_outgoing_transfer') {
+            address = knownPayload.data.to.address
         }
     }
 
-    const decimals = symbol == null ? 9 : symbol.decimals
-    const currencyName = symbol == null ? NATIVE_CURRENCY : symbol.name
     const transactionId = transaction.info?.data.method.data.data.transactionId as string
     const creator = transaction.info.data.method.data.data.custodian
 
@@ -305,7 +303,7 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                         </div>
                     )}
 
-                    {symbol == null && parsedTokenTransaction != null && (
+                    {parsedTokenTransaction != null && (
                         <>
                             <div className="transaction-info-tx-details-separator" />
                             <div className="transaction-info-tx-details-param">
@@ -335,14 +333,12 @@ export function MultisigTransactionSign({ transaction, symbol }: Props): JSX.Ele
                     <div className="transaction-info-tx-details-separator" />
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">
-                            {symbol == null && parsedTokenTransaction != null
-                                ? 'Attached amount'
-                                : 'Amount'}
+                            {parsedTokenTransaction != null ? 'Attached amount' : 'Amount'}
                         </span>
                         <span className="transaction-info-tx-details-param-value transaction-info-tx-details-param-value--amount">
                             <TonAssetIcon className="root-token-icon noselect" />
-                            {convertCurrency(value.toString(), decimals)}{' '}
-                            {convertTokenName(currencyName)}
+                            {convertCurrency(value.toString(), 9)}{' '}
+                            {convertTokenName(NATIVE_CURRENCY)}
                         </span>
                     </div>
 
