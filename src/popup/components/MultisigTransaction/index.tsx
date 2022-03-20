@@ -5,7 +5,6 @@ import {
     convertCurrency,
     convertTokenName,
     currentUtime,
-    extractTokenTransactionAddress,
     extractTransactionAddress,
     transactionExplorerLink,
 } from '@shared/utils'

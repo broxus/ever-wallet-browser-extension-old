@@ -130,6 +130,11 @@ export class AccountController extends BaseController<
             storedKeys[entry.publicKey] = entry
         }
 
+        let externalAccounts = await this._loadExternalAccounts()
+        if (externalAccounts == null) {
+            externalAccounts = []
+        }
+
         const accountEntries: AccountControllerState['accountEntries'] = {}
         const entries = await this.config.accountsStorage.getStoredAccounts()
         for (const entry of entries) {
@@ -148,6 +153,21 @@ export class AccountController extends BaseController<
         let selectedMasterKey = await this._loadSelectedMasterKey()
         if (selectedMasterKey == null && selectedAccount !== undefined) {
             selectedMasterKey = storedKeys[selectedAccount.tonWallet.publicKey]?.masterKey
+
+            if (selectedMasterKey == null) {
+                const address = selectedAccount.tonWallet.address
+                for (const externalAccount of externalAccounts) {
+                    if (externalAccount.address != address) {
+                        continue
+                    }
+
+                    const externalIn = externalAccount.externalIn[0] as string | undefined
+                    if (externalIn != null) {
+                        selectedMasterKey = storedKeys[externalIn]?.masterKey
+                    }
+                    break
+                }
+            }
         }
 
         let accountsVisibility = await this._loadAccountsVisibility()
@@ -163,11 +183,6 @@ export class AccountController extends BaseController<
         let recentMasterKeys = await this._loadRecentMasterKeys()
         if (recentMasterKeys == null) {
             recentMasterKeys = []
-        }
-
-        let externalAccounts = await this._loadExternalAccounts()
-        if (externalAccounts == null) {
-            externalAccounts = []
         }
 
         this.update({

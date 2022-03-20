@@ -338,9 +338,9 @@ checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
+checksum = "21e50f3adc76d6a43f5ed73b698a87d0760ca74617f60f7c3b879003536fdd28"
 
 [[package]]
 name = "ed25519"
@@ -626,9 +626,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.119"
+version = "0.2.120"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bf2e165bb3457c8e098ea76f3e3bc9db55f87aa90d52d0e6be741470916aaa4"
+checksum = "ad5c14e80759d0939d013e6ca49930e59fc53dd8e5009132f76240c179380c09"
 
 [[package]]
 name = "libsecp256k1"
@@ -725,7 +725,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#a7fc6c44640b31c369caddeb13094f1ba5434442"
+source = "git+https://github.com/broxus/nekoton.git#c7dfc4161d1d4466215a3f0ed3b7100cdbc8f3c6"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -770,7 +770,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#a7fc6c44640b31c369caddeb13094f1ba5434442"
+source = "git+https://github.com/broxus/nekoton.git#c7dfc4161d1d4466215a3f0ed3b7100cdbc8f3c6"
 dependencies = [
  "anyhow",
  "base64",
@@ -796,7 +796,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#a7fc6c44640b31c369caddeb13094f1ba5434442"
+source = "git+https://github.com/broxus/nekoton.git#c7dfc4161d1d4466215a3f0ed3b7100cdbc8f3c6"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -811,7 +811,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#a7fc6c44640b31c369caddeb13094f1ba5434442"
+source = "git+https://github.com/broxus/nekoton.git#c7dfc4161d1d4466215a3f0ed3b7100cdbc8f3c6"
 dependencies = [
  "either",
  "proc-macro2",
@@ -822,7 +822,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#a7fc6c44640b31c369caddeb13094f1ba5434442"
+source = "git+https://github.com/broxus/nekoton.git#c7dfc4161d1d4466215a3f0ed3b7100cdbc8f3c6"
 dependencies = [
  "anyhow",
  "base64",
@@ -1225,9 +1225,9 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 
 [[package]]
 name = "syn"
-version = "1.0.86"
+version = "1.0.88"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8a65b3f4ffa0092e9887669db0eae07941f023991ab58ea44da8fe8e2d511c6b"
+checksum = "ebd69e719f31e88618baa1eaa6ee2de5c9a1c004f1e9ecdb58e8352a13f20a01"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1345,15 +1345,15 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "2.1.0"
-source = "git+https://github.com/broxus/ton-labs-abi.git#b4a5649ce37bd36c629abe75a24fc785d751da5b"
+source = "git+https://github.com/broxus/ton-labs-abi.git#4926538e5608b0f79725fb06117584a56f673213"
 dependencies = [
  "anyhow",
  "base64",
  "byteorder",
- "chrono",
  "ed25519",
  "ed25519-dalek",
  "hex",
+ "js-sys",
  "num-bigint",
  "num-traits",
  "serde",
