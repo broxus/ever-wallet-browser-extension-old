@@ -120,9 +120,7 @@ pub fn validate_mnemonic(
 pub fn encode_comment(comment: &str) -> Result<String, JsValue> {
     let body = base64::decode(comment.trim())
         .ok()
-        .and_then(|bytes| {
-            ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&bytes)).ok()
-        })
+        .and_then(|bytes| ton_types::deserialize_tree_of_cells(&mut bytes.as_slice()).ok())
         .map(Result::<_, JsValue>::Ok)
         .unwrap_or_else(|| {
             nt_abi::create_comment_payload(comment)
@@ -145,7 +143,7 @@ pub fn extract_public_key(boc: &str) -> Result<String, JsValue> {
 #[wasm_bindgen(js_name = "codeToTvc")]
 pub fn code_to_tvc(code: &str) -> Result<String, JsValue> {
     let cell = base64::decode(code).handle_error()?;
-    ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(cell))
+    ton_types::deserialize_tree_of_cells(&mut cell.as_slice())
         .handle_error()
         .and_then(|x| nt_abi::code_to_tvc(x).handle_error())
         .and_then(|x| x.serialize().handle_error())

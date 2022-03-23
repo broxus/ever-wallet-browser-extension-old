@@ -724,7 +724,7 @@ fn parse_token_value(
                     base64::decode(&value)
                         .map_err(|_| AbiError::InvalidCell)
                         .and_then(|value| {
-                            ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&value))
+                            ton_types::deserialize_tree_of_cells(&mut value.as_slice())
                                 .map_err(|_| AbiError::InvalidCell)
                         })
                 }
@@ -1238,8 +1238,7 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
 #[wasm_bindgen(js_name = "getBocHash")]
 pub fn get_boc_hash(boc: &str) -> Result<String, JsValue> {
     let body = base64::decode(boc).handle_error()?;
-    let cell =
-        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    let cell = ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()?;
     Ok(cell.repr_hash().to_hex_string())
 }
 
@@ -1261,8 +1260,7 @@ pub fn unpack_from_cell(
 ) -> Result<TokensObject, JsValue> {
     let params = parse_params_list(params).handle_error()?;
     let body = base64::decode(boc).handle_error()?;
-    let cell =
-        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    let cell = ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()?;
     nt_abi::unpack_from_cell(&params, cell.into(), allow_partial)
         .handle_error()
         .and_then(|tokens| make_tokens_object(&tokens))

@@ -32,6 +32,15 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.28 (2022-03-23)
+
+Bugfixes
+
+* Fixed recipient in the token transaction details popup
+* Fixed potential panics in cells deserialization
+* Fixed `Waiting for confirmation` label for multisig transactions with `reqConfirms: 0`
+* Fixed restore for external accounts
+
 ### 0.2.27 (2022-03-01)
 
 Features

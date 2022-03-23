@@ -6,13 +6,11 @@ import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import LedgerSignIn from '@popup/components/Ledger/SignIn'
-import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import SittingMan from '@popup/img/welcome.svg'
 
 import './style.scss'
 import { parseError } from '@popup/utils'
-import { Checkbox } from '@popup/components/Checkbox'
 
 enum Step {
     WELCOME,
@@ -109,6 +107,7 @@ export function WelcomePage(): JSX.Element {
                 if (!(await rpc.importStorage(file))) {
                     throw new Error('Failed to import storage')
                 }
+                window.close()
             })
             .catch((e) => {
                 setRestoreError(parseError(e))

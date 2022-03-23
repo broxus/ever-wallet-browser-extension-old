@@ -295,10 +295,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                     {openedPanel == Panel.TRANSACTION &&
                         selectedTransaction &&
                         (isSubmitTransaction(selectedTransaction) ? (
-                            <MultisigTransactionSign
-                                transaction={selectedTransaction}
-                                symbol={symbol}
-                            />
+                            <MultisigTransactionSign transaction={selectedTransaction} />
                         ) : (
                             <TransactionInfo transaction={selectedTransaction} symbol={symbol} />
                         ))}

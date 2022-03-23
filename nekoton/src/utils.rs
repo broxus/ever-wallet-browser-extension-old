@@ -91,8 +91,7 @@ pub fn parse_address(address: &str) -> Result<MsgAddressInt, JsValue> {
 
 pub fn parse_slice(boc: &str) -> Result<ton_types::SliceData, JsValue> {
     let body = base64::decode(boc).handle_error()?;
-    let cell =
-        ton_types::deserialize_tree_of_cells(&mut std::io::Cursor::new(&body)).handle_error()?;
+    let cell = ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()?;
     Ok(cell.into())
 }
 
