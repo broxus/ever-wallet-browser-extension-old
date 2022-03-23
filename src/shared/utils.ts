@@ -660,7 +660,8 @@ export function isSubmitTransaction(
         transaction.info?.type === 'wallet_interaction' &&
         transaction.info.data.method.type === 'multisig' &&
         transaction.info.data.method.data.type === 'submit' &&
-        transaction.info.data.method.data.data.transactionId != '0'
+        transaction.info.data.method.data.data.transactionId != '0' &&
+        transaction.outMessages.length == 0
     )
 }
 

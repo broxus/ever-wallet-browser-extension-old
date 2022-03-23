@@ -1642,7 +1642,7 @@ export class AccountController extends BaseController<
                 switch (method.type) {
                     case 'submit': {
                         const transactionId = method.data.transactionId
-                        if (transactionId == '0') {
+                        if (transactionId == '0' || transaction.outMessages.length > 0) {
                             break outer
                         }
 
