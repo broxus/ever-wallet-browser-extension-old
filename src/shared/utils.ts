@@ -661,7 +661,7 @@ export function isSubmitTransaction(
         transaction.info.data.method.type === 'multisig' &&
         transaction.info.data.method.data.type === 'submit' &&
         transaction.info.data.method.data.data.transactionId != '0' &&
-        transaction.outMessages.length == 0
+        transaction.outMessages.every((msg) => msg.dst == null)
     )
 }
 

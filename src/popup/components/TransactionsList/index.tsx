@@ -152,7 +152,10 @@ export function TransactionsList({
                         case 'submit': {
                             const transactionId =
                                 transaction.info.data.method.data.data.transactionId
-                            if (transactionId == '0' || transaction.outMessages.length > 0) {
+                            if (
+                                transactionId == '0' ||
+                                transaction.outMessages.some((msg) => msg.dst != null)
+                            ) {
                                 couldSkipHeightComputation = true
                                 break
                             }

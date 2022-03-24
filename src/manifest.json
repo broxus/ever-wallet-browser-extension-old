@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "EVER Wallet",
-  "version": "0.2.28",
+  "version": "0.2.29",
   "description": "Manage Everscale wallets and access dApps directly from your browser",
   "browser_action": {
     "default_title": "EVER Wallet",

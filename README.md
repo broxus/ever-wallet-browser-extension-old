@@ -32,6 +32,12 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.29 (2022-03-24)
+
+Bugfixes
+
+* Fixed multisig transactions
+
 ### 0.2.28 (2022-03-23)
 
 Bugfixes
