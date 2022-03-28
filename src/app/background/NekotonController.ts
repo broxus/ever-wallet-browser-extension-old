@@ -36,6 +36,7 @@ import { createProviderMiddleware } from './providerMiddleware'
 import { WindowManager, focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
 
 import LedgerBridge from './ledger/LedgerBridge'
+import { LocalizationController } from './controllers/LocalizationController'
 
 export interface TriggerUiParams {
     group: string
@@ -60,6 +61,7 @@ interface NekotonControllerComponents {
     accountController: AccountController
     approvalController: ApprovalController
     connectionController: ConnectionController
+    localizationController: LocalizationController
     notificationController: NotificationController
     permissionsController: PermissionsController
     subscriptionsController: SubscriptionController
@@ -116,6 +118,8 @@ export class NekotonController extends EventEmitter {
             disabled: true,
         })
 
+        const localizationController = new LocalizationController({})
+
         const accountController = new AccountController({
             clock,
             storage,
@@ -160,6 +164,7 @@ export class NekotonController extends EventEmitter {
             accountController,
             approvalController,
             connectionController,
+            localizationController,
             notificationController,
             permissionsController,
             subscriptionsController,
@@ -176,6 +181,10 @@ export class NekotonController extends EventEmitter {
         this._components = components
 
         this._components.approvalController.subscribe((_state) => {
+            this._debouncedSendUpdate()
+        })
+
+        this._components.localizationController.subscribe((_state) => {
             this._debouncedSendUpdate()
         })
 
@@ -225,8 +234,13 @@ export class NekotonController extends EventEmitter {
     public getApi() {
         type ApiCallback<T> = (error: Error | null, result?: T) => void
 
-        const { windowManager, approvalController, accountController, connectionController } =
-            this._components
+        const {
+            windowManager,
+            approvalController,
+            accountController,
+            connectionController,
+            localizationController,
+        } = this._components
 
         return {
             initialize: (windowId: number | undefined, cb: ApiCallback<WindowInfo>) => {
@@ -297,6 +311,7 @@ export class NekotonController extends EventEmitter {
             getLedgerFirstPage: nodeifyAsync(accountController, 'getLedgerFirstPage'),
             getLedgerNextPage: nodeifyAsync(accountController, 'getLedgerNextPage'),
             getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
+            setLocale: nodeifyAsync(localizationController, 'setLocale'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             addExternalAccount: nodeifyAsync(accountController, 'addExternalAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
@@ -337,6 +352,7 @@ export class NekotonController extends EventEmitter {
             ...this._components.approvalController.state,
             ...this._components.accountController.state,
             ...this._components.connectionController.state,
+            ...this._components.localizationController.state,
             domainMetadata: this._components.permissionsController.state.domainMetadata,
         }
     }
