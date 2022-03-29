@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { parseError, prepareKey } from '@popup/utils'
 import classNames from 'classnames'
 import { PendingApproval } from '@shared/backgroundApi'
@@ -48,6 +49,7 @@ export function ApproveEncryptData({
     onSubmit,
     onReject,
 }: Props) {
+    const intl = useIntl()
     const { origin } = approval
     const { publicKey, data: rawData } = approval.requestData
 
@@ -110,7 +112,7 @@ export function ApproveEncryptData({
         <>
             <Approval
                 account={account}
-                title="Encrypt data"
+                title={intl.formatMessage({ id: 'APPROVE_ENRYPT_DATA_APPROVAL_TITLE' })}
                 origin={origin}
                 className={'approval--encrypt-data'}
             >
@@ -118,7 +120,11 @@ export function ApproveEncryptData({
                     <div className="approval__spend-details">
                         <div className="approval__spend-details-param">
                             <div className="approval__spend-details-param-desc with-selector">
-                                <span>Data</span>
+                                <span>
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_ENRYPT_DATA_TERM_DATA',
+                                    })}
+                                </span>
                                 <div className="selector noselect">
                                     {[
                                         selectorItem(DisplayType.Utf8, 'utf8'),
@@ -132,10 +138,15 @@ export function ApproveEncryptData({
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            onClick={onReject}
+                        />
                         <Button
                             type="submit"
-                            text="Encrypt"
+                            text={intl.formatMessage({ id: 'ENCRYPT_BTN_TEXT' })}
                             onClick={() => {
                                 setPasswordModalVisible(true)
                             }}

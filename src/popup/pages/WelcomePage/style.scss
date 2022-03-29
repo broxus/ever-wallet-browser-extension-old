@@ -53,3 +53,37 @@
         }
     }
 }
+
+.welcome-page-header {
+  background-color: #2B3363;
+  height: 40px;
+  width: 100%;
+  left: 0;
+  top: 0;
+  position: fixed;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-page-header-inner {
+  width: min(90vw, 600px);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 28px;
+
+  .lang-switcher {
+	display: flex;
+	gap: 16px;
+	> .active > a {
+	  opacity: 1;
+	}
+  }
+
+  a {
+	color: #FFFFFF;
+	font-size: 14px;
+	line-height: 40px;
+	opacity: 0.8;
+  }
+}

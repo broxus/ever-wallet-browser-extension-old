@@ -25,15 +25,6 @@ type Props = {
     transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
 }
 
-const TransferTypeMapping = {
-    incoming_transfer: 'Incoming transfer',
-    outgoing_transfer: 'Outgoing transfer',
-    swap_back: 'Swap back',
-    accept: 'Accept',
-    transfer_bounced: 'Transfer bounced',
-    swap_back_bounced: 'Swap back bounced',
-}
-
 export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
     const intl = useIntl()
     const rpcState = useRpcState()

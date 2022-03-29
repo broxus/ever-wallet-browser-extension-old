@@ -5,13 +5,14 @@ import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
 import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import LedgerSignIn from '@popup/components/Ledger/SignIn'
+import { parseError } from '@popup/utils'
 
 import SittingMan from '@popup/img/welcome.svg'
 
 import './style.scss'
-import { parseError } from '@popup/utils'
 
 enum Step {
     WELCOME,
@@ -69,6 +70,9 @@ const updateFile = (): Promise<File | undefined> => {
 export function WelcomePage(): JSX.Element {
     const intl = useIntl()
     const rpc = useRpc()
+    const rpcState = useRpcState()
+
+    const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
 
     const [localStep, setStep] = React.useState(Step.WELCOME)
     const [restoreInProcess, setRestoreInProcess] = React.useState(false)
@@ -117,8 +121,43 @@ export function WelcomePage(): JSX.Element {
             .finally(() => setRestoreInProcess(false))
     }
 
+    const setEnglishLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+        try {
+            event.preventDefault()
+            event.stopPropagation()
+            await rpc.setLocale('en')
+            forceUpdate()
+        } catch (e) {}
+    }
+
+    const setKoreanLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+        try {
+            event.preventDefault()
+            event.stopPropagation()
+            await rpc.setLocale('ko')
+            forceUpdate()
+        } catch (e) {}
+    }
+
     return (
         <>
+            <div className="welcome-page-header">
+                <div className="welcome-page-header-inner">
+                    <div className="lang-switcher">
+                        <div className={rpcState.state.selectedLocale === 'en' ? 'active' : ''}>
+                            <a href="#" onClick={setEnglishLocale}>
+                                English
+                            </a>
+                        </div>
+                        <div className={rpcState.state.selectedLocale === 'ko' ? 'active' : ''}>
+                            <a href="#" onClick={setKoreanLocale}>
+                                한국어
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {localStep == Step.WELCOME && (
                 <div className="welcome-page">
                     <div className="welcome-page__content">

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 import { useForm } from 'react-hook-form'
 
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
+    const intl = useIntl()
     const { register, handleSubmit, getValues, setValue, formState } = useForm({
         defaultValues: data,
     })
@@ -43,7 +45,7 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                 <div className="deploy-wallet__content-form-rows">
                     <div className="deploy-wallet__content-form-row">
                         <div className="deploy-wallet__content-header">
-                            Any transaction requires the confirmation of:
+                            {intl.formatMessage({ id: 'DEPLOY_MULTISIG_FORM_CONTENT_HEADER' })}
                         </div>
                         <div className="deploy-wallet__field-confirms">
                             <Input
@@ -54,22 +56,30 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                                     min: 1,
                                     max: custodiansCount,
                                 })}
-                                label="Enter number..."
+                                label={intl.formatMessage({ id: 'ENTER_NUMBER_PLACEHOLDER' })}
                             />
                             <div className="deploy-wallet__field-placeholder">
-                                out of {custodiansCount} custodians
+                                {intl.formatMessage(
+                                    { id: 'DEPLOY_MULTISIG_FORM_FIELD_COUNT_HINT' },
+                                    { count: custodiansCount }
+                                )}
                             </div>
                         </div>
                         {formState.errors.reqConfirms !== undefined && (
                             <>
                                 {formState.errors.reqConfirms.type === 'max' && (
                                     <div className="deploy-wallet__content-error">
-                                        You can specify no more than {custodiansCount} custodians.
+                                        {intl.formatMessage(
+                                            { id: 'DEPLOY_MULTISIG_FORM_VALIDATION_MAX' },
+                                            { count: custodiansCount }
+                                        )}
                                     </div>
                                 )}
                                 {formState.errors.reqConfirms.type === 'required' && (
                                     <div className="deploy-wallet__content-error">
-                                        Specify the number of custodians.
+                                        {intl.formatMessage({
+                                            id: 'DEPLOY_MULTISIG_FORM_VALIDATION_REQUIRED',
+                                        })}
                                     </div>
                                 )}
                             </>
@@ -77,7 +87,9 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                     </div>
 
                     <div className="deploy-wallet__content-header--lead" style={{ marginTop: 0 }}>
-                        Custodians
+                        {intl.formatMessage({
+                            id: 'DEPLOY_MULTISIG_FORM_LIST_CUSTODIANS_HEADER',
+                        })}
                     </div>
 
                     {new Array(custodiansCount).fill(1).map((_, idx) => {
@@ -85,7 +97,12 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                         return (
                             <div key={name} className="deploy-wallet__content-form-row">
                                 <div className="deploy-wallet__content-header">
-                                    Public key of Custodian {idx + 1}
+                                    {intl.formatMessage(
+                                        {
+                                            id: 'DEPLOY_MULTISIG_FORM_CUSTODIAN_FIELD_LABEL',
+                                        },
+                                        { index: idx + 1 }
+                                    )}
                                 </div>
                                 <div
                                     className={classNames('deploy-wallet__field', {
@@ -98,7 +115,9 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                                             required: true,
                                             pattern: /^[a-fA-F0-9]{64}$/,
                                         })}
-                                        label="Enter public key..."
+                                        label={intl.formatMessage({
+                                            id: 'ENTER_PUBLIC_KEY_FIELD_PLACEHOLDER',
+                                        })}
                                         type="text"
                                     />
                                     {custodiansCount > 1 && (
@@ -107,13 +126,17 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                                             className="deploy-wallet__field-delete"
                                             onClick={removeField(idx)}
                                         >
-                                            Delete
+                                            {intl.formatMessage({
+                                                id: 'DELETE_BTN_TEXT',
+                                            })}
                                         </a>
                                     )}
                                 </div>
                                 {formState.errors.custodians?.[idx]?.type === 'pattern' && (
                                     <div className="deploy-wallet__content-error">
-                                        It doesn't look like a public key
+                                        {intl.formatMessage({
+                                            id: 'DEPLOY_MULTISIG_FORM_VALIDATION_INVALID',
+                                        })}
                                     </div>
                                 )}
                             </div>
@@ -126,14 +149,19 @@ export function MultisigForm({ data, onSubmit }: Props): JSX.Element {
                             className="deploy-wallet__content-form-add-field"
                             onClick={addField}
                         >
-                            + Add one more public key
+                            {intl.formatMessage({
+                                id: 'DEPLOY_MULTISIG_FORM_ADD_FIELD_LINK_TEXT',
+                            })}
                         </a>
                     </div>
                 </div>
             </form>
 
             <footer className="approval__footer">
-                <Button text="Next" onClick={handleSubmit(onSubmit)} />
+                <Button
+                    text={intl.formatMessage({ id: 'NEXT_BTN_TEXT' })}
+                    onClick={handleSubmit(onSubmit)}
+                />
             </footer>
         </div>
     )

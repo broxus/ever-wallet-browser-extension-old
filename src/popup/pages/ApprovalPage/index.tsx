@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import { ApproveContractInteraction } from '@popup/components/Approvals/ApproveContractInteraction'
 import { ApproveRequestPermissions } from '@popup/components/Approvals/ApproveRequestPermissions'
@@ -24,6 +25,7 @@ const rejectedByUser = serializeError(
 )
 
 export function ApprovalPage(): JSX.Element | null {
+    const intl = useIntl()
     const rpc = useRpc()
     const rpcState = useRpcState()
 
@@ -72,12 +74,17 @@ export function ApprovalPage(): JSX.Element | null {
         <>
             {pendingApprovals.length !== 1 && (
                 <div className="pending-approvals__counter">
-                    <div>
-                        Pending approval{' '}
-                        <span className="pending-approvals__counter-counts">{`${
-                            approvalIndex + 1
-                        } of ${pendingApprovals.length}`}</span>
-                    </div>
+                    <div
+                        dangerouslySetInnerHTML={{
+                            __html: intl.formatMessage(
+                                {
+                                    id: 'PENDING_APPROVAL_COUNTER',
+                                },
+                                { value: approvalIndex + 1, total: pendingApprovals.length },
+                                { ignoreTag: true }
+                            ),
+                        }}
+                    />
                     <div className="pending-approvals__counter-nav">
                         <div
                             className="pending-approvals__counter-nav-button"

@@ -21,6 +21,7 @@ import { ConfirmMessageToPrepare } from '@shared/backgroundApi'
 
 import './style.scss'
 import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
+import { useIntl } from 'react-intl'
 
 type Props = {
     transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
@@ -31,16 +32,8 @@ enum LocalStep {
     ENTER_PASSWORD,
 }
 
-const TRANSACTION_NAMES = {
-    to: 'Recipient',
-    service: 'Recipient',
-    from: 'Sender',
-    incoming_transfer: 'Sender',
-    outgoing_transfer: 'Recipient',
-    swap_back: 'Recipient',
-}
-
 export function MultisigTransactionSign({ transaction }: Props): JSX.Element | null {
+    const intl = useIntl()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -107,10 +100,14 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
         (knownPayload.type != 'token_outgoing_transfer' && knownPayload.type != 'token_swap_back')
     ) {
         const txAddress = extractTransactionAddress(transaction)
-        direction = TRANSACTION_NAMES[txAddress.direction]
+        direction = intl.formatMessage({
+            id: `TRANSACTION_TERM_${txAddress.direction}`.toUpperCase(),
+        })
         address = txAddress.address
     } else {
-        direction = TRANSACTION_NAMES.outgoing_transfer
+        direction = intl.formatMessage({
+            id: 'TRANSACTION_TERM_OUTGOING_TRANSFER',
+        })
         if (knownPayload.type === 'token_outgoing_transfer') {
             address = knownPayload.data.to.address
         }
@@ -250,7 +247,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
         <div className="multisig-transaction">
             <header className="multisig-transaction__header">
                 <h2 className="multisig-transaction__header-title noselect">
-                    Multisig transaction
+                    {intl.formatMessage({ id: 'TRANSACTION_MULTISIG_PANEL_HEADER' })}
                 </h2>
             </header>
 
@@ -258,7 +255,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                 <div className="transaction-info-tx-details">
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">
-                            Date and time
+                            {intl.formatMessage({ id: 'TRANSACTION_TERM_DATETIME' })}
                         </span>
                         <span className="transaction-info-tx-details-param-value">
                             {new Date(transaction.createdAt * 1000).toLocaleString()}
@@ -268,7 +265,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                     {txHash != undefined && (
                         <div className="transaction-info-tx-details-param">
                             <span className="transaction-info-tx-details-param-desc">
-                                Hash (ID)
+                                {intl.formatMessage({ id: 'TRANSACTION_TERM_HASH' })}
                             </span>
                             <CopyText
                                 className="transaction-info-tx-details-param-value copy"
@@ -294,7 +291,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                     {transactionId !== undefined && (
                         <div className="transaction-info-tx-details-param">
                             <span className="transaction-info-tx-details-param-desc">
-                                Transaction Id
+                                {intl.formatMessage({ id: 'TRANSACTION_TERM_TRANSACTION_ID' })}
                             </span>
                             <span className="transaction-info-tx-details-param-value">
                                 {transactionId}
@@ -307,7 +304,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                             <div className="transaction-info-tx-details-separator" />
                             <div className="transaction-info-tx-details-param">
                                 <span className="transaction-info-tx-details-param-desc">
-                                    Amount
+                                    {intl.formatMessage({ id: 'TRANSACTION_TERM_AMOUNT' })}
                                 </span>
                                 <span className="transaction-info-tx-details-param-value transaction-info-tx-details-param-value--amount">
                                     <AssetIcon
@@ -332,7 +329,9 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                     <div className="transaction-info-tx-details-separator" />
                     <div className="transaction-info-tx-details-param">
                         <span className="transaction-info-tx-details-param-desc">
-                            {parsedTokenTransaction != null ? 'Attached amount' : 'Amount'}
+                            {parsedTokenTransaction != null
+                                ? intl.formatMessage({ id: 'TRANSACTION_TERM_ATTACHED_AMOUNT' })
+                                : intl.formatMessage({ id: 'TRANSACTION_TERM_AMOUNT' })}
                         </span>
                         <span className="transaction-info-tx-details-param-value transaction-info-tx-details-param-value--amount">
                             <TonAssetIcon className="root-token-icon noselect" />
@@ -348,7 +347,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                             {unconfirmedTransaction != null ? (
                                 <div className="transaction-info-tx-details-param">
                                     <span className="transaction-info-tx-details-param-desc">
-                                        Signatures
+                                        {intl.formatMessage({ id: 'TRANSACTION_TERM_SIGNATURES' })}
                                     </span>
                                     <span className="transaction-info-tx-details-param-value">
                                         {confirmations.length} of{' '}
@@ -359,10 +358,16 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                                 (txHash != null || isExpired) && (
                                     <div className="transaction-info-tx-details-param">
                                         <span className="transaction-info-tx-details-param-desc">
-                                            Status
+                                            {intl.formatMessage({ id: 'TRANSACTION_TERM_STATUS' })}
                                         </span>
                                         <span className="transaction-info-tx-details-param-value">
-                                            {txHash != null ? 'Sent' : 'Expired'}
+                                            {txHash != null
+                                                ? intl.formatMessage({
+                                                      id: 'TRANSACTION_TERM_VALUE_STATUS_SENT',
+                                                  })
+                                                : intl.formatMessage({
+                                                      id: 'TRANSACTION_TERM_VALUE_STATUS_EXPIRED',
+                                                  })}
                                         </span>
                                     </div>
                                 )
@@ -378,20 +383,31 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                                         className="transaction-info-tx-details-param"
                                     >
                                         <div className="transaction-info-tx-details-param-desc">
-                                            Custodian {idx + 1}
+                                            {intl.formatMessage(
+                                                {
+                                                    id: 'TRANSACTION_TERM_CUSTODIAN',
+                                                },
+                                                { value: idx + 1 }
+                                            )}
                                             {isSigned && (
                                                 <span className="transaction-info-tx-details-param-signed">
-                                                    Signed
+                                                    {intl.formatMessage({
+                                                        id: 'TRANSACTION_TERM_CUSTODIAN_SIGNED',
+                                                    })}
                                                 </span>
                                             )}
                                             {isInitiator && (
                                                 <span className="transaction-info-tx-details-param-initiator">
-                                                    Initiator
+                                                    {intl.formatMessage({
+                                                        id: 'TRANSACTION_TERM_CUSTODIAN_INITIATOR',
+                                                    })}
                                                 </span>
                                             )}
                                             {!isSigned && (
                                                 <span className="transaction-info-tx-details-param-unsigned">
-                                                    Not signed
+                                                    {intl.formatMessage({
+                                                        id: 'TRANSACTION_TERM_CUSTODIAN_NOT_SIGNED',
+                                                    })}
                                                 </span>
                                             )}
                                         </div>
@@ -420,12 +436,16 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                                     active: false,
                                 })
                             }
-                            text="Open in explorer"
+                            text={intl.formatMessage({ id: 'OPEN_IN_EXPLORER_BTN_TEXT' })}
                         />
                     </footer>
                 ) : unconfirmedTransaction != null ? (
                     <footer className="multisig-transaction__footer">
-                        <Button text="Confirm" onClick={onConfirm} disabled={selectedKey == null} />
+                        <Button
+                            text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
+                            onClick={onConfirm}
+                            disabled={selectedKey == null}
+                        />
                     </footer>
                 ) : (
                     <></>

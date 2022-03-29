@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import {
@@ -17,6 +18,7 @@ enum Step {
 }
 
 export function DeployMultisigWallet(): JSX.Element {
+    const intl = useIntl()
     const rpc = useRpc()
     const rpcState = useRpcState()
 
@@ -60,7 +62,7 @@ export function DeployMultisigWallet(): JSX.Element {
         const params: DeployMessageToPrepare = {
             type: 'multiple_owners',
             custodians: multisigData?.custodians || [],
-            reqConfirms: parseInt((multisigData?.reqConfirms as unknown) as string) || 0,
+            reqConfirms: parseInt(multisigData?.reqConfirms as unknown as string) || 0,
         }
 
         setError(undefined)
@@ -103,10 +105,12 @@ export function DeployMultisigWallet(): JSX.Element {
     return (
         <div className="deploy-wallet">
             <header className="deploy-wallet__header">
-                <h2 className="deploy-wallet__header-title">Deploy your wallet</h2>
+                <h2 className="deploy-wallet__header-title">
+                    {intl.formatMessage({ id: 'DEPLOY_MULTISIG_PANEL_HEADER' })}
+                </h2>
                 {step === Step.DEPLOY_MESSAGE && (
                     <h3 className="deploy-wallet__header-subtitle">
-                        Funds will be debited from your balance to deploy.
+                        {intl.formatMessage({ id: 'DEPLOY_MULTISIG_PANEL_COMMENT' })}
                     </h3>
                 )}
             </header>

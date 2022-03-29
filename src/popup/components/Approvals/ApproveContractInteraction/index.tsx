@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
@@ -25,6 +26,7 @@ export function ApproveContractInteraction({
     onSubmit,
     onReject,
 }: Props) {
+    const intl = useIntl()
     const { origin } = approval
     const { publicKey, recipient, payload } = approval.requestData
 
@@ -84,19 +86,35 @@ export function ApproveContractInteraction({
 
     return (
         <>
-            <Approval account={account} title="Contract interaction" origin={origin}>
+            <Approval
+                account={account}
+                title={intl.formatMessage({ id: 'APPROVE_CONTRACT_INTERACTION_APPROVAL_TITLE' })}
+                origin={origin}
+            >
                 <div className="approval__wrapper">
                     <div className="approval__spend-details">
                         <div className="approval__spend-details-param">
-                            <span className="approval__spend-details-param-desc">Contract</span>
+                            <span className="approval__spend-details-param-desc">
+                                {intl.formatMessage({
+                                    id: 'APPROVE_CONTRACT_INTERACTION_TERM_CONTRACT',
+                                })}
+                            </span>
                             <span className="approval__spend-details-param-value">{recipient}</span>
                         </div>
                         {payload && (
                             <div className="approval__spend-details-param">
-                                <span className="approval__spend-details-param-desc">Data</span>
+                                <span className="approval__spend-details-param-desc">
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_CONTRACT_INTERACTION_TERM_DATA',
+                                    })}
+                                </span>
                                 <div className="approval__spend-details-param-data">
                                     <div className="approval__spend-details-param-data__method">
-                                        <span>Method:</span>
+                                        <span>
+                                            {intl.formatMessage({
+                                                id: 'APPROVE_CONTRACT_INTERACTION_TERM_DATA_METHOD',
+                                            })}
+                                        </span>
                                         <span>{payload.method}</span>
                                     </div>
                                     {iterateItems(payload.params)}
@@ -106,10 +124,15 @@ export function ApproveContractInteraction({
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            onClick={onReject}
+                        />
                         <Button
                             type="submit"
-                            text="Send"
+                            text={intl.formatMessage({ id: 'SEND_BTN_TEXT' })}
                             onClick={() => {
                                 setPasswordModalVisible(true)
                             }}
