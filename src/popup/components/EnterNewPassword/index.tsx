@@ -1,4 +1,5 @@
 import React from 'react'
+import { useIntl } from 'react-intl'
 import { useForm } from 'react-hook-form'
 
 import Input from '@popup/components/Input'
@@ -13,6 +14,7 @@ type IEnterPasswordScreen = {
 }
 
 const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, onBack }) => {
+    const intl = useIntl()
     const { register, handleSubmit, watch, formState } = useForm()
 
     const trySubmit = (data: any) => {
@@ -24,10 +26,10 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
             <div className="enter-new-password__content">
                 <div className="enter-new-password__content-pwd-form">
                     <h2 className="enter-new-password__content-pwd-form-header">
-                        Password protection
+                        {intl.formatMessage({ id: 'PASSWORD_PROTECTION' })}
                     </h2>
                     <h3 className="enter-new-password__content-pwd-form-comment">
-                        So no one else, but you can unlock your wallet.
+                        {intl.formatMessage({ id: 'PASSWORD_PROTECTION_NOTE' })}
                     </h3>
                     <form
                         id="password"
@@ -35,7 +37,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
                         style={{ position: 'relative' }}
                     >
                         <Input
-                            label={'Your password'}
+                            label={intl.formatMessage({ id: 'PASSWORD_FIELD_PLACEHOLDER' })}
                             autoFocus
                             disabled={disabled}
                             type={'password'}
@@ -45,7 +47,7 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
                             })}
                         />
                         <Input
-                            label={'Confirm password'}
+                            label={intl.formatMessage({ id: 'PASSWORD_CONFIRM_FIELD_PLACEHOLDER' })}
                             type={'password'}
                             disabled={disabled}
                             {...register('passwordConfirm', {
@@ -55,24 +57,29 @@ const EnterNewPassword: React.FC<IEnterPasswordScreen> = ({ disabled, onSubmit, 
                         />
                         {formState.errors.password && (
                             <div className="check-seed__content-error">
-                                The password is required and must be minimum 6 characters long
+                                {intl.formatMessage({ id: 'ERROR_PASSWORD_IS_REQUIRED' })}
                             </div>
                         )}
                         {formState.errors.passwordConfirm && (
                             <div className="check-seed__content-error">
-                                Your password doesn't match
+                                {intl.formatMessage({ id: 'ERROR_PASSWORD_DOES_NOT_MATCH' })}
                             </div>
                         )}
                     </form>
                 </div>
                 <div className="enter-new-password__content-buttons">
                     <Button
-                        text={'Confirm'}
+                        text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
                         disabled={disabled}
                         onClick={handleSubmit(trySubmit)}
                         form="password"
                     />
-                    <Button text={'Back'} white disabled={disabled} onClick={onBack} />
+                    <Button
+                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                        white
+                        disabled={disabled}
+                        onClick={onBack}
+                    />
                 </div>
             </div>
         </div>

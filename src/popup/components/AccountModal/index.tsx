@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import manifest from '../../../manifest.json'
 
@@ -17,6 +18,7 @@ import './style.scss'
 import * as nt from '@nekoton'
 
 export function AccountModal() {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpcState = useRpcState()
     const drawer = useDrawerPanel()
@@ -129,14 +131,23 @@ export function AccountModal() {
                 <div ref={wrapperRef} className="account-settings noselect">
                     <div className="account-settings-section">
                         <div className="account-settings-section-header">
-                            Current: {selectedSeedName !== undefined && `${selectedSeedName}`}
+                            {intl.formatMessage(
+                                { id: 'ACCOUNT_CURRENT_ACCOUNT_PLACEHOLDER' },
+                                {
+                                    name: selectedSeedName ?? '',
+                                }
+                            )}
                         </div>
                     </div>
 
                     <div className="account-settings-separator" />
 
                     <div className="account-settings-section">
-                        <div className="account-settings-section-header">Recent seeds</div>
+                        <div className="account-settings-section-header">
+                            {intl.formatMessage({
+                                id: 'ACCOUNT_RECENT_SEEDS_HEADER',
+                            })}
+                        </div>
 
                         <ul className="account-settings__seeds-list">
                             {accountability.recentMasterKeys
@@ -158,7 +169,9 @@ export function AccountModal() {
                         </ul>
 
                         <div className="account-settings-section-item" onClick={onManageSeeds}>
-                            Manage seeds & accounts
+                            {intl.formatMessage({
+                                id: 'ACCOUNT_MANAGE_SEED_AND_ACCOUNT_LINK_TEXT',
+                            })}
                         </div>
                     </div>
 
@@ -168,10 +181,15 @@ export function AccountModal() {
                         className="account-settings-section-item-log-out"
                         onClick={accountability.logOut}
                     >
-                        Log out
+                        {intl.formatMessage({
+                            id: 'ACCOUNT_LOGOUT_LINK_TEXT',
+                        })}
                     </div>
                     <div className="account-settings-section-item-version">
-                        Version: {(manifest as any).version}
+                        {intl.formatMessage(
+                            { id: 'EXTENSION_VERSION' },
+                            { value: (manifest as any).version || '' }
+                        )}
                     </div>
                 </div>
             )}

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
@@ -33,13 +34,13 @@ const downloadFileAsText = (text: string) => {
 }
 
 export function ManageSeeds(): JSX.Element {
+    const intl = useIntl()
     const [inProgress, setInProgress] = React.useState(false)
 
     const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
     const signerName = accountability.currentMasterKey?.signerName
-
 
     const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
         return () => accountability.onManageMasterKey(seed)
@@ -72,15 +73,19 @@ export function ManageSeeds(): JSX.Element {
             {accountability.step == Step.MANAGE_SEEDS && (
                 <div key="manageSeeds" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">Manage seed phrases</h2>
+                        <h2 className="accounts-management__header-title">
+                            {intl.formatMessage({ id: 'MANAGE_SEEDS_PANEL_HEADER' })}
+                        </h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
                         <div className="accounts-management__content">
                             <div className="accounts-management__content-header">
-                                Seed phrases
+                                {intl.formatMessage({ id: 'MANAGE_SEEDS_LIST_HEADING' })}
                                 <a role="button" className="extra" onClick={addSeed}>
-                                    + Add new
+                                    {intl.formatMessage({
+                                        id: 'MANAGE_SEEDS_LIST_ADD_NEW_LINK_TEXT',
+                                    })}
                                 </a>
                             </div>
 
@@ -112,7 +117,10 @@ export function ManageSeeds(): JSX.Element {
                                                     {accountability.masterKeysNames[
                                                         key.masterKey
                                                     ] || convertAddress(key.masterKey)}
-                                                    {isActive && ' (current)'}
+                                                    {isActive &&
+                                                        intl.formatMessage({
+                                                            id: 'MANAGE_SEEDS_LIST_ITEM_CURRENT',
+                                                        })}
                                                 </div>
                                                 <img
                                                     src={Arrow}
@@ -127,7 +135,13 @@ export function ManageSeeds(): JSX.Element {
                         </div>
 
                         <footer className="accounts-management__footer">
-                            <Button text="Backup all" onClick={onBackup} disabled={inProgress} />
+                            <Button
+                                text={intl.formatMessage({
+                                    id: 'BACKUP_ALL_BTN_TEXT',
+                                })}
+                                onClick={onBackup}
+                                disabled={inProgress}
+                            />
                         </footer>
                     </div>
                 </div>

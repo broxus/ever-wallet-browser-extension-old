@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { useForm } from 'react-hook-form'
 
 import Button from '@popup/components/Button'
@@ -19,6 +20,7 @@ export function EnterPasswordForm({
     onSubmit,
     onBack,
 }: IEnterPasswordForm): JSX.Element {
+    const intl = useIntl()
     const { register, handleSubmit, formState } = useForm<{
         password: string
     }>()
@@ -44,12 +46,17 @@ export function EnterPasswordForm({
                                     minLength: 6,
                                 })}
                                 disabled={inProcess}
-                                label="Enter seed password..."
+                                label={intl.formatMessage({
+                                    id: 'ENTER_SEED_PASSWORD_FIELD_PLACEHOLDER',
+                                })}
                                 type="password"
                             />
                             {(formState.errors.password || error) && (
                                 <div className="accounts-management__content-error">
-                                    {formState.errors.password && 'The password is required'}
+                                    {formState.errors.password &&
+                                        intl.formatMessage({
+                                            id: 'ERROR_PASSWORD_IS_REQUIRED_FIELD',
+                                        })}
                                     {error}
                                 </div>
                             )}
@@ -59,9 +66,18 @@ export function EnterPasswordForm({
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
-                        <Button text="Back" disabled={inProcess} white onClick={onBack} />
+                        <Button
+                            text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                            disabled={inProcess}
+                            white
+                            onClick={onBack}
+                        />
                     </div>
-                    <Button text="Confirm" disabled={inProcess} onClick={handleSubmit(submit)} />
+                    <Button
+                        text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
+                        disabled={inProcess}
+                        onClick={handleSubmit(submit)}
+                    />
                 </footer>
             </div>
         </div>

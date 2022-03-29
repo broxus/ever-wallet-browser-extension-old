@@ -24,6 +24,7 @@ import store from '@popup/store'
 
 import App from './App'
 import Oval from '@popup/img/oval.svg'
+import { LocalizationProvider } from '@popup/providers/LocalizationProvider'
 
 const start = async () => {
     const windowType = getEnvironmentType()
@@ -171,9 +172,11 @@ const initializeUi = (
                 <Provider store={store}>
                     <RpcProvider connection={backgroundConnection}>
                         <RpcStateProvider group={group} activeTab={activeTab}>
-                            <AccountabilityProvider>
-                                <App />
-                            </AccountabilityProvider>
+                            <LocalizationProvider>
+                                <AccountabilityProvider>
+                                    <App />
+                                </AccountabilityProvider>
+                            </LocalizationProvider>
                         </RpcStateProvider>
                     </RpcProvider>
                 </Provider>

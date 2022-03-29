@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import ReactTooltip from 'react-tooltip'
 
@@ -15,6 +16,7 @@ type Props = {
 }
 
 export function CopyText({ children, className, id, place = 'top', text }: Props): JSX.Element {
+    const intl = useIntl()
     const [isCopied, setCopied] = React.useState(false)
 
     React.useEffect(() => {
@@ -45,7 +47,11 @@ export function CopyText({ children, className, id, place = 'top', text }: Props
                 type="dark"
                 effect="solid"
                 place={place}
-                getContent={() => (isCopied ? 'Copied!' : 'Click to copy')}
+                getContent={() =>
+                    isCopied
+                        ? intl.formatMessage({ id: 'COPIED_TOOLTIP' })
+                        : intl.formatMessage({ id: 'CLICK_TO_COPY_TOOLTIP' })
+                }
             />
         </>
     )

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
@@ -34,6 +35,7 @@ export function NewAccountContractType({
     onSubmit,
     onBack,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
 
     const availableContracts = React.useMemo(() => {
@@ -62,7 +64,9 @@ export function NewAccountContractType({
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">Select wallet type</h2>
+                <h2 className="accounts-management__header-title">
+                    {intl.formatMessage({ id: 'CONTRACT_TYPE_PANEL_HEADER' })}
+                </h2>
             </header>
 
             <div className="accounts-management__wrapper">
@@ -92,9 +96,18 @@ export function NewAccountContractType({
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
-                        <Button text="Back" disabled={disabled} white onClick={onBack} />
+                        <Button
+                            text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                            disabled={disabled}
+                            white
+                            onClick={onBack}
+                        />
                     </div>
-                    <Button text="Create account" disabled={disabled} onClick={onSubmit} />
+                    <Button
+                        text={intl.formatMessage({ id: 'CREATE_ACCOUNT_BTN_TEXT' })}
+                        disabled={disabled}
+                        onClick={onSubmit}
+                    />
                 </footer>
             </div>
         </div>

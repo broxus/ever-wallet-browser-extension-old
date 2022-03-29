@@ -12,12 +12,10 @@ enum ConnectLedgerSteps {
 }
 
 interface IAccountManager {
-    onBack: () => void;
+    onBack: () => void
 }
 
-const LedgerSignIn: React.FC<IAccountManager> = ({
-    onBack,
-}) => {
+const LedgerSignIn: React.FC<IAccountManager> = ({ onBack }) => {
     const rpc = useRpc()
     const rpcState = useRpcState()
     const [step, setStep] = useState<ConnectLedgerSteps>(ConnectLedgerSteps.SELECT)
@@ -27,8 +25,7 @@ const LedgerSignIn: React.FC<IAccountManager> = ({
             const bufferKey = await rpc.getLedgerMasterKey()
             const masterKey = Buffer.from(Object.values(bufferKey)).toString('hex')
             await rpc.selectMasterKey(masterKey)
-        }
-        catch (e) {
+        } catch (e) {
             console.error(e)
             setStep(ConnectLedgerSteps.CONNECT)
         }

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { NATIVE_CURRENCY } from '@shared/constants'
 
 import { CopyText } from '@popup/components/CopyText'
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export function AccountCard({ accountName, address, balance, publicKey }: Props): JSX.Element {
+    const intl = useIntl()
     const wholePart = balance.split('.')?.[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     const decimals = balance.split('.')?.[1]
 
@@ -25,7 +27,7 @@ export function AccountCard({ accountName, address, balance, publicKey }: Props)
                 <div className="account-card__info-details">
                     <div className="account-card__info-details-name">{accountName}</div>
                     <div className="account-card__info-details-public-key noselect">
-                        Public key
+                        {intl.formatMessage({ id: 'ACCOUNT_CARD_PUBLIC_KEY_LABEL' })}
                         <CopyText
                             className="account-card__info-details-public-key-value"
                             id={`copy-${publicKey}-${address}`}
@@ -36,7 +38,7 @@ export function AccountCard({ accountName, address, balance, publicKey }: Props)
                         </CopyText>
                     </div>
                     <div className="account-card__info-details-public-key noselect">
-                        Address
+                        {intl.formatMessage({ id: 'ACCOUNT_CARD_ADDRESS_LABEL' })}
                         {address !== undefined ? (
                             <CopyText
                                 className="account-card__info-details-public-key-value"
@@ -48,7 +50,7 @@ export function AccountCard({ accountName, address, balance, publicKey }: Props)
                             </CopyText>
                         ) : (
                             <span className="account-card__info-details-public-key-value">
-                                Not created
+                                {intl.formatMessage({ id: 'ACCOUNT_CARD_NO_ADDRESS_LABEL' })}
                             </span>
                         )}
                     </div>

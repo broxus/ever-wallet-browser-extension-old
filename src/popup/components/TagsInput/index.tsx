@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useIntl } from 'react-intl'
 import _ from 'lodash'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import { formatSeed } from '@popup/utils'
@@ -27,6 +28,7 @@ interface ITagsInput {
 }
 
 const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount }) => {
+    const intl = useIntl()
     const classes = useStyles()
     const [hints, setHints] = useState<string[]>([])
 
@@ -67,7 +69,7 @@ const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount }) => {
                     <TextField
                         {...params}
                         variant="standard"
-                        label="Enter your seed"
+                        label={intl.formatMessage({ id: 'ENTER_YOUR_SEED_FIELD_PLACEHOLDER' })}
                         margin="normal"
                     />
                 )}

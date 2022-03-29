@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import {
@@ -39,17 +40,37 @@ type OptionType = {
     label: string
 }
 
-const flowOptions: OptionType[] = [
-    { key: AddSeedFlow.CREATE, label: 'Create new seed', value: AddSeedFlow.CREATE },
-    { key: AddSeedFlow.IMPORT, label: 'Import seed', value: AddSeedFlow.IMPORT },
-    { key: AddSeedFlow.IMPORT_LEGACY, label: 'Import legacy seed', value: AddSeedFlow.IMPORT_LEGACY, },
-    { key: AddSeedFlow.CONNECT_LEDGER, label: 'Connect Ledger', value: AddSeedFlow.CONNECT_LEDGER },
-]
-
 export function CreateSeed(): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
+
+    const flowOptions = React.useMemo<OptionType[]>(
+        () => [
+            {
+                key: AddSeedFlow.CREATE,
+                label: intl.formatMessage({ id: 'ADD_SEED_OPTION_CREATE' }),
+                value: AddSeedFlow.CREATE,
+            },
+            {
+                key: AddSeedFlow.IMPORT,
+                label: intl.formatMessage({ id: 'ADD_SEED_OPTION_IMPORT' }),
+                value: AddSeedFlow.IMPORT,
+            },
+            {
+                key: AddSeedFlow.IMPORT_LEGACY,
+                label: intl.formatMessage({ id: 'ADD_SEED_OPTION_IMPORT_LEGACY' }),
+                value: AddSeedFlow.IMPORT_LEGACY,
+            },
+            {
+                key: AddSeedFlow.CONNECT_LEDGER,
+                label: intl.formatMessage({ id: 'ADD_SEED_OPTION_CONNECT_LEDGER' }),
+                value: AddSeedFlow.CONNECT_LEDGER,
+            },
+        ],
+        []
+    )
 
     const [error, setError] = React.useState<string>()
     const [flow, setFlow] = React.useState<AddSeedFlow | undefined>(flowOptions[0].value)
@@ -160,14 +181,18 @@ export function CreateSeed(): JSX.Element {
             {step === FlowStep.INDEX && (
                 <div key="index" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">Add seed phrase</h2>
+                        <h2 className="accounts-management__header-title">
+                            {intl.formatMessage({ id: 'ADD_SEED_PANEL_HEADER' })}
+                        </h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
                         <div className="accounts-management__content-form-rows">
                             <div className="accounts-management__content-form-row">
                                 <Input
-                                    label="Enter seed name..."
+                                    label={intl.formatMessage({
+                                        id: 'ENTER_SEED_FIELD_PLACEHOLDER',
+                                    })}
                                     type="text"
                                     autocomplete="off"
                                     value={name || ''}
@@ -186,9 +211,18 @@ export function CreateSeed(): JSX.Element {
 
                         <footer className="accounts-management__footer">
                             <div className="accounts-management__footer-button-back">
-                                <Button text="Back" disabled={inProcess} white onClick={onBack} />
+                                <Button
+                                    text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                    disabled={inProcess}
+                                    white
+                                    onClick={onBack}
+                                />
                             </div>
-                            <Button text="Next" type="submit" onClick={onNext} />
+                            <Button
+                                text={intl.formatMessage({ id: 'NEXT_BTN_TEXT' })}
+                                type="submit"
+                                onClick={onNext}
+                            />
                         </footer>
                     </div>
                 </div>
@@ -232,13 +266,7 @@ export function CreateSeed(): JSX.Element {
                 />
             )}
 
-            {step === FlowStep.CONNECT_LEDGER && (
-                <AccountManager
-                    name={name}
-                    onBack={onBack}
-                />
-            )}
-
+            {step === FlowStep.CONNECT_LEDGER && <AccountManager name={name} onBack={onBack} />}
         </>
     )
 }

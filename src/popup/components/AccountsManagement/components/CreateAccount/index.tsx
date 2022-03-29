@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
@@ -41,6 +42,7 @@ type Props = {
 }
 
 export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
@@ -122,7 +124,11 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         console.log('address not found in derived key -> create')
                                     })
                             } else {
-                                setError('Account has already been added to the list')
+                                setError(
+                                    intl.formatMessage({
+                                        id: 'CREATE_ACCOUNT_PANEL_ACCOUNT_EXISTS_ERROR',
+                                    })
+                                )
                             }
                         }
                         break
@@ -162,7 +168,11 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
 
                     // Not custodian
                     case !custodians.includes(currentPublicKey): {
-                        setError('You are not a custodian of this account')
+                        setError(
+                            intl.formatMessage({
+                                id: 'CREATE_ACCOUNT_PANEL_NOT_CUSTODIAN_ERROR',
+                            })
+                        )
                     }
                 }
 
@@ -237,8 +247,12 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                     <header className="accounts-management__header">
                         <h2 className="accounts-management__header-title">
                             {step === FlowStep.ENTER_ADDRESS
-                                ? 'Add an existing account'
-                                : 'Create new account'}
+                                ? intl.formatMessage({
+                                      id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_AN_EXISTING_LABEL',
+                                  })
+                                : intl.formatMessage({
+                                      id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_LABEL',
+                                  })}
                         </h2>
                     </header>
 
@@ -248,7 +262,9 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                 <div className="accounts-management__content-form-row">
                                     <Input
                                         name="name"
-                                        label="Enter account name..."
+                                        label={intl.formatMessage({
+                                            id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_LABEL',
+                                        })}
                                         autoFocus
                                         autocomplete="off"
                                         type="text"
@@ -260,7 +276,9 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                     <div className="accounts-management__content-form-row">
                                         <Input
                                             name="name"
-                                            label="Enter a multisig address..."
+                                            label={intl.formatMessage({
+                                                id: 'ENTER_MULTISIG_ADDRESS_FIELD_PLACEHOLDER',
+                                            })}
                                             autoFocus
                                             autocomplete="off"
                                             type="text"
@@ -271,10 +289,13 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                 )}
                                 {step === FlowStep.ENTER_NAME && (
                                     <div className="accounts-management__content-comment">
-                                        There will be created new public key. For creating new
-                                        address within an existing public key, please go to{' '}
+                                        {intl.formatMessage({
+                                            id: 'CREATE_NEW_ACCOUNT_PANEL_COMMENT',
+                                        })}{' '}
                                         <a role="button" onClick={onManageDerivedKey}>
-                                            Manage key
+                                            {intl.formatMessage({
+                                                id: 'CREATE_NEW_ACCOUNT_PANEL_COMMENT_MANAGE_KEY_LINK_LABEL',
+                                            })}
                                         </a>
                                         .
                                     </div>
@@ -288,10 +309,18 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
 
                         <footer className="accounts-management__footer">
                             <div className="accounts-management__footer-button-back">
-                                <Button text="Back" white onClick={onBack} />
+                                <Button
+                                    text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                    white
+                                    onClick={onBack}
+                                />
                             </div>
                             <Button
-                                text={step === FlowStep.ENTER_ADDRESS ? 'Add account' : 'Next'}
+                                text={
+                                    step === FlowStep.ENTER_ADDRESS
+                                        ? intl.formatMessage({ id: 'ADD_ACCOUNT_BTN_TEXT' })
+                                        : intl.formatMessage({ id: 'NEXT_BTN_TEXT' })
+                                }
                                 disabled={
                                     step === FlowStep.ENTER_ADDRESS ? address.length === 0 : false
                                 }

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
@@ -66,6 +67,7 @@ const updateFile = (): Promise<File | undefined> => {
 }
 
 export function WelcomePage(): JSX.Element {
+    const intl = useIntl()
     const rpc = useRpc()
 
     const [localStep, setStep] = React.useState(Step.WELCOME)
@@ -122,7 +124,9 @@ export function WelcomePage(): JSX.Element {
                     <div className="welcome-page__content">
                         <div>
                             <h1 className="welcome-page__content-header-xl">
-                                Welcome to EVER Wallet
+                                {intl.formatMessage({
+                                    id: 'WELCOME_TO_EVER_WALLET',
+                                })}
                             </h1>
                             <img src={SittingMan} alt="" />
                         </div>
@@ -143,7 +147,9 @@ export function WelcomePage(): JSX.Element {
                         <div>
                             <div className="welcome-page__content-button">
                                 <Button
-                                    text="Create a new wallet"
+                                    text={intl.formatMessage({
+                                        id: 'CREATE_A_NEW_WALLET',
+                                    })}
                                     onClick={() => {
                                         setStep(Step.CREATE_ACCOUNT)
                                     }}
@@ -151,7 +157,9 @@ export function WelcomePage(): JSX.Element {
                             </div>
                             <div className="welcome-page__content-button">
                                 <Button
-                                    text="Sign in with seed phrase"
+                                    text={intl.formatMessage({
+                                        id: 'SIGN_IN_WITH_SEED_PHRASE',
+                                    })}
                                     white
                                     onClick={() => {
                                         setStep(Step.IMPORT_ACCOUNT)
@@ -160,7 +168,9 @@ export function WelcomePage(): JSX.Element {
                             </div>
                             <div className="welcome-page__content-button">
                                 <Button
-                                    text="Sign in with ledger"
+                                    text={intl.formatMessage({
+                                        id: 'SIGN_IN_WITH_LEDGER',
+                                    })}
                                     white
                                     onClick={() => {
                                         setStep(Step.LEDGER_ACCOUNT)
@@ -169,7 +179,9 @@ export function WelcomePage(): JSX.Element {
                             </div>
                             <hr />
                             <Button
-                                text="Restore from backup"
+                                text={intl.formatMessage({
+                                    id: 'RESTORE_FROM_BACKUP',
+                                })}
                                 white
                                 disabled={restoreInProcess}
                                 onClick={restoreFromBackup}

@@ -1,5 +1,6 @@
 import React from 'react'
 import moment from 'moment'
+import { useIntl } from 'react-intl'
 
 import Button from '@popup/components/Button'
 import Modal from '@popup/components/Modal'
@@ -26,35 +27,38 @@ interface INotifications {
     onClose: () => void
 }
 
-const Notifications: React.FC<INotifications> = ({ onClose }) => (
-    <Modal onClose={onClose} className="notification-wrapper">
-        <div className="notification">
-            {testNotifications.map((el, i) => (
-                <div key={i} className="notification__record">
-                    {iconPlaceholder}
-                    <div style={{ paddingLeft: '16px', display: 'flex', alignItems: 'center' }}>
-                        <div>
-                            <div className="notification__record-title">{el.name}</div>
-                            <div className="notification__record-timestamp">
-                                {moment(el.timestamp).fromNow()}
+const Notifications: React.FC<INotifications> = ({ onClose }) => {
+    const intl = useIntl()
+    return (
+        <Modal onClose={onClose} className="notification-wrapper">
+            <div className="notification">
+                {testNotifications.map((el, i) => (
+                    <div key={i} className="notification__record">
+                        {iconPlaceholder}
+                        <div style={{ paddingLeft: '16px', display: 'flex', alignItems: 'center' }}>
+                            <div>
+                                <div className="notification__record-title">{el.name}</div>
+                                <div className="notification__record-timestamp">
+                                    {moment(el.timestamp).fromNow()}
+                                </div>
+                            </div>
+                            <div style={{ width: '33%' }}>
+                                <Button
+                                    text={intl.formatMessage({ id: 'UPDATE_BTN_TEXT' })}
+                                    onClick={() =>
+                                        window.browser.tabs.create({
+                                            url: 'https://broxus.com',
+                                            active: false,
+                                        })
+                                    }
+                                />
                             </div>
                         </div>
-                        <div style={{ width: '33%' }}>
-                            <Button
-                                text="Update"
-                                onClick={() =>
-                                    window.browser.tabs.create({
-                                        url: 'https://broxus.com',
-                                        active: false,
-                                    })
-                                }
-                            />
-                        </div>
                     </div>
-                </div>
-            ))}
-        </div>
-    </Modal>
-)
+                ))}
+            </div>
+        </Modal>
+    )
+}
 
 export default Notifications

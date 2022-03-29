@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { Carousel as ReactCarousel } from 'react-responsive-carousel'
 
 import { createRipple, removeRipple } from '@popup/common'
@@ -6,6 +7,7 @@ import { AccountCard } from '@popup/components/AccountCard'
 import { AddNewAccountCard } from '@popup/components/AddNewAccountCard'
 import { AccountModal } from '@popup/components/AccountModal'
 import { Carousel } from '@popup/components/Carousel'
+import { NetworkSettings } from '@popup/components/NetworkSettings'
 import Notifications from '@popup/components/Notifications'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
 import { Panel, useDrawerPanel } from '@popup/providers/DrawerPanelProvider'
@@ -20,9 +22,9 @@ import ReceiveIcon from '@popup/img/receive.svg'
 import SendIcon from '@popup/img/send.svg'
 
 import './style.scss'
-import { NetworkSettings } from '@popup/components/NetworkSettings'
 
 export function AccountDetails(): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
@@ -129,7 +131,7 @@ export function AccountDetails(): JSX.Element {
                 >
                     <div className="account-details__controls__button__content">
                         <img src={ReceiveIcon} alt="" style={{ marginRight: '8px' }} />
-                        Receive
+                        {intl.formatMessage({ id: 'RECEIVE_BTN_TEXT' })}
                     </div>
                 </button>
 
@@ -156,12 +158,12 @@ export function AccountDetails(): JSX.Element {
                             accountability.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
                                 <>
                                     <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
-                                    Send
+                                    {intl.formatMessage({ id: 'SEND_BTN_TEXT' })}
                                 </>
                             ) : (
                                 <>
                                     <img src={DeployIcon} alt="" style={{ marginRight: '8px' }} />
-                                    Deploy
+                                    {intl.formatMessage({ id: 'DEPLOY_BTN_TEXT' })}
                                 </>
                             )}
                         </div>

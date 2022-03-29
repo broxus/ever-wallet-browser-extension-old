@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
 
@@ -42,6 +43,7 @@ enum Panel {
 }
 
 export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Props) {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -204,7 +206,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                     >
                         <div className="asset-full__controls__button__content">
                             <img src={ReceiveIcon} alt="" style={{ marginRight: '8px' }} />
-                            Receive
+                            {intl.formatMessage({ id: 'RECEIVE_BTN_TEXT' })}
                         </div>
                     </button>
 
@@ -231,12 +233,12 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
                                             alt=""
                                             style={{ marginRight: '8px' }}
                                         />
-                                        Deploy
+                                        {intl.formatMessage({ id: 'DEPLOY_BTN_TEXT' })}
                                     </>
                                 ) : (
                                     <>
                                         <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
-                                        Send
+                                        {intl.formatMessage({ id: 'SEND_BTN_TEXT' })}
                                     </>
                                 )}
                             </div>

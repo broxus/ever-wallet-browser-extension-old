@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
@@ -44,6 +45,7 @@ export function UserAssets({
     onViewAsset,
     preloadTransactions,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpcState = useRpcState()
 
@@ -75,7 +77,7 @@ export function UserAssets({
                         })}
                         onClick={() => setActiveTab(AssetsTab.ASSETS)}
                     >
-                        Assets
+                        {intl.formatMessage({ id: 'USER_ASSETS_TAB_ASSETS_LABEL' })}
                     </div>
                     <div
                         className={classNames('user-assets__panel__tab', {
@@ -83,7 +85,7 @@ export function UserAssets({
                         })}
                         onClick={() => setActiveTab(AssetsTab.TRANSACTIONS)}
                     >
-                        Transactions
+                        {intl.formatMessage({ id: 'USER_ASSETS_TAB_TRANSACTIONS_LABEL' })}
                     </div>
                 </div>
                 {activeTab == AssetsTab.ASSETS && (

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 
 import Button from '@popup/components/Button'
@@ -54,6 +55,7 @@ type Props = {
 }
 
 export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
 
     const derivedKeys = React.useMemo(
@@ -89,7 +91,9 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">Add account</h2>
+                <h2 className="accounts-management__header-title">
+                    {intl.formatMessage({ id: 'ADD_ACCOUNT_PANEL_HEADER' })}
+                </h2>
             </header>
 
             <div className="accounts-management__wrapper">
@@ -121,7 +125,7 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
                             onClick={onChangeFlow(AddAccountFlow.CREATE)}
                         >
                             <CreateAccountIcon className="accounts-management__add-options-icon" />
-                            Create new account
+                            {intl.formatMessage({ id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_LABEL' })}
                         </div>
                         <div
                             className={classNames('accounts-management__add-options-option', {
@@ -131,7 +135,9 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
                             onClick={onChangeFlow(AddAccountFlow.IMPORT)}
                         >
                             <PlusIcon className="accounts-management__add-options-icon" />
-                            Add an existing account
+                            {intl.formatMessage({
+                                id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_AN_EXISTING_LABEL',
+                            })}
                         </div>
                     </div>
                 </div>
@@ -139,10 +145,14 @@ export function SelectAccountAddingFlow({ flow, onSelect, onNext, onBack }: Prop
                 <footer className="accounts-management__footer">
                     {typeof onBack === 'function' && (
                         <div className="accounts-management__footer-button-back">
-                            <Button text="Back" white onClick={onBack} />
+                            <Button
+                                text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                white
+                                onClick={onBack}
+                            />
                         </div>
                     )}
-                    <Button text="Next" onClick={onNext} />
+                    <Button text={intl.formatMessage({ id: 'NEXT_BTN_TEXT' })} onClick={onNext} />
                 </footer>
             </div>
         </div>

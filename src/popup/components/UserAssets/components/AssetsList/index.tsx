@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { NATIVE_CURRENCY } from '@shared/constants'
 import * as nt from '@nekoton'
 
@@ -32,6 +33,7 @@ export function AssetsList({
     updateTokenWallets,
     onViewAsset,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const [openedPanel, setOpenedPanel] = React.useState<Panel>()
 
     const closePanel = () => setOpenedPanel(undefined)
@@ -79,7 +81,7 @@ export function AssetsList({
             })}
             <div className="user-assets__assets-list__add-new-btn">
                 <Button
-                    text={'Select assets'}
+                    text={intl.formatMessage({ id: 'SELECT_ASSETS_BTN_TEXT' })}
                     white
                     onClick={() => setOpenedPanel(Panel.ADD_NEW_TOKEN)}
                 />

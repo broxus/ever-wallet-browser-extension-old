@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { connect } from 'react-redux'
 import * as nt from '@nekoton'
 import { PendingApproval } from '@shared/backgroundApi'
@@ -74,6 +75,7 @@ const ApproveAddAsset: React.FC<Props> = ({
     onSubmit,
     onReject,
 }) => {
+    const intl = useIntl()
     const rpcState = useRpcState()
     const rpc = useRpc()
 
@@ -140,7 +142,7 @@ const ApproveAddAsset: React.FC<Props> = ({
         <>
             <Approval
                 account={account}
-                title="Add TIP3 token"
+                title={intl.formatMessage({ id: 'APPROVE_ADD_ASSET_APPROVAL_TITLE' })}
                 origin={origin}
                 className={'approval--add-tip3-token'}
             >
@@ -162,14 +164,18 @@ const ApproveAddAsset: React.FC<Props> = ({
                             </div>
                             {tokensMeta != null && manifestData == null && (
                                 <TokenNotification type={TokenNotificationType.Error}>
-                                    <p>
-                                        This token is not published in the&nbsp;
-                                        <a href={TOKENS_MANIFEST_REPO} target="_blank">
-                                            official assets repository
-                                        </a>
-                                        .
-                                    </p>
-                                    <p>Add it with caution if you trust the source.</p>
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: intl.formatMessage(
+                                                {
+                                                    id: 'APPROVE_ADD_ASSET_NOT_PUBLISHED_NOTE',
+                                                },
+                                                {
+                                                    url: TOKENS_MANIFEST_REPO,
+                                                }
+                                            ) as string,
+                                        }}
+                                    />
                                 </TokenNotification>
                             )}
                         </div>
@@ -234,14 +240,23 @@ const ApproveAddAsset: React.FC<Props> = ({
                                           balance,
                                           details.decimals
                                       )} ${convertTokenName(details.symbol)}`
-                                    : 'calculating...'}
+                                    : intl.formatMessage({ id: 'CALCULATING_HINT' })}
                             </span>
                         </div>
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
-                        <Button type="submit" text="Add" onClick={() => onSubmit({})} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            onClick={onReject}
+                        />
+                        <Button
+                            type="submit"
+                            text={intl.formatMessage({ id: 'ADD_BTN_TEXT' })}
+                            onClick={() => onSubmit({})}
+                        />
                     </footer>
                 </div>
             </Approval>

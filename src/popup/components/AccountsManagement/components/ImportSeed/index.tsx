@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 import { OptionsType } from 'rc-select/lib/interface'
 import { LabelValueType } from 'rc-select/lib/interface/generator'
@@ -16,6 +17,7 @@ type Props = {
 }
 
 export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props): JSX.Element {
+    const intl = useIntl()
     const { control, handleSubmit, setValue } = useForm()
 
     const [hints, setHints] = React.useState<LabelValueType[]>([])
@@ -83,7 +85,9 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">Enter seed phrase</h2>
+                <h2 className="accounts-management__header-title">
+                    {intl.formatMessage({ id: 'IMPORT_SEED_PANEL_HEADER' })}
+                </h2>
             </header>
 
             <div className="accounts-management__wrapper">
@@ -117,7 +121,9 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                                                 id={`select-index-${number}`}
                                                 listHeight={120}
                                                 options={hints as unknown as OptionsType}
-                                                placeholder="Word..."
+                                                placeholder={intl.formatMessage({
+                                                    id: 'WORD_FIELD_PLACEHOLDER',
+                                                })}
                                                 showArrow={false}
                                                 showSearch
                                                 onBlur={onBlur}
@@ -155,7 +161,9 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
                                                 id={`select-index-${number}`}
                                                 listHeight={120}
                                                 options={hints as unknown as OptionsType}
-                                                placeholder="Word..."
+                                                placeholder={intl.formatMessage({
+                                                    id: 'WORD_FIELD_PLACEHOLDER',
+                                                })}
                                                 showArrow={false}
                                                 showSearch
                                                 onBlur={onBlur}
@@ -178,9 +186,17 @@ export function ImportSeed({ error, wordsCount = 12, onSubmit, onBack }: Props):
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
-                        <Button text="Back" white onClick={onBack} />
+                        <Button
+                            text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                            white
+                            onClick={onBack}
+                        />
                     </div>
-                    <Button text="Confirm" form="words" onClick={handleSubmit(doOnSubmit)} />
+                    <Button
+                        text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
+                        form="words"
+                        onClick={handleSubmit(doOnSubmit)}
+                    />
                 </footer>
             </div>
         </div>

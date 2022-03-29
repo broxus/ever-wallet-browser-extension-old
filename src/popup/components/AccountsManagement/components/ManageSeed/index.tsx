@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
@@ -19,6 +20,7 @@ enum ManageSeedStep {
 }
 
 export function ManageSeed(): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpc = useRpc()
     const rpcState = useRpcState()
@@ -73,16 +75,22 @@ export function ManageSeed(): JSX.Element {
             {step == ManageSeedStep.INDEX && (
                 <div key="index" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">Manage seed phrase</h2>
+                        <h2 className="accounts-management__header-title">
+                            {intl.formatMessage({ id: 'MANAGE_SEED_PANEL_HEADER' })}
+                        </h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
                         <div className="accounts-management__content">
-                            <div className="accounts-management__content-header">Seed name</div>
+                            <div className="accounts-management__content-header">
+                                {intl.formatMessage({ id: 'MANAGE_SEED_FIELD_NAME_LABEL' })}
+                            </div>
                             <div className="accounts-management__name-field">
                                 <Input
                                     name="seed_name"
-                                    label="Enter seed name"
+                                    label={intl.formatMessage({
+                                        id: 'ENTER_SEED_FIELD_PLACEHOLDER',
+                                    })}
                                     type="text"
                                     autocomplete="off"
                                     value={name || ''}
@@ -101,7 +109,7 @@ export function ManageSeed(): JSX.Element {
                                             className="accounts-management__name-button"
                                             onMouseDown={saveName}
                                         >
-                                            Save
+                                            {intl.formatMessage({ id: 'SAVE_BTN_TEXT' })}
                                         </a>
                                     )}
                             </div>
@@ -110,13 +118,19 @@ export function ManageSeed(): JSX.Element {
                                 className="accounts-management__content-header"
                                 style={{ marginTop: 16 }}
                             >
-                                Keys
+                                {intl.formatMessage({ id: 'MANAGE_SEED_LIST_KEYS_HEADING' })}
                                 {accountability.currentMasterKey?.signerName !== 'encrypted_key' ? (
                                     <a role="button" className="extra" onClick={addKey}>
-                                        + Add new
+                                        {intl.formatMessage({
+                                            id: 'MANAGE_SEED_LIST_KEYS_ADD_NEW_LINK_TEXT',
+                                        })}
                                     </a>
                                 ) : (
-                                    <small>(only one is available for legacy seed)</small>
+                                    <small>
+                                        {intl.formatMessage({
+                                            id: 'MANAGE_SEED_LIST_KEYS_ONLY_ONE_NOTE',
+                                        })}
+                                    </small>
                                 )}
                             </div>
 
@@ -163,10 +177,17 @@ export function ManageSeed(): JSX.Element {
                         <footer className="accounts-management__footer">
                             {rpcState.activeTab?.type != ENVIRONMENT_TYPE_POPUP && (
                                 <div className="accounts-management__footer-button-back">
-                                    <Button text="Back" white onClick={onBack} />
+                                    <Button
+                                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                        white
+                                        onClick={onBack}
+                                    />
                                 </div>
                             )}
-                            <Button text="Export seed" onClick={onExportSeed} />
+                            <Button
+                                text={intl.formatMessage({ id: 'EXPORT_SEED_BTN_TEXT' })}
+                                onClick={onExportSeed}
+                            />
                         </footer>
                     </div>
                 </div>

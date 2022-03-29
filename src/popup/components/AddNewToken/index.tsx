@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useIntl } from 'react-intl'
 import { connect } from 'react-redux'
 import { useForm } from 'react-hook-form'
 import cn from 'classnames'
@@ -72,6 +73,7 @@ const SearchToken: React.FC<ISearchToken> = ({
     onSubmit,
     onBack,
 }) => {
+    const intl = useIntl()
     const [result, setResult] = useState<TokenWalletsToUpdate>({})
 
     const hasChanges = Object.keys(result).length > 0
@@ -110,10 +112,14 @@ const SearchToken: React.FC<ISearchToken> = ({
             </div>
             <div style={{ display: 'flex', paddingTop: '16px' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button text={'Back'} onClick={onBack} white />
+                    <Button
+                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                        onClick={onBack}
+                        white
+                    />
                 </div>
                 <Button
-                    text={'Save'}
+                    text={intl.formatMessage({ id: 'SAVE_BTN_TEXT' })}
                     disabled={disabled || !hasChanges}
                     onClick={() => onSubmit(result)}
                 />
@@ -130,6 +136,7 @@ type ICustomToken = {
 }
 
 const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack }) => {
+    const intl = useIntl()
     const { register, handleSubmit, formState } = useForm<NewToken>()
 
     const trySubmit = async ({ rootTokenContract }: NewToken) => {
@@ -141,7 +148,7 @@ const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack
     return (
         <form>
             <Input
-                label={'Root token contract...'}
+                label={intl.formatMessage({ id: 'ROOT_TOKEN_CONTRACT_FIELD_PLACEHOLDER' })}
                 className="add-new-token__search-form"
                 type="text"
                 autocomplete="off"
@@ -156,19 +163,24 @@ const CustomToken: React.FC<ICustomToken> = ({ disabled, error, onSubmit, onBack
             {formState.errors.rootTokenContract && (
                 <div className="check-seed__content-error">
                     {formState.errors.rootTokenContract.type == 'required' &&
-                        'This field is required'}
+                        intl.formatMessage({ id: 'ERROR_FIELD_IS_REQUIRED' })}
                     {(formState.errors.rootTokenContract.type == 'pattern' ||
                         formState.errors.rootTokenContract.type == 'validate') &&
-                        'Invalid address'}
+                        intl.formatMessage({ id: 'ERROR_INVALID_ADDRESS' })}
                 </div>
             )}
             <div style={{ display: 'flex', paddingTop: '16px' }}>
                 <div style={{ width: '50%', marginRight: '12px' }}>
-                    <Button disabled={disabled} text={'Back'} onClick={onBack} white />
+                    <Button
+                        disabled={disabled}
+                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                        onClick={onBack}
+                        white
+                    />
                 </div>
                 <Button
                     disabled={disabled}
-                    text={'Proceed'}
+                    text={intl.formatMessage({ id: 'PROCEED_BTN_TEXT' })}
                     type="button"
                     onClick={handleSubmit(trySubmit)}
                 />
@@ -201,6 +213,7 @@ const AddNewToken: React.FC<IAddNewToken> = ({
     onSubmit,
     onBack,
 }) => {
+    const intl = useIntl()
     const [activeTab, setActiveTab] = useState(Tab.PREDEFINED)
     const [inProcess, setInProcess] = useState(false)
     const [error, setError] = useState<string>()
@@ -252,7 +265,9 @@ const AddNewToken: React.FC<IAddNewToken> = ({
         <>
             {/*step === SelectTokenStep.SELECT && ( */}
             <>
-                <h2 className="add-new-token__header noselect">Select assets</h2>
+                <h2 className="add-new-token__header noselect">
+                    {intl.formatMessage({ id: 'USER_ASSETS_SELECT_ASSETS_HEADER' })}
+                </h2>
                 <div className="add-new-token">
                     <div className="add-new-token__panel noselect">
                         <div
@@ -261,7 +276,9 @@ const AddNewToken: React.FC<IAddNewToken> = ({
                             })}
                             onClick={() => setActiveTab(Tab.PREDEFINED)}
                         >
-                            Search
+                            {intl.formatMessage({
+                                id: 'USER_ASSETS_SELECT_ASSETS_TAB_SEARCH_LABEL',
+                            })}
                         </div>
                         <div
                             className={cn('add-new-token__panel-tab', {
@@ -269,7 +286,9 @@ const AddNewToken: React.FC<IAddNewToken> = ({
                             })}
                             onClick={() => setActiveTab(Tab.CUSTOM)}
                         >
-                            Custom token
+                            {intl.formatMessage({
+                                id: 'USER_ASSETS_SELECT_ASSETS_TAB_CUSTOM_TOKEN_LABEL',
+                            })}
                         </div>
                     </div>
                     {activeTab == Tab.PREDEFINED &&

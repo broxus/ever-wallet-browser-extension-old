@@ -1,6 +1,7 @@
 import * as React from 'react'
 import classNames from 'classnames'
 import QRCode from 'react-qr-code'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
@@ -16,6 +17,7 @@ import Arrow from '@popup/img/arrow.svg'
 import TonKey from '@popup/img/ton-key.svg'
 
 export function ManageAccount(): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
@@ -111,16 +113,22 @@ export function ManageAccount(): JSX.Element {
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">Manage account</h2>
+                <h2 className="accounts-management__header-title">
+                    {intl.formatMessage({ id: 'MANAGE_ACCOUNT_PANEL_HEADER' })}
+                </h2>
             </header>
 
             <div className="accounts-management__wrapper">
                 <div className="accounts-management__content">
-                    <div className="accounts-management__content-header">Account name</div>
+                    <div className="accounts-management__content-header">
+                        {intl.formatMessage({ id: 'MANAGE_ACCOUNT_FIELD_NAME_LABEL' })}
+                    </div>
                     <div className="accounts-management__name-field">
                         <Input
                             name="seed_name"
-                            label="Enter key name"
+                            label={intl.formatMessage({
+                                id: 'ENTER_ACCOUNT_NAME_FIELD_PLACEHOLDER',
+                            })}
                             type="text"
                             autocomplete="off"
                             value={name || ''}
@@ -135,7 +143,7 @@ export function ManageAccount(): JSX.Element {
                                     className="accounts-management__name-button"
                                     onClick={saveName}
                                 >
-                                    Save
+                                    {intl.formatMessage({ id: 'SAVE_BTN_TEXT' })}
                                 </a>
                             )}
                     </div>
@@ -150,7 +158,9 @@ export function ManageAccount(): JSX.Element {
                             checked={isVisible}
                             onChange={onToggleVisibility}
                         />
-                        <label htmlFor="visibility">Display on the main screen</label>
+                        <label htmlFor="visibility">
+                            {intl.formatMessage({ id: 'MANAGE_ACCOUNT_VISIBILITY_SWITCHER_LABEL' })}
+                        </label>
                     </div>
 
                     {accountability.currentAccount !== undefined && (
@@ -173,7 +183,11 @@ export function ManageAccount(): JSX.Element {
 
                     {linkedKeys.length > 0 && (
                         <>
-                            <div className="accounts-management__content-header">Linked keys</div>
+                            <div className="accounts-management__content-header">
+                                {intl.formatMessage({
+                                    id: 'MANAGE_ACCOUNT_LIST_LINKED_KEYS_HEADING',
+                                })}
+                            </div>
                             <div className="accounts-management__divider" />
                             <ul className="accounts-management__list">
                                 {linkedKeys.map((key) => (
@@ -206,9 +220,16 @@ export function ManageAccount(): JSX.Element {
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
-                        <Button text="Back" white onClick={onBack} />
+                        <Button
+                            text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                            white
+                            onClick={onBack}
+                        />
                     </div>
-                    <Button text="Go to account" onClick={onSelectAccount} />
+                    <Button
+                        text={intl.formatMessage({ id: 'MANAGE_ACCOUNT_GO_TO_ACCOUNT_BTN_TEXT' })}
+                        onClick={onSelectAccount}
+                    />
                 </footer>
             </div>
         </div>

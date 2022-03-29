@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 
 import Button from '@popup/components/Button'
 import Input from '@popup/components/Input'
+import { useIntl } from 'react-intl'
 
 type Props = {
     disabled?: boolean
@@ -12,6 +13,7 @@ type Props = {
 }
 
 export function EnterNewSeedPasswords({ disabled, error, onBack, ...props }: Props): JSX.Element {
+    const intl = useIntl()
     const { register, handleSubmit, watch, formState } = useForm()
 
     const onSubmit = ({ password }: { password: string }) => {
@@ -22,7 +24,7 @@ export function EnterNewSeedPasswords({ disabled, error, onBack, ...props }: Pro
         <div className="accounts-management">
             <header className="accounts-management__header">
                 <h2 className="accounts-management__header-title">
-                    Enter password to confirm adding
+                    {intl.formatMessage({ id: 'IMPORT_SEED_PANEL_CONFIRM_HEADER' })}
                 </h2>
             </header>
 
@@ -36,13 +38,13 @@ export function EnterNewSeedPasswords({ disabled, error, onBack, ...props }: Pro
                                     minLength: 6,
                                 })}
                                 disabled={disabled}
-                                label="Your password"
+                                label={intl.formatMessage({ id: 'PASSWORD_FIELD_PLACEHOLDER' })}
                                 autoFocus
                                 type="password"
                             />
                             {formState.errors.password && (
                                 <div className="accounts-management__content-error">
-                                    The password is required and must be minimum 6 characters long
+                                    {intl.formatMessage({ id: 'ERROR_PASSWORD_IS_REQUIRED' })}
                                 </div>
                             )}
                         </div>
@@ -54,12 +56,14 @@ export function EnterNewSeedPasswords({ disabled, error, onBack, ...props }: Pro
                                     validate: (value) => value === watch('password'),
                                 })}
                                 disabled={disabled}
-                                label="Confirm password"
+                                label={intl.formatMessage({
+                                    id: 'PASSWORD_CONFIRM_FIELD_PLACEHOLDER',
+                                })}
                                 type="password"
                             />
                             {formState.errors.passwordConfirm && (
                                 <div className="accounts-management__content-error">
-                                    Your password doesn't match
+                                    {intl.formatMessage({ id: 'ERROR_PASSWORD_DOES_NOT_MATCH' })}
                                 </div>
                             )}
                         </div>
@@ -71,9 +75,18 @@ export function EnterNewSeedPasswords({ disabled, error, onBack, ...props }: Pro
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
-                        <Button text="Back" disabled={disabled} white onClick={onBack} />
+                        <Button
+                            text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                            disabled={disabled}
+                            white
+                            onClick={onBack}
+                        />
                     </div>
-                    <Button text="Confirm" disabled={disabled} onClick={handleSubmit(onSubmit)} />
+                    <Button
+                        text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
+                        disabled={disabled}
+                        onClick={handleSubmit(onSubmit)}
+                    />
                 </footer>
             </div>
         </div>

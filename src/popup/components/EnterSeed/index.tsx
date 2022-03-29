@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useIntl } from 'react-intl'
 
 import TagsInput from '@popup/components/TagsInput'
 import Button from '@popup/components/Button'
@@ -20,23 +21,34 @@ export const EnterSeedLogin: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCou
 }
 
 const EnterSeed: React.FC<IEnterSeed> = ({ onSubmit, onBack, wordCount }) => {
+    const intl = useIntl()
     const [words, setWords] = useState<string[]>([])
 
     return (
         <div className="enter-seed__content">
             <div className="enter-seed__content__seed-form">
-                <h2 className="enter-seed__content__seed-form__header">Enter your seed phrase</h2>
+                <h2 className="enter-seed__content__seed-form__header">
+                    {intl.formatMessage({ id: 'ENTER_SEED_PHRASE' })}
+                </h2>
                 <TagsInput setWords={setWords} words={words} wordCount={wordCount} />
-                <div className="words-count">{`${words.length}/${wordCount} words`}</div>
+                <div className="words-count">
+                    {intl.formatMessage(
+                        { id: 'ENTER_SEED_PHRASE_WORDS_COUNTER' },
+                        {
+                            value: words.length,
+                            limit: wordCount,
+                        }
+                    )}
+                </div>
             </div>
             <br />
             <div className="enter-seed__buttons">
                 <Button
-                    onClick={() => onSubmit(words)}
-                    text={'Confirm'}
+                    text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
                     disabled={words.length != wordCount}
+                    onClick={() => onSubmit(words)}
                 />
-                <Button text={'Back'} white onClick={onBack} />
+                <Button text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })} white onClick={onBack} />
             </div>
         </div>
     )
