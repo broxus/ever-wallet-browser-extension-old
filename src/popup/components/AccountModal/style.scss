@@ -116,4 +116,21 @@
             }
         }
     }
+
+
+  .lang-switcher {
+	display: flex;
+	gap: 16px;
+
+	> .active > a {
+	  color: $windowFg;
+	}
+  }
+
+  a {
+	color: $accountHeader;
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 20px;
+  }
 }

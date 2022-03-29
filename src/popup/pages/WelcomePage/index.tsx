@@ -72,8 +72,6 @@ export function WelcomePage(): JSX.Element {
     const rpc = useRpc()
     const rpcState = useRpcState()
 
-    const [, forceUpdate] = React.useReducer((x) => x + 1, 0)
-
     const [localStep, setStep] = React.useState(Step.WELCOME)
     const [restoreInProcess, setRestoreInProcess] = React.useState(false)
     const [restoreError, setRestoreError] = React.useState<string | undefined>()
@@ -126,7 +124,6 @@ export function WelcomePage(): JSX.Element {
             event.preventDefault()
             event.stopPropagation()
             await rpc.setLocale('en')
-            forceUpdate()
         } catch (e) {}
     }
 
@@ -135,7 +132,6 @@ export function WelcomePage(): JSX.Element {
             event.preventDefault()
             event.stopPropagation()
             await rpc.setLocale('ko')
-            forceUpdate()
         } catch (e) {}
     }
 

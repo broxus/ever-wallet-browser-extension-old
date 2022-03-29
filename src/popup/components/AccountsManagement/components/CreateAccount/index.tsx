@@ -263,7 +263,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                     <Input
                                         name="name"
                                         label={intl.formatMessage({
-                                            id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_LABEL',
+                                            id: 'ENTER_ACCOUNT_NAME_FIELD_PLACEHOLDER',
                                         })}
                                         autoFocus
                                         autocomplete="off"

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
+import * as nt from '@nekoton'
 
 import manifest from '../../../manifest.json'
 
@@ -15,7 +16,6 @@ import Profile from '@popup/img/profile.svg'
 import { convertAddress } from '@shared/utils'
 
 import './style.scss'
-import * as nt from '@nekoton'
 
 export function AccountModal() {
     const intl = useIntl()
@@ -119,6 +119,22 @@ export function AccountModal() {
         })
     }
 
+    const setEnglishLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+        try {
+            event.preventDefault()
+            event.stopPropagation()
+            await rpc.setLocale('en')
+        } catch (e) {}
+    }
+
+    const setKoreanLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+        try {
+            event.preventDefault()
+            event.stopPropagation()
+            await rpc.setLocale('ko')
+        } catch (e) {}
+    }
+
     hideModalOnClick(wrapperRef, iconRef, hide)
 
     return (
@@ -129,6 +145,23 @@ export function AccountModal() {
 
             {isActive && (
                 <div ref={wrapperRef} className="account-settings noselect">
+                    <div className="account-settings-section">
+                        <div className="lang-switcher">
+                            <div className={rpcState.state.selectedLocale === 'en' ? 'active' : ''}>
+                                <a href="#" onClick={setEnglishLocale}>
+                                    English
+                                </a>
+                            </div>
+                            <div className={rpcState.state.selectedLocale === 'ko' ? 'active' : ''}>
+                                <a href="#" onClick={setKoreanLocale}>
+                                    한국어
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="account-settings-separator" />
+
                     <div className="account-settings-section">
                         <div className="account-settings-section-header">
                             {intl.formatMessage(

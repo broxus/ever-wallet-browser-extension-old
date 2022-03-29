@@ -276,7 +276,7 @@ export default {
     ERROR_PASSWORD_IS_REQUIRED_FIELD: 'The password is required',
     ERROR_PASSWORD_DOES_NOT_MATCH: 'Your password doesn`t match',
     ERROR_SEED_DOES_NOT_MATCH: 'Your seed doesn`t match',
-    ERROR_FAILED_TO_CONNECT_TO_LEDGER: 'Failed to connect to ledger',
+    ERROR_FAILED_TO_CONNECT_TO_LEDGER: 'Failed to connect to Ledger',
     ERROR_KEY_ENTRY_NOT_FOUND: 'Key entry not found',
 
     COPIED_TOOLTIP: 'Copied!',
