@@ -152,7 +152,9 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                     <div key="copySeedPhrase" className="accounts-management">
                         <header className="accounts-management__header">
                             <h2 className="accounts-management__header-title">
-                                Save the seed phrase
+                                {intl.formatMessage({
+                                    id: 'SAVE_THE_SEED_PHRASE',
+                                })}
                             </h2>
                         </header>
 
