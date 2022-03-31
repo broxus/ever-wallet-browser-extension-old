@@ -51,6 +51,7 @@ export default {
     TRANSACTION_TERM_AMOUNT: 'Amount',
     TRANSACTION_TERM_ATTACHED_AMOUNT: 'Attached amount',
     TRANSACTION_TERM_SIGNATURES: 'Signatures',
+    TRANSACTION_TERM_SIGNATURES_COLLECTED: '{value} of {total} signatures collected',
     TRANSACTION_TERM_STATUS: 'Status',
     TRANSACTION_TERM_BLOCKCHAIN_FEE: 'Blockchain fee',
     TRANSACTION_TERM_CUSTODIAN: 'Custodian {value}',

@@ -350,8 +350,15 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                                         {intl.formatMessage({ id: 'TRANSACTION_TERM_SIGNATURES' })}
                                     </span>
                                     <span className="transaction-info-tx-details-param-value">
-                                        {confirmations.length} of{' '}
-                                        {unconfirmedTransaction.signsRequired} signatures collected
+                                        {intl.formatMessage(
+                                            {
+                                                id: 'TRANSACTION_TERM_SIGNATURES_COLLECTED',
+                                            },
+                                            {
+                                                value: confirmations.length,
+                                                total: unconfirmedTransaction.signsRequired,
+                                            }
+                                        )}
                                     </span>
                                 </div>
                             ) : (
