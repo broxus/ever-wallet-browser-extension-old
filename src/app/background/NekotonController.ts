@@ -127,6 +127,7 @@ export class NekotonController extends EventEmitter {
             keyStore,
             connectionController,
             notificationController,
+            localizationController,
             ledgerBridge,
         })
         const approvalController = new ApprovalController({
@@ -147,6 +148,7 @@ export class NekotonController extends EventEmitter {
             connectionController,
         })
 
+        await localizationController.initialSync()
         await connectionController.initialSync()
         await accountController.initialSync()
         await accountController.startSubscriptions()

@@ -40,6 +40,7 @@ import * as nt from '@nekoton'
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
 import { ConnectionController } from '../ConnectionController'
 import { NotificationController } from '../NotificationController'
+import { LocalizationController } from '../LocalizationController'
 
 import { DEFAULT_POLLING_INTERVAL, BACKGROUND_POLLING_INTERVAL } from './constants'
 import { ITonWalletHandler, TonWalletSubscription } from './TonWalletSubscription'
@@ -54,6 +55,7 @@ export interface AccountControllerConfig extends BaseConfig {
     clock: nt.ClockWithOffset
     connectionController: ConnectionController
     notificationController: NotificationController
+    localizationController: LocalizationController
     ledgerBridge: LedgerBridge
 }
 
@@ -1573,22 +1575,28 @@ export class AccountController extends BaseController<
         const network = this.config.connectionController.state.selectedConnection.group
 
         if (info.batchType == 'new') {
+            const { notificationController, localizationController } = this.config
+
             for (const transaction of transactions) {
                 const value = extractTransactionValue(transaction)
                 const { address, direction } = extractTransactionAddress(transaction)
 
-                let title = 'New transaction found'
+                let title = localizationController.localize('NEW_TRANSACTION_FOUND')
                 if (
                     transaction.info?.type === 'wallet_interaction' &&
                     transaction.info.data.method.type == 'multisig'
                 ) {
                     switch (transaction.info.data.method.data.type) {
                         case 'confirm': {
-                            title = 'Multisig transaction confirmation'
+                            title = localizationController.localize(
+                                'MULTISIG_TRANSACTION_CONFIRMATION'
+                            )
                             break
                         }
                         case 'submit': {
-                            title = 'New multisig transaction found'
+                            title = localizationController.localize(
+                                'NEW_MULTISIG_TRANSACTION_FOUND'
+                            )
                             break
                         }
                         default: {
@@ -1599,9 +1607,11 @@ export class AccountController extends BaseController<
 
                 const body = `${convertTons(
                     value.toString()
-                )} ${NATIVE_CURRENCY} ${direction} ${convertAddress(address)}`
+                )} ${NATIVE_CURRENCY} ${localizationController.localize(
+                    `TRANSACTION_DIRECTION_${direction.toLocaleUpperCase()}` as any
+                )} ${convertAddress(address)}`
 
-                this.config.notificationController.showNotification({
+                notificationController.showNotification({
                     title,
                     body,
                     link: transactionExplorerLink({
@@ -1756,6 +1766,8 @@ export class AccountController extends BaseController<
         if (info.batchType == 'new') {
             const symbol = this.state.knownTokens[rootTokenContract]
             if (symbol != null) {
+                const { notificationController, localizationController } = this.config
+
                 for (const transaction of transactions) {
                     const value = extractTokenTransactionValue(transaction)
                     if (value == null) {
@@ -1768,8 +1780,8 @@ export class AccountController extends BaseController<
                         symbol.name
                     } ${value.lt(0) ? 'to' : 'from'} ${direction?.address}`
 
-                    this.config.notificationController.showNotification({
-                        title: `New token transaction found`,
+                    notificationController.showNotification({
+                        title: localizationController.localize('NEW_TOKEN_TRANSACTION_FOUND'),
                         body,
                         link: transactionExplorerLink({
                             network,
