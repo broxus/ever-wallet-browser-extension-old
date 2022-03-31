@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useIntl } from 'react-intl'
+import { IntlShape, useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
@@ -31,10 +31,13 @@ enum FlowStep {
     SELECT_CONTRACT_TYPE,
 }
 
-const defaultAccountName = (accountability: AccountabilityContext) => {
+const defaultAccountName = (accountability: AccountabilityContext, intl: IntlShape) => {
     const accountId = accountability.currentDerivedKey?.accountId || 0
     const number = accountability.currentDerivedKeyAccounts.length
-    return `Account ${accountId + 1}.${number + 1}`
+    return intl.formatMessage(
+        { id: 'ACCOUNT_GENERATED_NAME' },
+        { accountId: accountId + 1, number: number + 1 }
+    )
 }
 
 type Props = {
@@ -53,7 +56,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
     const [flow, setFlow] = React.useState(AddAccountFlow.CREATE)
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(FlowStep.INDEX)
-    const [name, setName] = React.useState(defaultAccountName(accountability))
+    const [name, setName] = React.useState(defaultAccountName(accountability, intl))
     const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
     const onManageDerivedKey = () => {

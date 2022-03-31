@@ -5,12 +5,14 @@ const DEFAULT_LOCALE: string = 'en'
 export interface LocalizationControllerConfig extends BaseConfig {}
 
 export interface LocalizationControllerState extends BaseState {
-    selectedLocale: string
+    defaultLocale: string
+    selectedLocale?: string | undefined
 }
 
 function makeDefaultState(): LocalizationControllerState {
     return {
-        selectedLocale: DEFAULT_LOCALE,
+        defaultLocale: DEFAULT_LOCALE,
+        selectedLocale: undefined,
     }
 }
 
@@ -26,7 +28,7 @@ export class LocalizationController extends BaseController<
 
     public async initialSync() {
         const selectedLocale = await LocalizationController._loadSelectedLocale()
-        this.update({ selectedLocale })
+        this.update({ defaultLocale: DEFAULT_LOCALE, selectedLocale })
     }
 
     public async setLocale(locale: string) {
@@ -36,12 +38,12 @@ export class LocalizationController extends BaseController<
         this.update({ selectedLocale: locale })
     }
 
-    private static async _loadSelectedLocale(): Promise<string> {
+    private static async _loadSelectedLocale(): Promise<string | undefined> {
         const { selectedLocale } = await window.browser.storage.local.get(['selectedLocale'])
         if (typeof selectedLocale === 'string') {
             return selectedLocale
         } else {
-            return DEFAULT_LOCALE
+            return undefined
         }
     }
 

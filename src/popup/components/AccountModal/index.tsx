@@ -31,6 +31,8 @@ export function AccountModal() {
 
     const scrollWidth = React.useMemo(() => getScrollWidth(), [])
 
+    const selectedLocale = rpcState.state.selectedLocale || rpcState.state.defaultLocale
+
     const selectedSeedName = React.useMemo(() => {
         if (accountability.selectedMasterKey !== undefined) {
             return (
@@ -147,12 +149,12 @@ export function AccountModal() {
                 <div ref={wrapperRef} className="account-settings noselect">
                     <div className="account-settings-section">
                         <div className="lang-switcher">
-                            <div className={rpcState.state.selectedLocale === 'en' ? 'active' : ''}>
+                            <div className={selectedLocale === 'en' ? 'active' : ''}>
                                 <a href="#" onClick={setEnglishLocale}>
                                     English
                                 </a>
                             </div>
-                            <div className={rpcState.state.selectedLocale === 'ko' ? 'active' : ''}>
+                            <div className={selectedLocale === 'ko' ? 'active' : ''}>
                                 <a href="#" onClick={setKoreanLocale}>
                                     한국어
                                 </a>

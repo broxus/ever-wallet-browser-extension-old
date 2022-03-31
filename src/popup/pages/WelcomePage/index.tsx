@@ -119,41 +119,39 @@ export function WelcomePage(): JSX.Element {
             .finally(() => setRestoreInProcess(false))
     }
 
-    const setEnglishLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const setEnglishLocale = async () => {
         try {
-            event.preventDefault()
-            event.stopPropagation()
             await rpc.setLocale('en')
         } catch (e) {}
     }
 
-    const setKoreanLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const setKoreanLocale = async () => {
         try {
-            event.preventDefault()
-            event.stopPropagation()
             await rpc.setLocale('ko')
         } catch (e) {}
     }
 
-    return (
-        <>
-            <div className="welcome-page-header">
-                <div className="welcome-page-header-inner">
-                    <div className="lang-switcher">
-                        <div className={rpcState.state.selectedLocale === 'en' ? 'active' : ''}>
-                            <a href="#" onClick={setEnglishLocale}>
-                                English
-                            </a>
+    console.log(rpcState.state.selectedLocale)
+
+    if (rpcState.state.selectedLocale === undefined) {
+        return (
+            <div className="welcome-page">
+                <div className="welcome-page__content">
+                    <div>
+                        <div className="welcome-page__content-button">
+                            <Button text="English" onClick={setEnglishLocale} />
                         </div>
-                        <div className={rpcState.state.selectedLocale === 'ko' ? 'active' : ''}>
-                            <a href="#" onClick={setKoreanLocale}>
-                                한국어
-                            </a>
+                        <div className="welcome-page__content-button">
+                            <Button text="한국어" white onClick={setKoreanLocale} />
                         </div>
                     </div>
                 </div>
             </div>
+        )
+    }
 
+    return (
+        <>
             {localStep == Step.WELCOME && (
                 <div className="welcome-page">
                     <div className="welcome-page__content">

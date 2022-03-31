@@ -12,16 +12,15 @@ type Props = {
 export function LocalizationProvider({ children }: Props): JSX.Element {
     const rpcState = useRpcState()
 
-    const messages = React.useMemo(
-        () => ({ en, ko }[rpcState.state.selectedLocale]),
-        [rpcState.state.selectedLocale]
-    )
+    const locale = rpcState.state.selectedLocale || rpcState.state.defaultLocale
+
+    const messages = React.useMemo(() => ({ en, ko }[locale]), [locale])
 
     return (
         <IntlProvider
             key="intl"
-            locale={rpcState.state.selectedLocale}
-            defaultLocale="en"
+            locale={locale}
+            defaultLocale={rpcState.state.defaultLocale}
             messages={messages}
             onError={noop}
         >
