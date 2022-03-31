@@ -174,19 +174,35 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 
                             <footer className="accounts-management__footer">
                                 <div className="accounts-management__footer-button-back">
-                                    <Button text="Back" white onClick={onBack} />
+                                    <Button
+                                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                        white
+                                        onClick={onBack}
+                                    />
                                 </div>
-                                <div data-tip="Copied!" data-event="click focus">
+                                <div
+                                    data-tip={intl.formatMessage({ id: 'COPIED_TOOLTIP' })}
+                                    data-event="click focus"
+                                >
                                     {step === ExportSeedStep.COPY_SEED_PHRASE && (
                                         <CopyToClipboard
                                             text={seedPhrase?.length ? seedPhrase.join(' ') : ''}
                                             onCopy={onCopy}
                                         >
-                                            <Button text="Copy all words" />
+                                            <Button
+                                                text={intl.formatMessage({
+                                                    id: 'COPY_ALL_WORDS_BTN_TEXT',
+                                                })}
+                                            />
                                         </CopyToClipboard>
                                     )}
                                     {step === ExportSeedStep.SEED_PHRASE_COPIED && (
-                                        <Button text="I save it down" onClick={onBack} />
+                                        <Button
+                                            text={intl.formatMessage({
+                                                id: 'SAVE_IT_DOWN_BTN_TEXT',
+                                            })}
+                                            onClick={onBack}
+                                        />
                                     )}
                                     <ReactTooltip type="dark" effect="solid" place="top" />
                                 </div>

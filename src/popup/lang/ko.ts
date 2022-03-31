@@ -152,6 +152,7 @@ export default {
     COPY_DERIVED_KEY_BTN_TEXT: '공개 키 복사',
     COPY_ALL_WORDS_BTN_TEXT: '모든 단어 복사',
     WROTE_ON_PAPER_BTN_TEXT: '종이에 잘 기록했습니다.',
+    SAVE_IT_DOWN_BTN_TEXT: '나는 그것을 저장',
     OPEN_IN_EXPLORER_BTN_TEXT: '탐색기에서 열기',
     PASSWORD_FIELD_PLACEHOLDER: '귀하의 비밀번호',
     PASSWORD_CONFIRM_FIELD_PLACEHOLDER: '비밀번호 확인',

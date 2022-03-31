@@ -215,6 +215,7 @@ export default {
     COPY_DERIVED_KEY_BTN_TEXT: 'Copy public key',
     COPY_ALL_WORDS_BTN_TEXT: 'Copy all words',
     WROTE_ON_PAPER_BTN_TEXT: 'I wrote it down on paper',
+    SAVE_IT_DOWN_BTN_TEXT: 'I save it down',
     OPEN_IN_EXPLORER_BTN_TEXT: 'Open in explorer',
     SELECT_CURRENCY_SELECT_PLACEHOLDER: 'Select currency',
     PASSWORD_FIELD_PLACEHOLDER: 'Your password',
