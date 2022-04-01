@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 
 import * as nt from '@nekoton'
@@ -15,6 +16,7 @@ import UserAvatar from '@popup/components/UserAvatar'
 import TonWalletLogo from '@popup/img/ton-wallet-logo.svg'
 
 import './style.scss'
+import { TOKENS_MANIFEST_REPO } from '@popup/utils'
 
 type Props = {
     approval: PendingApproval<'requestPermissions'>
@@ -36,6 +38,7 @@ export function ApproveRequestPermissions({
     accountEntries,
     onSubmit,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
 
     const { origin } = approval
@@ -69,7 +72,7 @@ export function ApproveRequestPermissions({
                             key="select-account-heading"
                             className="connect-wallet__header-title noselect"
                         >
-                            Select account to connect with EVER Wallet
+                            {intl.formatMessage({ id: 'APPROVE_REQUEST_PERMISSIONS_HEADER' })}
                         </h2>
                     )}
                     {localStep === LocalStep.CONFIRM && (
@@ -78,7 +81,10 @@ export function ApproveRequestPermissions({
                                 key="confirm-heading"
                                 className="connect-wallet__header-title noselect"
                             >
-                                Connected to {selectedAccount?.name}
+                                {intl.formatMessage(
+                                    { id: 'APPROVE_REQUEST_PERMISSIONS_CONNECTED_TO' },
+                                    { name: selectedAccount?.name || '' }
+                                )}
                             </h2>
                             <div className="connect-wallet__account-balance">
                                 {`${convertTons(
@@ -132,7 +138,7 @@ export function ApproveRequestPermissions({
                     <footer className="connect-wallet__footer">
                         <Button
                             type="submit"
-                            text="Next"
+                            text={intl.formatMessage({ id: 'NEXT_BTN_TEXT' })}
                             disabled={selectedAccount == null}
                             onClick={() => setLocalStep(LocalStep.CONFIRM)}
                         />
@@ -144,7 +150,9 @@ export function ApproveRequestPermissions({
                 <div className="connect-wallet__wrapper">
                     <div className="connect-wallet__permissions">
                         <h3 className="connect-wallet__permissions-heading noselect">
-                            Permissions:
+                            {intl.formatMessage({
+                                id: 'APPROVE_REQUEST_PERMISSIONS_PERMISSIONS_SUBHEADING',
+                            })}
                         </h3>
                         <div className="connect-wallet__permissions-list">
                             <div className="connect-wallet__permissions-list-item">
@@ -160,14 +168,14 @@ export function ApproveRequestPermissions({
                         {shouldSelectAccount && (
                             <div className="connect-wallet__footer-button-back">
                                 <Button
-                                    text="Back"
+                                    text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
                                     white
                                     onClick={() => setLocalStep(LocalStep.SELECT_ACCOUNT)}
                                 />
                             </div>
                         )}
                         <Button
-                            text="Connect"
+                            text={intl.formatMessage({ id: 'CONNECT_BTN_TEXT' })}
                             disabled={!confirmChecked || (shouldSelectAccount && !selectedAccount)}
                             onClick={() => {
                                 setLocalStep(LocalStep.CONNECTING)
@@ -194,7 +202,9 @@ export function ApproveRequestPermissions({
 
             {localStep === LocalStep.CONNECTING && (
                 <div className="connect-wallet__connecting">
-                    <h2 className="connect-wallet__connecting-heading">Connecting...</h2>
+                    <h2 className="connect-wallet__connecting-heading">
+                        {intl.formatMessage({ id: 'CONNECTING_HINT' })}
+                    </h2>
                     <div className="connect-wallet__connecting-process">
                         <WebsiteIcon origin={origin} />
                         <p className="connecting-process">

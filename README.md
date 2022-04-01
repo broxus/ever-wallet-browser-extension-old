@@ -32,6 +32,17 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.30 (2022-04-01)
+
+Features
+
+* Added Korean localisation
+
+Bugfixes
+
+* Fixed multisig transaction expiration label
+* Fixed transaction explorer link
+
 ### 0.2.29 (2022-03-24)
 
 Bugfixes

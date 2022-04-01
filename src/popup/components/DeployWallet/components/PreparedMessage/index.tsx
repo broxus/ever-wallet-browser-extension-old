@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import * as nt from '@nekoton'
 
 import { NATIVE_CURRENCY } from '@shared/constants'
@@ -29,6 +30,7 @@ export function PreparedMessage({
     onSubmit,
     onBack,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const [passwordModalVisible, setPasswordModalVisible] = React.useState(false)
 
     const onDeploy = () => {
@@ -43,23 +45,40 @@ export function PreparedMessage({
         <div className="deploy-wallet__wrapper">
             <div className="deploy-wallet__details">
                 <div className="deploy-wallet__details-param">
-                    <span className="deploy-wallet__details-param-desc">Account balance</span>
+                    <span className="deploy-wallet__details-param-desc">
+                        {intl.formatMessage({
+                            id: 'DEPLOY_WALLET_DETAILS_TERM_BALANCE',
+                        })}
+                    </span>
                     <span className="deploy-wallet__details-param-value">
                         {`${convertTons(balance).toLocaleString()} ${NATIVE_CURRENCY}`}
                     </span>
                 </div>
 
                 <div className="deploy-wallet__details-param">
-                    <span className="deploy-wallet__details-param-desc">Fee</span>
+                    <span className="deploy-wallet__details-param-desc">
+                        {intl.formatMessage({
+                            id: 'DEPLOY_WALLET_DETAILS_TERM_FEE',
+                        })}
+                    </span>
                     <span className="deploy-wallet__details-param-value">
-                        {fees ? `${convertTons(fees)} ${NATIVE_CURRENCY}` : 'calculating...'}
+                        {fees
+                            ? `${convertTons(fees)} ${NATIVE_CURRENCY}`
+                            : intl.formatMessage({
+                                  id: 'CALCULATING_HINT',
+                              })}
                     </span>
                 </div>
 
                 {custodians?.map((custodian, idx) => (
                     <div key={custodian} className="deploy-wallet__details-param">
                         <span className="deploy-wallet__details-param-desc">
-                            Custodian {idx + 1}
+                            {intl.formatMessage(
+                                {
+                                    id: 'DEPLOY_MULTISIG_DETAILS_TERM_CUSTODIAN',
+                                },
+                                { index: idx + 1 }
+                            )}
                         </span>
                         <span className="deploy-wallet__details-param-value">{custodian}</span>
                     </div>
@@ -68,9 +87,17 @@ export function PreparedMessage({
 
             <footer className="deploy-wallet__footer">
                 <div className="deploy-wallet__footer-button-back">
-                    <Button text="Back" white onClick={onBack} />
+                    <Button
+                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                        white
+                        onClick={onBack}
+                    />
                 </div>
-                <Button text="Deploy" disabled={!fees} onClick={onDeploy} />
+                <Button
+                    text={intl.formatMessage({ id: 'DEPLOY_BTN_TEXT' })}
+                    disabled={!fees}
+                    onClick={onDeploy}
+                />
             </footer>
 
             <SlidingPanel

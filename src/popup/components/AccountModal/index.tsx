@@ -1,4 +1,6 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
+import * as nt from '@nekoton'
 
 import manifest from '../../../manifest.json'
 
@@ -14,9 +16,9 @@ import Profile from '@popup/img/profile.svg'
 import { convertAddress } from '@shared/utils'
 
 import './style.scss'
-import * as nt from '@nekoton'
 
 export function AccountModal() {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpcState = useRpcState()
     const drawer = useDrawerPanel()
@@ -28,6 +30,8 @@ export function AccountModal() {
     const [isActive, setActiveTo] = React.useState(false)
 
     const scrollWidth = React.useMemo(() => getScrollWidth(), [])
+
+    const selectedLocale = rpcState.state.selectedLocale || rpcState.state.defaultLocale
 
     const selectedSeedName = React.useMemo(() => {
         if (accountability.selectedMasterKey !== undefined) {
@@ -117,6 +121,22 @@ export function AccountModal() {
         })
     }
 
+    const setEnglishLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+        try {
+            event.preventDefault()
+            event.stopPropagation()
+            await rpc.setLocale('en')
+        } catch (e) {}
+    }
+
+    const setKoreanLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+        try {
+            event.preventDefault()
+            event.stopPropagation()
+            await rpc.setLocale('ko')
+        } catch (e) {}
+    }
+
     hideModalOnClick(wrapperRef, iconRef, hide)
 
     return (
@@ -128,15 +148,41 @@ export function AccountModal() {
             {isActive && (
                 <div ref={wrapperRef} className="account-settings noselect">
                     <div className="account-settings-section">
-                        <div className="account-settings-section-header">
-                            Current: {selectedSeedName !== undefined && `${selectedSeedName}`}
+                        <div className="lang-switcher">
+                            <div className={selectedLocale === 'en' ? 'active' : ''}>
+                                <a href="#" onClick={setEnglishLocale}>
+                                    English
+                                </a>
+                            </div>
+                            <div className={selectedLocale === 'ko' ? 'active' : ''}>
+                                <a href="#" onClick={setKoreanLocale}>
+                                    한국어
+                                </a>
+                            </div>
                         </div>
                     </div>
 
                     <div className="account-settings-separator" />
 
                     <div className="account-settings-section">
-                        <div className="account-settings-section-header">Recent seeds</div>
+                        <div className="account-settings-section-header">
+                            {intl.formatMessage(
+                                { id: 'ACCOUNT_CURRENT_ACCOUNT_PLACEHOLDER' },
+                                {
+                                    name: selectedSeedName ?? '',
+                                }
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="account-settings-separator" />
+
+                    <div className="account-settings-section">
+                        <div className="account-settings-section-header">
+                            {intl.formatMessage({
+                                id: 'ACCOUNT_RECENT_SEEDS_HEADER',
+                            })}
+                        </div>
 
                         <ul className="account-settings__seeds-list">
                             {accountability.recentMasterKeys
@@ -158,7 +204,9 @@ export function AccountModal() {
                         </ul>
 
                         <div className="account-settings-section-item" onClick={onManageSeeds}>
-                            Manage seeds & accounts
+                            {intl.formatMessage({
+                                id: 'ACCOUNT_MANAGE_SEED_AND_ACCOUNT_LINK_TEXT',
+                            })}
                         </div>
                     </div>
 
@@ -168,10 +216,15 @@ export function AccountModal() {
                         className="account-settings-section-item-log-out"
                         onClick={accountability.logOut}
                     >
-                        Log out
+                        {intl.formatMessage({
+                            id: 'ACCOUNT_LOGOUT_LINK_TEXT',
+                        })}
                     </div>
                     <div className="account-settings-section-item-version">
-                        Version: {(manifest as any).version}
+                        {intl.formatMessage(
+                            { id: 'EXTENSION_VERSION' },
+                            { value: (manifest as any).version || '' }
+                        )}
                     </div>
                 </div>
             )}

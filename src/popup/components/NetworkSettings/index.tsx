@@ -1,4 +1,5 @@
 import React from 'react'
+import { useIntl } from 'react-intl'
 import { ConnectionDataItem } from '@shared/backgroundApi'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
@@ -8,6 +9,7 @@ import { hideModalOnClick } from '@popup/common'
 import classNames from 'classnames'
 
 export function NetworkSettings(): JSX.Element {
+    const intl = useIntl()
     const rpc = useRpc()
     const rpcState = useRpcState()
 
@@ -63,7 +65,11 @@ export function NetworkSettings(): JSX.Element {
             {isActive && (
                 <div ref={wrapperRef} className="network-settings noselect">
                     <div className="network-settings-section">
-                        <div className="network-settings-section-header">Available networks</div>
+                        <div className="network-settings-section-header">
+                            {intl.formatMessage({
+                                id: 'NETWORK_TOGGLE_HEADER',
+                            })}
+                        </div>
 
                         <ul className="network-settings__networks-list">
                             {availableNetworks.map((network) => {

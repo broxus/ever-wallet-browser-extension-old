@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useIntl } from 'react-intl'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { generateSeed } from '@popup/store/app/actions'
 import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
@@ -35,6 +36,7 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
     createAccount,
     onBack,
 }) => {
+    const intl = useIntl()
     const [inProcess, setInProcess] = useState<boolean>(false)
     const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_CONTRACT_TYPE) // LocalStep.SIGN_POLICY
     const [error, setError] = useState<string>()
@@ -123,7 +125,9 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
                     className="enter-password-screen__modal"
                 >
                     <h3 style={{ color: 'black', marginBottom: '18px' }}>
-                        Could not create wallet
+                        {intl.formatMessage({
+                            id: 'COULD_NOT_CREATE_WALLET',
+                        })}
                     </h3>
                     <div className="check-seed__content-error">{error}</div>
                 </Modal>

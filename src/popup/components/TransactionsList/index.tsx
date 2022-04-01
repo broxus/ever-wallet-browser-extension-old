@@ -8,6 +8,7 @@ import { StoredBriefMessageInfo } from '@shared/backgroundApi'
 import './style.scss'
 import { AggregatedMultisigTransactions, currentUtime } from '@shared/utils'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { useIntl } from 'react-intl'
 
 const TRANSACTION_HEIGHT = 109
 const TRANSACTION_WITH_LABEL_HEIGHT = 138
@@ -40,6 +41,7 @@ export function TransactionsList({
     onViewTransaction,
     preloadTransactions,
 }: Props) {
+    const intl = useIntl()
     const rpcState = useRpcState()
 
     const [scroll, setScroll] = React.useState(scrollArea.current?.scrollTop || 0)
@@ -220,7 +222,9 @@ export function TransactionsList({
                 />
             ))}
             {transactions.length == 0 && (
-                <p className="transactions-list-empty">History is empty</p>
+                <p className="transactions-list-empty">
+                    {intl.formatMessage({ id: 'TRANSACTIONS_LIST_HISTORY_IS_EMPTY' })}
+                </p>
             )}
             <div style={{ height: `${offsetHeight}px` }} />
             {slice.map((transaction) => {

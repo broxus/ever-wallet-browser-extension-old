@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
@@ -61,6 +62,7 @@ export function EnterPassword({
     onBack,
     onChangeKeyEntry,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
 
     const [submitted, setSubmitted] = React.useState(false)
@@ -92,8 +94,7 @@ export function EnterPassword({
                     address: recipient,
                     amount: amount.data.attachedAmount,
                 }
-            }
-            else if (amount.type === 'ton_wallet') {
+            } else if (amount.type === 'ton_wallet') {
                 context = {
                     address: recipient,
                     amount: amount.data.amount,
@@ -122,7 +123,9 @@ export function EnterPassword({
         <div className="enter-password">
             {showHeading && (
                 <header className="enter-password__header">
-                    <h2 className="enter-password__header-title noselect">Confirm message</h2>
+                    <h2 className="enter-password__header-title noselect">
+                        {intl.formatMessage({ id: 'APPROVE_SEND_MESSAGE_APPROVAL_TITLE' })}
+                    </h2>
                 </header>
             )}
             <div className="enter-password__wrapper">
@@ -131,7 +134,9 @@ export function EnterPassword({
                         {recipient != null && (
                             <div key="recipient" className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">
-                                    Recipient
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_TERM_RECIPIENT',
+                                    })}
                                 </span>
                                 <span className="enter-password__confirm-details-param-value">
                                     {recipient}
@@ -144,7 +149,9 @@ export function EnterPassword({
                                 className="enter-password__confirm-details-param"
                             >
                                 <span className="enter-password__confirm-details-param-desc">
-                                    Transaction Id
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_TERM_TRANSACTION_ID',
+                                    })}
                                 </span>
                                 <span className="enter-password__confirm-details-param-value">
                                     {transactionId}
@@ -154,7 +161,9 @@ export function EnterPassword({
                         {amount?.type == 'token_wallet' && (
                             <div className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">
-                                    Amount
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_TERM_AMOUNT',
+                                    })}
                                 </span>
                                 <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
                                     <AssetIcon
@@ -177,7 +186,13 @@ export function EnterPassword({
                         {amount != null && (
                             <div className="enter-password__confirm-details-param">
                                 <span className="enter-password__confirm-details-param-desc">
-                                    {amount.type == 'ton_wallet' ? 'Amount' : 'Attached amount'}
+                                    {amount.type == 'ton_wallet'
+                                        ? intl.formatMessage({
+                                              id: 'APPROVE_SEND_MESSAGE_TERM_AMOUNT',
+                                          })
+                                        : intl.formatMessage({
+                                              id: 'APPROVE_SEND_MESSAGE_TERM_ATTACHED_AMOUNT',
+                                          })}
                                 </span>
                                 <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
                                     <TonAssetIcon className="root-token-icon noselect" />
@@ -193,13 +208,17 @@ export function EnterPassword({
 
                         <div key="convertedFees" className="enter-password__confirm-details-param">
                             <span className="enter-password__confirm-details-param-desc">
-                                Blockchain fee
+                                {intl.formatMessage({
+                                    id: 'APPROVE_SEND_MESSAGE_TERM_BLOCKCHAIN_FEE',
+                                })}
                             </span>
                             <span className="enter-password__confirm-details-param-value enter-password__confirm-details-param-value--amount">
                                 <TonAssetIcon className="root-token-icon noselect" />
                                 {fees != null
                                     ? `~${convertTons(fees)} ${NATIVE_CURRENCY}`
-                                    : 'calculating...'}
+                                    : intl.formatMessage({
+                                          id: 'CALCULATING_HINT',
+                                      })}
                             </span>
                         </div>
                     </div>
@@ -215,7 +234,9 @@ export function EnterPassword({
                         <>
                             <Input
                                 className="enter-password__field-password"
-                                label="Password..."
+                                label={intl.formatMessage({
+                                    id: 'APPROVE_SEND_MESSAGE_PASSWORD_FIELD_PLACEHOLDER',
+                                })}
                                 type="password"
                                 disabled={disabled}
                                 value={password}
@@ -224,14 +245,21 @@ export function EnterPassword({
                                 ref={passwordRef}
                             />
                             <div className="enter-password__field-hint">
-                                Enter password for seed:{' '}
-                                {accountability.masterKeysNames[keyEntry.masterKey] ||
-                                    convertPublicKey(keyEntry.masterKey)}
+                                {intl.formatMessage(
+                                    { id: 'APPROVE_SEND_MESSAGE_PASSWORD_FIELD_HINT' },
+                                    {
+                                        name:
+                                            accountability.masterKeysNames[keyEntry.masterKey] ||
+                                            convertPublicKey(keyEntry.masterKey),
+                                    }
+                                )}
                             </div>
                         </>
                     ) : (
                         <div className="enter-password__ledger-confirm">
-                            Please confirm the transaction with your Ledger
+                            {intl.formatMessage({
+                                id: 'APPROVE_SEND_MESSAGE_APPROVE_WITH_LEDGER_HINT',
+                            })}
                         </div>
                     )}
                     {error && <div className="enter-password__error-message">{error}</div>}
@@ -240,18 +268,22 @@ export function EnterPassword({
                     <div className="enter-password__footer-button-back">
                         <Button
                             white
-                            text="Back"
+                            text={intl.formatMessage({
+                                id: 'BACK_BTN_TEXT',
+                            })}
                             onClick={onBack}
                             disabled={submitted && !error}
                         />
                     </div>
                     <Button
-                        text="Confirm transaction"
+                        text={intl.formatMessage({
+                            id: 'CONFIRM_TRANSACTION_BTN_TEXT',
+                        })}
                         onClick={trySubmit}
                         disabled={
-                            disabled
-                            || (keyEntry.signerName != 'ledger_key' && password.length === 0)
-                            || (submitted && !error)
+                            disabled ||
+                            (keyEntry.signerName != 'ledger_key' && password.length === 0) ||
+                            (submitted && !error)
                         }
                     />
                 </div>

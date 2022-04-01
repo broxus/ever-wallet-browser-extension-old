@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import Decimal from 'decimal.js'
 import { useForm } from 'react-hook-form'
 import { NATIVE_CURRENCY } from '@shared/constants'
@@ -83,6 +84,7 @@ export function PrepareMessage({
     onSubmit,
     onBack,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const [localStep, setLocalStep] = React.useState(PrepareStep.ENTER_ADDRESS)
     const [inProcess, setInProcess] = React.useState(false)
     const [error, setError] = React.useState<string>()
@@ -273,10 +275,14 @@ export function PrepareMessage({
                     <span className="prepare-message__account_details-title">{accountName}</span>
                 </div>
                 {localStep === PrepareStep.ENTER_ADDRESS && (
-                    <h2 className="prepare-message__header-title noselect">Send message</h2>
+                    <h2 className="prepare-message__header-title noselect">
+                        {intl.formatMessage({ id: 'SEND_MESSAGE_PANEL_ENTER_ADDRESS_HEADER' })}
+                    </h2>
                 )}
                 {localStep === PrepareStep.ENTER_PASSWORD && (
-                    <h2 className="prepare-message__header-title noselect">Confirm message</h2>
+                    <h2 className="prepare-message__header-title noselect">
+                        {intl.formatMessage({ id: 'SEND_MESSAGE_PANEL_ENTER_PASSWORD_HEADER' })}
+                    </h2>
                 )}
             </header>
 
@@ -285,23 +291,34 @@ export function PrepareMessage({
                     <form id="send" onSubmit={handleSubmit(submitMessageParams)}>
                         <Select
                             options={options}
-                            placeholder="Select currency"
+                            placeholder={intl.formatMessage({
+                                id: 'SELECT_CURRENCY_SELECT_PLACEHOLDER',
+                            })}
                             defaultValue={defaultValue.value}
                             value={selectedAsset}
                             onChange={onChangeAsset}
                         />
                         {decimals != null && (
-                            <div className="prepare-message__balance">
-                                <span className="noselect">Your balance:&nbsp;</span>
-                                {convertCurrency(balance.toString(), decimals)}
-                                &nbsp;
-                                {currencyName}
-                            </div>
+                            <div
+                                className="prepare-message__balance"
+                                dangerouslySetInnerHTML={{
+                                    __html: intl.formatMessage(
+                                        { id: 'SEND_MESSAGE_CURRENCY_SELECT_HINT' },
+                                        {
+                                            value: convertCurrency(balance.toString(), decimals),
+                                            symbol: currencyName,
+                                        },
+                                        { ignoreTag: true }
+                                    ),
+                                }}
+                            />
                         )}
                         <Input
                             type="text"
                             className="prepare-message__field-input"
-                            label="Amount..."
+                            label={intl.formatMessage({
+                                id: 'SEND_MESSAGE_AMOUNT_FIELD_PLACEHOLDER',
+                            })}
                             autocomplete="off"
                             {...register('amount', {
                                 required: true,
@@ -347,18 +364,29 @@ export function PrepareMessage({
                         {formState.errors.amount && (
                             <div className="prepare-message__error-message">
                                 {formState.errors.amount.type == 'required' &&
-                                    'This field is required'}
+                                    intl.formatMessage({
+                                        id: 'ERROR_FIELD_IS_REQUIRED',
+                                    })}
                                 {formState.errors.amount.type == 'invalidAmount' &&
-                                    'Invalid amount'}
+                                    intl.formatMessage({
+                                        id: 'ERROR_INVALID_AMOUNT',
+                                    })}
                                 {formState.errors.amount.type == 'insufficientBalance' &&
-                                    'Insufficient balance'}
-                                {formState.errors.amount.type == 'pattern' && 'Invalid format'}
+                                    intl.formatMessage({
+                                        id: 'ERROR_INSUFFICIENT_BALANCE',
+                                    })}
+                                {formState.errors.amount.type == 'pattern' &&
+                                    intl.formatMessage({
+                                        id: 'ERROR_INVALID_FORMAT',
+                                    })}
                             </div>
                         )}
 
                         <Input
                             type="text"
-                            label="Recipient address..."
+                            label={intl.formatMessage({
+                                id: 'SEND_MESSAGE_RECIPIENT_FIELD_PLACEHOLDER',
+                            })}
                             autocomplete="off"
                             className="prepare-message__field-input"
                             {...register('recipient', {
@@ -371,15 +399,24 @@ export function PrepareMessage({
                         {formState.errors.recipient && (
                             <div className="prepare-message__error-message">
                                 {formState.errors.recipient.type == 'required' &&
-                                    'This field is required'}
+                                    intl.formatMessage({
+                                        id: 'ERROR_FIELD_IS_REQUIRED',
+                                    })}
                                 {formState.errors.recipient.type == 'validate' &&
-                                    'Invalid recipient'}
-                                {formState.errors.recipient.type == 'pattern' && 'Invalid format'}
+                                    intl.formatMessage({
+                                        id: 'ERROR_INVALID_RECIPIENT',
+                                    })}
+                                {formState.errors.recipient.type == 'pattern' &&
+                                    intl.formatMessage({
+                                        id: 'ERROR_INVALID_FORMAT',
+                                    })}
                             </div>
                         )}
 
                         <Input
-                            label="Comment..."
+                            label={intl.formatMessage({
+                                id: 'SEND_MESSAGE_COMMENT_FIELD_PLACEHOLDER',
+                            })}
                             className="prepare-message__field-input"
                             autocomplete="off"
                             type="text"
@@ -388,20 +425,37 @@ export function PrepareMessage({
 
                         {selectedAsset.length > 0 && (
                             <div className="prepare-message__field-checkbox">
-                                <Checkbox checked={notifyReceiver} onChange={setNotifyReceiver} />
-                                <span className="prepare-message__field-checkbox-label">
-                                    Notify receiver
-                                </span>
+                                <Checkbox
+                                    checked={notifyReceiver}
+                                    id="notify"
+                                    onChange={setNotifyReceiver}
+                                />
+                                <label
+                                    htmlFor="notify"
+                                    className="prepare-message__field-checkbox-label"
+                                >
+                                    {intl.formatMessage({
+                                        id: 'SEND_MESSAGE_NOTIFY_CHECKBOX_LABEL',
+                                    })}
+                                </label>
                             </div>
                         )}
                     </form>
 
                     <footer className="prepare-message__footer">
                         <div className="prepare-message__footer-button-back">
-                            <Button text="Back" white onClick={onBack} />
+                            <Button
+                                text={intl.formatMessage({
+                                    id: 'BACK_BTN_TEXT',
+                                })}
+                                white
+                                onClick={onBack}
+                            />
                         </div>
                         <Button
-                            text="Send"
+                            text={intl.formatMessage({
+                                id: 'SEND_BTN_TEXT',
+                            })}
                             form="send"
                             onClick={handleSubmit(submitMessageParams)}
                             disabled={selectedKey == null}

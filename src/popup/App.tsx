@@ -62,7 +62,7 @@ function App(): JSX.Element | null {
     }
 
     if (isNotification && rpcState.group === 'manage_seeds') {
-        return <AccountsManagerPage key="accountsManagerPAge" />
+        return <AccountsManagerPage key="accountsManagerPage" />
     }
 
     return (

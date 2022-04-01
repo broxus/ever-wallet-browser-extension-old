@@ -60,7 +60,10 @@
       ],
       "@shared/*": [
         "src/shared/*"
-      ]
+      ],
+      "@background/*": [
+        "src/app/background/*"
+      ],
     },
     // "rootDirs": [],                        /* List of root folders whose combined content represents the structure of the project at runtime. */
     "typeRoots": [
@@ -89,8 +92,14 @@
     /* Advanced Options */
     "skipLibCheck": true
     /* Skip type checking of declaration files. */,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
     /* Disallow inconsistently-cased references to the same file. */
+    "lib": [
+      "dom",
+      "es5",
+      "scripthost",
+      "es2015.promise"
+    ]
   },
   "include": [
     "src/**/*",

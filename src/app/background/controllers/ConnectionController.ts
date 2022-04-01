@@ -149,7 +149,7 @@ export class ConnectionController extends BaseController<
 
             const selectedConnection = getPreset(loadedConnectionId)
             if (selectedConnection != null) {
-                this.update({ selectedConnection }, true)
+                this.update({ selectedConnection, pendingConnection: undefined })
             }
 
             try {

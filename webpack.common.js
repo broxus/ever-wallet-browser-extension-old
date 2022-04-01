@@ -49,6 +49,7 @@ module.exports = {
             '@nekoton': path.resolve(__dirname, './nekoton/pkg'),
             '@popup': path.resolve(__dirname, './src/popup'),
             '@shared': path.resolve(__dirname, './src/shared'),
+            '@background': path.resolve(__dirname, './src/app/background'),
         },
         extensions: ['.tsx', '.ts', '.js', '.wasm'],
         fallback: {

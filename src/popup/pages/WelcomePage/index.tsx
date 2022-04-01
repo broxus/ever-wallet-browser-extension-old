@@ -1,16 +1,18 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
 import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
+import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import LedgerSignIn from '@popup/components/Ledger/SignIn'
+import { parseError } from '@popup/utils'
 
 import SittingMan from '@popup/img/welcome.svg'
 
 import './style.scss'
-import { parseError } from '@popup/utils'
 
 enum Step {
     WELCOME,
@@ -66,7 +68,9 @@ const updateFile = (): Promise<File | undefined> => {
 }
 
 export function WelcomePage(): JSX.Element {
+    const intl = useIntl()
     const rpc = useRpc()
+    const rpcState = useRpcState()
 
     const [localStep, setStep] = React.useState(Step.WELCOME)
     const [restoreInProcess, setRestoreInProcess] = React.useState(false)
@@ -115,6 +119,37 @@ export function WelcomePage(): JSX.Element {
             .finally(() => setRestoreInProcess(false))
     }
 
+    const setEnglishLocale = async () => {
+        try {
+            await rpc.setLocale('en')
+        } catch (e) {}
+    }
+
+    const setKoreanLocale = async () => {
+        try {
+            await rpc.setLocale('ko')
+        } catch (e) {}
+    }
+
+    console.log(rpcState.state.selectedLocale)
+
+    if (rpcState.state.selectedLocale === undefined) {
+        return (
+            <div className="welcome-page">
+                <div className="welcome-page__content">
+                    <div>
+                        <div className="welcome-page__content-button">
+                            <Button text="English" onClick={setEnglishLocale} />
+                        </div>
+                        <div className="welcome-page__content-button">
+                            <Button text="한국어" white onClick={setKoreanLocale} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <>
             {localStep == Step.WELCOME && (
@@ -122,7 +157,9 @@ export function WelcomePage(): JSX.Element {
                     <div className="welcome-page__content">
                         <div>
                             <h1 className="welcome-page__content-header-xl">
-                                Welcome to EVER Wallet
+                                {intl.formatMessage({
+                                    id: 'WELCOME_TO_EVER_WALLET',
+                                })}
                             </h1>
                             <img src={SittingMan} alt="" />
                         </div>
@@ -143,7 +180,9 @@ export function WelcomePage(): JSX.Element {
                         <div>
                             <div className="welcome-page__content-button">
                                 <Button
-                                    text="Create a new wallet"
+                                    text={intl.formatMessage({
+                                        id: 'CREATE_A_NEW_WALLET',
+                                    })}
                                     onClick={() => {
                                         setStep(Step.CREATE_ACCOUNT)
                                     }}
@@ -151,7 +190,9 @@ export function WelcomePage(): JSX.Element {
                             </div>
                             <div className="welcome-page__content-button">
                                 <Button
-                                    text="Sign in with seed phrase"
+                                    text={intl.formatMessage({
+                                        id: 'SIGN_IN_WITH_SEED_PHRASE',
+                                    })}
                                     white
                                     onClick={() => {
                                         setStep(Step.IMPORT_ACCOUNT)
@@ -160,7 +201,9 @@ export function WelcomePage(): JSX.Element {
                             </div>
                             <div className="welcome-page__content-button">
                                 <Button
-                                    text="Sign in with ledger"
+                                    text={intl.formatMessage({
+                                        id: 'SIGN_IN_WITH_LEDGER',
+                                    })}
                                     white
                                     onClick={() => {
                                         setStep(Step.LEDGER_ACCOUNT)
@@ -169,7 +212,9 @@ export function WelcomePage(): JSX.Element {
                             </div>
                             <hr />
                             <Button
-                                text="Restore from backup"
+                                text={intl.formatMessage({
+                                    id: 'RESTORE_FROM_BACKUP',
+                                })}
                                 white
                                 disabled={restoreInProcess}
                                 onClick={restoreFromBackup}

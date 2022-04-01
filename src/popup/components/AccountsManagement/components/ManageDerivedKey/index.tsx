@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import Button from '@popup/components/Button'
@@ -10,6 +11,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { CopyText } from '@popup/components/CopyText'
 
 export function ManageDerivedKey(): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpc = useRpc()
 
@@ -44,14 +46,18 @@ export function ManageDerivedKey(): JSX.Element {
     return (
         <div className="accounts-management">
             <header className="accounts-management__header">
-                <h2 className="accounts-management__header-title">Manage key</h2>
+                <h2 className="accounts-management__header-title">
+                    {intl.formatMessage({ id: 'MANAGE_DERIVED_KEY_PANEL_HEADER' })}
+                </h2>
             </header>
 
             <div className="accounts-management__wrapper">
                 <div className="accounts-management__content">
                     {accountability.currentDerivedKey !== undefined && (
                         <>
-                            <div className="accounts-management__content-header">Public key</div>
+                            <div className="accounts-management__content-header">
+                                {intl.formatMessage({ id: 'MANAGE_DERIVED_KEY_PLACEHOLDER_LABEL' })}
+                            </div>
 
                             <div className="accounts-management__public-key-placeholder">
                                 <CopyText
@@ -62,11 +68,15 @@ export function ManageDerivedKey(): JSX.Element {
                         </>
                     )}
 
-                    <div className="accounts-management__content-header">Key name</div>
+                    <div className="accounts-management__content-header">
+                        {intl.formatMessage({ id: 'MANAGE_DERIVED_KEY_FIELD_NAME_LABEL' })}
+                    </div>
                     <div className="accounts-management__name-field">
                         <Input
                             name="seed_name"
-                            label="Enter key name"
+                            label={intl.formatMessage({
+                                id: 'ENTER_DERIVED_KEY_NAME_FIELD_PLACEHOLDER',
+                            })}
                             type="text"
                             autocomplete="off"
                             value={name || ''}
@@ -80,27 +90,37 @@ export function ManageDerivedKey(): JSX.Element {
                                     className="accounts-management__name-button"
                                     onClick={saveName}
                                 >
-                                    Save
+                                    {intl.formatMessage({ id: 'SAVE_BTN_TEXT' })}
                                 </a>
                             )}
                     </div>
 
                     <div className="accounts-management__content-header--lead">
-                        Accounts
+                        {intl.formatMessage({ id: 'MANAGE_DERIVED_KEY_LISTS_ACCOUNTS_HEADER' })}
                         <a
                             role="button"
                             className="accounts-management__create-account"
                             onClick={addAccount}
                         >
-                            + Add new
+                            {intl.formatMessage({
+                                id: 'MANAGE_DERIVED_KEY_LISTS_ACCOUNTS_ADD_NEW_LINK_TEXT',
+                            })}
                         </a>
                     </div>
 
-                    <div className="accounts-management__content-header">My accounts</div>
+                    <div className="accounts-management__content-header">
+                        {intl.formatMessage({
+                            id: 'MANAGE_DERIVED_KEY_LIST_MY_ACCOUNTS_HEADING',
+                        })}
+                    </div>
                     <div className="accounts-management__divider" />
 
                     {accountability.currentDerivedKeyAccounts.length === 0 ? (
-                        <div className="accounts-management__list--empty">No accounts yet</div>
+                        <div className="accounts-management__list--empty">
+                            {intl.formatMessage({
+                                id: 'MANAGE_DERIVED_KEY_LIST_NO_ACCOUNTS',
+                            })}
+                        </div>
                     ) : (
                         <AccountsList
                             items={accountability.currentDerivedKeyAccounts}
@@ -114,7 +134,9 @@ export function ManageDerivedKey(): JSX.Element {
                                 className="accounts-management__content-header"
                                 style={{ marginTop: 20 }}
                             >
-                                External accounts
+                                {intl.formatMessage({
+                                    id: 'MANAGE_DERIVED_KEY_LIST_EXTERNAL_ACCOUNTS_HEADING',
+                                })}
                             </div>
                             <div className="accounts-management__divider" />
 
@@ -128,7 +150,11 @@ export function ManageDerivedKey(): JSX.Element {
 
                 <footer className="accounts-management__footer">
                     <div className="accounts-management__footer-button-back">
-                        <Button text="Back" white onClick={onBack} />
+                        <Button
+                            text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                            white
+                            onClick={onBack}
+                        />
                     </div>
 
                     {accountability.currentDerivedKey !== undefined && (
@@ -136,7 +162,9 @@ export function ManageDerivedKey(): JSX.Element {
                             id="pubkey-copy-button"
                             text={accountability.currentDerivedKey.publicKey}
                         >
-                            <Button text="Copy public key" />
+                            <Button
+                                text={intl.formatMessage({ id: 'COPY_DERIVED_KEY_BTN_TEXT' })}
+                            />
                         </CopyButton>
                     )}
                 </footer>

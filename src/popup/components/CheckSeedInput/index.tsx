@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import Input from '@popup/components/Input'
 
@@ -14,11 +15,12 @@ type Props = {
 
 const CheckSeedInput = React.forwardRef<HTMLInputElement, Props>(
     ({ number, autoFocus = false, name, onBlur, onChange }, ref) => {
+        const intl = useIntl()
         return (
             <div className="check-seed__input">
                 <span className="check-seed__input-number">{`${number}. `}</span>
                 <Input
-                    label="Enter the word"
+                    label={intl.formatMessage({ id: 'ENTER_THE_WORD_FIELD_PLACEHOLDER' })}
                     className="check-seed__input-placeholder"
                     autoFocus={autoFocus}
                     autocomplete="off"

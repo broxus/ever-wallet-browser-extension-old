@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useIntl } from 'react-intl'
 import { shuffleArray } from '@shared/utils'
 
 import CheckSeedInput from '@popup/components/CheckSeedInput'
@@ -28,6 +29,7 @@ export const CheckSeedOnCreation: React.FC<ICheckSeed> = ({ onSubmit, onBack, se
 }
 
 const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
+    const intl = useIntl()
     const { register, handleSubmit, formState } = useForm()
 
     const numbers = useMemo(() => generateRandomNumbers(), [seed])
@@ -39,7 +41,9 @@ const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
     return (
         <div className="check-seed__content">
             <div>
-                <h2 className="check-seed__content-title">Let’s check the seed phrase</h2>
+                <h2 className="check-seed__content-title">
+                    {intl.formatMessage({ id: 'CHECK_THE_SEED_PHRASE' })}
+                </h2>
                 <form
                     id="words"
                     onSubmit={handleSubmit(onSubmit)}
@@ -62,13 +66,19 @@ const CheckSeed: React.FC<ICheckSeed> = ({ onSubmit, onBack, seed }) => {
                         formState.errors.word1 ||
                         formState.errors.word2 ||
                         formState.errors.word3) && (
-                        <div className="check-seed__content-error">Your seed doesn't match</div>
+                        <div className="check-seed__content-error">
+                            {intl.formatMessage({ id: 'ERROR_SEED_DOES_NOT_MATCH' })}
+                        </div>
                     )}
                 </form>
             </div>
             <div className="check-seed__content-buttons">
-                <Button text={'Confirm'} onClick={handleSubmit(onSubmit)} form="words" />
-                <Button text={'Back'} white onClick={onBack} />
+                <Button
+                    text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
+                    onClick={handleSubmit(onSubmit)}
+                    form="words"
+                />
+                <Button text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })} white onClick={onBack} />
             </div>
         </div>
     )

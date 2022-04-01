@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import Decimal from 'decimal.js'
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
@@ -24,25 +25,8 @@ type Props = {
     transaction: nt.TonWalletTransaction | nt.TokenWalletTransaction
 }
 
-const TRANSACTION_NAMES = {
-    to: 'Recipient',
-    service: 'Recipient',
-    from: 'Sender',
-    incoming_transfer: 'Sender',
-    outgoing_transfer: 'Recipient',
-    swap_back: 'Recipient',
-}
-
-const TransferTypeMapping = {
-    incoming_transfer: 'Incoming transfer',
-    outgoing_transfer: 'Outgoing transfer',
-    swap_back: 'Swap back',
-    accept: 'Accept',
-    transfer_bounced: 'Transfer bounced',
-    swap_back_bounced: 'Swap back bounced',
-}
-
 export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
+    const intl = useIntl()
     const rpcState = useRpcState()
 
     const value = React.useMemo(() => {
@@ -60,14 +44,18 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
 
     if (symbol == null) {
         const txAddress = extractTransactionAddress(transaction)
-        direction = TRANSACTION_NAMES[txAddress.direction]
+        direction = intl.formatMessage({
+            id: `TRANSACTION_TERM_${txAddress.direction}`.toUpperCase(),
+        })
         address = txAddress.address
     } else {
         const tokenTransaction = transaction as nt.TokenWalletTransaction
 
         const txAddress = extractTokenTransactionAddress(tokenTransaction)
         if (txAddress && tokenTransaction.info) {
-            direction = (TRANSACTION_NAMES as any)[tokenTransaction.info.type]
+            direction = intl.formatMessage({
+                id: `TRANSACTION_TERM_${tokenTransaction.info.type}`.toUpperCase(),
+            })
             address = txAddress?.address
         }
     }
@@ -85,16 +73,22 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
 
     return (
         <div className="transaction-info">
-            <h2 className="transaction-info-title noselect">Transaction information</h2>
+            <h2 className="transaction-info-title noselect">
+                {intl.formatMessage({ id: 'TRANSACTION_PANEL_HEADER' })}
+            </h2>
             <div className="transaction-info-tx-details">
                 <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">Date and time</span>
+                    <span className="transaction-info-tx-details-param-desc">
+                        {intl.formatMessage({ id: 'TRANSACTION_TERM_DATETIME' })}
+                    </span>
                     <span className="transaction-info-tx-details-param-value">
                         {new Date(transaction.createdAt * 1000).toLocaleString()}
                     </span>
                 </div>
                 <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">Hash (ID)</span>
+                    <span className="transaction-info-tx-details-param-desc">
+                        {intl.formatMessage({ id: 'TRANSACTION_TERM_HASH' })}
+                    </span>
                     <CopyText
                         className="transaction-info-tx-details-param-value copy"
                         id={`copy-${txHash}`}
@@ -113,22 +107,30 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
                 )}
                 {info && (
                     <div className="transaction-info-tx-details-param">
-                        <span className="transaction-info-tx-details-param-desc">Info</span>
+                        <span className="transaction-info-tx-details-param-desc">
+                            {intl.formatMessage({ id: 'TRANSACTION_TERM_INFO' })}
+                        </span>
                         <span className="transaction-info-tx-details-param-value">
-                            {TransferTypeMapping?.[info?.type]}
+                            {intl.formatMessage({
+                                id: `TRANSACTION_TERM_TYPE_${info?.type}`.toUpperCase(),
+                            })}
                         </span>
                     </div>
                 )}
                 <div className="transaction-info-tx-details-separator" />
                 <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">Amount</span>
+                    <span className="transaction-info-tx-details-param-desc">
+                        {intl.formatMessage({ id: 'TRANSACTION_TERM_AMOUNT' })}
+                    </span>
                     <span className="transaction-info-tx-details-param-value">
                         {convertCurrency(value.toString(), decimals)}{' '}
                         {currencyName.length >= 10 ? trimTokenName(currencyName) : currencyName}
                     </span>
                 </div>
                 <div className="transaction-info-tx-details-param">
-                    <span className="transaction-info-tx-details-param-desc">Blockchain fee</span>
+                    <span className="transaction-info-tx-details-param-desc">
+                        {intl.formatMessage({ id: 'TRANSACTION_TERM_BLOCKCHAIN_FEE' })}
+                    </span>
                     <span className="transaction-info-tx-details-param-value">
                         {`${convertTons(fee.toString())} ${NATIVE_CURRENCY}`}
                     </span>
@@ -145,7 +147,7 @@ export function TransactionInfo({ transaction, symbol }: Props): JSX.Element {
                         active: false,
                     })
                 }
-                text="Open in explorer"
+                text={intl.formatMessage({ id: 'OPEN_IN_EXPLORER_BTN_TEXT' })}
             />
         </div>
     )

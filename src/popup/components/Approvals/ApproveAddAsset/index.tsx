@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { connect } from 'react-redux'
 import * as nt from '@nekoton'
 import { PendingApproval } from '@shared/backgroundApi'
@@ -74,6 +75,7 @@ const ApproveAddAsset: React.FC<Props> = ({
     onSubmit,
     onReject,
 }) => {
+    const intl = useIntl()
     const rpcState = useRpcState()
     const rpc = useRpc()
 
@@ -140,14 +142,16 @@ const ApproveAddAsset: React.FC<Props> = ({
         <>
             <Approval
                 account={account}
-                title="Add TIP3 token"
+                title={intl.formatMessage({ id: 'APPROVE_ADD_ASSET_APPROVAL_TITLE' })}
                 origin={origin}
                 className={'approval--add-tip3-token'}
             >
                 <div className="approval__wrapper">
                     <div className="approval__spend-details">
                         <div className="approval__spend-details-param">
-                            <span className="approval__spend-details-param-desc">Name</span>
+                            <span className="approval__spend-details-param-desc">
+                                {intl.formatMessage({ id: 'APPROVE_ADD_ASSET_TERM_NAME' })}
+                            </span>
                             <div className="approval__spend-details-param-value approval--add-tip3-token__token-name">
                                 <AssetIcon
                                     type={'token_wallet'}
@@ -162,63 +166,90 @@ const ApproveAddAsset: React.FC<Props> = ({
                             </div>
                             {tokensMeta != null && manifestData == null && (
                                 <TokenNotification type={TokenNotificationType.Error}>
-                                    <p>
-                                        This token is not published in the&nbsp;
-                                        <a href={TOKENS_MANIFEST_REPO} target="_blank">
-                                            official assets repository
-                                        </a>
-                                        .
-                                    </p>
-                                    <p>Add it with caution if you trust the source.</p>
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: intl.formatMessage(
+                                                {
+                                                    id: 'APPROVE_ADD_ASSET_NOT_PUBLISHED_NOTE',
+                                                },
+                                                {
+                                                    url: TOKENS_MANIFEST_REPO,
+                                                },
+                                                { ignoreTag: true }
+                                            ) as string,
+                                        }}
+                                    />
                                 </TokenNotification>
                             )}
                         </div>
                         <div className="approval__spend-details-param">
-                            <span className="approval__spend-details-param-desc">Symbol</span>
+                            <span className="approval__spend-details-param-desc">
+                                {intl.formatMessage({ id: 'APPROVE_ADD_ASSET_TERM_SYMBOL' })}
+                            </span>
                             <span className="approval__spend-details-param-value">
                                 {details.symbol}
                             </span>
                             {phishingAttempt === PhishingAttempt.Explicit && (
                                 <TokenNotification type={TokenNotificationType.Error}>
-                                    <p>
-                                        Token has the symbol from the trusted list but a different
-                                        root contract address.
-                                    </p>
-                                    <p>Be careful: it may be a phishing attempt.</p>
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: intl.formatMessage(
+                                                {
+                                                    id: 'APPROVE_ADD_ASSET_PHISHING_ATTEMPT_EXPLICIT_NOTE',
+                                                },
+                                                undefined,
+                                                { ignoreTag: true }
+                                            ),
+                                        }}
+                                    />
                                 </TokenNotification>
                             )}
                             {phishingAttempt === PhishingAttempt.SameSymbol && (
                                 <TokenNotification type={TokenNotificationType.Error}>
-                                    <p>You already have a token with the same symbol.</p>
-                                    <p>Be careful: it may be a phishing attempt.</p>
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: intl.formatMessage(
+                                                {
+                                                    id: 'APPROVE_ADD_ASSET_PHISHING_ATTEMPT_SAME_SYMBOL_NOTE',
+                                                },
+                                                undefined,
+                                                { ignoreTag: true }
+                                            ),
+                                        }}
+                                    />
                                 </TokenNotification>
                             )}
                             {phishingAttempt === PhishingAttempt.Suggestion && (
                                 <TokenNotification type={TokenNotificationType.Warning}>
-                                    <p>
-                                        You have already added a token with the same symbol before,
-                                        however the new one is in the&nbsp;
-                                        <a href={TOKENS_MANIFEST_REPO} target="_blank">
-                                            official assets repository
-                                        </a>
-                                        .
-                                    </p>
-                                    <p>
-                                        This may be a new version and you might consider deleting
-                                        the previous one.
-                                    </p>
+                                    <div
+                                        dangerouslySetInnerHTML={{
+                                            __html: intl.formatMessage(
+                                                {
+                                                    id: 'APPROVE_ADD_ASSET_PHISHING_ATTEMPT_SUGGESTION_NOTE',
+                                                },
+                                                {
+                                                    url: TOKENS_MANIFEST_REPO,
+                                                },
+                                                { ignoreTag: true }
+                                            ) as string,
+                                        }}
+                                    />
                                 </TokenNotification>
                             )}
                         </div>
                         <div className="approval__spend-details-param">
-                            <span className="approval__spend-details-param-desc">Decimals</span>
+                            <span className="approval__spend-details-param-desc">
+                                {intl.formatMessage({ id: 'APPROVE_ADD_ASSET_TERM_DECIMALS' })}
+                            </span>
                             <span className="approval__spend-details-param-value">
                                 {details.decimals}
                             </span>
                         </div>
                         <div className="approval__spend-details-param">
                             <span className="approval__spend-details-param-desc">
-                                Token root contract address
+                                {intl.formatMessage({
+                                    id: 'APPROVE_ADD_ASSET_TERM_TOKEN_ROOT_CONTRACT_ADDRESS',
+                                })}
                             </span>
                             <span className="approval__spend-details-param-value">
                                 {details.address}
@@ -226,7 +257,9 @@ const ApproveAddAsset: React.FC<Props> = ({
                         </div>
                         <div className="approval__spend-details-param">
                             <span className="approval__spend-details-param-desc">
-                                Current balance
+                                {intl.formatMessage({
+                                    id: 'APPROVE_ADD_ASSET_TERM_CURRENT_BALANCE',
+                                })}
                             </span>
                             <span className="approval__spend-details-param-value">
                                 {balance != null
@@ -234,14 +267,23 @@ const ApproveAddAsset: React.FC<Props> = ({
                                           balance,
                                           details.decimals
                                       )} ${convertTokenName(details.symbol)}`
-                                    : 'calculating...'}
+                                    : intl.formatMessage({ id: 'CALCULATING_HINT' })}
                             </span>
                         </div>
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
-                        <Button type="submit" text="Add" onClick={() => onSubmit({})} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            onClick={onReject}
+                        />
+                        <Button
+                            type="submit"
+                            text={intl.formatMessage({ id: 'ADD_BTN_TEXT' })}
+                            onClick={() => onSubmit({})}
+                        />
                     </footer>
                 </div>
             </Approval>

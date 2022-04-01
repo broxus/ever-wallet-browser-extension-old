@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
 import { StoredBriefMessageInfo } from '@shared/backgroundApi'
@@ -26,6 +27,7 @@ type Props = {
 }
 
 export function MessageItem({ tonWalletAsset, message, style }: Props): JSX.Element {
+    const intl = useIntl()
     const amount = message.type == 'transfer' ? message.data.amount : undefined
     const recipient = message.type == 'transfer' ? message.data.recipient : undefined
 
@@ -64,7 +66,10 @@ export function MessageItem({ tonWalletAsset, message, style }: Props): JSX.Elem
 
                 <div className="transactions-list-item__labels">
                     <div className="transactions-list-item__label-in-progress">
-                        {OPERATION_NAME[message.type]} in progress
+                        {intl.formatMessage(
+                            { id: 'TRANSACTIONS_LIST_ITEM_LABEL_PROGRESS' },
+                            { name: OPERATION_NAME[message.type] }
+                        )}
                     </div>
                 </div>
             </div>

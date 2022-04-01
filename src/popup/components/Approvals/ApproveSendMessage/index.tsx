@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import Decimal from 'decimal.js'
 
 import * as nt from '@nekoton'
@@ -39,6 +40,7 @@ export function ApproveSendMessage({
     onReject,
     onSubmit,
 }: Props): JSX.Element | null {
+    const intl = useIntl()
     const rpc = useRpc()
 
     const { origin } = approval
@@ -126,7 +128,7 @@ export function ApproveSendMessage({
             if (isValid) {
                 onSubmit(keyPassword, true)
             } else {
-                setError('Invalid password')
+                setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
             }
         } catch (e: any) {
             setError(parseError(e))
@@ -161,8 +163,8 @@ export function ApproveSendMessage({
             account={account}
             title={
                 localStep === ApproveStep.MESSAGE_PREVIEW
-                    ? 'Send internal message'
-                    : 'Confirm message'
+                    ? intl.formatMessage({ id: 'APPROVE_SEND_MESSAGE_APPROVAL_PREVIEW_TITLE' })
+                    : intl.formatMessage({ id: 'APPROVE_SEND_MESSAGE_APPROVAL_TITLE' })
             }
             origin={origin}
             className={'approval--send-message'}
@@ -171,12 +173,16 @@ export function ApproveSendMessage({
                 <div className="approval__wrapper">
                     <div key="message" className="approval__spend-details">
                         <div className="approval__spend-details-param">
-                            <span className="approval__spend-details-param-desc">Recipient</span>
+                            <span className="approval__spend-details-param-desc">
+                                {intl.formatMessage({ id: 'APPROVE_SEND_MESSAGE_TERM_RECIPIENT' })}
+                            </span>
                             <span className="approval__spend-details-param-value">{recipient}</span>
                         </div>
                         {tokenTransaction != null && (
                             <div className="approval__spend-details-param">
-                                <span className="approval__spend-details-param-desc">Amount</span>
+                                <span className="approval__spend-details-param-desc">
+                                    {intl.formatMessage({ id: 'APPROVE_SEND_MESSAGE_TERM_AMOUNT' })}
+                                </span>
                                 <span className="approval__spend-details-param-value approval--send-message__amount">
                                     <AssetIcon
                                         type={'token_wallet'}
@@ -199,7 +205,11 @@ export function ApproveSendMessage({
                         )}
                         <div className="approval__spend-details-param">
                             <span className="approval__spend-details-param-desc">
-                                {tokenTransaction == null ? 'Amount' : 'Attached amount'}
+                                {tokenTransaction == null
+                                    ? intl.formatMessage({ id: 'APPROVE_SEND_MESSAGE_TERM_AMOUNT' })
+                                    : intl.formatMessage({
+                                          id: 'APPROVE_SEND_MESSAGE_TERM_ATTACHED_AMOUNT',
+                                      })}
                             </span>
                             <span className="approval__spend-details-param-value approval--send-message__amount">
                                 <TonAssetIcon className="root-token-icon noselect" />
@@ -210,34 +220,48 @@ export function ApproveSendMessage({
                                     className="check-seed__content-error"
                                     style={{ marginBottom: '16px', marginTop: '-12px' }}
                                 >
-                                    Insufficient funds
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_INSUFFICIENT_FUNDS',
+                                    })}
                                 </div>
                             )}
                         </div>
                         <div className="approval__spend-details-param">
                             <span className="approval__spend-details-param-desc">
-                                Blockchain fee
+                                {intl.formatMessage({
+                                    id: 'APPROVE_SEND_MESSAGE_TERM_BLOCKCHAIN_FEE',
+                                })}
                             </span>
                             {isDeployed && (
                                 <span className="approval__spend-details-param-value approval--send-message__amount">
                                     <TonAssetIcon className="root-token-icon noselect" />
                                     {fees != null
                                         ? `~${convertTons(fees)} ${NATIVE_CURRENCY}`
-                                        : 'calculating...'}
+                                        : intl.formatMessage({ id: 'CALCULATING_HINT' })}
                                 </span>
                             )}
                             {!isDeployed && (
                                 <div className="check-seed__content-error">
-                                    Operation not possible. Wallet is not deployed
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_OPERATION_NOT_POSSIBLE',
+                                    })}
                                 </div>
                             )}
                         </div>
                         {payload && (
                             <div className="approval__spend-details-param">
-                                <span className="approval__spend-details-param-desc">Data</span>
+                                <span className="approval__spend-details-param-desc">
+                                    {intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_TERM_DATA',
+                                    })}
+                                </span>
                                 <div className="approval__spend-details-param-data">
                                     <div className="approval__spend-details-param-data__method">
-                                        <span>Method:</span>
+                                        <span>
+                                            {intl.formatMessage({
+                                                id: 'APPROVE_SEND_MESSAGE_TERM_DATA_METHOD',
+                                            })}
+                                        </span>
                                         <span>{payload.method}</span>
                                     </div>
                                     {iterateItems(payload.params)}
@@ -247,10 +271,19 @@ export function ApproveSendMessage({
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({
+                                id: 'REJECT_BTN_TEXT',
+                            })}
+                            onClick={onReject}
+                        />
                         <Button
                             type="submit"
-                            text="Send"
+                            text={intl.formatMessage({
+                                id: 'SEND_BTN_TEXT',
+                            })}
                             disabled={balance.lessThan(amount) || selectedKey == null}
                             onClick={() => {
                                 setLocalStep(ApproveStep.ENTER_PASSWORD)

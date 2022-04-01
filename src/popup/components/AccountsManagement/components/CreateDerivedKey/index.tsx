@@ -1,9 +1,13 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import { parseError } from '@popup/utils'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { Step, useAccountability } from '@popup/providers/AccountabilityProvider'
-import { EnterPasswordForm, SelectDerivedKeys } from '@popup/components/AccountsManagement/components'
+import {
+    EnterPasswordForm,
+    SelectDerivedKeys,
+} from '@popup/components/AccountsManagement/components'
 
 const PUBLIC_KEYS_LIMIT = 100
 
@@ -15,6 +19,7 @@ enum LocalStep {
 }
 
 export function CreateDerivedKey(): JSX.Element {
+    const intl = useIntl()
     const rpc = useRpc()
     const accountability = useAccountability()
     const { derivedKeys, currentMasterKey, accounts, selectedAccount } = accountability
@@ -45,7 +50,7 @@ export function CreateDerivedKey(): JSX.Element {
                         offset: 0,
                         limit: PUBLIC_KEYS_LIMIT,
                         masterKey: currentMasterKey.masterKey,
-                    }
+                    },
                 })
                 .then((rawPublicKeys) => {
                     setPublicKeys(new Map(rawPublicKeys.map((key, i) => [key, i])))
@@ -53,7 +58,7 @@ export function CreateDerivedKey(): JSX.Element {
                     setInProcess(false)
                     setLocalStep(LocalStep.SELECT)
                 })
-                .catch(e => {
+                .catch((e) => {
                     setPasswordError(parseError(e))
                     setInProcess(false)
                 })
@@ -73,16 +78,21 @@ export function CreateDerivedKey(): JSX.Element {
         const { masterKey } = currentMasterKey
         const currentKeysIds = derivedKeys.map(({ accountId }) => accountId)
         const selectedKeysIds = [...selectedKeys.values()]
-        const keysIdsToCreate = selectedKeysIds
-            .filter(accountId => !currentKeysIds.includes(accountId))
-        const keyIdsToRemove = currentKeysIds
-            .filter(accountId => !selectedKeysIds.includes(accountId))
+        const keysIdsToCreate = selectedKeysIds.filter(
+            (accountId) => !currentKeysIds.includes(accountId)
+        )
+        const keyIdsToRemove = currentKeysIds.filter(
+            (accountId) => !selectedKeysIds.includes(accountId)
+        )
         const keysToRemove = [...publicKeys.entries()]
             .filter(([, accountId]) => keyIdsToRemove.includes(accountId))
             .map(([publicKey]) => publicKey)
-        const paramsToCreate = keysIdsToCreate
-            .map(accountId => ({ password, accountId, masterKey }))
-        const paramsToRemove = keysToRemove.map(publicKey => ({ publicKey }))
+        const paramsToCreate = keysIdsToCreate.map((accountId) => ({
+            password,
+            accountId,
+            masterKey,
+        }))
+        const paramsToRemove = keysToRemove.map((publicKey) => ({ publicKey }))
         const accountsToRemove = accounts
             .filter(({ tonWallet: { publicKey } }) => keysToRemove.includes(publicKey))
             .map(({ tonWallet: { address } }) => address)
@@ -111,7 +121,7 @@ export function CreateDerivedKey(): JSX.Element {
         <>
             {localStep === LocalStep.PASSWORD && (
                 <EnterPasswordForm
-                    title="Add keys"
+                    title={intl.formatMessage({ id: 'CREATE_DERIVED_KEY_PANEL_HEADER' })}
                     onSubmit={onSubmitPassword}
                     onBack={goToManageSeed}
                     inProcess={inProcess}

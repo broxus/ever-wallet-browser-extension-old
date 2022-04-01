@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import CopyToClipboard from 'react-copy-to-clipboard'
 import { useForm } from 'react-hook-form'
 import ReactTooltip from 'react-tooltip'
@@ -21,6 +22,7 @@ enum ExportSeedStep {
 }
 
 export function ExportSeed({ onBack }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
     const rpc = useRpc()
 
@@ -90,7 +92,11 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
             {step === ExportSeedStep.PASSWORD_REQUEST && (
                 <div key="passwordRequest" className="accounts-management">
                     <header className="accounts-management__header">
-                        <h2 className="accounts-management__header-title">Export a seed phrase</h2>
+                        <h2 className="accounts-management__header-title">
+                            {intl.formatMessage({
+                                id: 'EXPORT_SEED_PANEL_HEADER',
+                            })}
+                        </h2>
                     </header>
 
                     <div className="accounts-management__wrapper">
@@ -103,14 +109,18 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                                             minLength: 6,
                                         })}
                                         disabled={inProcess}
-                                        label="Enter seed password..."
+                                        label={intl.formatMessage({
+                                            id: 'ENTER_SEED_PASSWORD_FIELD_PLACEHOLDER',
+                                        })}
                                         type="password"
                                     />
 
                                     {(formState.errors.password || error) && (
                                         <div className="accounts-management__content-error">
                                             {formState.errors.password &&
-                                                'The password is required'}
+                                                intl.formatMessage({
+                                                    id: 'ERROR_PASSWORD_IS_REQUIRED_FIELD',
+                                                })}
                                             {error}
                                         </div>
                                     )}
@@ -120,9 +130,16 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 
                         <footer className="accounts-management__footer">
                             <div className="accounts-management__footer-button-back">
-                                <Button text="Back" white onClick={onBack} />
+                                <Button
+                                    text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                    white
+                                    onClick={onBack}
+                                />
                             </div>
-                            <Button text="Confirm" onClick={handleSubmit(onSubmit)} />
+                            <Button
+                                text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}
+                                onClick={handleSubmit(onSubmit)}
+                            />
                         </footer>
                     </div>
                 </div>
@@ -135,7 +152,9 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                     <div key="copySeedPhrase" className="accounts-management">
                         <header className="accounts-management__header">
                             <h2 className="accounts-management__header-title">
-                                Save the seed phrase
+                                {intl.formatMessage({
+                                    id: 'SAVE_THE_SEED_PHRASE',
+                                })}
                             </h2>
                         </header>
 
@@ -155,19 +174,35 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
 
                             <footer className="accounts-management__footer">
                                 <div className="accounts-management__footer-button-back">
-                                    <Button text="Back" white onClick={onBack} />
+                                    <Button
+                                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                        white
+                                        onClick={onBack}
+                                    />
                                 </div>
-                                <div data-tip="Copied!" data-event="click focus">
+                                <div
+                                    data-tip={intl.formatMessage({ id: 'COPIED_TOOLTIP' })}
+                                    data-event="click focus"
+                                >
                                     {step === ExportSeedStep.COPY_SEED_PHRASE && (
                                         <CopyToClipboard
                                             text={seedPhrase?.length ? seedPhrase.join(' ') : ''}
                                             onCopy={onCopy}
                                         >
-                                            <Button text="Copy all words" />
+                                            <Button
+                                                text={intl.formatMessage({
+                                                    id: 'COPY_ALL_WORDS_BTN_TEXT',
+                                                })}
+                                            />
                                         </CopyToClipboard>
                                     )}
                                     {step === ExportSeedStep.SEED_PHRASE_COPIED && (
-                                        <Button text="I save it down" onClick={onBack} />
+                                        <Button
+                                            text={intl.formatMessage({
+                                                id: 'SAVE_IT_DOWN_BTN_TEXT',
+                                            })}
+                                            onClick={onBack}
+                                        />
                                     )}
                                     <ReactTooltip type="dark" effect="solid" place="top" />
                                 </div>

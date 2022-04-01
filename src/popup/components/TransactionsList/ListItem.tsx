@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
 import AssetIcon from '@popup/components/AssetIcon'
@@ -43,6 +44,8 @@ type Props = {
 }
 
 export function ListItem({ symbol, transaction, style, onViewTransaction }: Props): JSX.Element {
+    const intl = useIntl()
+
     if (isConfirmTransaction(transaction)) {
         return <></>
     }
@@ -134,7 +137,13 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                             <span className="transactions-list-item__description transactions-list-item__fees">
-                                Fees: {convertTons(transaction.totalFees)} {NATIVE_CURRENCY}
+                                {intl.formatMessage(
+                                    { id: 'TRANSACTIONS_LIST_ITEM_FEES_HINT' },
+                                    {
+                                        value: convertTons(transaction.totalFees),
+                                        symbol: NATIVE_CURRENCY,
+                                    }
+                                )}
                             </span>
                         </div>
                     </div>
@@ -143,11 +152,19 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span
                         className="transactions-list-item__description transactions-list-item__address"
-                        data-tooltip={recipient ? splitAddress(recipient.address) : 'Unknown'}
+                        data-tooltip={
+                            recipient
+                                ? splitAddress(recipient.address)
+                                : intl.formatMessage({
+                                      id: 'TRANSACTIONS_LIST_ITEM_RECIPIENT_UNKNOWN_HINT',
+                                  })
+                        }
                     >
                         {recipient
                             ? recipient.address && convertAddress(recipient.address)
-                            : 'Unknown'}
+                            : intl.formatMessage({
+                                  id: 'TRANSACTIONS_LIST_ITEM_RECIPIENT_UNKNOWN_HINT',
+                              })}
                     </span>
                     <span className="transactions-list-item__description transactions-list-item__date">
                         {new Date(transaction.createdAt * 1000).toLocaleString('default', {
@@ -163,22 +180,35 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                     <>
                         <div className="transactions-list-item__labels">
                             <div className="transactions-list-item__label-waiting">
-                                Waiting for confirmation
+                                {intl.formatMessage({
+                                    id: 'TRANSACTIONS_LIST_ITEM_LABEL_WAITING_FOR_CONFIRMATION',
+                                })}
                             </div>
                         </div>
                         {unconfirmedTransaction != null && (
                             <div className="transactions-list-item__signatures">
-                                {`${unconfirmedTransaction.signsReceived} of ${unconfirmedTransaction.signsRequired} signatures`}
-                                <br />
-                                {`Expires at ${new Date(expiresAt * 1000).toLocaleString(
-                                    'default',
+                                {intl.formatMessage(
                                     {
-                                        month: 'long', // TODO: remove
-                                        day: 'numeric', // TODO: remove
-                                        hour: 'numeric',
-                                        minute: 'numeric',
+                                        id: 'TRANSACTIONS_LIST_ITEM_LABEL_SIGNATURES',
+                                    },
+                                    {
+                                        received: unconfirmedTransaction.signsReceived || '0',
+                                        requested: unconfirmedTransaction.signsRequired || '0',
                                     }
-                                )}`}
+                                )}
+                                <br />
+
+                                {intl.formatMessage(
+                                    { id: 'TRANSACTIONS_LIST_ITEM_LABEL_EXPIRES_AT' },
+                                    {
+                                        date: new Date(expiresAt * 1000).toLocaleString('default', {
+                                            month: 'long', // TODO: remove
+                                            day: 'numeric', // TODO: remove
+                                            hour: 'numeric',
+                                            minute: 'numeric',
+                                        }),
+                                    }
+                                )}
                             </div>
                         )}
                     </>
@@ -186,7 +216,11 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
 
                 {labelType === Label.EXPIRED && (
                     <div className="transactions-list-item__labels">
-                        <div className="transactions-list-item__label-expired">Expired</div>
+                        <div className="transactions-list-item__label-expired">
+                            {intl.formatMessage({
+                                id: 'TRANSACTIONS_LIST_ITEM_LABEL_EXPIRED',
+                            })}
+                        </div>
                     </div>
                 )}
             </div>

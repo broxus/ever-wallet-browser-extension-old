@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import Decimal from 'decimal.js'
 import QRCode from 'react-qr-code'
 
@@ -34,15 +35,25 @@ type OptionType = {
     label: string
 }
 
-const walletTypesOptions: OptionType[] = [
-    { label: 'Standard wallet', value: DeployWalletType.STANDARD },
-    { label: 'Multi-signature wallet', value: DeployWalletType.MULTISIG },
-]
-
 export function DeployWallet(): JSX.Element | null {
+    const intl = useIntl()
     const drawer = useDrawerPanel()
     const rpc = useRpc()
     const rpcState = useRpcState()
+
+    const walletTypesOptions = React.useMemo<OptionType[]>(
+        () => [
+            {
+                label: intl.formatMessage({ id: 'DEPLOY_WALLET_DRAWER_SELECT_WALLET_STANDARD' }),
+                value: DeployWalletType.STANDARD,
+            },
+            {
+                label: intl.formatMessage({ id: 'DEPLOY_WALLET_DRAWER_SELECT_WALLET_MULTISIG' }),
+                value: DeployWalletType.MULTISIG,
+            },
+        ],
+        []
+    )
 
     const [inProcess, setInProcess] = React.useState(false)
     const [error, setError] = React.useState<string>()
@@ -152,7 +163,9 @@ export function DeployWallet(): JSX.Element | null {
         return (
             <div className="deploy-wallet">
                 <header className="deploy-wallet__header">
-                    <h2 className="deploy-wallet__header-title">Deploy your wallet</h2>
+                    <h2 className="deploy-wallet__header-title">
+                        {intl.formatMessage({ id: 'DEPLOY_WALLET_DRAWER_PANEL_HEADER' })}
+                    </h2>
                 </header>
 
                 {(() => {
@@ -188,7 +201,10 @@ export function DeployWallet(): JSX.Element | null {
                                     </div>
 
                                     <footer key="standard" className="deploy-wallet__footer">
-                                        <Button text="Next" onClick={onNext} />
+                                        <Button
+                                            text={intl.formatMessage({ id: 'NEXT_BTN_TEXT' })}
+                                            onClick={onNext}
+                                        />
                                     </footer>
                                 </div>
                             )
@@ -201,17 +217,27 @@ export function DeployWallet(): JSX.Element | null {
     return (
         <div className="deploy-wallet">
             <header className="deploy-wallet__header">
-                <h2 className="deploy-wallet__header-title">Deploy your wallet</h2>
+                <h2 className="deploy-wallet__header-title">
+                    {intl.formatMessage({ id: 'DEPLOY_WALLET_DRAWER_PANEL_HEADER' })}
+                </h2>
             </header>
 
             <div className="deploy-wallet__wrapper">
                 <div className="deploy-wallet__content">
                     <p className="deploy-wallet__comment noselect">
-                        You need to have at least {convertTons(totalAmount)} {NATIVE_CURRENCY} on
-                        your account balance to deploy.
+                        {intl.formatMessage(
+                            { id: 'DEPLOY_WALLET_DRAWER_INSUFFICIENT_BALANCE_HINT' },
+                            {
+                                value: convertTons(totalAmount),
+                                symbol: NATIVE_CURRENCY,
+                            }
+                        )}
                     </p>
                     <h3 className="deploy-wallet__content-header--lead noselect">
-                        Your address to receive {NATIVE_CURRENCY}
+                        {intl.formatMessage(
+                            { id: 'DEPLOY_WALLET_DRAWER_ADDRESS_COPY_HEADING' },
+                            { symbol: NATIVE_CURRENCY }
+                        )}
                     </h3>
                     <div className="deploy-wallet__qr-address-placeholder">
                         <div className="deploy-wallet__qr-address-code">
@@ -225,7 +251,7 @@ export function DeployWallet(): JSX.Element | null {
 
                 <footer className="deploy-wallet__footer">
                     <CopyButton text={selectedAccount.address}>
-                        <Button text="Copy address" />
+                        <Button text={intl.formatMessage({ id: 'COPY_ADDRESS_BTN_TEXT' })} />
                     </CopyButton>
                 </footer>
             </div>

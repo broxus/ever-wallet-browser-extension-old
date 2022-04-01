@@ -1,4 +1,5 @@
 import React from 'react'
+import { useIntl } from 'react-intl'
 
 import Button from '@popup/components/Button'
 import { CopyButton } from '@popup/components/CopyButton'
@@ -12,11 +13,14 @@ interface IExportedSeed {
 }
 
 const ExportedSeed: React.FC<IExportedSeed> = ({ onNext, onBack, seed }) => {
+    const intl = useIntl()
     return (
         <div className="exported-seed">
             <div className="exported-seed__content">
                 <div>
-                    <h2 className="exported-seed__content-title">Save the seed phrase</h2>
+                    <h2 className="exported-seed__content-title">
+                        {intl.formatMessage({ id: 'SAVE_THE_SEED_PHRASE' })}
+                    </h2>
                     <ol>
                         {seed?.map((item: string, i: number) => (
                             <li key={i} className="exported-seed__content-word">
@@ -27,11 +31,21 @@ const ExportedSeed: React.FC<IExportedSeed> = ({ onNext, onBack, seed }) => {
                 </div>
                 <br />
                 <div className="exported-seed__content-buttons">
-                    <Button text={'I wrote it down on paper'} onClick={onNext} />
+                    <Button
+                        text={intl.formatMessage({ id: 'WROTE_ON_PAPER_BTN_TEXT' })}
+                        onClick={onNext}
+                    />
                     <CopyButton text={seed.length ? seed?.join(' ') : ''}>
-                        <Button text={'Copy all words'} white />
+                        <Button
+                            text={intl.formatMessage({ id: 'COPY_ALL_WORDS_BTN_TEXT' })}
+                            white
+                        />
                     </CopyButton>
-                    <Button text={'Back'} white onClick={onBack} />
+                    <Button
+                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                        white
+                        onClick={onBack}
+                    />
                 </div>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { parseError, prepareKey } from '@popup/utils'
 import classNames from 'classnames'
 import { PendingApproval } from '@shared/backgroundApi'
@@ -48,6 +49,7 @@ export function ApproveSignData({
     onSubmit,
     onReject,
 }: Props) {
+    const intl = useIntl()
     const { origin } = approval
     const { publicKey, data: rawData } = approval.requestData
 
@@ -70,7 +72,7 @@ export function ApproveSignData({
 
     const trySubmit = async (password: string) => {
         if (keyEntry == null) {
-            setError('Key entry not found')
+            setError(intl.formatMessage({ id: 'ERROR_KEY_ENTRY_NOT_FOUND' }))
             return
         }
 
@@ -82,7 +84,7 @@ export function ApproveSignData({
                 onSubmit(keyPassword, true)
                 setSubmitted(true)
             } else {
-                setError('Invalid password')
+                setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
             }
         } catch (e: any) {
             setError(parseError(e))
@@ -112,7 +114,7 @@ export function ApproveSignData({
         <>
             <Approval
                 account={account}
-                title="Sign data"
+                title={intl.formatMessage({ id: 'APPROVE_SIGN_DATA_APPROVAL_TITLE' })}
                 origin={origin}
                 className={'approval--sign-data'}
             >
@@ -120,7 +122,9 @@ export function ApproveSignData({
                     <div className="approval__spend-details">
                         <div className="approval__spend-details-param">
                             <div className="approval__spend-details-param-desc with-selector">
-                                <span>Data</span>
+                                <span>
+                                    {intl.formatMessage({ id: 'APPROVE_SIGN_DATA_TERM_DATA' })}
+                                </span>
                                 <div className="selector noselect">
                                     {[
                                         selectorItem(DisplayType.Utf8, 'utf8'),
@@ -134,10 +138,15 @@ export function ApproveSignData({
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            onClick={onReject}
+                        />
                         <Button
                             type="submit"
-                            text="Sign"
+                            text={intl.formatMessage({ id: 'SIGN_BTN_TEXT' })}
                             onClick={() => {
                                 setPasswordModalVisible(true)
                             }}

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import classNames from 'classnames'
 
 import { NATIVE_CURRENCY } from '@shared/constants'
@@ -34,6 +35,7 @@ export function ApproveChangeAccount({
     accountEntries,
     onSubmit,
 }: Props): JSX.Element {
+    const intl = useIntl()
     const accountability = useAccountability()
 
     const { origin } = approval
@@ -61,7 +63,7 @@ export function ApproveChangeAccount({
                             key="select-account-heading"
                             className="change-account__header-title noselect"
                         >
-                            Select account to connect with EVER Wallet
+                            {intl.formatMessage({ id: 'APPROVE_CHANGE_ACCOUNT_HEADER' })}
                         </h2>
                     </header>
                     <div className="change-account__wrapper">
@@ -103,7 +105,7 @@ export function ApproveChangeAccount({
                         <footer className="change-account__footer">
                             <Button
                                 type="submit"
-                                text="Next"
+                                text={intl.formatMessage({ id: 'NEXT_BTN_TEXT' })}
                                 disabled={selectedAccount == null}
                                 onClick={() => {
                                     setLocalStep(LocalStep.CONNECTING)
@@ -123,7 +125,9 @@ export function ApproveChangeAccount({
 
             {localStep === LocalStep.CONNECTING && (
                 <div className="change-account__connecting">
-                    <h2 className="change-account__connecting-heading">Connecting...</h2>
+                    <h2 className="change-account__connecting-heading">
+                        {intl.formatMessage({ id: 'CONNECTING_HINT' })}
+                    </h2>
                     <div className="change-account__connecting-process">
                         <WebsiteIcon origin={origin} />
                         <p className="connecting-process">

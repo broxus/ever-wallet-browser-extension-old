@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { useIntl } from 'react-intl'
 import { parseError, prepareKey } from '@popup/utils'
 import { PendingApproval } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
@@ -27,6 +28,7 @@ export function ApproveDecryptData({
     onSubmit,
     onReject,
 }: Props) {
+    const intl = useIntl()
     const { origin } = approval
     const { publicKey, sourcePublicKey } = approval.requestData
 
@@ -47,7 +49,7 @@ export function ApproveDecryptData({
 
     const trySubmit = async (password: string) => {
         if (keyEntry == null) {
-            setError('Key entry not found')
+            setError(intl.formatMessage({ id: 'ERROR_KEY_ENTRY_NOT_FOUND' }))
             return
         }
 
@@ -58,7 +60,7 @@ export function ApproveDecryptData({
             if (isValid) {
                 onSubmit(keyPassword, true)
             } else {
-                setError('Invalid password')
+                setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
             }
         } catch (e: any) {
             setError(parseError(e))
@@ -71,7 +73,7 @@ export function ApproveDecryptData({
         <>
             <Approval
                 account={account}
-                title="Decrypt data"
+                title={intl.formatMessage({ id: 'APPROVE_DECRYPT_DATA_APPROVAL_TITLE' })}
                 origin={origin}
                 className={'approval--encrypt-data'}
             >
@@ -79,7 +81,7 @@ export function ApproveDecryptData({
                     <div className="approval__spend-details">
                         <div className="approval__spend-details-param">
                             <span className="approval__spend-details-param-desc">
-                                Encryptor's public key
+                                {intl.formatMessage({ id: 'APPROVE_DECRYPT_DATA_TERM_PUBLIC_KEY' })}
                             </span>
                             <span className="approval__spend-details-param-value">
                                 {sourcePublicKey}
@@ -88,10 +90,15 @@ export function ApproveDecryptData({
                     </div>
 
                     <footer className="approval__footer">
-                        <Button type="button" white text="Reject" onClick={onReject} />
+                        <Button
+                            type="button"
+                            white
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            onClick={onReject}
+                        />
                         <Button
                             type="submit"
-                            text="Decrypt"
+                            text={intl.formatMessage({ id: 'DECRYPT_BTN_TEXT' })}
                             onClick={() => {
                                 setPasswordModalVisible(true)
                             }}
