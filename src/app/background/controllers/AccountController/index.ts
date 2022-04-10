@@ -259,6 +259,24 @@ export class AccountController extends BaseController<
         return subscription.use(f)
     }
 
+    public async findExistingWallets({
+        publicKey,
+        workchainId = 0,
+        contractTypes,
+    }: {
+        publicKey: string
+        workchainId: number
+        contractTypes: nt.ContractType[]
+    }): Promise<Array<nt.ExistingWalletInfo>> {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
+            try {
+                return await transport.findExistingWallets(publicKey, workchainId, contractTypes)
+            } catch (e: any) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
+    }
+
     public async getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
         return this._getTonWalletInitData(address)
     }

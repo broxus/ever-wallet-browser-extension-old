@@ -553,6 +553,9 @@ extern "C" {
     #[wasm_bindgen(typescript_type = "ContractType")]
     pub type ContractType;
 
+    #[wasm_bindgen(typescript_type = "Array<ContractType>")]
+    pub type ContractTypeList;
+
     #[wasm_bindgen(typescript_type = "Promise<RawContractState | null>")]
     pub type PromiseOptionRawContractState;
 

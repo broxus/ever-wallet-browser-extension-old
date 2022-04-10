@@ -1,7 +1,6 @@
 use std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 
-use anyhow::Result;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -197,6 +196,48 @@ impl Transport {
             .handle_error()?;
 
             Ok(JsValue::from(TokenWallet::new(handle, wallet)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "findExistingWallets")]
+    pub fn find_existing_wallets(
+        &self,
+        public_key: &str,
+        workchain_id: i8,
+        contract_types: crate::core::ton_wallet::ContractTypeList,
+    ) -> Result<PromiseExistingWalletInfoList, JsValue> {
+        let public_key = parse_public_key(public_key)?;
+
+        if !js_sys::Array::is_array(&contract_types) {
+            return Err("contract_types must be an array").handle_error()?;
+        }
+        let contract_types: js_sys::Array = contract_types.unchecked_into();
+
+        let wallet_types = contract_types
+            .iter()
+            .map(|item| {
+                let item: crate::core::ton_wallet::ContractType = item.unchecked_into();
+                item.try_into()
+            })
+            .collect::<Result<Vec<nt::core::ton_wallet::WalletType>, _>>()?;
+
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let result = nt::core::ton_wallet::find_existing_wallets(
+                handle.as_ref(),
+                &public_key,
+                workchain_id,
+                &wallet_types,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(result
+                .into_iter()
+                .map(make_existing_wallet_info)
+                .collect::<js_sys::Array>()
+                .unchecked_into())
         })))
     }
 
@@ -592,6 +633,37 @@ pub fn make_transport_info(data: transport::TransportInfo) -> TransportInfo {
 extern "C" {
     #[wasm_bindgen(typescript_type = "TransportInfo")]
     pub type TransportInfo;
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const EXISTING_WALLET_INFO: &'static str = r#"
+export type ExistingWalletInfo = {
+    address: string,
+    publicKey: string,
+    contractType: ContractType,
+    contractState: ContractState,
+};
+"#;
+
+pub fn make_existing_wallet_info(data: nt::core::ton_wallet::ExistingWalletInfo) -> JsValue {
+    ObjectBuilder::new()
+        .set("address", data.address.to_string())
+        .set("publicKey", hex::encode(data.public_key.as_bytes()))
+        .set(
+            "contractType",
+            crate::core::ton_wallet::ContractType::from(data.wallet_type),
+        )
+        .set(
+            "contractState",
+            crate::core::models::make_contract_state(data.contract_state),
+        )
+        .build()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "Promise<Array<ExistingWalletInfo>>")]
+    pub type PromiseExistingWalletInfoList;
 }
 
 #[wasm_bindgen(typescript_custom_section)]
