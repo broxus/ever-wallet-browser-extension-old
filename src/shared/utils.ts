@@ -784,7 +784,7 @@ export const transactionExplorerLink = ({ network, hash }: { network: string; ha
         case 'fld':
             return `https://fld.ever.live/transactions/transactionDetails?id=${hash}`
         case 'localnet':
-            return `https://localhost/transactions/transactionDetails?id=${hash}`
+            return `http://localhost/transactions/transactionDetails?id=${hash}`
         default:
             return `https://tonscan.io/transactions/${hash}`
     }
