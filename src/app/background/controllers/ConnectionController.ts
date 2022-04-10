@@ -81,6 +81,7 @@ export type InitializedConnection = { group: string } & (
           {
               socket: GqlSocket
               connection: nt.GqlConnection
+              transport: nt.Transport
           }
       >
     | nt.EnumItem<
@@ -88,6 +89,7 @@ export type InitializedConnection = { group: string } & (
           {
               socket: JrpcSocket
               connection: nt.JrpcConnection
+              transport: nt.Transport
           }
       >
 )
@@ -322,11 +324,8 @@ export class ConnectionController extends BaseController<
 
     private async _connect(params: ConnectionDataItem) {
         if (this._initializedConnection) {
-            if (this._initializedConnection.type === 'graphql') {
-                this._initializedConnection.data.connection.free()
-            } else if (this._initializedConnection.type == 'jrpc') {
-                this._initializedConnection.data.connection.free()
-            }
+            this._initializedConnection.data.transport.free()
+            this._initializedConnection.data.connection.free()
         }
 
         this._initializedConnection = undefined
@@ -344,13 +343,13 @@ export class ConnectionController extends BaseController<
         }
 
         const testConnection = async ({
-            data: { connection },
+            data: { transport },
         }: InitializedConnection): Promise<TestConnectionResult> => {
             return new Promise<TestConnectionResult>((resolve, reject) => {
                 this._cancelTestConnection = () => resolve(TestConnectionResult.CANCELLED)
 
                 // Try to get any account state
-                connection
+                transport
                     .getFullContractState(
                         '-1:0000000000000000000000000000000000000000000000000000000000000000'
                     )
@@ -366,6 +365,7 @@ export class ConnectionController extends BaseController<
                 ? async () => {
                       const socket = new GqlSocket()
                       const connection = await socket.connect(this.config.clock, params.data)
+                      const transport = nt.Transport.fromGqlConnection(connection)
 
                       return {
                           shouldTest: !params.data.local,
@@ -376,6 +376,7 @@ export class ConnectionController extends BaseController<
                               data: {
                                   socket,
                                   connection,
+                                  transport,
                               },
                           } as InitializedConnection,
                       }
@@ -383,6 +384,7 @@ export class ConnectionController extends BaseController<
                 : async () => {
                       const socket = new JrpcSocket()
                       const connection = await socket.connect(this.config.clock, params.data)
+                      const transport = nt.Transport.fromJrpcConnection(connection)
 
                       return {
                           shouldTest: true,
@@ -393,6 +395,7 @@ export class ConnectionController extends BaseController<
                               data: {
                                   socket,
                                   connection,
+                                  transport,
                               },
                           } as InitializedConnection,
                       }

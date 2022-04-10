@@ -1,17 +1,19 @@
-pub mod gql;
-pub mod jrpc;
-
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::sync::Arc;
 
 use anyhow::Result;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::*;
 
 use nt::transport;
 
+use crate::core::token_wallet::RootTokenContractDetailsWithAddress;
 use crate::utils::*;
+
+pub mod gql;
+pub mod jrpc;
 
 pub trait IntoHandle: Sized {
     fn into_handle(self) -> TransportHandle;
@@ -20,26 +22,387 @@ pub trait IntoHandle: Sized {
 #[derive(Clone)]
 pub enum TransportHandle {
     GraphQl(Arc<transport::gql::GqlTransport>),
-    Adnl(Arc<dyn transport::Transport>),
+    Jrpc(Arc<transport::jrpc::JrpcTransport>),
 }
 
 impl TransportHandle {
-    pub fn transport(&self) -> &dyn transport::Transport {
-        match self {
-            Self::GraphQl(transport) => transport.as_ref(),
-            Self::Adnl(transport) => transport.as_ref(),
-        }
-    }
-
-    pub fn info(&self) -> TransportInfo {
-        make_transport_info(self.transport().info())
-    }
-
     pub async fn get_block(&self, block_id: &str) -> Result<ton_block::Block, JsValue> {
         match self {
             Self::GraphQl(transport) => transport.get_block(block_id).await.handle_error(),
             _ => Err(TransportError::MethodNotSupported).handle_error(),
         }
+    }
+}
+
+impl<'a> AsRef<dyn transport::Transport + 'a> for TransportHandle {
+    fn as_ref(&self) -> &(dyn transport::Transport + 'a) {
+        match self {
+            Self::GraphQl(transport) => transport.as_ref(),
+            Self::Jrpc(transport) => transport.as_ref(),
+        }
+    }
+}
+
+impl From<TransportHandle> for Arc<dyn transport::Transport> {
+    fn from(handle: TransportHandle) -> Self {
+        match handle {
+            TransportHandle::GraphQl(transport) => transport,
+            TransportHandle::Jrpc(transport) => transport,
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub struct Transport {
+    #[wasm_bindgen(skip)]
+    pub handle: TransportHandle,
+    #[wasm_bindgen(skip)]
+    pub clock: Arc<nt_utils::ClockWithOffset>,
+}
+
+#[wasm_bindgen]
+impl Transport {
+    #[wasm_bindgen(js_name = "fromGqlConnection")]
+    pub fn from_gql_connection(gql: &gql::GqlConnection) -> Transport {
+        let transport = Arc::new(nt::transport::gql::GqlTransport::new(gql.inner.clone()));
+        Self {
+            handle: TransportHandle::GraphQl(transport),
+            clock: gql.clock.clone(),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "fromJrpcConnection")]
+    pub fn from_jrpc_connection(jrpc: &jrpc::JrpcConnection) -> Transport {
+        let transport = Arc::new(nt::transport::jrpc::JrpcTransport::new(jrpc.inner.clone()));
+        Self {
+            handle: TransportHandle::Jrpc(transport),
+            clock: jrpc.clock.clone(),
+        }
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToGenericContract")]
+    pub fn subscribe_to_generic_contract_wallet(
+        &self,
+        address: &str,
+        handler: crate::core::generic_contract::GenericContractSubscriptionHandlerImpl,
+    ) -> Result<PromiseGenericContract, JsValue> {
+        use crate::core::generic_contract::*;
+
+        let address = parse_address(address)?;
+
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+        let handler = Arc::new(GenericContractSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::generic_contract::GenericContract::subscribe(
+                clock,
+                handle.clone().into(),
+                address,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(GenericContract::new(handle, wallet)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToNativeWallet")]
+    pub fn subscribe_to_native_wallet(
+        &self,
+        public_key: &str,
+        contract_type: crate::core::ton_wallet::ContractType,
+        workchain: i8,
+        handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
+    ) -> Result<PromiseTonWallet, JsValue> {
+        use crate::core::ton_wallet::*;
+
+        let public_key = parse_public_key(public_key)?;
+        let contract_type = contract_type.try_into()?;
+
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+        let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::ton_wallet::TonWallet::subscribe(
+                clock,
+                handle.clone().into(),
+                workchain,
+                public_key,
+                contract_type,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(TonWallet::new(handle, wallet)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToNativeWalletByAddress")]
+    pub fn subscribe_to_native_wallet_by_address(
+        &self,
+        address: &str,
+        handler: crate::core::ton_wallet::TonWalletSubscriptionHandlerImpl,
+    ) -> Result<PromiseTonWallet, JsValue> {
+        use crate::core::ton_wallet::*;
+
+        let address = parse_address(address)?;
+
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+        let handler = Arc::new(TonWalletSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::ton_wallet::TonWallet::subscribe_by_address(
+                clock,
+                handle.clone().into(),
+                address,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(TonWallet::new(handle, wallet)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "subscribeToTokenWallet")]
+    pub fn subscribe_to_token_wallet(
+        &self,
+        owner: &str,
+        root_token_contract: &str,
+        handler: crate::core::token_wallet::TokenWalletSubscriptionHandlerImpl,
+    ) -> Result<PromiseTokenWallet, JsValue> {
+        use crate::core::token_wallet::*;
+
+        let owner = parse_address(owner)?;
+        let root_token_contract = parse_address(root_token_contract)?;
+
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+        let handler = Arc::new(TokenWalletSubscriptionHandler::from(handler));
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let wallet = nt::core::token_wallet::TokenWallet::subscribe(
+                clock,
+                handle.clone().into(),
+                owner,
+                root_token_contract,
+                handler,
+            )
+            .await
+            .handle_error()?;
+
+            Ok(JsValue::from(TokenWallet::new(handle, wallet)))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getNativeWalletInitData")]
+    pub fn get_native_wallet_init_data(
+        &self,
+        address: &str,
+    ) -> Result<PromiseTonWalletInitData, JsValue> {
+        let address = parse_address(address)?;
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let contract = match handle
+                .as_ref()
+                .get_contract_state(&address)
+                .await
+                .handle_error()?
+            {
+                nt::transport::models::RawContractState::Exists(contract) => contract,
+                nt::transport::models::RawContractState::NotExists => {
+                    return Err(TransportError::WalletNotDeployed).handle_error()
+                }
+            };
+
+            let (public_key, wallet_type) =
+                nt::core::ton_wallet::extract_wallet_init_data(&contract).handle_error()?;
+            let custodians = nt::core::ton_wallet::get_wallet_custodians(
+                clock.as_ref(),
+                &contract,
+                &public_key,
+                wallet_type,
+            )
+            .handle_error()?;
+
+            Ok(make_ton_wallet_init_data(
+                public_key,
+                wallet_type,
+                address.workchain_id() as i8,
+                custodians,
+            ))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenRootDetails")]
+    pub fn get_token_root_details(
+        &self,
+        root_token_contract: &str,
+        owner_address: &str,
+    ) -> Result<RootTokenContractDetailsWithAddress, JsValue> {
+        let root_token_contract = parse_address(root_token_contract)?;
+        let owner = parse_address(owner_address)?;
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            crate::core::token_wallet::get_token_root_details_with_user_token_wallet(
+                clock.as_ref(),
+                handle.as_ref(),
+                &root_token_contract,
+                &owner,
+            )
+            .await
+            .map(JsCast::unchecked_into)
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenWalletBalance")]
+    pub fn get_token_wallet_balance(&self, token_wallet: &str) -> Result<PromiseString, JsValue> {
+        let token_wallet = parse_address(token_wallet)?;
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            crate::core::token_wallet::get_token_wallet_balance(
+                clock.as_ref(),
+                handle.as_ref(),
+                &token_wallet,
+            )
+            .await
+            .map(JsValue::from)
+            .map(JsCast::unchecked_into)
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTokenRootDetailsFromTokenWallet")]
+    pub fn get_token_root_details_from_token_wallet(
+        &self,
+        token_wallet_address: &str,
+    ) -> Result<PromiseRootTokenContractDetails, JsValue> {
+        let token_wallet_address = parse_address(token_wallet_address)?;
+        let clock = self.clock.clone();
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let (address, details) =
+                nt::core::token_wallet::get_token_root_details_from_token_wallet(
+                    clock.as_ref(),
+                    handle.as_ref(),
+                    &token_wallet_address,
+                )
+                .await
+                .handle_error()?;
+            Ok(make_root_token_contract_details(address, details))
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getFullContractState")]
+    pub fn get_full_account_state(
+        &self,
+        address: &str,
+    ) -> Result<PromiseOptionFullContractState, JsValue> {
+        let address = parse_address(address)?;
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            make_full_contract_state(
+                handle
+                    .as_ref()
+                    .get_contract_state(&address)
+                    .await
+                    .handle_error()?,
+            )
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getAccountsByCodeHash")]
+    pub fn get_accounts_by_code_hash(
+        &self,
+        code_hash: &str,
+        limit: u8,
+        continuation: Option<String>,
+    ) -> Result<PromiseAccountsList, JsValue> {
+        let code_hash = parse_hash(code_hash)?;
+        let continuation = continuation.map(|addr| parse_address(&addr)).transpose()?;
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(make_accounts_list(
+                handle
+                    .as_ref()
+                    .get_accounts_by_code_hash(&code_hash, limit, &continuation)
+                    .await
+                    .handle_error()?,
+            )
+            .unchecked_into())
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTransactions")]
+    pub fn get_transactions(
+        &self,
+        address: &str,
+        continuation: Option<crate::core::models::TransactionId>,
+        limit: u8,
+    ) -> Result<PromiseTransactionsList, JsValue> {
+        use crate::core::models::*;
+
+        let address = parse_address(address)?;
+        let before_lt = continuation
+            .map(parse_transaction_id)
+            .transpose()?
+            .map(|id| id.lt);
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let raw_transactions = handle
+                .as_ref()
+                .get_transactions(
+                    address,
+                    nt_abi::TransactionId {
+                        lt: before_lt.unwrap_or(u64::MAX),
+                        hash: Default::default(),
+                    },
+                    limit,
+                )
+                .await
+                .handle_error()?;
+            Ok(make_transactions_list(raw_transactions).unchecked_into())
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "getTransaction")]
+    pub fn get_transaction(&self, hash: &str) -> Result<PromiseOptionTransaction, JsValue> {
+        let hash = parse_hash(hash)?;
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(
+                match handle
+                    .as_ref()
+                    .get_transaction(&hash)
+                    .await
+                    .handle_error()?
+                {
+                    Some(transaction) => nt::core::models::Transaction::try_from((
+                        transaction.hash,
+                        transaction.data,
+                    ))
+                    .map(crate::core::models::make_transaction)
+                    .handle_error()?
+                    .unchecked_into(),
+                    None => JsValue::undefined(),
+                },
+            )
+        })))
     }
 }
 

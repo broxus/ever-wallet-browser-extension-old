@@ -385,13 +385,13 @@ class GenericContractSubscription extends ContractSubscription<nt.GenericContrac
     ) {
         const {
             connection: {
-                data: { connection },
+                data: { connection, transport },
             },
             release,
         } = await connectionController.acquire()
 
         try {
-            const contract = await connection.subscribeToGenericContract(address, handler)
+            const contract = await transport.subscribeToGenericContract(address, handler)
             if (contract == null) {
                 throw new NekotonRpcError(RpcErrorCode.INTERNAL, 'Failed to subscribe')
             }

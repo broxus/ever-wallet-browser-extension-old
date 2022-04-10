@@ -266,9 +266,9 @@ export class AccountController extends BaseController<
     public async getTokenRootDetailsFromTokenWallet(
         tokenWalletAddress: string
     ): Promise<nt.RootTokenContractDetails> {
-        return this.config.connectionController.use(async ({ data: { connection } }) => {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
             try {
-                return await connection.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
+                return await transport.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
@@ -279,9 +279,9 @@ export class AccountController extends BaseController<
         rootContract: string,
         ownerAddress: string
     ): Promise<nt.RootTokenContractDetailsWithAddress> {
-        return this.config.connectionController.use(async ({ data: { connection } }) => {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
             try {
-                return await connection.getTokenRootDetails(rootContract, ownerAddress)
+                return await transport.getTokenRootDetails(rootContract, ownerAddress)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
@@ -289,9 +289,9 @@ export class AccountController extends BaseController<
     }
 
     public async getTokenWalletBalance(tokenWallet: string): Promise<string> {
-        return this.config.connectionController.use(async ({ data: { connection } }) => {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
             try {
-                return await connection.getTokenWalletBalance(tokenWallet)
+                return await transport.getTokenWalletBalance(tokenWallet)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
@@ -1351,8 +1351,8 @@ export class AccountController extends BaseController<
     }
 
     private async _getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
-        return this.config.connectionController.use(({ data: { connection } }) =>
-            connection.getTonWalletInitData(address)
+        return this.config.connectionController.use(({ data: { transport } }) =>
+            transport.getNativeWalletInitData(address)
         )
     }
 

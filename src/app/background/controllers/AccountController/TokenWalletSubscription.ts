@@ -36,13 +36,13 @@ export class TokenWalletSubscription {
     ) {
         const {
             connection: {
-                data: { connection },
+                data: { transport, connection },
             },
             release,
         } = await connectionController.acquire()
 
         try {
-            const tokenWallet = await connection.subscribeToTokenWallet(
+            const tokenWallet = await transport.subscribeToTokenWallet(
                 owner,
                 rootTokenContract,
                 handler

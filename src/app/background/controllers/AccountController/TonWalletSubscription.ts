@@ -25,13 +25,13 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     ) {
         const {
             connection: {
-                data: { connection },
+                data: { transport, connection },
             },
             release,
         } = await connectionController.acquire()
 
         try {
-            const tonWallet = await connection.subscribeToTonWallet(
+            const tonWallet = await transport.subscribeToNativeWallet(
                 publicKey,
                 contractType,
                 workchain,

@@ -377,7 +377,7 @@ const getFullContractState: ProviderMethod<'getFullContractState'> = async (
     try {
         res.result = {
             state: await connectionController.use(
-                async ({ data: { connection } }) => await connection.getFullContractState(address)
+                async ({ data: { transport } }) => await transport.getFullContractState(address)
             ),
         }
         end()
@@ -405,8 +405,8 @@ const getAccountsByCodeHash: ProviderMethod<'getAccountsByCodeHash'> = async (
 
     try {
         res.result = await connectionController.use(
-            async ({ data: { connection } }) =>
-                await connection.getAccountsByCodeHash(codeHash, limit || 50, continuation)
+            async ({ data: { transport } }) =>
+                await transport.getAccountsByCodeHash(codeHash, limit || 50, continuation)
         )
         end()
     } catch (e: any) {
@@ -427,8 +427,8 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
 
     try {
         res.result = await connectionController.use(
-            async ({ data: { connection } }) =>
-                await connection.getTransactions(address, continuation, limit || 50)
+            async ({ data: { transport } }) =>
+                await transport.getTransactions(address, continuation, limit || 50)
         )
 
         end()
@@ -449,7 +449,7 @@ const getTransaction: ProviderMethod<'getTransaction'> = async (req, res, _next,
     try {
         res.result = {
             transaction: await connectionController.use(
-                async ({ data: { connection } }) => await connection.getTransaction(hash)
+                async ({ data: { transport } }) => await transport.getTransaction(hash)
             ),
         }
 
@@ -475,7 +475,7 @@ const runLocal: ProviderMethod<'runLocal'> = async (req, res, _next, end, ctx) =
 
     if (contractState == null) {
         contractState = await connectionController.use(
-            async ({ data: { connection } }) => await connection.getFullContractState(address)
+            async ({ data: { transport } }) => await transport.getFullContractState(address)
         )
     }
 
