@@ -646,9 +646,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.122"
+version = "0.2.123"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec647867e2bf0772e28c8bcde4f0d19a9216916e890543b5a03ed8ef27b8f259"
+checksum = "cb691a747a7ab48abc15c5b42066eaafde10dc427e3b6ee2a1cf43db04c763bd"
 
 [[package]]
 name = "libsecp256k1"
@@ -746,7 +746,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#875fb3210fa39c7a01ece37d10162078564a11b0"
+source = "git+https://github.com/broxus/nekoton.git#8ad182ffcfa490373bc8f23cb3ad93620f60894d"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -791,7 +791,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#875fb3210fa39c7a01ece37d10162078564a11b0"
+source = "git+https://github.com/broxus/nekoton.git#8ad182ffcfa490373bc8f23cb3ad93620f60894d"
 dependencies = [
  "anyhow",
  "base64",
@@ -817,7 +817,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#875fb3210fa39c7a01ece37d10162078564a11b0"
+source = "git+https://github.com/broxus/nekoton.git#8ad182ffcfa490373bc8f23cb3ad93620f60894d"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -832,7 +832,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#875fb3210fa39c7a01ece37d10162078564a11b0"
+source = "git+https://github.com/broxus/nekoton.git#8ad182ffcfa490373bc8f23cb3ad93620f60894d"
 dependencies = [
  "either",
  "proc-macro2",
@@ -843,7 +843,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#875fb3210fa39c7a01ece37d10162078564a11b0"
+source = "git+https://github.com/broxus/nekoton.git#8ad182ffcfa490373bc8f23cb3ad93620f60894d"
 dependencies = [
  "anyhow",
  "base64",
@@ -1054,9 +1054,9 @@ dependencies = [
 
 [[package]]
 name = "quote"
-version = "1.0.17"
+version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "632d02bff7f874a36f33ea8bb416cd484b90cc66c1194b1a1110d067a7013f58"
+checksum = "a1feb54ed693b93a84e14094943b84b7c4eae204c512b7ccb95ab0c66d278ad1"
 dependencies = [
  "proc-macro2",
 ]
@@ -1389,7 +1389,7 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.7.14"
-source = "git+https://github.com/broxus/ton-labs-block.git#a21dc5ed417d25db511c7db3173baef2279bda15"
+source = "git+https://github.com/broxus/ton-labs-block.git#e19b43070e876f45569256c73192aa46e4ab6eeb"
 dependencies = [
  "anyhow",
  "base64",

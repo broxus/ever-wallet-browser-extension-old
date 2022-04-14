@@ -687,6 +687,7 @@ export class AccountController extends BaseController<
         publicKey,
         contractType,
         workchain,
+        explicitAddress,
     }: AccountToCreate): Promise<nt.AssetsList> {
         const { accountsStorage } = this.config
 
@@ -695,7 +696,8 @@ export class AccountController extends BaseController<
                 name,
                 publicKey,
                 contractType,
-                workchain
+                workchain,
+                explicitAddress
             )
 
             const accountEntries = { ...this.state.accountEntries }
@@ -1319,17 +1321,27 @@ export class AccountController extends BaseController<
             }
         }
 
-        const workchain = nt.extractAddressWorkchain(address)
+        let subscription
+        let handler = new TonWalletHandler(address, contractType, this)
 
         console.debug('_createTonWalletSubscription -> subscribing to EVER wallet')
-        const subscription = await TonWalletSubscription.subscribe(
-            this.config.clock,
-            this.config.connectionController,
-            workchain,
-            publicKey,
-            contractType,
-            new TonWalletHandler(address, contractType, this)
-        )
+        if (this.state.externalAccounts.some((item) => item.address === address)) {
+            subscription = await TonWalletSubscription.subscribeByAddress(
+                this.config.clock,
+                this.config.connectionController,
+                address,
+                handler
+            )
+        } else {
+            subscription = await TonWalletSubscription.subscribe(
+                this.config.clock,
+                this.config.connectionController,
+                nt.extractAddressWorkchain(address),
+                publicKey,
+                contractType,
+                handler
+            )
+        }
         console.debug('_createTonWalletSubscription -> subscribed to EVER wallet')
 
         this._tonWalletSubscriptions.set(address, subscription)

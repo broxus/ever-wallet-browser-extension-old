@@ -48,6 +48,7 @@ export type AccountToCreate = {
     publicKey: string
     contractType: WalletContractType
     workchain: number
+    explicitAddress?: string
 }
 
 export type DeployMessageToPrepare =

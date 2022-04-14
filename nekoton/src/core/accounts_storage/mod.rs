@@ -55,15 +55,25 @@ impl AccountsStorage {
         public_key: &str,
         contract_type: crate::core::ton_wallet::ContractType,
         workchain: i8,
+        explicit_address: Option<String>,
     ) -> Result<PromiseAssetsList, JsValue> {
         let public_key = parse_public_key(public_key)?;
         let contract_type = contract_type.try_into()?;
+        let explicit_address = explicit_address
+            .map(|addr| parse_address(&addr))
+            .transpose()?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let assets_list = inner
-                .add_account(&name, public_key, contract_type, workchain)
+                .add_account(
+                    &name,
+                    public_key,
+                    contract_type,
+                    workchain,
+                    explicit_address,
+                )
                 .await
                 .handle_error()?;
             Ok(make_assets_list(assets_list).unchecked_into())

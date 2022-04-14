@@ -15,6 +15,36 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     private _hasCustodians: boolean = false
     private _hasUnconfirmedTransactions: boolean = false
 
+    public static async subscribeByAddress(
+        clock: nt.ClockWithOffset,
+        connectionController: ConnectionController,
+        address: string,
+        handler: ITonWalletHandler
+    ) {
+        const {
+            connection: {
+                data: { transport, connection },
+            },
+            release,
+        } = await connectionController.acquire()
+
+        try {
+            const tonWallet = await transport.subscribeToNativeWalletByAddress(address, handler)
+
+            return new TonWalletSubscription(
+                clock,
+                connection,
+                release,
+                tonWallet.address,
+                tonWallet,
+                handler
+            )
+        } catch (e: any) {
+            release()
+            throw e
+        }
+    }
+
     public static async subscribe(
         clock: nt.ClockWithOffset,
         connectionController: ConnectionController,
