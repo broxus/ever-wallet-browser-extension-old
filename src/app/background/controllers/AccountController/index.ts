@@ -1325,7 +1325,7 @@ export class AccountController extends BaseController<
         let handler = new TonWalletHandler(address, contractType, this)
 
         console.debug('_createTonWalletSubscription -> subscribing to EVER wallet')
-        if (this.state.externalAccounts.some((item) => item.address === address)) {
+        if (this.config.connectionController.isFromZerostate(address)) {
             subscription = await TonWalletSubscription.subscribeByAddress(
                 this.config.clock,
                 this.config.connectionController,
