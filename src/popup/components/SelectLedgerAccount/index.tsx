@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react'
+import { getEnvironmentType } from '@shared/platform'
+import { parseError } from '@popup/utils'
+import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 
@@ -8,10 +11,7 @@ import Modal from '@popup/components/Modal'
 import Nav from '@popup/components/Nav'
 import AccountSelector from '@popup/components/AccountSelector'
 
-import * as nt from '@nekoton'
 import './style.scss'
-import { getEnvironmentType } from '@popup/utils/platform'
-import { parseError } from '@popup/utils'
 
 interface ISelectLedgerAccount {
     controllerRpc: IControllerRpcClient

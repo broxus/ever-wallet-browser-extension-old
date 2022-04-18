@@ -10,7 +10,6 @@ import { ModalError, LedgerModal } from '@popup/components/Ledger/Modal'
 import Nav from '@popup/components/Nav'
 import AccountSelector from '@popup/components/AccountSelector'
 import PanelLoader from '@popup/components/PanelLoader'
-import { getEnvironmentType } from '@popup/utils/platform'
 import { parseError } from '@popup/utils'
 
 import './styles.scss'

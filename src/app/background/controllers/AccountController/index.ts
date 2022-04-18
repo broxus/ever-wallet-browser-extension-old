@@ -21,7 +21,6 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
-    AccountToCreate,
     DeployMessageToPrepare,
     KeyToDerive,
     KeyToRemove,
@@ -682,23 +681,11 @@ export class AccountController extends BaseController<
         return await ledgerBridge.getPreviousPage()
     }
 
-    public async createAccount({
-        name,
-        publicKey,
-        contractType,
-        workchain,
-        explicitAddress,
-    }: AccountToCreate): Promise<nt.AssetsList> {
+    public async createAccount(params: nt.AccountToAdd): Promise<nt.AssetsList> {
         const { accountsStorage } = this.config
 
         try {
-            const selectedAccount = await accountsStorage.addAccount(
-                name,
-                publicKey,
-                contractType,
-                workchain,
-                explicitAddress
-            )
+            const selectedAccount = await accountsStorage.addAccount(params)
 
             const accountEntries = { ...this.state.accountEntries }
             accountEntries[selectedAccount.tonWallet.address] = selectedAccount
@@ -714,6 +701,36 @@ export class AccountController extends BaseController<
 
             await this.startSubscriptions()
             return selectedAccount
+        } catch (e: any) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async createAccounts(params: nt.AccountToAdd[]): Promise<nt.AssetsList[]> {
+        const { accountsStorage } = this.config
+
+        try {
+            const newAccounts = await accountsStorage.addAccounts(params)
+
+            const accountEntries = { ...this.state.accountEntries }
+            const accountsVisibility: { [address: string]: boolean } = {}
+            for (const account of newAccounts) {
+                accountsVisibility[account.tonWallet.address] = true
+                accountEntries[account.tonWallet.address] = account
+            }
+
+            this.update({
+                accountsVisibility: {
+                    ...this.state.accountsVisibility,
+                    ...accountsVisibility,
+                },
+                accountEntries,
+            })
+
+            // TODO: select first account?
+
+            await this.startSubscriptions()
+            return newAccounts
         } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }

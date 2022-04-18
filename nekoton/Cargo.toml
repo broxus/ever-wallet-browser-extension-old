@@ -16,12 +16,14 @@ wasm-opt = ["-O3", "--enable-mutable-globals"]
 [dependencies]
 anyhow = "1.0"
 async-trait = "0.1"
-hex = "0.4"
 base64 = "0.13"
 chrono = { version = "0.4", features = ["wasmbind"] }
 console_error_panic_hook = "0.1"
+const_format = "0.2.22"
 dyn-clone = "1.0"
 futures = "0.3"
+getrandom = { version = "0.2", features = ["js"] }
+hex = "0.4"
 js-sys = "0.3"
 log = "0.4"
 num-bigint = "0.3"
@@ -34,7 +36,6 @@ sha2 = "0.9"
 thiserror = "1.0"
 wasm-bindgen = { version = "0.2.79", features = ["serde-serialize"] }
 wasm-bindgen-futures = "0.4"
-getrandom = { version = "0.2", features = ["js"] }
 wasm-logger = "0.2"
 
 ed25519-dalek = { git = "https://github.com/broxus/ed25519-dalek.git" }

@@ -10,7 +10,7 @@ import pump from 'pump'
 import { AccountabilityProvider } from '@popup/providers/AccountabilityProvider'
 import { RpcProvider } from '@popup/providers/RpcProvider'
 import { ActiveTab, RpcStateProvider } from '@popup/providers/RpcStateProvider'
-import { getCurrentWindow, getEnvironmentType } from '@popup/utils/platform'
+import { getCurrentWindow, getEnvironmentType } from '@shared/platform'
 import { getUniqueId, PortDuplexStream } from '@shared/utils'
 import {
     Environment,

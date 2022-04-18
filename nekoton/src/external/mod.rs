@@ -446,3 +446,13 @@ impl nt::external::JrpcConnection for JrpcConnector {
         Ok(rx.await.unwrap_or(Err(JrpcError::RequestFailed))?)
     }
 }
+
+#[wasm_bindgen(js_name = "keystoreStorageKey")]
+pub fn keystore_storage_key() -> String {
+    nt::core::keystore::KEYSTORE_STORAGE_KEY.to_owned()
+}
+
+#[wasm_bindgen(js_name = "accountsStorageKey")]
+pub fn accounts_storage_key() -> String {
+    nt::core::accounts_storage::ACCOUNTS_STORAGE_KEY.to_owned()
+}

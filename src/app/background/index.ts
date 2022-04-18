@@ -9,8 +9,7 @@ import {
     ENVIRONMENT_TYPE_NOTIFICATION,
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
-
-import { WindowManager, openExtensionInBrowser } from '@popup/utils/platform'
+import { WindowManager, openExtensionInBrowser } from '@shared/platform'
 import { NekotonController, TriggerUiParams } from './NekotonController'
 
 const windowManager = new WindowManager()

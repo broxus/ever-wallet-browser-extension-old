@@ -1,12 +1,13 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
+import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
 import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
+import { KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import LedgerSignIn from '@popup/components/Ledger/SignIn'
 import { parseError } from '@popup/utils'
 
@@ -77,7 +78,7 @@ export function WelcomePage(): JSX.Element {
     const [restoreError, setRestoreError] = React.useState<string | undefined>()
     // const [checked, setChecked] = React.useState(false)
 
-    const createAccount = (params: AccountToCreate) => rpc.createAccount(params)
+    const createAccount = (params: nt.AccountToAdd) => rpc.createAccount(params)
     const createMasterKey = (params: MasterKeyToCreate) => rpc.createMasterKey(params)
     const removeKey = (params: KeyToRemove) => rpc.removeKey(params)
 
