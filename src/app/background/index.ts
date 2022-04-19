@@ -10,7 +10,9 @@ import {
     ENVIRONMENT_TYPE_FULLSCREEN,
 } from '@shared/constants'
 import { WindowManager, openExtensionInBrowser } from '@shared/platform'
-import { NekotonController, TriggerUiParams } from './NekotonController'
+
+// NOTE: import only types here to prevent interaction with WASM module
+import type { NekotonController, TriggerUiParams } from './NekotonController'
 
 const windowManager = new WindowManager()
 
@@ -25,6 +27,9 @@ const initialize = async () => {
 }
 
 const setupController = async () => {
+    // NOTE: all interaction with WASM module must be done only after `init`
+    const { NekotonController } = require('./NekotonController')
+
     console.log('Setup controller')
 
     window.browser.runtime.onConnect.addListener(connectRemote)
@@ -37,7 +42,7 @@ const setupController = async () => {
         getOpenNekotonTabIds: () => {
             return openNekotonTabsIDs
         },
-    }).then((createdController) => (controller = createdController))
+    }).then((createdController: NekotonController) => (controller = createdController))
 
     const nekotonInternalProcessHash: { [type: string]: true } = {
         [ENVIRONMENT_TYPE_POPUP]: true,
@@ -80,7 +85,7 @@ const setupController = async () => {
                 proceedConnect()
             } else {
                 const sender = remotePort.sender
-                controllerPromise.then((controller) => {
+                controllerPromise.then((controller: NekotonController) => {
                     controller.setupTrustedCommunication(portStream, sender)
                     proceedConnect()
                 })
@@ -97,7 +102,7 @@ const setupController = async () => {
             controller.setupUntrustedCommunication(portStream, remotePort.sender)
         } else if (remotePort.sender) {
             const sender = remotePort.sender
-            controllerPromise.then((controller) => {
+            controllerPromise.then((controller: NekotonController) => {
                 controller.setupUntrustedCommunication(portStream, sender)
             })
         }
