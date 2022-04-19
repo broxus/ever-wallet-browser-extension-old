@@ -667,9 +667,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.123"
+version = "0.2.124"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb691a747a7ab48abc15c5b42066eaafde10dc427e3b6ee2a1cf43db04c763bd"
+checksum = "21a41fed9d98f27ab1c6d161da622a4fa35e8a54a8adc24bbf3ddd0ef70b0e50"
 
 [[package]]
 name = "libsecp256k1"
@@ -766,7 +766,7 @@ dependencies = [
 [[package]]
 name = "nekoton"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#72ac4f16761fe34f3faba916fe8b5067aee8be66"
+source = "git+https://github.com/broxus/nekoton.git#d75533a43df104d113e1b10f38744b514cf94118"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -811,7 +811,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#72ac4f16761fe34f3faba916fe8b5067aee8be66"
+source = "git+https://github.com/broxus/nekoton.git#d75533a43df104d113e1b10f38744b514cf94118"
 dependencies = [
  "anyhow",
  "base64",
@@ -837,7 +837,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#72ac4f16761fe34f3faba916fe8b5067aee8be66"
+source = "git+https://github.com/broxus/nekoton.git#d75533a43df104d113e1b10f38744b514cf94118"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -852,7 +852,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#72ac4f16761fe34f3faba916fe8b5067aee8be66"
+source = "git+https://github.com/broxus/nekoton.git#d75533a43df104d113e1b10f38744b514cf94118"
 dependencies = [
  "either",
  "proc-macro2",
@@ -863,7 +863,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.10.0"
-source = "git+https://github.com/broxus/nekoton.git#72ac4f16761fe34f3faba916fe8b5067aee8be66"
+source = "git+https://github.com/broxus/nekoton.git#d75533a43df104d113e1b10f38744b514cf94118"
 dependencies = [
  "anyhow",
  "base64",
