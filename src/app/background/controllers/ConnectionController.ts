@@ -661,7 +661,7 @@ export class GqlSocket {
 
         if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
             return `${baseUrl}/graphql`
-        } else if (['localhost', '127.0.0.1'].indexOf(baseUrl)) {
+        } else if (['localhost', '127.0.0.1'].indexOf(baseUrl) >= 0) {
             return `http://${baseUrl}/graphql`
         } else {
             return `https://${baseUrl}/graphql`
