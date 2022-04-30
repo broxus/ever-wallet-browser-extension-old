@@ -208,7 +208,7 @@ impl TonWallet {
 
         JsCast::unchecked_into(future_to_promise(async move {
             let contract_state = transport
-                .transport()
+                .as_ref()
                 .get_contract_state(&address)
                 .await
                 .handle_error()?;
@@ -552,6 +552,9 @@ fn make_ton_wallet_transaction(
 extern "C" {
     #[wasm_bindgen(typescript_type = "ContractType")]
     pub type ContractType;
+
+    #[wasm_bindgen(typescript_type = "Array<ContractType>")]
+    pub type ContractTypeList;
 
     #[wasm_bindgen(typescript_type = "Promise<RawContractState | null>")]
     pub type PromiseOptionRawContractState;

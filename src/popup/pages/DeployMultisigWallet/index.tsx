@@ -11,6 +11,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { closeCurrentWindow, useRpcState } from '@popup/providers/RpcStateProvider'
 import { parseError, prepareKey } from '@popup/utils'
 import { DeployMessageToPrepare, WalletMessageToSend } from '@shared/backgroundApi'
+import { NATIVE_CURRENCY } from '@shared/constants'
 
 enum Step {
     ENTER_DATA,
@@ -58,6 +59,8 @@ export function DeployMultisigWallet(): JSX.Element {
         const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
             address: selectedAccount.address,
             amount: '0',
+            asset: NATIVE_CURRENCY,
+            decimals: 9,
         })
         const params: DeployMessageToPrepare = {
             type: 'multiple_owners',

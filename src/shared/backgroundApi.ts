@@ -43,13 +43,6 @@ export type TokenWalletsToUpdate = {
     [rootTokenContract: string]: boolean
 }
 
-export type AccountToCreate = {
-    name: string
-    publicKey: string
-    contractType: WalletContractType
-    workchain: number
-}
-
 export type DeployMessageToPrepare =
     | { type: 'single_owner' }
     | { type: 'multiple_owners'; custodians: string[]; reqConfirms: number }

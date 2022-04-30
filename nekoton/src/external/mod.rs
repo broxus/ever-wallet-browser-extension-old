@@ -235,6 +235,8 @@ pub enum GqlQueryError {
 pub const LEDGER_SIGNATURE_CONTEXT: &str = r#"
 export type LedgerSignatureContext = {
     amount: string,
+    decimals: number,
+    asset: string,
     address: string,
 }
 "#;
@@ -343,6 +345,14 @@ impl nt::external::LedgerConnection for LedgerConnectionImpl {
             context.as_ref().map(|ctx| {
                 ObjectBuilder::new()
                     .set("amount", ctx.amount.to_string())
+                    .set("decimals", ctx.decimals)
+                    .set("asset", {
+                        let as_bytes = ctx.asset.as_bytes();
+                        match as_bytes.len() {
+                            len if len < 32 => ctx.asset.to_string(),
+                            _ => String::from_utf8_lossy(&as_bytes[..31]).to_string(),
+                        }
+                    })
                     .set("address", ctx.address.to_string())
                     .build()
                     .unchecked_into()
@@ -435,4 +445,14 @@ impl nt::external::JrpcConnection for JrpcConnector {
         self.sender.send(data, query);
         Ok(rx.await.unwrap_or(Err(JrpcError::RequestFailed))?)
     }
+}
+
+#[wasm_bindgen(js_name = "keystoreStorageKey")]
+pub fn keystore_storage_key() -> String {
+    nt::core::keystore::KEYSTORE_STORAGE_KEY.to_owned()
+}
+
+#[wasm_bindgen(js_name = "accountsStorageKey")]
+pub fn accounts_storage_key() -> String {
+    nt::core::accounts_storage::ACCOUNTS_STORAGE_KEY.to_owned()
 }

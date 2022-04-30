@@ -11,6 +11,20 @@ import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 
+const ZEROSTATE_ADDRESSES: { [group: string]: string[] } = {
+    mainnet: [
+        '-1:7777777777777777777777777777777777777777777777777777777777777777',
+        '-1:8888888888888888888888888888888888888888888888888888888888888888',
+        '-1:9999999999999999999999999999999999999999999999999999999999999999',
+    ],
+    testnet: ['-1:7777777777777777777777777777777777777777777777777777777777777777'],
+    fld: [
+        '-1:7777777777777777777777777777777777777777777777777777777777777777',
+        '-1:8888888888888888888888888888888888888888888888888888888888888888',
+        '-1:9999999999999999999999999999999999999999999999999999999999999999',
+    ],
+}
+
 const NETWORK_PRESETS = {
     [0]: {
         name: 'Mainnet (ADNL)',
@@ -81,6 +95,7 @@ export type InitializedConnection = { group: string } & (
           {
               socket: GqlSocket
               connection: nt.GqlConnection
+              transport: nt.Transport
           }
       >
     | nt.EnumItem<
@@ -88,6 +103,7 @@ export type InitializedConnection = { group: string } & (
           {
               socket: JrpcSocket
               connection: nt.JrpcConnection
+              transport: nt.Transport
           }
       >
 )
@@ -240,6 +256,14 @@ export class ConnectionController extends BaseController<
             })
     }
 
+    public isFromZerostate(address: string): boolean {
+        requireInitializedConnection(this._initializedConnection)
+        return (
+            ZEROSTATE_ADDRESSES[this._initializedConnection.group as any]?.includes(address) ||
+            false
+        )
+    }
+
     public getAvailableNetworks(): ConnectionDataItem[] {
         return window.ObjectExt.entries(NETWORK_PRESETS).map(([id, value]) => ({
             ...(value as ConnectionData),
@@ -322,11 +346,8 @@ export class ConnectionController extends BaseController<
 
     private async _connect(params: ConnectionDataItem) {
         if (this._initializedConnection) {
-            if (this._initializedConnection.type === 'graphql') {
-                this._initializedConnection.data.connection.free()
-            } else if (this._initializedConnection.type == 'jrpc') {
-                this._initializedConnection.data.connection.free()
-            }
+            this._initializedConnection.data.transport.free()
+            this._initializedConnection.data.connection.free()
         }
 
         this._initializedConnection = undefined
@@ -344,13 +365,13 @@ export class ConnectionController extends BaseController<
         }
 
         const testConnection = async ({
-            data: { connection },
+            data: { transport },
         }: InitializedConnection): Promise<TestConnectionResult> => {
             return new Promise<TestConnectionResult>((resolve, reject) => {
                 this._cancelTestConnection = () => resolve(TestConnectionResult.CANCELLED)
 
                 // Try to get any account state
-                connection
+                transport
                     .getFullContractState(
                         '-1:0000000000000000000000000000000000000000000000000000000000000000'
                     )
@@ -366,6 +387,7 @@ export class ConnectionController extends BaseController<
                 ? async () => {
                       const socket = new GqlSocket()
                       const connection = await socket.connect(this.config.clock, params.data)
+                      const transport = nt.Transport.fromGqlConnection(connection)
 
                       return {
                           shouldTest: !params.data.local,
@@ -376,6 +398,7 @@ export class ConnectionController extends BaseController<
                               data: {
                                   socket,
                                   connection,
+                                  transport,
                               },
                           } as InitializedConnection,
                       }
@@ -383,6 +406,7 @@ export class ConnectionController extends BaseController<
                 : async () => {
                       const socket = new JrpcSocket()
                       const connection = await socket.connect(this.config.clock, params.data)
+                      const transport = nt.Transport.fromJrpcConnection(connection)
 
                       return {
                           shouldTest: true,
@@ -393,6 +417,7 @@ export class ConnectionController extends BaseController<
                               data: {
                                   socket,
                                   connection,
+                                  transport,
                               },
                           } as InitializedConnection,
                       }
@@ -636,7 +661,7 @@ export class GqlSocket {
 
         if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
             return `${baseUrl}/graphql`
-        } else if (['localhost', '127.0.0.1'].indexOf(baseUrl)) {
+        } else if (['localhost', '127.0.0.1'].indexOf(baseUrl) >= 0) {
             return `http://${baseUrl}/graphql`
         } else {
             return `https://${baseUrl}/graphql`

@@ -21,7 +21,6 @@ import {
 } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
-    AccountToCreate,
     DeployMessageToPrepare,
     KeyToDerive,
     KeyToRemove,
@@ -259,6 +258,24 @@ export class AccountController extends BaseController<
         return subscription.use(f)
     }
 
+    public async findExistingWallets({
+        publicKey,
+        workchainId = 0,
+        contractTypes,
+    }: {
+        publicKey: string
+        workchainId: number
+        contractTypes: nt.ContractType[]
+    }): Promise<Array<nt.ExistingWalletInfo>> {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
+            try {
+                return await transport.findExistingWallets(publicKey, workchainId, contractTypes)
+            } catch (e: any) {
+                throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+            }
+        })
+    }
+
     public async getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
         return this._getTonWalletInitData(address)
     }
@@ -266,9 +283,9 @@ export class AccountController extends BaseController<
     public async getTokenRootDetailsFromTokenWallet(
         tokenWalletAddress: string
     ): Promise<nt.RootTokenContractDetails> {
-        return this.config.connectionController.use(async ({ data: { connection } }) => {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
             try {
-                return await connection.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
+                return await transport.getTokenRootDetailsFromTokenWallet(tokenWalletAddress)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
@@ -279,9 +296,9 @@ export class AccountController extends BaseController<
         rootContract: string,
         ownerAddress: string
     ): Promise<nt.RootTokenContractDetailsWithAddress> {
-        return this.config.connectionController.use(async ({ data: { connection } }) => {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
             try {
-                return await connection.getTokenRootDetails(rootContract, ownerAddress)
+                return await transport.getTokenRootDetails(rootContract, ownerAddress)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
@@ -289,9 +306,9 @@ export class AccountController extends BaseController<
     }
 
     public async getTokenWalletBalance(tokenWallet: string): Promise<string> {
-        return this.config.connectionController.use(async ({ data: { connection } }) => {
+        return this.config.connectionController.use(async ({ data: { transport } }) => {
             try {
-                return await connection.getTokenWalletBalance(tokenWallet)
+                return await transport.getTokenWalletBalance(tokenWallet)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
             }
@@ -664,21 +681,11 @@ export class AccountController extends BaseController<
         return await ledgerBridge.getPreviousPage()
     }
 
-    public async createAccount({
-        name,
-        publicKey,
-        contractType,
-        workchain,
-    }: AccountToCreate): Promise<nt.AssetsList> {
+    public async createAccount(params: nt.AccountToAdd): Promise<nt.AssetsList> {
         const { accountsStorage } = this.config
 
         try {
-            const selectedAccount = await accountsStorage.addAccount(
-                name,
-                publicKey,
-                contractType,
-                workchain
-            )
+            const selectedAccount = await accountsStorage.addAccount(params)
 
             const accountEntries = { ...this.state.accountEntries }
             accountEntries[selectedAccount.tonWallet.address] = selectedAccount
@@ -694,6 +701,36 @@ export class AccountController extends BaseController<
 
             await this.startSubscriptions()
             return selectedAccount
+        } catch (e: any) {
+            throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
+        }
+    }
+
+    public async createAccounts(params: nt.AccountToAdd[]): Promise<nt.AssetsList[]> {
+        const { accountsStorage } = this.config
+
+        try {
+            const newAccounts = await accountsStorage.addAccounts(params)
+
+            const accountEntries = { ...this.state.accountEntries }
+            const accountsVisibility: { [address: string]: boolean } = {}
+            for (const account of newAccounts) {
+                accountsVisibility[account.tonWallet.address] = true
+                accountEntries[account.tonWallet.address] = account
+            }
+
+            this.update({
+                accountsVisibility: {
+                    ...this.state.accountsVisibility,
+                    ...accountsVisibility,
+                },
+                accountEntries,
+            })
+
+            // TODO: select first account?
+
+            await this.startSubscriptions()
+            return newAccounts
         } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
@@ -1301,17 +1338,27 @@ export class AccountController extends BaseController<
             }
         }
 
-        const workchain = nt.extractAddressWorkchain(address)
+        let subscription
+        let handler = new TonWalletHandler(address, contractType, this)
 
         console.debug('_createTonWalletSubscription -> subscribing to EVER wallet')
-        const subscription = await TonWalletSubscription.subscribe(
-            this.config.clock,
-            this.config.connectionController,
-            workchain,
-            publicKey,
-            contractType,
-            new TonWalletHandler(address, contractType, this)
-        )
+        if (this.config.connectionController.isFromZerostate(address)) {
+            subscription = await TonWalletSubscription.subscribeByAddress(
+                this.config.clock,
+                this.config.connectionController,
+                address,
+                handler
+            )
+        } else {
+            subscription = await TonWalletSubscription.subscribe(
+                this.config.clock,
+                this.config.connectionController,
+                nt.extractAddressWorkchain(address),
+                publicKey,
+                contractType,
+                handler
+            )
+        }
         console.debug('_createTonWalletSubscription -> subscribed to EVER wallet')
 
         this._tonWalletSubscriptions.set(address, subscription)
@@ -1351,8 +1398,8 @@ export class AccountController extends BaseController<
     }
 
     private async _getTonWalletInitData(address: string): Promise<nt.TonWalletInitData> {
-        return this.config.connectionController.use(({ data: { connection } }) =>
-            connection.getTonWalletInitData(address)
+        return this.config.connectionController.use(({ data: { transport } }) =>
+            transport.getNativeWalletInitData(address)
         )
     }
 

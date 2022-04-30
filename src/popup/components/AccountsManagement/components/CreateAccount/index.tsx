@@ -120,6 +120,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                         publicKey,
                                         name,
                                         workchain,
+                                        explicitAddress: address,
                                     })
                                     .then((account) => {
                                         drawer.setPanel(Panel.MANAGE_SEEDS)
@@ -151,6 +152,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                             publicKey,
                                             name,
                                             workchain,
+                                            explicitAddress: address,
                                         })
                                     )
                                     .then(async (account) => {

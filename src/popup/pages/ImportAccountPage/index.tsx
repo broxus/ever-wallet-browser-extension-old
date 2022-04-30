@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useIntl } from 'react-intl'
 import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { validateMnemonic } from '@popup/store/app/actions'
-import { AccountToCreate, KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
+import { KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
 import SignPolicy from '@popup/components/SignPolicy'
@@ -25,7 +25,7 @@ interface IRestoreAccountPage {
     name: string
     createMasterKey: (params: MasterKeyToCreate) => Promise<nt.KeyStoreEntry>
     removeKey: (params: KeyToRemove) => Promise<nt.KeyStoreEntry | undefined>
-    createAccount: (params: AccountToCreate) => Promise<nt.AssetsList>
+    createAccount: (params: nt.AccountToAdd) => Promise<nt.AssetsList>
     onBack: () => void
 }
 

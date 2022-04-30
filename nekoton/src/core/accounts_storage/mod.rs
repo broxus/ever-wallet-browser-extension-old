@@ -49,24 +49,40 @@ impl AccountsStorage {
     }
 
     #[wasm_bindgen(js_name = "addAccount")]
-    pub fn add_account(
-        &self,
-        name: String,
-        public_key: &str,
-        contract_type: crate::core::ton_wallet::ContractType,
-        workchain: i8,
-    ) -> Result<PromiseAssetsList, JsValue> {
-        let public_key = parse_public_key(public_key)?;
-        let contract_type = contract_type.try_into()?;
+    pub fn add_account(&self, new_account: AccountToAdd) -> Result<PromiseAssetsList, JsValue> {
+        let account = parse_account_to_add(new_account.unchecked_into())?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let assets_list = inner
-                .add_account(&name, public_key, contract_type, workchain)
-                .await
-                .handle_error()?;
+            let assets_list = inner.add_account(account).await.handle_error()?;
             Ok(make_assets_list(assets_list).unchecked_into())
+        })))
+    }
+
+    #[wasm_bindgen(js_name = "addAccounts")]
+    pub fn add_accounts(
+        &self,
+        new_accounts: AccountToAddList,
+    ) -> Result<PromiseAssetsListList, JsValue> {
+        if js_sys::Array::is_array(&new_accounts) {
+            return Err("Expected new_accounts to be an array").handle_error();
+        }
+        let new_accounts: js_sys::Array = new_accounts.unchecked_into();
+        let new_accounts = new_accounts
+            .iter()
+            .map(parse_account_to_add)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        let inner = self.inner.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            let assets_list = inner.add_accounts(new_accounts).await.handle_error()?;
+            Ok(assets_list
+                .into_iter()
+                .map(make_assets_list)
+                .collect::<js_sys::Array>()
+                .unchecked_into())
         })))
     }
 
@@ -173,6 +189,82 @@ impl AccountsStorage {
                 .unchecked_into())
         }))
     }
+}
+
+#[wasm_bindgen(typescript_custom_section)]
+const ACCOUNT_TO_ADD: &str = r#"
+export type AccountToAdd = {
+    name: string,
+    publicKey: string,
+    contractType: ContractType,
+    workchain: number,
+    explicitAddress?: string,
+}
+"#;
+
+#[wasm_bindgen(typescript_custom_section)]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "AccountToAdd")]
+    pub type AccountToAdd;
+
+    #[wasm_bindgen(typescript_type = "Array<AccountToAdd>")]
+    pub type AccountToAddList;
+}
+
+fn parse_account_to_add(
+    data: JsValue,
+) -> Result<nt::core::accounts_storage::AccountToAdd, JsValue> {
+    if !data.is_object() {
+        return Err("Object expected").handle_error();
+    }
+
+    let name = match js_sys::Reflect::get(&data, &JsValue::from_str("name"))
+        .as_ref()
+        .map(JsValue::as_string)?
+    {
+        Some(name) => name,
+        None => return Err("name is required").handle_error(),
+    };
+
+    let public_key = match js_sys::Reflect::get(&data, &JsValue::from_str("publicKey"))
+        .as_ref()
+        .map(JsValue::as_string)?
+    {
+        Some(public_key) => parse_public_key(&public_key)?,
+        None => return Err("publicKey is required").handle_error(),
+    };
+
+    let contract = js_sys::Reflect::get(&data, &JsValue::from_str("contractType"))?
+        .unchecked_into::<crate::core::ton_wallet::ContractType>()
+        .try_into()?;
+
+    let workchain = match js_sys::Reflect::get(&data, &JsValue::from_str("workchain"))
+        .as_ref()
+        .map(JsValue::as_f64)?
+    {
+        Some(workchain) => workchain as i8,
+        None => return Err("workchain is required").handle_error(),
+    };
+
+    let explicit_address = {
+        let value = js_sys::Reflect::get(&data, &JsValue::from_str("explicitAddress"))?;
+        if value.is_null() || value.is_undefined() {
+            None
+        } else {
+            match value.as_string() {
+                Some(explicit_address) => Some(parse_address(&explicit_address)?),
+                None => return Err("explicitAddress must be a string").handle_error(),
+            }
+        }
+    };
+
+    Ok(nt::core::accounts_storage::AccountToAdd {
+        name,
+        public_key,
+        contract,
+        workchain,
+        explicit_address,
+    })
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -323,4 +415,5 @@ extern "C" {
 
     #[wasm_bindgen(typescript_type = "Promise<AssetsList>")]
     pub type PromiseAssetsList;
+
 }

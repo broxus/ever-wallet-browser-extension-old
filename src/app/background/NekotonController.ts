@@ -25,6 +25,7 @@ import {
 import { RpcErrorCode } from '@shared/errors'
 import { NEKOTON_PROVIDER } from '@shared/constants'
 import { ConnectionDataItem, ExternalWindowParams, WindowInfo } from '@shared/backgroundApi'
+import { WindowManager, focusTab, focusWindow, openExtensionInBrowser } from '@shared/platform'
 
 import { AccountController } from './controllers/AccountController'
 import { ApprovalController } from './controllers/ApprovalController'
@@ -33,10 +34,14 @@ import { NotificationController } from './controllers/NotificationController'
 import { PermissionsController } from './controllers/PermissionsController'
 import { SubscriptionController } from './controllers/SubscriptionController'
 import { createProviderMiddleware } from './providerMiddleware'
-import { WindowManager, focusTab, focusWindow, openExtensionInBrowser } from '@popup/utils/platform'
-
 import LedgerBridge from './ledger/LedgerBridge'
 import { LocalizationController } from './controllers/LocalizationController'
+import {
+    StorageConnector,
+    ACCOUNTS_STORAGE_KEY,
+    KEYSTORE_STORAGE_KEY,
+} from './utils/StorageConnector'
+import { LedgerConnection } from './utils/LedgerConnection'
 
 export interface TriggerUiParams {
     group: string
@@ -315,6 +320,7 @@ export class NekotonController extends EventEmitter {
             getLedgerPreviousPage: nodeifyAsync(accountController, 'getLedgerPreviousPage'),
             setLocale: nodeifyAsync(localizationController, 'setLocale'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
+            createAccounts: nodeifyAsync(accountController, 'createAccounts'),
             addExternalAccount: nodeifyAsync(accountController, 'addExternalAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),
@@ -326,6 +332,7 @@ export class NekotonController extends EventEmitter {
                 accountController,
                 'getMultisigPendingTransactions'
             ),
+            findExistingWallets: nodeifyAsync(accountController, 'findExistingWallets'),
             getTonWalletInitData: nodeifyAsync(accountController, 'getTonWalletInitData'),
             getTokenRootDetailsFromTokenWallet: nodeifyAsync(
                 accountController,
@@ -418,12 +425,12 @@ export class NekotonController extends EventEmitter {
             return false
         }
 
-        const accounts = parsedStorage['__core__accounts']
+        const accounts = parsedStorage[ACCOUNTS_STORAGE_KEY]
         if (typeof accounts !== 'string' || !nt.AccountsStorage.verify(accounts)) {
             return false
         }
 
-        const keystore = parsedStorage['__core__keystore']
+        const keystore = parsedStorage[KEYSTORE_STORAGE_KEY]
         if (typeof keystore !== 'string' || !nt.KeyStore.verify(keystore)) {
             return false
         }
@@ -437,8 +444,8 @@ export class NekotonController extends EventEmitter {
             selectedMasterKey: undefined,
             permissions: {},
             domainMetadata: {},
-            __core__accounts: accounts,
-            __core__keystore: keystore,
+            [ACCOUNTS_STORAGE_KEY]: accounts,
+            [KEYSTORE_STORAGE_KEY]: keystore,
         }
         await window.browser.storage.local.set(result)
 
@@ -457,8 +464,8 @@ export class NekotonController extends EventEmitter {
             'recentMasterKeys',
             'accountsVisibility',
             'externalAccounts',
-            '__core__accounts',
-            '__core__keystore',
+            ACCOUNTS_STORAGE_KEY,
+            KEYSTORE_STORAGE_KEY,
         ])
         return JSON.stringify(result, undefined, 2)
     }
@@ -725,74 +732,6 @@ export class NekotonController extends EventEmitter {
 
     private _sendUpdate() {
         this.emit('update', this.getState())
-    }
-}
-
-export class StorageConnector {
-    get(key: string, handler: nt.StorageQueryResultHandler) {
-        window.browser.storage.local
-            .get(key)
-            .then((items) => {
-                handler.onResult(items[key])
-            })
-            .catch((e) => handler.onError(e))
-    }
-
-    set(key: string, value: string, handler: nt.StorageQueryHandler) {
-        window.browser.storage.local
-            .set({ [key]: value })
-            .then(() => {
-                handler.onResult()
-            })
-            .catch((e) => handler.onError(e))
-    }
-
-    setUnchecked(key: string, value: string) {
-        window.browser.storage.local.set({ [key]: value }).catch(console.error)
-    }
-
-    remove(key: string, handler: nt.StorageQueryHandler) {
-        window.browser.storage.local
-            .remove([key])
-            .then(() => {
-                handler.onResult()
-            })
-            .catch((e) => handler.onError(e))
-    }
-
-    removeUnchecked(key: string) {
-        window.browser.storage.local.remove([key]).catch(console.error)
-    }
-}
-
-export class LedgerConnection {
-    constructor(private readonly bridge: LedgerBridge) {}
-
-    async getPublicKey(account: number, handler: nt.LedgerQueryResultHandler) {
-        await this.bridge
-            .getPublicKey(account)
-            .then((publicKey) => {
-                handler.onResult(publicKey)
-            })
-            .catch((err) => {
-                handler.onError(err.message)
-            })
-    }
-
-    async sign(
-        account: number,
-        message: Buffer,
-        context: nt.LedgerSignatureContext,
-        handler: nt.LedgerQueryResultHandler
-    ) {
-        await this.bridge
-            .signHash(account, new Uint8Array(message), context)
-            .then((signature) => {
-                handler.onResult(signature)
-            })
-            .catch((err) => {
-                handler.onError(err.message)
-            })
     }
 }
 
