@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.31 (2022-05-01)
+
+Bugfixes
+
+* Fixed Ledger app connection (still in beta)
+* Fixed gql endpoint selection
+
 ### 0.2.30 (2022-04-01)
 
 Features
