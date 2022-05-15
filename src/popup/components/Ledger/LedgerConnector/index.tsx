@@ -3,7 +3,7 @@ import classNames from 'classnames'
 
 import Button from '@popup/components/Button'
 import PanelLoader from '@popup/components/PanelLoader'
-import { LEDGER_BRIDGE_URL } from '@popup/constants/ledger-url'
+import { LEDGER_BRIDGE_URL } from '@shared/constants'
 import { ModalError } from '@popup/components/Ledger/Modal'
 import { useRpc } from '@popup/providers/RpcProvider'
 

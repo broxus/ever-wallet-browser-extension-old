@@ -14,3 +14,5 @@ export const INPAGE_SCRIPT = 'nekoton-inpage'
 export const NEKOTON_PROVIDER = 'nekoton-provider'
 
 export const NATIVE_CURRENCY = 'EVER'
+
+export const LEDGER_BRIDGE_URL = 'https://rexagon.github.io/everscale-ledger-bridge'
