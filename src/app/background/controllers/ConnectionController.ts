@@ -70,6 +70,16 @@ const NETWORK_PRESETS = {
             local: false,
         },
     } as ConnectionData,
+    [6]: {
+        name: 'Gosh',
+        group: 'gosh',
+        type: 'graphql',
+        data: {
+            endpoints: ['network.gosh.sh'],
+            latencyDetectionInterval: 60000,
+            local: false,
+        },
+    } as ConnectionData,
     [100]: {
         name: 'Local node',
         group: 'localnet',
