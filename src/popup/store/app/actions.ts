@@ -1,5 +1,5 @@
 import { AppDispatch } from '@popup/store'
-import { TOKENS_MANIFEST_URL } from '@popup/utils'
+import {ADDITIONAL_TOKENS_MANIFEST_URL, TOKENS_MANIFEST_URL} from '@popup/utils'
 import { Locale, AppState, TokensManifest } from './types'
 import axios from 'axios'
 import * as nt from '@nekoton'
@@ -48,8 +48,25 @@ export const validateMnemonic = (phrase: string, mnemonicType: nt.MnemonicType) 
 }
 
 export const fetchManifest = () => async (dispatch: AppDispatch) => {
-    const response = await axios.get<TokensManifest>(TOKENS_MANIFEST_URL)
+    let response = await axios.get<TokensManifest>(TOKENS_MANIFEST_URL)
+    let manifest: TokensManifest = {} as TokensManifest
+
     if (response.status == 200 && typeof response.data === 'object') {
-        updateStore(dispatch, ActionTypes.setManifest, response.data)
+        manifest = { ...response.data as TokensManifest }
+    }
+
+    updateStore(dispatch, ActionTypes.setManifest, manifest)
+
+    response = await axios.get<TokensManifest>(ADDITIONAL_TOKENS_MANIFEST_URL)
+
+    if (response.status == 200 && typeof response.data === 'object') {
+        const tokens = manifest.tokens.slice()
+        for (const token of response.data.tokens) {
+            if (tokens.every(t => t.address !== token.address)) {
+                tokens.push(token)
+            }
+        }
+        manifest = { ...manifest, tokens }
+        updateStore(dispatch, ActionTypes.setManifest, manifest)
     }
 }

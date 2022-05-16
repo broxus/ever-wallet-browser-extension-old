@@ -11,6 +11,9 @@ export const formatSeed = (seed: string) => seed?.split(/[, ;\r\n\t]+/g).filter(
 export const TOKENS_MANIFEST_URL =
     'https://raw.githubusercontent.com/broxus/ton-assets/master/manifest.json'
 
+export const ADDITIONAL_TOKENS_MANIFEST_URL =
+    'https://raw.githubusercontent.com/tonred/dex-assets/main/manifest.json'
+
 export const TOKENS_MANIFEST_REPO = 'https://github.com/broxus/ton-assets'
 
 export const prepareKey = (
