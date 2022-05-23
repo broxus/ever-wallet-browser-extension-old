@@ -231,7 +231,7 @@ pub fn decode_event(
 ) -> Result<Option<DecodedEvent>, JsValue> {
     let message_body = parse_slice(message_body)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
-    let events = contract_abi.events();
+    let events = &contract_abi.events;
     let event = match parse_method_name(event)? {
         MethodName::Known(name) => match events.get(&name) {
             Some(event) => event,
@@ -483,7 +483,7 @@ fn read_input_function_id(
             body.move_by(ed25519_dalek::SIGNATURE_LENGTH * 8)
                 .handle_error()?
         }
-        for header in contract_abi.header() {
+        for header in &contract_abi.header {
             match header.kind {
                 ton_abi::ParamType::PublicKey => {
                     if body.get_next_bit().handle_error()? {
@@ -1030,12 +1030,12 @@ fn insert_init_data(
         .handle_error()?;
     }
 
-    if !contract_abi.data().is_empty() {
+    if !contract_abi.data.is_empty() {
         if !tokens.is_object() {
             return Err(AbiError::ExpectedObject).handle_error();
         }
 
-        for (param_name, param) in contract_abi.data() {
+        for (param_name, param) in &contract_abi.data {
             let value = js_sys::Reflect::get(&tokens, &JsValue::from_str(param_name.as_str()))
                 .map_err(|_| AbiError::TuplePropertyNotFound)
                 .handle_error()?;
@@ -1315,7 +1315,7 @@ enum AbiError {
 }
 
 fn parse_contract_abi(contract_abi: &str) -> Result<ton_abi::Contract, JsValue> {
-    ton_abi::Contract::load(&mut std::io::Cursor::new(contract_abi)).handle_error()
+    ton_abi::Contract::load(contract_abi).handle_error()
 }
 
 #[wasm_bindgen]

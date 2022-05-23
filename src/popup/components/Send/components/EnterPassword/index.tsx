@@ -9,6 +9,7 @@ import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import { Select } from '@popup/components/Select'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import { usePasswordsCache } from '@popup/providers/PasswordCacheProvider'
 import { convertCurrency, convertPublicKey, convertTokenName, convertTons } from '@shared/utils'
 import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
@@ -66,9 +67,20 @@ export function EnterPassword({
     const accountability = useAccountability()
 
     const [submitted, setSubmitted] = React.useState(false)
-    const [password, setPassword] = React.useState<string>('')
+    const [password, setPassword] = React.useState<string>()
+    const passwordCached = usePasswordsCache(keyEntry.publicKey)
 
     const passwordRef = React.useRef<HTMLInputElement>(null)
+
+    React.useEffect(() => {
+        if (passwordRef.current) {
+            passwordRef.current.scrollIntoView()
+        }
+    }, [])
+
+    if (passwordCached == null) {
+        return <></>
+    }
 
     const keyEntriesOptions = keyEntries.map((key) => ({
         label: key.name,
@@ -116,12 +128,6 @@ export function EnterPassword({
             await trySubmit()
         }
     }
-
-    React.useEffect(() => {
-        if (passwordRef.current) {
-            passwordRef.current.scrollIntoView()
-        }
-    }, [])
 
     return (
         <div className="enter-password">
@@ -235,30 +241,33 @@ export function EnterPassword({
                         />
                     ) : null}
                     {keyEntry.signerName != 'ledger_key' ? (
-                        <>
-                            <Input
-                                className="enter-password__field-password"
-                                label={intl.formatMessage({
-                                    id: 'APPROVE_SEND_MESSAGE_PASSWORD_FIELD_PLACEHOLDER',
-                                })}
-                                type="password"
-                                disabled={disabled}
-                                value={password}
-                                onKeyDown={onKeyDown}
-                                onChange={(e) => setPassword(e.target.value)}
-                                ref={passwordRef}
-                            />
-                            <div className="enter-password__field-hint">
-                                {intl.formatMessage(
-                                    { id: 'APPROVE_SEND_MESSAGE_PASSWORD_FIELD_HINT' },
-                                    {
-                                        name:
-                                            accountability.masterKeysNames[keyEntry.masterKey] ||
-                                            convertPublicKey(keyEntry.masterKey),
-                                    }
-                                )}
-                            </div>
-                        </>
+                        !passwordCached && (
+                            <>
+                                <Input
+                                    className="enter-password__field-password"
+                                    label={intl.formatMessage({
+                                        id: 'APPROVE_SEND_MESSAGE_PASSWORD_FIELD_PLACEHOLDER',
+                                    })}
+                                    type="password"
+                                    disabled={disabled}
+                                    value={password}
+                                    onKeyDown={onKeyDown}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    ref={passwordRef}
+                                />
+                                <div className="enter-password__field-hint">
+                                    {intl.formatMessage(
+                                        { id: 'APPROVE_SEND_MESSAGE_PASSWORD_FIELD_HINT' },
+                                        {
+                                            name:
+                                                accountability.masterKeysNames[
+                                                    keyEntry.masterKey
+                                                ] || convertPublicKey(keyEntry.masterKey),
+                                        }
+                                    )}
+                                </div>
+                            </>
+                        )
                     ) : (
                         <div className="enter-password__ledger-confirm">
                             {intl.formatMessage({
@@ -286,7 +295,9 @@ export function EnterPassword({
                         onClick={trySubmit}
                         disabled={
                             disabled ||
-                            (keyEntry.signerName != 'ledger_key' && password.length === 0) ||
+                            (keyEntry.signerName != 'ledger_key' &&
+                                !passwordCached &&
+                                (password == null || password.length === 0)) ||
                             (submitted && !error)
                         }
                     />

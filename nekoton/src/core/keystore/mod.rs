@@ -1,4 +1,6 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use serde::Deserialize;
 use sha2::Digest;
@@ -11,7 +13,19 @@ use crate::utils::*;
 #[wasm_bindgen]
 pub struct KeyStore {
     #[wasm_bindgen(skip)]
+    pub cache_passwords: AtomicBool,
+    #[wasm_bindgen(skip)]
     pub inner: Arc<nt::core::keystore::KeyStore>,
+}
+
+impl KeyStore {
+    fn cache_behavior(&self) -> nt::crypto::PasswordCacheBehavior {
+        if self.cache_passwords.load(Ordering::Acquire) {
+            nt::crypto::PasswordCacheBehavior::Store(KEYSTORE_CACHE_DURATION)
+        } else {
+            nt::crypto::PasswordCacheBehavior::Remove
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -57,9 +71,11 @@ impl KeyStore {
     pub fn load(
         storage: &crate::external::Storage,
         ledger_connection: &crate::external::LedgerConnection,
+        cache_passwords: bool,
     ) -> PromiseKeyStore {
         let storage = storage.inner.clone();
         let ledger_connection = ledger_connection.inner.clone();
+        let cache_passwords = AtomicBool::new(cache_passwords);
 
         JsCast::unchecked_into(future_to_promise(async move {
             let inner = Arc::new(
@@ -78,7 +94,10 @@ impl KeyStore {
                     .handle_error()?,
             );
 
-            Ok(JsValue::from(Self { inner }))
+            Ok(JsValue::from(Self {
+                cache_passwords,
+                inner,
+            }))
         }))
     }
 
@@ -92,12 +111,26 @@ impl KeyStore {
         }))
     }
 
+    #[wasm_bindgen(js_name = "setPasswordsCacheEnabled")]
+    pub fn set_passwords_cache_enabled(&self, enabled: bool) {
+        self.cache_passwords.store(enabled, Ordering::Release);
+    }
+
+    #[wasm_bindgen(js_name = "isPasswordCached")]
+    pub fn is_password_cached(&self, public_key: &str) -> Result<bool, JsValue> {
+        let public_key = parse_public_key(public_key)?;
+        Ok(self
+            .inner
+            .is_password_cached(public_key.as_bytes(), KEYSTORE_CACHE_GAP))
+    }
+
     #[wasm_bindgen(js_name = "addKey")]
     pub fn add_key(&self, new_key: JsNewKey) -> Result<PromiseKeyStoreEntry, JsValue> {
         use nt::crypto::*;
 
         let inner = self.inner.clone();
         let new_key = JsValue::into_serde::<ParsedNewKey>(&new_key).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let entry = match new_key {
@@ -106,13 +139,14 @@ impl KeyStore {
                     params,
                     password,
                 } => {
+                    let password = cached_password(Some(password), cache_behavior);
                     inner
                         .add_key::<DerivedKeySigner>(match params {
                             ParsedNewMasterKeyParams::MasterKeyParams { phrase } => {
                                 DerivedKeyCreateInput::Import {
                                     key_name: name,
                                     phrase: phrase.into(),
-                                    password: explicit_password(password),
+                                    password,
                                 }
                             }
                             ParsedNewMasterKeyParams::DerivedKeyParams {
@@ -122,7 +156,7 @@ impl KeyStore {
                                 key_name: name,
                                 master_key: parse_public_key(&master_key)?,
                                 account_id,
-                                password: explicit_password(password),
+                                password,
                             },
                         })
                         .await
@@ -138,7 +172,7 @@ impl KeyStore {
                             name,
                             phrase: phrase.into(),
                             mnemonic_type: mnemonic_type.into(),
-                            password: explicit_password(password),
+                            password: cached_password(Some(password), cache_behavior),
                         })
                         .await
                 }
@@ -206,6 +240,7 @@ impl KeyStore {
         let inner = self.inner.clone();
         let change_password =
             JsValue::into_serde::<ParsedChangeKeyPassword>(&change_password).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let entry = match change_password {
@@ -217,7 +252,7 @@ impl KeyStore {
                     let input = DerivedKeyUpdateParams::ChangePassword {
                         master_key: parse_public_key(&master_key)?,
                         old_password: explicit_password(old_password),
-                        new_password: explicit_password(new_password),
+                        new_password: cached_password(Some(new_password), cache_behavior),
                     };
                     inner.update_key::<DerivedKeySigner>(input).await
                 }
@@ -230,7 +265,7 @@ impl KeyStore {
                     let input = EncryptedKeyUpdateParams::ChangePassword {
                         public_key,
                         old_password: explicit_password(old_password),
-                        new_password: explicit_password(new_password),
+                        new_password: cached_password(Some(new_password), cache_behavior),
                     };
                     inner.update_key::<EncryptedKeySigner>(input).await
                 }
@@ -294,6 +329,7 @@ impl KeyStore {
         let inner = self.inner.clone();
         let get_public_keys =
             JsValue::into_serde::<ParsedGetPublicKeys>(&get_public_keys).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             match get_public_keys {
@@ -305,7 +341,7 @@ impl KeyStore {
                 } => {
                     let input = DerivedKeyGetPublicKeys {
                         master_key: parse_public_key(&master_key)?,
-                        password: explicit_password(password),
+                        password: cached_password(password, cache_behavior),
                         limit,
                         offset,
                     };
@@ -335,9 +371,14 @@ impl KeyStore {
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let hash = ton_types::UInt256::default();
             Ok(JsValue::from(
-                sign_data(&inner, key_password, hash.as_slice())
-                    .await
-                    .is_ok(),
+                sign_data(
+                    &inner,
+                    key_password,
+                    hash.as_slice(),
+                    nt::crypto::PasswordCacheBehavior::Nop,
+                )
+                .await
+                .is_ok(),
             ))
         })))
     }
@@ -358,16 +399,22 @@ impl KeyStore {
         let algorithm = nt::crypto::EncryptionAlgorithm::from_str(algorithm).handle_error()?;
         let key_password =
             JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            Ok(
-                encrypt_data(&inner, &data, key_password, &public_keys, algorithm)
-                    .await?
-                    .into_iter()
-                    .map(|data| make_encrypted_data(data).unchecked_into::<JsValue>())
-                    .collect::<js_sys::Array>()
-                    .unchecked_into(),
+            Ok(encrypt_data(
+                &inner,
+                &data,
+                key_password,
+                &public_keys,
+                algorithm,
+                cache_behavior,
             )
+            .await?
+            .into_iter()
+            .map(|data| make_encrypted_data(data).unchecked_into::<JsValue>())
+            .collect::<js_sys::Array>()
+            .unchecked_into())
         })))
     }
 
@@ -381,9 +428,10 @@ impl KeyStore {
         let data = parse_encrypted_data(data)?;
         let key_password =
             JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let data = decrypt_data(&inner, data, key_password).await?;
+            let data = decrypt_data(&inner, data, key_password, cache_behavior).await?;
             Ok(JsValue::from(base64::encode(data)).unchecked_into())
         })))
     }
@@ -398,10 +446,11 @@ impl KeyStore {
         let inner = self.inner.clone();
         let key_password =
             JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let hash = nt::crypto::UnsignedMessage::hash(message.as_ref());
-            let signature = sign_data(&inner, key_password, hash).await?;
+            let signature = sign_data(&inner, key_password, hash, cache_behavior).await?;
 
             let message = message.sign(&signature).handle_error()?;
 
@@ -419,10 +468,11 @@ impl KeyStore {
         let inner = self.inner.clone();
         let key_password =
             JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let hash: [u8; 32] = sha2::Sha256::digest(&data).into();
-            let signature = sign_data(&inner, key_password, &hash).await?;
+            let signature = sign_data(&inner, key_password, &hash, cache_behavior).await?;
 
             Ok(crate::crypto::make_signed_data(hash, signature).unchecked_into())
         })))
@@ -438,9 +488,10 @@ impl KeyStore {
         let inner = self.inner.clone();
         let key_password =
             JsValue::into_serde::<ParsedKeyPassword>(&key_password).handle_error()?;
+        let cache_behavior = self.cache_behavior();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
-            let signature = sign_data(&inner, key_password, &data).await?;
+            let signature = sign_data(&inner, key_password, &data, cache_behavior).await?;
 
             Ok(crate::crypto::make_signed_data_raw(signature).unchecked_into())
         })))
@@ -466,6 +517,7 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             inner.clear().await.handle_error()?;
+            inner.password_cache().clear();
             Ok(JsValue::undefined())
         }))
     }
@@ -492,6 +544,7 @@ async fn sign_data(
     key_store: &nt::core::keystore::KeyStore,
     key_password: ParsedKeyPassword,
     data: &[u8],
+    cache_behavior: nt::crypto::PasswordCacheBehavior,
 ) -> Result<[u8; 64], JsValue> {
     use nt::crypto::*;
 
@@ -504,7 +557,7 @@ async fn sign_data(
             let input = DerivedKeySignParams::ByPublicKey {
                 public_key: parse_public_key(&public_key)?,
                 master_key: parse_public_key(&master_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache_behavior),
             };
             key_store.sign::<DerivedKeySigner>(data, input).await
         }
@@ -515,7 +568,7 @@ async fn sign_data(
             let public_key = parse_public_key(&public_key)?;
             let input = EncryptedKeyPassword {
                 public_key,
-                password: explicit_password(password),
+                password: cached_password(password, cache_behavior),
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
         }
@@ -530,6 +583,7 @@ async fn encrypt_data(
     key_password: ParsedKeyPassword,
     public_keys: &[ed25519_dalek::PublicKey],
     algorithm: nt::crypto::EncryptionAlgorithm,
+    cache_behavior: nt::crypto::PasswordCacheBehavior,
 ) -> Result<Vec<nt::crypto::EncryptedData>, JsValue> {
     use nt::crypto::*;
 
@@ -542,7 +596,7 @@ async fn encrypt_data(
             let input = DerivedKeySignParams::ByPublicKey {
                 master_key: parse_public_key(&public_key)?,
                 public_key: parse_public_key(&master_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache_behavior),
             };
             key_store
                 .encrypt::<DerivedKeySigner>(data, public_keys, algorithm, input)
@@ -554,7 +608,7 @@ async fn encrypt_data(
         } => {
             let input = EncryptedKeyPassword {
                 public_key: parse_public_key(&public_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache_behavior),
             };
             key_store
                 .encrypt::<EncryptedKeySigner>(data, public_keys, algorithm, input)
@@ -573,6 +627,7 @@ async fn decrypt_data(
     key_store: &nt::core::keystore::KeyStore,
     data: nt::crypto::EncryptedData,
     key_password: ParsedKeyPassword,
+    cache_behavior: nt::crypto::PasswordCacheBehavior,
 ) -> Result<Vec<u8>, JsValue> {
     use nt::crypto::*;
 
@@ -585,7 +640,7 @@ async fn decrypt_data(
             let input = DerivedKeySignParams::ByPublicKey {
                 master_key: parse_public_key(&public_key)?,
                 public_key: parse_public_key(&master_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache_behavior),
             };
             key_store.decrypt::<DerivedKeySigner>(&data, input).await
         }
@@ -595,7 +650,7 @@ async fn decrypt_data(
         } => {
             let input = EncryptedKeyPassword {
                 public_key: parse_public_key(&public_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache_behavior),
             };
             key_store.decrypt::<EncryptedKeySigner>(&data, input).await
         }
@@ -852,7 +907,7 @@ enum ParsedExportKey {
 #[wasm_bindgen(typescript_custom_section)]
 const GET_PUBLIC_KEYS: &str = r#"
 export type GetPublicKeys =
-    | EnumItem<'master_key', { masterKey: string, password: string, offset: number, limit: number }>
+    | EnumItem<'master_key', { masterKey: string, password?: string, offset: number, limit: number }>
     | EnumItem<'ledger_key', { offset: number, limit: number }>;
 "#;
 
@@ -868,7 +923,7 @@ enum ParsedGetPublicKeys {
     #[serde(rename_all = "camelCase")]
     MasterKey {
         master_key: String,
-        password: String,
+        password: Option<String>,
         offset: u16,
         limit: u16,
     },
@@ -930,8 +985,8 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 #[wasm_bindgen(typescript_custom_section)]
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
-    | EnumItem<'master_key', { masterKey: string, publicKey: string, password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: string }>
+    | EnumItem<'master_key', { masterKey: string, publicKey: string, password?: string }>
+    | EnumItem<'encrypted_key', { publicKey: string, password?: string }>
     | EnumItem<'ledger_key', { publicKey: string, context?: LedgerSignatureContext }>;
 "#;
 
@@ -949,12 +1004,12 @@ enum ParsedKeyPassword {
     MasterKey {
         master_key: String,
         public_key: String,
-        password: String,
+        password: Option<String>,
     },
     #[serde(rename_all = "camelCase")]
     EncryptedKey {
         public_key: String,
-        password: String,
+        password: Option<String>,
     },
     LedgerKey(nt::crypto::LedgerSignInput),
 }
@@ -987,9 +1042,25 @@ fn make_key_store_entry(data: nt::core::keystore::KeyStoreEntry) -> KeyStoreEntr
         .unchecked_into()
 }
 
+fn cached_password(
+    password: Option<String>,
+    cache_behavior: nt::crypto::PasswordCacheBehavior,
+) -> nt::crypto::Password {
+    match password {
+        Some(password) => nt::crypto::Password::Explicit {
+            password: password.into(),
+            cache_behavior,
+        },
+        None => nt::crypto::Password::FromCache,
+    }
+}
+
 fn explicit_password(password: String) -> nt::crypto::Password {
     nt::crypto::Password::Explicit {
         password: password.into(),
         cache_behavior: Default::default(),
     }
 }
+
+const KEYSTORE_CACHE_DURATION: Duration = Duration::from_secs(1800); // 30 min
+const KEYSTORE_CACHE_GAP: Duration = Duration::from_secs(60); // 1 min

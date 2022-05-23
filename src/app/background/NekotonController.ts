@@ -111,7 +111,7 @@ export class NekotonController extends EventEmitter {
         const ledgerBridge = new LedgerBridge()
         const ledgerConnection = new nt.LedgerConnection(new LedgerConnection(ledgerBridge))
 
-        const keyStore = await nt.KeyStore.load(storage, ledgerConnection)
+        const keyStore = await nt.KeyStore.load(storage, ledgerConnection, true)
 
         const clock = new nt.ClockWithOffset()
 
@@ -303,6 +303,7 @@ export class NekotonController extends EventEmitter {
             importStorage: nodeifyAsync(this, 'importStorage'),
             exportStorage: nodeifyAsync(this, 'exportStorage'),
             checkPassword: nodeifyAsync(accountController, 'checkPassword'),
+            isPasswordCached: nodeifyAsync(accountController, 'isPasswordCached'),
             createMasterKey: nodeifyAsync(accountController, 'createMasterKey'),
             selectMasterKey: nodeifyAsync(accountController, 'selectMasterKey'),
             exportMasterKey: nodeifyAsync(accountController, 'exportMasterKey'),

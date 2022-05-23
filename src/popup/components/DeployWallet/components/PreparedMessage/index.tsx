@@ -10,13 +10,13 @@ import SlidingPanel from '@popup/components/SlidingPanel'
 import { convertTons } from '@shared/utils'
 
 type Props = {
-    keyEntry?: nt.KeyStoreEntry
+    keyEntry: nt.KeyStoreEntry
     balance?: string
     custodians?: string[]
     fees?: string
     error?: string
     disabled?: boolean
-    onSubmit(password: string): void
+    onSubmit(password?: string): void
     onBack(): void
 }
 

@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
-import { parseError, prepareKey } from '@popup/utils'
+import { parseError, prepareKey, ignoreCheckPassword } from '@popup/utils'
 import classNames from 'classnames'
 import { PendingApproval } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
+import { usePasswordsCache } from '@popup/providers/PasswordCacheProvider'
 
 import Button from '@popup/components/Button'
 import Approval from '../Approval'
@@ -69,7 +70,9 @@ export function ApproveEncryptData({
         return null
     }
 
-    const trySubmit = async (password: string) => {
+    const passwordCached = usePasswordsCache(publicKey)
+
+    const trySubmit = async (password?: string) => {
         if (keyEntry == null) {
             setError('Key entry not found')
             return
@@ -78,8 +81,7 @@ export function ApproveEncryptData({
         setInProcess(true)
         try {
             const keyPassword = prepareKey(keyEntry, password)
-            const isValid = await checkPassword(keyPassword)
-            if (isValid) {
+            if (ignoreCheckPassword(keyPassword) || (await checkPassword(keyPassword))) {
                 onSubmit(keyPassword, true)
             } else {
                 setError('Invalid password')
@@ -142,30 +144,34 @@ export function ApproveEncryptData({
                             type="button"
                             white
                             text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            disabled={inProcess}
                             onClick={onReject}
                         />
                         <Button
                             type="submit"
                             text={intl.formatMessage({ id: 'ENCRYPT_BTN_TEXT' })}
+                            disabled={inProcess || passwordCached == null}
                             onClick={() => {
-                                setPasswordModalVisible(true)
+                                passwordCached ? trySubmit() : setPasswordModalVisible(true)
                             }}
                         />
                     </footer>
                 </div>
             </Approval>
-            <SlidingPanel
-                isOpen={passwordModalVisible}
-                onClose={() => setPasswordModalVisible(false)}
-            >
-                <EnterPassword
-                    keyEntry={keyEntry}
-                    disabled={inProcess}
-                    error={error}
-                    handleNext={trySubmit}
-                    handleBack={() => setPasswordModalVisible(false)}
-                />
-            </SlidingPanel>
+            {passwordCached === false && (
+                <SlidingPanel
+                    isOpen={passwordModalVisible}
+                    onClose={() => setPasswordModalVisible(false)}
+                >
+                    <EnterPassword
+                        keyEntry={keyEntry}
+                        disabled={inProcess}
+                        error={error}
+                        handleNext={trySubmit}
+                        handleBack={() => setPasswordModalVisible(false)}
+                    />
+                </SlidingPanel>
+            )}
         </>
     )
 }

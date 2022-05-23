@@ -866,6 +866,10 @@ export class AccountController extends BaseController<
         return this.config.keyStore.check_password(password)
     }
 
+    public async isPasswordCached(publicKey: string): Promise<boolean> {
+        return this.config.keyStore.isPasswordCached(publicKey)
+    }
+
     public async estimateFees(
         address: string,
         params: TransferMessageToPrepare,

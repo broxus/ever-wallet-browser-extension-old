@@ -9,7 +9,7 @@ import Button from '@popup/components/Button'
 import './style.scss'
 
 type Props = {
-    keyEntry?: nt.KeyStoreEntry
+    keyEntry: nt.KeyStoreEntry
     minHeight?: string
     disabled?: boolean
     error?: string
