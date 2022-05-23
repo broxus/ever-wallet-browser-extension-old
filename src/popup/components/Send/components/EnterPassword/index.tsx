@@ -9,11 +9,12 @@ import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
 import { Select } from '@popup/components/Select'
 import { useAccountability } from '@popup/providers/AccountabilityProvider'
-import { usePasswordsCache } from '@popup/providers/PasswordCacheProvider'
+import { usePasswordCache } from '@popup/providers/PasswordCacheProvider'
 import { convertCurrency, convertPublicKey, convertTokenName, convertTons } from '@shared/utils'
 import AssetIcon, { TonAssetIcon } from '@popup/components/AssetIcon'
 
 import './style.scss'
+import { Switcher } from '@popup/components/Switcher'
 
 export type MessageAmount =
     | nt.EnumItem<
@@ -68,7 +69,8 @@ export function EnterPassword({
 
     const [submitted, setSubmitted] = React.useState(false)
     const [password, setPassword] = React.useState<string>()
-    const passwordCached = usePasswordsCache(keyEntry.publicKey)
+    const [cache, setCache] = React.useState(false)
+    const passwordCached = usePasswordCache(keyEntry.publicKey)
 
     const passwordRef = React.useRef<HTMLInputElement>(null)
 
@@ -118,7 +120,7 @@ export function EnterPassword({
             }
         }
 
-        onSubmit(prepareKey(keyEntry, password, context))
+        onSubmit(prepareKey({ keyEntry, password, context, cache }))
         setSubmitted(true)
     }
 
@@ -265,6 +267,18 @@ export function EnterPassword({
                                                 ] || convertPublicKey(keyEntry.masterKey),
                                         }
                                     )}
+                                </div>
+                                <div className="accounts-management__passwords-cache noselect">
+                                    <Switcher
+                                        id="visibility"
+                                        checked={cache}
+                                        onChange={() => setCache(!cache)}
+                                    />
+                                    <label htmlFor="visibility">
+                                        {intl.formatMessage({
+                                            id: 'APPROVE_PASSWORD_CACHE_SWITCHER_LABEL',
+                                        })}
+                                    </label>
                                 </div>
                             </>
                         )

@@ -88,12 +88,17 @@ export function DeployWallet(): JSX.Element | null {
         setWalletType(option)
     }
 
-    const onSubmit = async (password?: string) => {
-        const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
-            address: selectedAccount.address,
-            amount: '0',
-            asset: NATIVE_CURRENCY,
-            decimals: 9,
+    const onSubmit = async (password?: string, cache?: boolean) => {
+        const keyPassword = prepareKey({
+            keyEntry: selectedDerivedKeyEntry,
+            password,
+            cache,
+            context: {
+                address: selectedAccount.address,
+                amount: '0',
+                asset: NATIVE_CURRENCY,
+                decimals: 9,
+            },
         })
         const params: DeployMessageToPrepare = { type: 'single_owner' }
 

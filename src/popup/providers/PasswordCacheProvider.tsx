@@ -4,7 +4,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 
 const PASSWORD_CHECK_INTERVAL: number = 40000
 
-export const usePasswordsCache = (publicKey: string) => {
+export const usePasswordCache = (publicKey: string) => {
     const rpc = useRpc()
     const [passwordCached, setPasswordCached] = React.useState<boolean>()
 

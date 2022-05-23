@@ -61,6 +61,7 @@ export default {
     TRANSACTION_TERM_TYPE_TRANSFER_BOUNCED: '전송이 반송되었습니다',
     TRANSACTION_TERM_TYPE_SWAP_BACK_BOUNCED: '반송된 스왑',
     RECEIVE_ASSET_LEAD_TEXT: '받을 주소 {symbol}',
+    APPROVE_PASSWORD_CACHE_SWITCHER_LABEL: 'Cache password', // TODO: translate
     APPROVE_REQUEST_PERMISSIONS_HEADER: '에버 월릿과 연결할 계정 선택',
     APPROVE_REQUEST_PERMISSIONS_CONNECTED_TO: '연결된 {name}',
     APPROVE_REQUEST_PERMISSIONS_PERMISSIONS_SUBHEADING: '허가:',
@@ -82,7 +83,6 @@ export default {
     APPROVE_ADD_ASSET_APPROVAL_TITLE: 'TIP3 토큰 추가',
     APPROVE_ADD_ASSET_NOT_PUBLISHED_NOTE: '<p>이 토큰은 <a href="{url}" target="_blank" rel="nofollow noopener noreferrer">공식 저장소에</a> 게시되지 않습니다.</p><p>이 소스를 신뢰하며 확신하는 경우에만 주의하여 추가하십시오.</p>',
     MANAGE_SEEDS_PANEL_HEADER: '시드키 관리',
-    MANAGE_SEEDS_PASSWORDS_CACHE_SWITCHER_LABEL: 'Cache passwords', // TODO: translate
     MANAGE_SEEDS_LIST_HEADING: '시드키',
     MANAGE_SEEDS_LIST_ADD_NEW_LINK_TEXT: '+ 추가하기',
     MANAGE_SEEDS_LIST_ITEM_CURRENT: ' (현재)',

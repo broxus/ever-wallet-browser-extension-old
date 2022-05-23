@@ -8,7 +8,7 @@ import { EnterPassword } from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import { parseError, prepareKey, ignoreCheckPassword } from '@popup/utils'
 import { PendingApproval } from '@shared/backgroundApi'
-import { usePasswordsCache } from '@popup/providers/PasswordCacheProvider'
+import { usePasswordCache } from '@popup/providers/PasswordCacheProvider'
 
 type Props = {
     approval: PendingApproval<'callContractMethod'>
@@ -46,9 +46,9 @@ export function ApproveContractInteraction({
         return null
     }
 
-    const passwordCached = usePasswordsCache(publicKey)
+    const passwordCached = usePasswordCache(publicKey)
 
-    const trySubmit = async (password?: string) => {
+    const trySubmit = async (password?: string, cache?: boolean) => {
         if (keyEntry == null) {
             setError('Key entry not found')
             return
@@ -56,7 +56,7 @@ export function ApproveContractInteraction({
 
         setInProcess(true)
         try {
-            const keyPassword = prepareKey(keyEntry, password)
+            const keyPassword = prepareKey({ keyEntry, password, cache })
             if (ignoreCheckPassword(keyPassword) || (await checkPassword(keyPassword))) {
                 onSubmit(keyPassword, true)
             } else {

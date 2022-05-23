@@ -59,7 +59,6 @@ export interface AccountControllerConfig extends BaseConfig {
 }
 
 export interface AccountControllerState extends BaseState {
-    passwordsCacheEnabled: boolean
     accountEntries: { [address: string]: nt.AssetsList }
     accountContractStates: { [address: string]: nt.ContractState }
     accountCustodians: { [address: string]: string[] }
@@ -89,7 +88,6 @@ export interface AccountControllerState extends BaseState {
 }
 
 const defaultState: AccountControllerState = {
-    passwordsCacheEnabled: false,
     accountEntries: {},
     accountContractStates: {},
     accountCustodians: {},
@@ -127,9 +125,6 @@ export class AccountController extends BaseController<
     }
 
     public async initialSync() {
-        const passwordsCacheEnabled = await this._loadPasswordsCacheEnabled()
-        this.config.keyStore.setPasswordsCacheEnabled(passwordsCacheEnabled)
-
         const keyStoreEntries = await this.config.keyStore.getKeys()
         const storedKeys: typeof defaultState.storedKeys = {}
         for (const entry of keyStoreEntries) {
@@ -192,7 +187,6 @@ export class AccountController extends BaseController<
         }
 
         this.update({
-            passwordsCacheEnabled,
             accountsVisibility,
             selectedAccount,
             accountEntries,
@@ -872,16 +866,8 @@ export class AccountController extends BaseController<
         return this.config.keyStore.check_password(password)
     }
 
-    public async setPasswordsCacheEnabled(enabled: boolean) {
-        this.config.keyStore.setPasswordsCacheEnabled(enabled)
-        this.update({
-            passwordsCacheEnabled: enabled,
-        })
-        await this._savePasswordsCacheEnabled()
-    }
-
     public async isPasswordCached(publicKey: string): Promise<boolean> {
-        return this.state.passwordsCacheEnabled && this.config.keyStore.isPasswordCached(publicKey)
+        return this.config.keyStore.isPasswordCached(publicKey)
     }
 
     public async estimateFees(
@@ -1876,19 +1862,6 @@ export class AccountController extends BaseController<
 
         this.update({
             accountTokenTransactions: newTransactions,
-        })
-    }
-
-    private async _loadPasswordsCacheEnabled(): Promise<boolean> {
-        const { passwordsCacheEnabled } = await window.browser.storage.local.get([
-            'passwordsCacheEnabled',
-        ])
-        return typeof passwordsCacheEnabled === 'boolean' && passwordsCacheEnabled
-    }
-
-    private async _savePasswordsCacheEnabled(): Promise<void> {
-        await window.browser.storage.local.set({
-            passwordsCacheEnabled: this.state.passwordsCacheEnabled,
         })
     }
 

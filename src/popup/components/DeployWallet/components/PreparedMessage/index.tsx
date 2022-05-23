@@ -8,6 +8,7 @@ import Button from '@popup/components/Button'
 import { EnterPassword } from '@popup/components/EnterPassword'
 import SlidingPanel from '@popup/components/SlidingPanel'
 import { convertTons } from '@shared/utils'
+import { usePasswordCache } from '@popup/providers/PasswordCacheProvider'
 
 type Props = {
     keyEntry: nt.KeyStoreEntry
@@ -16,7 +17,7 @@ type Props = {
     fees?: string
     error?: string
     disabled?: boolean
-    onSubmit(password?: string): void
+    onSubmit(password?: string, cache?: boolean): void
     onBack(): void
 }
 
@@ -33,9 +34,7 @@ export function PreparedMessage({
     const intl = useIntl()
     const [passwordModalVisible, setPasswordModalVisible] = React.useState(false)
 
-    const onDeploy = () => {
-        setPasswordModalVisible(true)
-    }
+    const passwordCached = usePasswordCache(keyEntry.publicKey)
 
     const onCancel = () => {
         setPasswordModalVisible(false)
@@ -95,23 +94,27 @@ export function PreparedMessage({
                 </div>
                 <Button
                     text={intl.formatMessage({ id: 'DEPLOY_BTN_TEXT' })}
-                    disabled={!fees}
-                    onClick={onDeploy}
+                    disabled={!fees || passwordCached == null}
+                    onClick={() => {
+                        passwordCached ? onSubmit() : setPasswordModalVisible(true)
+                    }}
                 />
             </footer>
 
-            <SlidingPanel
-                isOpen={passwordModalVisible}
-                onClose={() => setPasswordModalVisible(false)}
-            >
-                <EnterPassword
-                    keyEntry={keyEntry}
-                    disabled={disabled}
-                    error={error}
-                    handleNext={onSubmit}
-                    handleBack={onCancel}
-                />
-            </SlidingPanel>
+            {passwordCached === false && (
+                <SlidingPanel
+                    isOpen={passwordModalVisible}
+                    onClose={() => setPasswordModalVisible(false)}
+                >
+                    <EnterPassword
+                        keyEntry={keyEntry}
+                        disabled={disabled}
+                        error={error}
+                        handleNext={onSubmit}
+                        handleBack={onCancel}
+                    />
+                </SlidingPanel>
+            )}
         </div>
     )
 }

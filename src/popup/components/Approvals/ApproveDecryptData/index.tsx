@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
 import { parseError, prepareKey, ignoreCheckPassword } from '@popup/utils'
-import { usePasswordsCache } from '@popup/providers/PasswordCacheProvider'
+import { usePasswordCache } from '@popup/providers/PasswordCacheProvider'
 import { PendingApproval } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
@@ -48,9 +48,9 @@ export function ApproveDecryptData({
         return null
     }
 
-    const passwordCached = usePasswordsCache(publicKey)
+    const passwordCached = usePasswordCache(publicKey)
 
-    const trySubmit = async (password?: string) => {
+    const trySubmit = async (password?: string, cache?: boolean) => {
         if (keyEntry == null) {
             setError(intl.formatMessage({ id: 'ERROR_KEY_ENTRY_NOT_FOUND' }))
             return
@@ -58,7 +58,7 @@ export function ApproveDecryptData({
 
         setInProcess(true)
         try {
-            const keyPassword = prepareKey(keyEntry, password)
+            const keyPassword = prepareKey({ keyEntry, password, cache })
             if (ignoreCheckPassword(keyPassword) || (await checkPassword(keyPassword))) {
                 onSubmit(keyPassword, true)
             } else {
