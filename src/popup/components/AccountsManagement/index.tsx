@@ -17,6 +17,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { convertAddress } from '@shared/utils'
 import LedgerAccountManager from '@popup/components/Ledger/AccountManager'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
+import { Switcher } from '@popup/components/Switcher'
 
 import Arrow from '@popup/img/arrow.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
@@ -35,7 +36,8 @@ const downloadFileAsText = (text: string) => {
 
 export function ManageSeeds(): JSX.Element {
     const intl = useIntl()
-    const [inProgress, setInProgress] = React.useState(false)
+    const [backupInProgress, setBackupInProgress] = React.useState(false)
+    const [passwordsCacheInProgress, setPasswordsCacheInProgress] = React.useState(false)
 
     const accountability = useAccountability()
     const rpc = useRpc()
@@ -60,12 +62,27 @@ export function ManageSeeds(): JSX.Element {
     }
 
     const onBackup = () => {
-        setInProgress(true)
+        if (backupInProgress) {
+            return
+        }
+
+        setBackupInProgress(true)
         rpc.exportStorage()
             .then((storage) => {
                 downloadFileAsText(storage)
             })
-            .finally(() => setInProgress(false))
+            .finally(() => setBackupInProgress(false))
+    }
+
+    const togglePasswordsCache = () => {
+        if (passwordsCacheInProgress) {
+            return
+        }
+
+        setPasswordsCacheInProgress(true)
+        rpc.setPasswordsCacheEnabled(!rpcState.state.passwordsCacheEnabled).finally(() =>
+            setPasswordsCacheInProgress(false)
+        )
     }
 
     return (
@@ -134,13 +151,31 @@ export function ManageSeeds(): JSX.Element {
                             </ul>
                         </div>
 
-                        <footer className="accounts-management__footer">
+                        <footer className="accounts-management__footer accounts-management__footer--vertical">
+                            <div
+                                className={classNames('accounts-management__passwords-cache', {
+                                    'accounts-management__passwords-cache-disabled':
+                                        passwordsCacheInProgress,
+                                })}
+                            >
+                                <Switcher
+                                    id="visibility"
+                                    checked={rpcState.state.passwordsCacheEnabled}
+                                    onChange={togglePasswordsCache}
+                                />
+                                <label htmlFor="visibility">
+                                    {intl.formatMessage({
+                                        id: 'MANAGE_SEEDS_PASSWORDS_CACHE_SWITCHER_LABEL',
+                                    })}
+                                </label>
+                            </div>
+
                             <Button
                                 text={intl.formatMessage({
                                     id: 'BACKUP_ALL_BTN_TEXT',
                                 })}
                                 onClick={onBackup}
-                                disabled={inProgress}
+                                disabled={backupInProgress}
                             />
                         </footer>
                     </div>

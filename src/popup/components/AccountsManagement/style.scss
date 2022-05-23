@@ -60,6 +60,10 @@
 
 		> * { width: 100%; }
 
+		&--vertical {
+			flex-direction: column;
+		}
+
 		&-button-back {
 			width: 100px;
 			min-width: 100px;
@@ -244,7 +248,7 @@
 		margin-bottom: 12px;
 	}
 
-	&__account-visibility {
+	&__account-visibility, &__passwords-cache {
 		font-size: 16px;
 		line-height: 20px;
 		margin: 16px 16px 16px 0;

@@ -114,6 +114,9 @@ impl KeyStore {
     #[wasm_bindgen(js_name = "setPasswordsCacheEnabled")]
     pub fn set_passwords_cache_enabled(&self, enabled: bool) {
         self.cache_passwords.store(enabled, Ordering::Release);
+        if !enabled {
+            self.inner.password_cache().reset();
+        }
     }
 
     #[wasm_bindgen(js_name = "isPasswordCached")]

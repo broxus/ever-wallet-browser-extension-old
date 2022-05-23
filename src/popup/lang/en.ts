@@ -123,6 +123,7 @@ export default {
     APPROVE_SIGN_DATA_APPROVAL_TITLE: 'Sign data',
     APPROVE_SIGN_DATA_TERM_DATA: 'Data',
     MANAGE_SEEDS_PANEL_HEADER: 'Manage seed phrases',
+    MANAGE_SEEDS_PASSWORDS_CACHE_SWITCHER_LABEL: 'Cache passwords',
     MANAGE_SEEDS_LIST_HEADING: 'Seed phrases',
     MANAGE_SEEDS_LIST_ADD_NEW_LINK_TEXT: '+ Add new',
     MANAGE_SEEDS_LIST_ITEM_CURRENT: ' (current)',

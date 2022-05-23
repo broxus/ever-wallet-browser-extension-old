@@ -82,6 +82,7 @@ export default {
     APPROVE_ADD_ASSET_APPROVAL_TITLE: 'TIP3 토큰 추가',
     APPROVE_ADD_ASSET_NOT_PUBLISHED_NOTE: '<p>이 토큰은 <a href="{url}" target="_blank" rel="nofollow noopener noreferrer">공식 저장소에</a> 게시되지 않습니다.</p><p>이 소스를 신뢰하며 확신하는 경우에만 주의하여 추가하십시오.</p>',
     MANAGE_SEEDS_PANEL_HEADER: '시드키 관리',
+    MANAGE_SEEDS_PASSWORDS_CACHE_SWITCHER_LABEL: 'Cache passwords', // TODO: translate
     MANAGE_SEEDS_LIST_HEADING: '시드키',
     MANAGE_SEEDS_LIST_ADD_NEW_LINK_TEXT: '+ 추가하기',
     MANAGE_SEEDS_LIST_ITEM_CURRENT: ' (현재)',
