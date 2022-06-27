@@ -90,15 +90,23 @@ pub fn parse_address(address: &str) -> Result<MsgAddressInt, JsValue> {
 }
 
 pub fn parse_slice(boc: &str) -> Result<ton_types::SliceData, JsValue> {
-    let body = base64::decode(boc).handle_error()?;
-    let cell = ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()?;
-    Ok(cell.into())
+    parse_cell(boc).map(From::from)
+}
+
+pub fn parse_cell(boc: &str) -> Result<ton_types::Cell, JsValue> {
+    let boc = boc.trim();
+    if boc.is_empty() {
+        Ok(ton_types::Cell::default())
+    } else {
+        let body = base64::decode(boc).handle_error()?;
+        ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()
+    }
 }
 
 pub fn parse_account_stuff(boc: &str) -> Result<ton_block::AccountStuff, JsValue> {
     use ton_block::MaybeDeserialize;
 
-    let bytes = base64::decode(boc).handle_error()?;
+    let bytes = base64::decode(boc.trim()).handle_error()?;
     ton_types::deserialize_tree_of_cells(&mut bytes.as_slice())
         .and_then(|cell| {
             let slice = &mut cell.into();

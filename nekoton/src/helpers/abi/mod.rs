@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
 use num_traits::Num;
-use ton_block::{Deserializable, GetRepresentationHash, MsgAddressInt, Serializable};
+use ton_block::{Deserializable, MsgAddressInt, Serializable};
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
@@ -46,6 +46,20 @@ pub fn run_local(
     make_execution_output(&output)
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const EXPECTED_ADDRESS: &str = r#"
+export type ExpectedAddress = {
+    stateInit: string;
+    address: string;
+};
+"#;
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(typescript_type = "ExpectedAddress")]
+    pub type ExpectedAddress;
+}
+
 #[wasm_bindgen(js_name = "getExpectedAddress")]
 pub fn get_expected_address(
     tvc: &str,
@@ -53,7 +67,7 @@ pub fn get_expected_address(
     workchain_id: i8,
     public_key: Option<String>,
     init_data: TokensObject,
-) -> Result<String, JsValue> {
+) -> Result<ExpectedAddress, JsValue> {
     let mut state_init = ton_block::StateInit::construct_from_base64(tvc).handle_error()?;
     let contract_abi = parse_contract_abi(contract_abi)?;
     let public_key = public_key.as_deref().map(parse_public_key).transpose()?;
@@ -64,14 +78,19 @@ pub fn get_expected_address(
         None
     };
 
-    let hash = state_init.hash().trust_me();
+    let cell = state_init.serialize().handle_error()?;
+    let repr_hash = cell.repr_hash().to_hex_string();
 
-    Ok(MsgAddressInt::AddrStd(ton_block::MsgAddrStd {
-        anycast: None,
-        workchain_id,
-        address: hash.into(),
-    })
-    .to_string())
+    Ok(ObjectBuilder::new()
+        .set(
+            "stateInit",
+            ton_types::serialize_toc(&cell)
+                .map(base64::encode)
+                .handle_error()?,
+        )
+        .set("address", format!("{workchain_id}:{repr_hash}"))
+        .build()
+        .unchecked_into())
 }
 
 #[wasm_bindgen(js_name = "encodeInternalInput")]
@@ -1237,9 +1256,7 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
 
 #[wasm_bindgen(js_name = "getBocHash")]
 pub fn get_boc_hash(boc: &str) -> Result<String, JsValue> {
-    let body = base64::decode(boc).handle_error()?;
-    let cell = ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()?;
-    Ok(cell.repr_hash().to_hex_string())
+    Ok(parse_cell(boc)?.repr_hash().to_hex_string())
 }
 
 #[wasm_bindgen(js_name = "packIntoCell")]
@@ -1259,8 +1276,7 @@ pub fn unpack_from_cell(
     allow_partial: bool,
 ) -> Result<TokensObject, JsValue> {
     let params = parse_params_list(params).handle_error()?;
-    let body = base64::decode(boc).handle_error()?;
-    let cell = ton_types::deserialize_tree_of_cells(&mut body.as_slice()).handle_error()?;
+    let cell = parse_slice(boc)?;
     nt_abi::unpack_from_cell(&params, cell.into(), allow_partial)
         .handle_error()
         .and_then(|tokens| make_tokens_object(&tokens))
