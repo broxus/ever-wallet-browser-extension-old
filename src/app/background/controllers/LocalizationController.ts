@@ -4,6 +4,7 @@ import { RpcErrorCode } from '@shared/errors'
 
 import en from '@background/lang/en'
 import ko from '@background/lang/ko'
+import jp from '@background/lang/jp'
 
 type LocalizationKeys = { [T in keyof typeof en]: string }
 
@@ -27,7 +28,7 @@ export class LocalizationController extends BaseController<
     LocalizationControllerConfig,
     LocalizationControllerState
 > {
-    private readonly _locales: { [key: string]: LocalizationKeys } = { en, ko }
+    private readonly _locales: { [key: string]: LocalizationKeys } = { en, ko, jp }
 
     constructor(config: LocalizationControllerConfig, state?: LocalizationControllerState) {
         super(config, state || makeDefaultState())

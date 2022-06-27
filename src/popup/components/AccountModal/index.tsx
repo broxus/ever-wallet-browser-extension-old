@@ -17,6 +17,12 @@ import { convertAddress } from '@shared/utils'
 
 import './style.scss'
 
+const LOCALES = [
+    { name: 'en', title: 'English' },
+    { name: 'ko', title: '한국어' },
+    { name: 'jp', title: '日本語' },
+] as const
+
 export function AccountModal() {
     const intl = useIntl()
     const accountability = useAccountability()
@@ -121,19 +127,11 @@ export function AccountModal() {
         })
     }
 
-    const setEnglishLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const setLocale = (locale: string) => async (event: React.MouseEvent<HTMLAnchorElement>) => {
         try {
             event.preventDefault()
             event.stopPropagation()
-            await rpc.setLocale('en')
-        } catch (e) {}
-    }
-
-    const setKoreanLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
-        try {
-            event.preventDefault()
-            event.stopPropagation()
-            await rpc.setLocale('ko')
+            await rpc.setLocale(locale)
         } catch (e) {}
     }
 
@@ -149,16 +147,13 @@ export function AccountModal() {
                 <div ref={wrapperRef} className="account-settings noselect">
                     <div className="account-settings-section">
                         <div className="lang-switcher">
-                            <div className={selectedLocale === 'en' ? 'active' : ''}>
-                                <a href="#" onClick={setEnglishLocale}>
-                                    English
-                                </a>
-                            </div>
-                            <div className={selectedLocale === 'ko' ? 'active' : ''}>
-                                <a href="#" onClick={setKoreanLocale}>
-                                    한국어
-                                </a>
-                            </div>
+                            {LOCALES.map(({ name, title }) => (
+                                <div key={name} className={selectedLocale === name ? 'active' : ''}>
+                                    <a href="#" onClick={setLocale(name)}>
+                                        {title}
+                                    </a>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

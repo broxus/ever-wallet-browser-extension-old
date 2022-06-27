@@ -18,7 +18,6 @@ type Props = {
 enum ExportSeedStep {
     PASSWORD_REQUEST,
     COPY_SEED_PHRASE,
-    SEED_PHRASE_COPIED,
 }
 
 export function ExportSeed({ onBack }: Props): JSX.Element {
@@ -32,10 +31,6 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
     const [inProcess, setInProcess] = React.useState(false)
     const [seedPhrase, setSeedPhrase] = React.useState<string[]>()
     const [step, setStep] = React.useState<ExportSeedStep>(ExportSeedStep.PASSWORD_REQUEST)
-
-    const onCopy = () => {
-        setStep(ExportSeedStep.SEED_PHRASE_COPIED)
-    }
 
     const prepareExportKey = (entry: nt.KeyStoreEntry, password: string) => {
         switch (entry.signerName) {
@@ -145,71 +140,54 @@ export function ExportSeed({ onBack }: Props): JSX.Element {
                 </div>
             )}
 
-            {step !== null &&
-                [ExportSeedStep.COPY_SEED_PHRASE, ExportSeedStep.SEED_PHRASE_COPIED].includes(
-                    step
-                ) && (
-                    <div key="copySeedPhrase" className="accounts-management">
-                        <header className="accounts-management__header">
-                            <h2 className="accounts-management__header-title">
-                                {intl.formatMessage({
-                                    id: 'SAVE_THE_SEED_PHRASE',
-                                })}
-                            </h2>
-                        </header>
+            {step == ExportSeedStep.COPY_SEED_PHRASE && (
+                <div key="copySeedPhrase" className="accounts-management">
+                    <header className="accounts-management__header">
+                        <h2 className="accounts-management__header-title">
+                            {intl.formatMessage({
+                                id: 'SAVE_THE_SEED_PHRASE',
+                            })}
+                        </h2>
+                    </header>
 
-                        <div className="accounts-management__wrapper">
-                            <div className="accounts-management__content">
-                                <ol>
-                                    {seedPhrase?.map((item) => (
-                                        <li
-                                            key={item}
-                                            className="accounts-management__content-word"
-                                        >
-                                            {item.toLowerCase()}
-                                        </li>
-                                    ))}
-                                </ol>
-                            </div>
-
-                            <footer className="accounts-management__footer">
-                                <div className="accounts-management__footer-button-back">
-                                    <Button
-                                        text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
-                                        white
-                                        onClick={onBack}
-                                    />
-                                </div>
-                                <div
-                                    data-tip={intl.formatMessage({ id: 'COPIED_TOOLTIP' })}
-                                    data-event="click focus"
-                                >
-                                    {step === ExportSeedStep.COPY_SEED_PHRASE && (
-                                        <CopyToClipboard
-                                            text={seedPhrase?.length ? seedPhrase.join(' ') : ''}
-                                            onCopy={onCopy}
-                                        >
-                                            <Button
-                                                text={intl.formatMessage({
-                                                    id: 'COPY_ALL_WORDS_BTN_TEXT',
-                                                })}
-                                            />
-                                        </CopyToClipboard>
-                                    )}
-                                    {step === ExportSeedStep.SEED_PHRASE_COPIED && (
-                                        <Button
-                                            text={intl.formatMessage({
-                                                id: 'SAVE_IT_DOWN_BTN_TEXT',
-                                            })}
-                                            onClick={onBack}
-                                        />
-                                    )}
-                                    <ReactTooltip type="dark" effect="solid" place="top" />
-                                </div>
-                            </footer>
+                    <div className="accounts-management__wrapper">
+                        <div className="accounts-management__content">
+                            <ol>
+                                {seedPhrase?.map((item) => (
+                                    <li key={item} className="accounts-management__content-word">
+                                        {item.toLowerCase()}
+                                    </li>
+                                ))}
+                            </ol>
                         </div>
+
+                        <footer className="accounts-management__footer">
+                            <div className="accounts-management__footer-button-back">
+                                <Button
+                                    text={intl.formatMessage({ id: 'BACK_BTN_TEXT' })}
+                                    white
+                                    onClick={onBack}
+                                />
+                            </div>
+                            <div
+                                data-tip={intl.formatMessage({ id: 'COPIED_TOOLTIP' })}
+                                data-event="click focus"
+                            >
+                                <CopyToClipboard
+                                    text={seedPhrase?.length ? seedPhrase.join(' ') : ''}
+                                >
+                                    <Button
+                                        text={intl.formatMessage({
+                                            id: 'COPY_ALL_WORDS_BTN_TEXT',
+                                        })}
+                                    />
+                                </CopyToClipboard>
+                                <ReactTooltip type="dark" effect="solid" place="top" />
+                            </div>
+                        </footer>
                     </div>
-                )}
+                </div>
+            )}
         </>
     )
 }
