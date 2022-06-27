@@ -14,14 +14,9 @@ import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import Profile from '@popup/img/profile.svg'
 
 import { convertAddress } from '@shared/utils'
+import { LOCALES } from '@shared/constants'
 
 import './style.scss'
-
-const LOCALES = [
-    { name: 'en', title: 'English' },
-    { name: 'ko', title: '한국어' },
-    { name: 'jp', title: '日本語' },
-] as const
 
 export function AccountModal() {
     const intl = useIntl()

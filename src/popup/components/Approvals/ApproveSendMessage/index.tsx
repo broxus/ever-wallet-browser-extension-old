@@ -122,17 +122,20 @@ export function ApproveSendMessage({
         !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy
 
     const trySubmit = async (keyPassword: nt.KeyPassword) => {
+        if (inProcess) {
+            return
+        }
+
         setInProcess(true)
         try {
-            console.log(keyPassword)
             if (ignoreCheckPassword(keyPassword) || (await checkPassword(keyPassword))) {
                 onSubmit(keyPassword, true)
             } else {
                 setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
+                setInProcess(false)
             }
         } catch (e: any) {
             setError(parseError(e))
-        } finally {
             setInProcess(false)
         }
     }

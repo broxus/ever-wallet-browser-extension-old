@@ -51,6 +51,10 @@ export function ApproveDecryptData({
     const passwordCached = usePasswordCache(publicKey)
 
     const trySubmit = async (password?: string, cache?: boolean) => {
+        if (inProcess) {
+            return
+        }
+
         if (keyEntry == null) {
             setError(intl.formatMessage({ id: 'ERROR_KEY_ENTRY_NOT_FOUND' }))
             return
@@ -63,10 +67,10 @@ export function ApproveDecryptData({
                 onSubmit(keyPassword, true)
             } else {
                 setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
+                setInProcess(false)
             }
         } catch (e: any) {
             setError(parseError(e))
-        } finally {
             setInProcess(false)
         }
     }
