@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.32 (2022-05-24)
+
+Features
+
+* Added passwords cache. If enabled, password for each seed will be saved for 30 minutes in the secure runtime cache.
+  Can be enabled in `Manage seeds & accounts` panel.
+
 ### 0.2.31 (2022-05-01)
 
 Bugfixes

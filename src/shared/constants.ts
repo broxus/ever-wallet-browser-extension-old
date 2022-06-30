@@ -14,3 +14,11 @@ export const INPAGE_SCRIPT = 'nekoton-inpage'
 export const NEKOTON_PROVIDER = 'nekoton-provider'
 
 export const NATIVE_CURRENCY = 'EVER'
+
+export const LEDGER_BRIDGE_URL = 'https://broxus.github.io/everscale-ledger-bridge'
+
+export const LOCALES = [
+    { name: 'en', title: 'English' },
+    { name: 'ko', title: '한국어' },
+    { name: 'jp', title: '日本語' },
+] as const

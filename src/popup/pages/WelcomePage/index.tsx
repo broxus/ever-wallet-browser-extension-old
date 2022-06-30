@@ -10,6 +10,7 @@ import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import LedgerSignIn from '@popup/components/Ledger/SignIn'
 import { parseError } from '@popup/utils'
+import { LOCALES } from '@shared/constants'
 
 import SittingMan from '@popup/img/welcome.svg'
 
@@ -120,31 +121,22 @@ export function WelcomePage(): JSX.Element {
             .finally(() => setRestoreInProcess(false))
     }
 
-    const setEnglishLocale = async () => {
+    const setLocale = (locale: string) => async () => {
         try {
-            await rpc.setLocale('en')
+            await rpc.setLocale(locale)
         } catch (e) {}
     }
-
-    const setKoreanLocale = async () => {
-        try {
-            await rpc.setLocale('ko')
-        } catch (e) {}
-    }
-
-    console.log(rpcState.state.selectedLocale)
 
     if (rpcState.state.selectedLocale === undefined) {
         return (
             <div className="welcome-page">
                 <div className="welcome-page__content">
                     <div>
-                        <div className="welcome-page__content-button">
-                            <Button text="English" onClick={setEnglishLocale} />
-                        </div>
-                        <div className="welcome-page__content-button">
-                            <Button text="한국어" white onClick={setKoreanLocale} />
-                        </div>
+                        {LOCALES.map(({ name, title }) => (
+                            <div className="welcome-page__content-button">
+                                <Button text={title} onClick={setLocale(name)} />
+                            </div>
+                        ))}
                     </div>
                 </div>
             </div>

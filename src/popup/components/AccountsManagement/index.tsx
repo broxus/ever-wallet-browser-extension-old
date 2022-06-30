@@ -16,7 +16,6 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import { useRpc } from '@popup/providers/RpcProvider'
 import { convertAddress } from '@shared/utils'
 import LedgerAccountManager from '@popup/components/Ledger/AccountManager'
-import { useRpcState } from '@popup/providers/RpcStateProvider'
 
 import Arrow from '@popup/img/arrow.svg'
 import TonLogo from '@popup/img/ton-logo.svg'
@@ -35,11 +34,10 @@ const downloadFileAsText = (text: string) => {
 
 export function ManageSeeds(): JSX.Element {
     const intl = useIntl()
-    const [inProgress, setInProgress] = React.useState(false)
+    const [backupInProgress, setBackupInProgress] = React.useState(false)
 
     const accountability = useAccountability()
     const rpc = useRpc()
-    const rpcState = useRpcState()
     const signerName = accountability.currentMasterKey?.signerName
 
     const onManageMasterKey = (seed: nt.KeyStoreEntry) => {
@@ -60,12 +58,16 @@ export function ManageSeeds(): JSX.Element {
     }
 
     const onBackup = () => {
-        setInProgress(true)
+        if (backupInProgress) {
+            return
+        }
+
+        setBackupInProgress(true)
         rpc.exportStorage()
             .then((storage) => {
                 downloadFileAsText(storage)
             })
-            .finally(() => setInProgress(false))
+            .finally(() => setBackupInProgress(false))
     }
 
     return (
@@ -134,13 +136,13 @@ export function ManageSeeds(): JSX.Element {
                             </ul>
                         </div>
 
-                        <footer className="accounts-management__footer">
+                        <footer className="accounts-management__footer accounts-management__footer--vertical">
                             <Button
                                 text={intl.formatMessage({
                                     id: 'BACKUP_ALL_BTN_TEXT',
                                 })}
                                 onClick={onBackup}
-                                disabled={inProgress}
+                                disabled={backupInProgress}
                             />
                         </footer>
                     </div>

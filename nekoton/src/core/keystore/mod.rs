@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use std::time::Duration;
 
 use serde::Deserialize;
 use sha2::Digest;
@@ -90,6 +91,19 @@ impl KeyStore {
             inner.reload().await.handle_error()?;
             Ok(JsValue::undefined())
         }))
+    }
+
+    #[wasm_bindgen(js_name = "refreshPasswordCache")]
+    pub fn refresh_password_cache(&self) {
+        self.inner.password_cache().refresh();
+    }
+
+    #[wasm_bindgen(js_name = "isPasswordCached")]
+    pub fn is_password_cached(&self, public_key: &str) -> Result<bool, JsValue> {
+        let public_key = parse_public_key(public_key)?;
+        Ok(self
+            .inner
+            .is_password_cached(public_key.as_bytes(), KEYSTORE_CACHE_GAP))
     }
 
     #[wasm_bindgen(js_name = "addKey")]
@@ -300,12 +314,13 @@ impl KeyStore {
                 ParsedGetPublicKeys::MasterKey {
                     master_key,
                     password,
+                    cache,
                     offset,
                     limit,
                 } => {
                     let input = DerivedKeyGetPublicKeys {
                         master_key: parse_public_key(&master_key)?,
-                        password: explicit_password(password),
+                        password: cached_password(password, cache),
                         limit,
                         offset,
                     };
@@ -466,6 +481,7 @@ impl KeyStore {
 
         JsCast::unchecked_into(future_to_promise(async move {
             inner.clear().await.handle_error()?;
+            inner.password_cache().clear();
             Ok(JsValue::undefined())
         }))
     }
@@ -500,22 +516,24 @@ async fn sign_data(
             master_key,
             public_key,
             password,
+            cache,
         } => {
             let input = DerivedKeySignParams::ByPublicKey {
                 public_key: parse_public_key(&public_key)?,
                 master_key: parse_public_key(&master_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache),
             };
             key_store.sign::<DerivedKeySigner>(data, input).await
         }
         ParsedKeyPassword::EncryptedKey {
             public_key,
             password,
+            cache,
         } => {
             let public_key = parse_public_key(&public_key)?;
             let input = EncryptedKeyPassword {
                 public_key,
-                password: explicit_password(password),
+                password: cached_password(password, cache),
             };
             key_store.sign::<EncryptedKeySigner>(data, input).await
         }
@@ -538,11 +556,12 @@ async fn encrypt_data(
             master_key,
             public_key,
             password,
+            cache,
         } => {
             let input = DerivedKeySignParams::ByPublicKey {
                 master_key: parse_public_key(&public_key)?,
                 public_key: parse_public_key(&master_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache),
             };
             key_store
                 .encrypt::<DerivedKeySigner>(data, public_keys, algorithm, input)
@@ -551,10 +570,11 @@ async fn encrypt_data(
         ParsedKeyPassword::EncryptedKey {
             public_key,
             password,
+            cache,
         } => {
             let input = EncryptedKeyPassword {
                 public_key: parse_public_key(&public_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache),
             };
             key_store
                 .encrypt::<EncryptedKeySigner>(data, public_keys, algorithm, input)
@@ -581,21 +601,23 @@ async fn decrypt_data(
             master_key,
             public_key,
             password,
+            cache,
         } => {
             let input = DerivedKeySignParams::ByPublicKey {
                 master_key: parse_public_key(&public_key)?,
                 public_key: parse_public_key(&master_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache),
             };
             key_store.decrypt::<DerivedKeySigner>(&data, input).await
         }
         ParsedKeyPassword::EncryptedKey {
             public_key,
             password,
+            cache,
         } => {
             let input = EncryptedKeyPassword {
                 public_key: parse_public_key(&public_key)?,
-                password: explicit_password(password),
+                password: cached_password(password, cache),
             };
             key_store.decrypt::<EncryptedKeySigner>(&data, input).await
         }
@@ -852,7 +874,7 @@ enum ParsedExportKey {
 #[wasm_bindgen(typescript_custom_section)]
 const GET_PUBLIC_KEYS: &str = r#"
 export type GetPublicKeys =
-    | EnumItem<'master_key', { masterKey: string, password: string, offset: number, limit: number }>
+    | EnumItem<'master_key', { masterKey: string, password?: string, cache?: boolean, offset: number, limit: number }>
     | EnumItem<'ledger_key', { offset: number, limit: number }>;
 "#;
 
@@ -868,7 +890,9 @@ enum ParsedGetPublicKeys {
     #[serde(rename_all = "camelCase")]
     MasterKey {
         master_key: String,
-        password: String,
+        password: Option<String>,
+        #[serde(default, deserialize_with = "deserialize_cache_behavior")]
+        cache: nt::crypto::PasswordCacheBehavior,
         offset: u16,
         limit: u16,
     },
@@ -930,8 +954,8 @@ fn make_exported_encrypted_key(data: nt::crypto::EncryptedKeyExportOutput) -> Js
 #[wasm_bindgen(typescript_custom_section)]
 const KEY_PASSWORD: &str = r#"
 export type KeyPassword =
-    | EnumItem<'master_key', { masterKey: string, publicKey: string, password: string }>
-    | EnumItem<'encrypted_key', { publicKey: string, password: string }>
+    | EnumItem<'master_key', { masterKey: string, publicKey: string, password?: string, cache?: boolean }>
+    | EnumItem<'encrypted_key', { publicKey: string, password?: string, cache?: boolean }>
     | EnumItem<'ledger_key', { publicKey: string, context?: LedgerSignatureContext }>;
 "#;
 
@@ -949,12 +973,16 @@ enum ParsedKeyPassword {
     MasterKey {
         master_key: String,
         public_key: String,
-        password: String,
+        password: Option<String>,
+        #[serde(default, deserialize_with = "deserialize_cache_behavior")]
+        cache: nt::crypto::PasswordCacheBehavior,
     },
     #[serde(rename_all = "camelCase")]
     EncryptedKey {
         public_key: String,
-        password: String,
+        password: Option<String>,
+        #[serde(default, deserialize_with = "deserialize_cache_behavior")]
+        cache: nt::crypto::PasswordCacheBehavior,
     },
     LedgerKey(nt::crypto::LedgerSignInput),
 }
@@ -987,9 +1015,39 @@ fn make_key_store_entry(data: nt::core::keystore::KeyStoreEntry) -> KeyStoreEntr
         .unchecked_into()
 }
 
+fn cached_password(
+    password: Option<String>,
+    cache_behavior: nt::crypto::PasswordCacheBehavior,
+) -> nt::crypto::Password {
+    match password {
+        Some(password) => nt::crypto::Password::Explicit {
+            password: password.into(),
+            cache_behavior,
+        },
+        None => nt::crypto::Password::FromCache,
+    }
+}
+
 fn explicit_password(password: String) -> nt::crypto::Password {
     nt::crypto::Password::Explicit {
         password: password.into(),
         cache_behavior: Default::default(),
     }
 }
+
+fn deserialize_cache_behavior<'de, D>(
+    deserializer: D,
+) -> Result<nt::crypto::PasswordCacheBehavior, <D as serde::Deserializer<'de>>::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let cache = bool::deserialize(deserializer)?;
+    Ok(if cache {
+        nt::crypto::PasswordCacheBehavior::Store(KEYSTORE_CACHE_DURATION)
+    } else {
+        nt::crypto::PasswordCacheBehavior::Remove
+    })
+}
+
+const KEYSTORE_CACHE_DURATION: Duration = Duration::from_secs(960); // 16 min
+const KEYSTORE_CACHE_GAP: Duration = Duration::from_secs(60); // 1 min

@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
-import { parseError, prepareKey } from '@popup/utils'
+import { parseError, prepareKey, ignoreCheckPassword } from '@popup/utils'
+import { usePasswordCache } from '@popup/providers/PasswordCacheProvider'
 import { PendingApproval } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
@@ -47,7 +48,13 @@ export function ApproveDecryptData({
         return null
     }
 
-    const trySubmit = async (password: string) => {
+    const passwordCached = usePasswordCache(publicKey)
+
+    const trySubmit = async (password?: string, cache?: boolean) => {
+        if (inProcess) {
+            return
+        }
+
         if (keyEntry == null) {
             setError(intl.formatMessage({ id: 'ERROR_KEY_ENTRY_NOT_FOUND' }))
             return
@@ -55,16 +62,15 @@ export function ApproveDecryptData({
 
         setInProcess(true)
         try {
-            const keyPassword = prepareKey(keyEntry, password)
-            const isValid = await checkPassword(keyPassword)
-            if (isValid) {
+            const keyPassword = prepareKey({ keyEntry, password, cache })
+            if (ignoreCheckPassword(keyPassword) || (await checkPassword(keyPassword))) {
                 onSubmit(keyPassword, true)
             } else {
                 setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
+                setInProcess(false)
             }
         } catch (e: any) {
             setError(parseError(e))
-        } finally {
             setInProcess(false)
         }
     }
@@ -94,30 +100,34 @@ export function ApproveDecryptData({
                             type="button"
                             white
                             text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            disabled={inProcess}
                             onClick={onReject}
                         />
                         <Button
                             type="submit"
                             text={intl.formatMessage({ id: 'DECRYPT_BTN_TEXT' })}
+                            disabled={inProcess || passwordCached == null}
                             onClick={() => {
-                                setPasswordModalVisible(true)
+                                passwordCached ? trySubmit() : setPasswordModalVisible(true)
                             }}
                         />
                     </footer>
                 </div>
             </Approval>
-            <SlidingPanel
-                isOpen={passwordModalVisible}
-                onClose={() => setPasswordModalVisible(false)}
-            >
-                <EnterPassword
-                    keyEntry={keyEntry}
-                    disabled={inProcess}
-                    error={error}
-                    handleNext={trySubmit}
-                    handleBack={() => setPasswordModalVisible(false)}
-                />
-            </SlidingPanel>
+            {passwordCached === false && (
+                <SlidingPanel
+                    isOpen={passwordModalVisible}
+                    onClose={() => setPasswordModalVisible(false)}
+                >
+                    <EnterPassword
+                        keyEntry={keyEntry}
+                        disabled={inProcess}
+                        error={error}
+                        handleNext={trySubmit}
+                        handleBack={() => setPasswordModalVisible(false)}
+                    />
+                </SlidingPanel>
+            )}
         </>
     )
 }
