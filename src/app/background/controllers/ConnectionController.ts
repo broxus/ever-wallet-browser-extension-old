@@ -1,6 +1,6 @@
-import { Mutex } from '@broxus/await-semaphore'
-import { NekotonRpcError } from '@shared/utils'
-import { RpcErrorCode } from '@shared/errors'
+import {Mutex} from '@broxus/await-semaphore'
+import {NekotonRpcError} from '@shared/utils'
+import {RpcErrorCode} from '@shared/errors'
 import {
     ConnectionData,
     ConnectionDataItem,
@@ -8,8 +8,9 @@ import {
     JrpcSocketParams,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
-
-import { BaseConfig, BaseController, BaseState } from './BaseController'
+import Axios, {AxiosInstance} from 'axios';
+import {buildWebStorage, defaultHeaderInterpreter, setupCache} from "axios-cache-interceptor";
+import {BaseConfig, BaseController, BaseState} from './BaseController'
 
 const ZEROSTATE_ADDRESSES: { [group: string]: string[] } = {
     mainnet: [
@@ -31,7 +32,7 @@ const NETWORK_PRESETS = {
         group: 'mainnet',
         type: 'jrpc',
         data: {
-            endpoint: 'https://extension-api.broxus.com/rpc',
+            endpoint: 'http://127.0.0.1:9000/rpc',
         },
     } as unknown as ConnectionData,
     [1]: {
@@ -96,27 +97,23 @@ const getPreset = (id: number): ConnectionDataItem | undefined => {
     const preset = (NETWORK_PRESETS as { [id: number]: ConnectionData })[id] as
         | ConnectionData
         | undefined
-    return preset != null ? { id, ...preset } : undefined
+    return preset != null ? {id, ...preset} : undefined
 }
 
 export type InitializedConnection = { group: string } & (
-    | nt.EnumItem<
-          'graphql',
-          {
-              socket: GqlSocket
-              connection: nt.GqlConnection
-              transport: nt.Transport
-          }
-      >
-    | nt.EnumItem<
-          'jrpc',
-          {
-              socket: JrpcSocket
-              connection: nt.JrpcConnection
-              transport: nt.Transport
-          }
-      >
-)
+    | nt.EnumItem<'graphql',
+    {
+        socket: GqlSocket
+        connection: nt.GqlConnection
+        transport: nt.Transport
+    }>
+    | nt.EnumItem<'jrpc',
+    {
+        socket: JrpcSocket
+        connection: nt.JrpcConnection
+        transport: nt.Transport
+    }>
+    )
 
 export interface ConnectionConfig extends BaseConfig {
     clock: nt.ClockWithOffset
@@ -141,10 +138,8 @@ interface INetworkSwitchHandle {
     switch(): Promise<void>
 }
 
-export class ConnectionController extends BaseController<
-    ConnectionConfig,
-    ConnectionControllerState
-> {
+export class ConnectionController extends BaseController<ConnectionConfig,
+    ConnectionControllerState> {
     private _initializedConnection?: InitializedConnection
     // Used to prevent network switch during some working subscriptions
     private _networkMutex: Mutex
@@ -175,7 +170,7 @@ export class ConnectionController extends BaseController<
 
             const selectedConnection = getPreset(loadedConnectionId)
             if (selectedConnection != null) {
-                this.update({ selectedConnection, pendingConnection: undefined })
+                this.update({selectedConnection, pendingConnection: undefined})
             }
 
             try {
@@ -286,7 +281,7 @@ export class ConnectionController extends BaseController<
         availableConnections.push(
             ...Object.entries(NETWORK_PRESETS)
                 .filter(([id, item]) => ~~id != first.id && item.group == first.group)
-                .map(([id, item]) => ({ id: ~~id, ...item }))
+                .map(([id, item]) => ({id: ~~id, ...item}))
         )
         return availableConnections
     }
@@ -337,7 +332,7 @@ export class ConnectionController extends BaseController<
             const clockOffset = await computeClockOffset()
             console.log(`Clock offset: ${clockOffset}`)
             this.config.clock.updateOffset(clockOffset)
-            this.update({ clockOffset })
+            this.update({clockOffset})
         }
 
         // NOTE: Update clock offset twice because first request is always too long
@@ -375,8 +370,8 @@ export class ConnectionController extends BaseController<
         }
 
         const testConnection = async ({
-            data: { transport },
-        }: InitializedConnection): Promise<TestConnectionResult> => {
+                                          data: {transport},
+                                      }: InitializedConnection): Promise<TestConnectionResult> => {
             return new Promise<TestConnectionResult>((resolve, reject) => {
                 this._cancelTestConnection = () => resolve(TestConnectionResult.CANCELLED)
 
@@ -393,45 +388,45 @@ export class ConnectionController extends BaseController<
         }
 
         try {
-            const { shouldTest, connection, connectionData } = await (params.type === 'graphql'
+            const {shouldTest, connection, connectionData} = await (params.type === 'graphql'
                 ? async () => {
-                      const socket = new GqlSocket()
-                      const connection = await socket.connect(this.config.clock, params.data)
-                      const transport = nt.Transport.fromGqlConnection(connection)
+                    const socket = new GqlSocket()
+                    const connection = await socket.connect(this.config.clock, params.data)
+                    const transport = nt.Transport.fromGqlConnection(connection)
 
-                      return {
-                          shouldTest: !params.data.local,
-                          connection,
-                          connectionData: {
-                              group: params.group,
-                              type: 'graphql',
-                              data: {
-                                  socket,
-                                  connection,
-                                  transport,
-                              },
-                          } as InitializedConnection,
-                      }
-                  }
+                    return {
+                        shouldTest: !params.data.local,
+                        connection,
+                        connectionData: {
+                            group: params.group,
+                            type: 'graphql',
+                            data: {
+                                socket,
+                                connection,
+                                transport,
+                            },
+                        } as InitializedConnection,
+                    }
+                }
                 : async () => {
-                      const socket = new JrpcSocket()
-                      const connection = await socket.connect(this.config.clock, params.data)
-                      const transport = nt.Transport.fromJrpcConnection(connection)
+                    const socket = new JrpcSocket()
+                    const connection = await socket.connect(this.config.clock, params.data)
+                    const transport = nt.Transport.fromJrpcConnection(connection)
 
-                      return {
-                          shouldTest: true,
-                          connection,
-                          connectionData: {
-                              group: params.group,
-                              type: 'jrpc',
-                              data: {
-                                  socket,
-                                  connection,
-                                  transport,
-                              },
-                          } as InitializedConnection,
-                      }
-                  })()
+                    return {
+                        shouldTest: true,
+                        connection,
+                        connectionData: {
+                            group: params.group,
+                            type: 'jrpc',
+                            data: {
+                                socket,
+                                connection,
+                                transport,
+                            },
+                        } as InitializedConnection,
+                    }
+                })()
 
             if (
                 shouldTest &&
@@ -481,7 +476,7 @@ export class ConnectionController extends BaseController<
     }
 
     private async _loadSelectedConnectionId(): Promise<number | undefined> {
-        const { selectedConnectionId } = await window.browser.storage.local.get([
+        const {selectedConnectionId} = await window.browser.storage.local.get([
             'selectedConnectionId',
         ])
         if (typeof selectedConnectionId === 'number') {
@@ -492,7 +487,7 @@ export class ConnectionController extends BaseController<
     }
 
     private async _saveSelectedConnectionId(connectionId: number): Promise<void> {
-        await window.browser.storage.local.set({ selectedConnectionId: connectionId })
+        await window.browser.storage.local.set({selectedConnectionId: connectionId})
     }
 }
 
@@ -602,7 +597,7 @@ export class GqlSocket {
                                 lastLatency.latency === undefined ||
                                 (latency !== undefined && latency < lastLatency.latency)
                             ) {
-                                lastLatency = { endpoint, latency }
+                                lastLatency = {endpoint, latency}
                             }
 
                             if (checkedEndpoints >= endpointCount) {
@@ -686,21 +681,35 @@ export class JrpcSocket {
     ): Promise<nt.JrpcConnection> {
         class JrpcSender {
             private readonly params: JrpcSocketParams
+            private readonly instance: AxiosInstance
 
             constructor(params: JrpcSocketParams) {
                 this.params = params
+                this.instance = Axios.create();
+                this.instance =
+                    setupCache(this.instance, {
+                        storage: buildWebStorage(localStorage, 'axios-cache:'),
+                        headerInterpreter: defaultHeaderInterpreter,
+                        debug: undefined,
+                        interpretHeader: true,
+                        methods: ['post'],
+                        staleIfError: false,
+                    });
             }
+
 
             send(data: string, handler: nt.JrpcQuery) {
                 ;(async () => {
                     try {
-                        const response = await fetch(this.params.endpoint, {
-                            method: 'post',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: data,
-                        }).then((response) => response.text())
+                        const response = await this.instance.post(this.params.endpoint,
+                            data,
+                            {
+                                headers: {'Content-Type': 'application/json',},
+                                decompress: true,
+                                responseType: 'text',
+                                transformResponse: undefined,
+                            }
+                        ).then((response) => response.data)
                         handler.onReceive(response)
                     } catch (e: any) {
                         handler.onError(e)
