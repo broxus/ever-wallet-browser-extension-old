@@ -100,7 +100,7 @@ pub fn check_eth_address(address: &str) -> bool {
 pub fn get_hints(word: &str) -> StringArray {
     nt::crypto::dict::get_hints(word)
         .into_iter()
-        .map(JsValue::from)
+        .map(|word| JsValue::from_str(word))
         .collect::<js_sys::Array>()
         .unchecked_into()
 }
