@@ -134,7 +134,7 @@ pub fn create_external_message_without_signature(
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
     // Prepare headers
-    let time = chrono::Utc::now().timestamp_millis() as u64;
+    let time = nt_utils::now_ms_u64();
     let expire_at = ExpireAt::new_from_millis(Expiration::Timeout(timeout), time);
 
     let mut header = HashMap::with_capacity(3);

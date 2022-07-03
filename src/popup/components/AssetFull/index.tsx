@@ -114,12 +114,12 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
     const old = selectedAsset.type === 'token_wallet' && symbol?.version != 'Tip3'
 
     const preloadTransactions = React.useCallback(
-        ({ lt, hash }) => {
+        ({ lt }) => {
             if (selectedAsset.type === 'ton_wallet') {
-                return rpc.preloadTransactions(accountAddress, lt, hash)
+                return rpc.preloadTransactions(accountAddress, lt)
             }
             const rootTokenContract = selectedAsset.data.rootTokenContract
-            return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt, hash)
+            return rpc.preloadTokenTransactions(accountAddress, rootTokenContract, lt)
         },
         [accountAddress, selectedAsset]
     )

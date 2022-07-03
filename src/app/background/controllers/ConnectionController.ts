@@ -31,7 +31,7 @@ const NETWORK_PRESETS = {
         group: 'mainnet',
         type: 'jrpc',
         data: {
-            endpoint: 'https://extension-api.broxus.com/rpc',
+            endpoint: 'https://jrpc.everwallet.net/rpc',
         },
     } as unknown as ConnectionData,
     [1]: {

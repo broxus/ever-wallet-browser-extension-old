@@ -128,18 +128,18 @@ impl GenericContract {
     }
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
-    pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = nt_abi::TransactionId {
-            lt: u64::from_str(lt).handle_error()?,
-            hash: ton_types::UInt256::from_str(hash).handle_error()?,
-        };
+    pub fn preload_transactions(&mut self, lt: &str) -> Result<PromiseVoid, JsValue> {
+        let from_lt = u64::from_str(lt).handle_error()?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut contract = inner.contract.lock().trust_me();
 
-            contract.preload_transactions(from).await.handle_error()?;
+            contract
+                .preload_transactions(from_lt)
+                .await
+                .handle_error()?;
             Ok(JsValue::undefined())
         })))
     }

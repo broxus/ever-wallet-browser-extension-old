@@ -8,7 +8,6 @@ use wasm_bindgen_futures::*;
 
 use nt::core::models as core_models;
 use nt::core::token_wallet;
-use nt_abi as abi;
 use nt_utils::TrustMe;
 
 use crate::transport::TransportHandle;
@@ -133,18 +132,15 @@ impl TokenWallet {
     }
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
-    pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = abi::TransactionId {
-            lt: u64::from_str(lt).handle_error()?,
-            hash: ton_types::UInt256::from_str(hash).handle_error()?,
-        };
+    pub fn preload_transactions(&mut self, lt: &str) -> Result<PromiseVoid, JsValue> {
+        let from_lt = u64::from_str(lt).handle_error()?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
-            wallet.preload_transactions(from).await.handle_error()?;
+            wallet.preload_transactions(from_lt).await.handle_error()?;
             Ok(JsValue::undefined())
         })))
     }

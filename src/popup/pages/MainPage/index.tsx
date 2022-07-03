@@ -109,9 +109,7 @@ export function MainPage(): JSX.Element | null {
                     }
                     onViewTransaction={showTransaction}
                     onViewAsset={showAsset}
-                    preloadTransactions={({ lt, hash }) =>
-                        rpc.preloadTransactions(accountAddress, lt, hash)
-                    }
+                    preloadTransactions={({ lt }) => rpc.preloadTransactions(accountAddress, lt)}
                 />
             </div>
 
