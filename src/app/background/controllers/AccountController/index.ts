@@ -866,6 +866,10 @@ export class AccountController extends BaseController<
         return this.config.keyStore.check_password(password)
     }
 
+    public async isPasswordCached(publicKey: string): Promise<boolean> {
+        return this.config.keyStore.isPasswordCached(publicKey)
+    }
+
     public async estimateFees(
         address: string,
         params: TransferMessageToPrepare,
@@ -1196,25 +1200,20 @@ export class AccountController extends BaseController<
         })
     }
 
-    public async preloadTransactions(address: string, lt: string, hash: string) {
+    public async preloadTransactions(address: string, lt: string) {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
         await subscription.use(async (wallet) => {
             try {
-                await wallet.preloadTransactions(lt, hash)
+                await wallet.preloadTransactions(lt)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }
         })
     }
 
-    public async preloadTokenTransactions(
-        owner: string,
-        rootTokenContract: string,
-        lt: string,
-        hash: string
-    ) {
+    public async preloadTokenTransactions(owner: string, rootTokenContract: string, lt: string) {
         const subscription = this._tokenWalletSubscriptions.get(owner)?.get(rootTokenContract)
         if (!subscription) {
             throw new NekotonRpcError(
@@ -1225,7 +1224,7 @@ export class AccountController extends BaseController<
 
         await subscription.use(async (wallet) => {
             try {
-                await wallet.preloadTransactions(lt, hash)
+                await wallet.preloadTransactions(lt)
             } catch (e: any) {
                 throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
             }

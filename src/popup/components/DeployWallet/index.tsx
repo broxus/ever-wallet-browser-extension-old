@@ -68,11 +68,10 @@ export function DeployWallet(): JSX.Element | null {
 
     const scrollWidth = React.useMemo(() => getScrollWidth(), [])
 
-    const selectedDerivedKeyEntry = React.useMemo(() => {
-        return selectedAccount.publicKey !== undefined
-            ? rpcState.state.storedKeys[selectedAccount.publicKey]
-            : undefined
-    }, [rpcState, selectedAccount])
+    const selectedDerivedKeyEntry = React.useMemo(
+        () => rpcState.state.storedKeys[selectedAccount.publicKey],
+        [rpcState, selectedAccount]
+    )
 
     const tonWalletState = React.useMemo(() => {
         return rpcState.state.accountContractStates[selectedAccount.address] as
@@ -89,16 +88,17 @@ export function DeployWallet(): JSX.Element | null {
         setWalletType(option)
     }
 
-    const onSubmit = async (password: string) => {
-        if (selectedDerivedKeyEntry == null) {
-            return
-        }
-
-        const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
-            address: selectedAccount.address,
-            amount: '0',
-            asset: NATIVE_CURRENCY,
-            decimals: 9,
+    const onSubmit = async (password?: string, cache?: boolean) => {
+        const keyPassword = prepareKey({
+            keyEntry: selectedDerivedKeyEntry,
+            password,
+            cache,
+            context: {
+                address: selectedAccount.address,
+                amount: '0',
+                asset: NATIVE_CURRENCY,
+                decimals: 9,
+            },
         })
         const params: DeployMessageToPrepare = { type: 'single_owner' }
 

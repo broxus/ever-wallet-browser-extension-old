@@ -1,8 +1,7 @@
 import * as nt from '@nekoton'
+import { LEDGER_BRIDGE_URL } from '@shared/constants'
 
 const { EventEmitter } = require('events')
-
-const BRIDGE_URL = 'https://broxus.github.io/everscale-ledger-bridge'
 
 type IBridgeApi = {
     'ledger-get-public-key': {
@@ -40,7 +39,7 @@ type IBridgeResponse<T extends keyof IBridgeApi> =
     | { success: false; payload: undefined; error: Error | undefined }
 
 export default class LedgerBridge extends EventEmitter {
-    private readonly bridgeUrl: string = BRIDGE_URL
+    private readonly bridgeUrl: string = LEDGER_BRIDGE_URL
     private readonly perPage = 5
     private page: number = 0
     private iframe?: HTMLIFrameElement
@@ -76,7 +75,11 @@ export default class LedgerBridge extends EventEmitter {
         }
     }
 
-    public async signHash(account: number, message: Uint8Array, context?: nt.LedgerSignatureContext) {
+    public async signHash(
+        account: number,
+        message: Uint8Array,
+        context?: nt.LedgerSignatureContext
+    ) {
         const { success, payload, error } = await this._sendMessage('ledger-sign-message', {
             account,
             message,

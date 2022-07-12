@@ -34,11 +34,10 @@ export function DeployMultisigWallet(): JSX.Element {
         return <></>
     }
 
-    const selectedDerivedKeyEntry = React.useMemo(() => {
-        return selectedAccount.publicKey !== undefined
-            ? rpcState.state.storedKeys[selectedAccount.publicKey]
-            : undefined
-    }, [rpcState, selectedAccount])
+    const selectedDerivedKeyEntry = React.useMemo(
+        () => rpcState.state.storedKeys[selectedAccount.publicKey],
+        [rpcState, selectedAccount]
+    )
 
     const tonWalletState = React.useMemo(() => {
         return rpcState.state.accountContractStates[selectedAccount.address] as
@@ -51,16 +50,16 @@ export function DeployMultisigWallet(): JSX.Element {
         closeCurrentWindow()
     }
 
-    const onSubmit = async (password: string) => {
-        if (selectedDerivedKeyEntry == null) {
-            return
-        }
-
-        const keyPassword = prepareKey(selectedDerivedKeyEntry, password, {
-            address: selectedAccount.address,
-            amount: '0',
-            asset: NATIVE_CURRENCY,
-            decimals: 9,
+    const onSubmit = async (password?: string) => {
+        const keyPassword = prepareKey({
+            keyEntry: selectedDerivedKeyEntry,
+            password,
+            context: {
+                address: selectedAccount.address,
+                amount: '0',
+                asset: NATIVE_CURRENCY,
+                decimals: 9,
+            },
         })
         const params: DeployMessageToPrepare = {
             type: 'multiple_owners',

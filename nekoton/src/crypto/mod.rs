@@ -192,7 +192,7 @@ pub fn parse_signed_message(data: JsSignedMessage) -> Result<ParsedSignedMessage
 pub fn generate_mnemonic(mnemonic_type: JsMnemonicType) -> Result<GeneratedMnemonic, JsValue> {
     let mnemonic_type = parse_mnemonic_type(mnemonic_type)?;
 
-    let key = crypto::generate_key(mnemonic_type).handle_error()?;
+    let key = crypto::generate_key(mnemonic_type);
     Ok(make_generated_mnemonic(key.words.join(" "), mnemonic_type))
 }
 

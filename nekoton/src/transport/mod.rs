@@ -99,6 +99,7 @@ impl Transport {
                 handle.clone().into(),
                 address,
                 handler,
+                false,
             )
             .await
             .handle_error()?;
@@ -406,14 +407,7 @@ impl Transport {
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let raw_transactions = handle
                 .as_ref()
-                .get_transactions(
-                    address,
-                    nt_abi::TransactionId {
-                        lt: before_lt.unwrap_or(u64::MAX),
-                        hash: Default::default(),
-                    },
-                    limit,
-                )
+                .get_transactions(&address, before_lt.unwrap_or(u64::MAX), limit)
                 .await
                 .handle_error()?;
             Ok(make_transactions_list(raw_transactions).unchecked_into())

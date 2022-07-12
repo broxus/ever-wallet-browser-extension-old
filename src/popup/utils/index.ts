@@ -13,36 +13,49 @@ export const TOKENS_MANIFEST_URL =
 
 export const TOKENS_MANIFEST_REPO = 'https://github.com/broxus/ton-assets'
 
-export const prepareKey = (
-    entry: nt.KeyStoreEntry,
-    password: string,
-    context?: nt.LedgerSignatureContext,
-): nt.KeyPassword => {
-    switch (entry.signerName) {
+export const ignoreCheckPassword = (keyPassword: nt.KeyPassword) =>
+    keyPassword.type !== 'ledger_key' && keyPassword.data.password == null
+
+export type PrepareKeyParams = {
+    keyEntry: nt.KeyStoreEntry
+    password?: string
+    context?: nt.LedgerSignatureContext
+    cache?: boolean
+}
+
+export const prepareKey = ({
+    keyEntry,
+    password,
+    context,
+    cache,
+}: PrepareKeyParams): nt.KeyPassword => {
+    switch (keyEntry.signerName) {
         case 'encrypted_key': {
             return {
-                type: entry.signerName,
+                type: keyEntry.signerName,
                 data: {
-                    publicKey: entry.publicKey,
+                    publicKey: keyEntry.publicKey,
                     password,
+                    cache,
                 },
             } as nt.KeyPassword
         }
         case 'master_key': {
             return {
-                type: entry.signerName,
+                type: keyEntry.signerName,
                 data: {
-                    masterKey: entry.masterKey,
-                    publicKey: entry.publicKey,
+                    masterKey: keyEntry.masterKey,
+                    publicKey: keyEntry.publicKey,
                     password,
+                    cache,
                 },
             }
         }
         case 'ledger_key': {
             return {
-                type: entry.signerName,
+                type: keyEntry.signerName,
                 data: {
-                    publicKey: entry.publicKey,
+                    publicKey: keyEntry.publicKey,
                     context,
                 },
             }

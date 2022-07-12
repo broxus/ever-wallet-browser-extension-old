@@ -100,7 +100,7 @@ pub fn check_eth_address(address: &str) -> bool {
 pub fn get_hints(word: &str) -> StringArray {
     nt::crypto::dict::get_hints(word)
         .into_iter()
-        .map(JsValue::from)
+        .map(|word| JsValue::from_str(word))
         .collect::<js_sys::Array>()
         .unchecked_into()
 }
@@ -142,13 +142,25 @@ pub fn extract_public_key(boc: &str) -> Result<String, JsValue> {
 
 #[wasm_bindgen(js_name = "codeToTvc")]
 pub fn code_to_tvc(code: &str) -> Result<String, JsValue> {
-    let cell = base64::decode(code).handle_error()?;
-    ton_types::deserialize_tree_of_cells(&mut cell.as_slice())
-        .handle_error()
-        .and_then(|x| nt_abi::code_to_tvc(x).handle_error())
-        .and_then(|x| x.serialize().handle_error())
-        .and_then(|x| ton_types::serialize_toc(&x).handle_error())
+    let cell = parse_cell(code)?;
+    nt_abi::code_to_tvc(cell)
+        .and_then(|x| x.serialize())
+        .and_then(|x| ton_types::serialize_toc(&x))
         .map(base64::encode)
+        .handle_error()
+}
+
+#[wasm_bindgen(js_name = "mergeTvc")]
+pub fn merge_tvc(code: &str, data: &str) -> Result<String, JsValue> {
+    let state_init = ton_block::StateInit {
+        code: Some(parse_cell(code)?),
+        data: Some(parse_cell(data)?),
+        ..Default::default()
+    };
+
+    let cell = state_init.serialize().handle_error()?;
+    let bytes = ton_types::serialize_toc(&cell).handle_error()?;
+    Ok(base64::encode(&bytes))
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -190,4 +202,22 @@ pub fn split_tvc(tvc: &str) -> Result<StateInit, JsValue> {
         .set("code", code)
         .build()
         .unchecked_into())
+}
+
+#[wasm_bindgen(js_name = "setCodeSalt")]
+pub fn set_code_salt(code: &str, salt: &str) -> Result<String, JsValue> {
+    nt_abi::set_code_salt(parse_cell(code)?, parse_cell(salt)?)
+        .and_then(|cell| ton_types::serialize_toc(&cell))
+        .map(base64::encode)
+        .handle_error()
+}
+
+#[wasm_bindgen(js_name = "getCodeSalt")]
+pub fn get_code_salt(code: &str) -> Result<Option<String>, JsValue> {
+    match nt::abi::get_code_salt(parse_cell(code)?).handle_error()? {
+        Some(salt) => Ok(Some(base64::encode(
+            ton_types::serialize_toc(&salt).handle_error()?,
+        ))),
+        None => Ok(None),
+    }
 }

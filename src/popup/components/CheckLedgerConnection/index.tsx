@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react'
 import Loader from '@popup/components/Loader'
 import './style.scss'
-import { LEDGER_BRIDGE_URL } from '@popup/constants/ledger-url'
+import { LEDGER_BRIDGE_URL } from '@shared/constants'
 
 interface ICheckLedgerConnection {
     onSuccess: () => void
     onFailed: () => void
 }
 
-
-const CheckLedgerConnection:React.FC<ICheckLedgerConnection> = ({ onSuccess, onFailed }) => {
+const CheckLedgerConnection: React.FC<ICheckLedgerConnection> = ({ onSuccess, onFailed }) => {
     const ref = useRef<HTMLIFrameElement>(null)
     const [loading, setLoading] = useState(true)
 

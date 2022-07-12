@@ -6,7 +6,7 @@ import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
-import { parseError } from '@popup/utils'
+import { parseError, ignoreCheckPassword } from '@popup/utils'
 import { PendingApproval, TransferMessageToPrepare } from '@shared/backgroundApi'
 import { convertCurrency, convertTokenName, convertTons } from '@shared/utils'
 
@@ -122,17 +122,20 @@ export function ApproveSendMessage({
         !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy
 
     const trySubmit = async (keyPassword: nt.KeyPassword) => {
+        if (inProcess) {
+            return
+        }
+
         setInProcess(true)
         try {
-            const isValid = await checkPassword(keyPassword)
-            if (isValid) {
+            if (ignoreCheckPassword(keyPassword) || (await checkPassword(keyPassword))) {
                 onSubmit(keyPassword, true)
             } else {
                 setError(intl.formatMessage({ id: 'ERROR_INVALID_PASSWORD' }))
+                setInProcess(false)
             }
         } catch (e: any) {
             setError(parseError(e))
-        } finally {
             setInProcess(false)
         }
     }
@@ -274,9 +277,8 @@ export function ApproveSendMessage({
                         <Button
                             type="button"
                             white
-                            text={intl.formatMessage({
-                                id: 'REJECT_BTN_TEXT',
-                            })}
+                            text={intl.formatMessage({ id: 'REJECT_BTN_TEXT' })}
+                            disabled={inProcess}
                             onClick={onReject}
                         />
                         <Button

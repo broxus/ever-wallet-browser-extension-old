@@ -8,7 +8,6 @@ use wasm_bindgen_futures::*;
 
 use nt::core::models as core_models;
 use nt::core::ton_wallet;
-use nt_abi as abi;
 use nt_utils::TrustMe;
 
 use crate::core::models::make_multisig_pending_transaction;
@@ -139,7 +138,7 @@ impl TonWallet {
         timeout: u32,
     ) -> Result<Option<crate::crypto::UnsignedMessage>, JsValue> {
         let public_key = parse_public_key(public_key)?;
-        let dest = parse_address(dest)?;
+        let destination = parse_address(dest)?;
         let amount = u64::from_str(amount).handle_error()?;
         let body = if !body.is_empty() {
             Some(parse_slice(body)?)
@@ -149,25 +148,27 @@ impl TonWallet {
 
         let mut wallet = self.inner.wallet.lock().unwrap();
 
-        Ok(
-            match wallet
-                .prepare_transfer(
-                    &raw_current_state.inner,
-                    &public_key,
-                    dest,
-                    amount,
+        match wallet
+            .prepare_transfer(
+                &raw_current_state.inner,
+                &public_key,
+                ton_wallet::Gift {
+                    flags: core_models::MessageFlags::Normal.into(),
                     bounce,
+                    destination,
+                    amount,
                     body,
-                    core_models::Expiration::Timeout(timeout),
-                )
-                .handle_error()?
-            {
-                ton_wallet::TransferAction::Sign(inner) => {
-                    Some(crate::crypto::UnsignedMessage { inner })
-                }
-                ton_wallet::TransferAction::DeployFirst => None,
-            },
-        )
+                    state_init: None,
+                },
+                core_models::Expiration::Timeout(timeout),
+            )
+            .handle_error()?
+        {
+            ton_wallet::TransferAction::Sign(inner) => {
+                Ok(Some(crate::crypto::UnsignedMessage { inner }))
+            }
+            ton_wallet::TransferAction::DeployFirst => Ok(None),
+        }
     }
 
     #[wasm_bindgen(js_name = "getCustodians")]
@@ -302,18 +303,15 @@ impl TonWallet {
     }
 
     #[wasm_bindgen(js_name = "preloadTransactions")]
-    pub fn preload_transactions(&mut self, lt: &str, hash: &str) -> Result<PromiseVoid, JsValue> {
-        let from = abi::TransactionId {
-            lt: u64::from_str(lt).handle_error()?,
-            hash: ton_types::UInt256::from_str(hash).handle_error()?,
-        };
+    pub fn preload_transactions(&mut self, lt: &str) -> Result<PromiseVoid, JsValue> {
+        let from_lt = u64::from_str(lt).handle_error()?;
 
         let inner = self.inner.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let mut wallet = inner.wallet.lock().trust_me();
 
-            wallet.preload_transactions(from).await.handle_error()?;
+            wallet.preload_transactions(from_lt).await.handle_error()?;
             Ok(JsValue::undefined())
         })))
     }

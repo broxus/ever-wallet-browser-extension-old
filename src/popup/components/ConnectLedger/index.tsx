@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import Button from '@popup/components/Button'
 import SelectLedgerAccount from '@popup/components/SelectLedgerAccount'
 import Loader from '@popup/components/Loader'
-import { LEDGER_BRIDGE_URL } from '@popup/constants/ledger-url'
+import { LEDGER_BRIDGE_URL } from '@shared/constants'
 import Modal from '@popup/components/Modal'
 
 interface ISelectWallet {

@@ -32,6 +32,23 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.32 (2022-07-13)
+
+Features
+
+* Added passwords cache. If enabled, password for each seed will be saved for 30 minutes in the secure runtime cache.
+  Can be enabled in `Manage seeds & accounts` panel.
+* Added `setCodeSalt`, `getCodeSalt` and `mergeTvc` methods to the provider api
+* `getExpectedAddress` now also returns `stateInit`
+* Added local requests cache for JRPC transport
+* Added Japanese localization
+* Reduced WASM size
+* Optimized contract subscriptions
+
+Bugfixes
+
+* Fixed timing issues when contract state was modified the same second it was used in `runLocal`
+
 ### 0.2.31 (2022-05-01)
 
 Bugfixes
@@ -129,7 +146,7 @@ Features
 
 Bugfixes
 
-* Fixed account state decoding 
+* Fixed account state decoding
 * Fixed origin metadata
 
 ### 0.2.19 (2021-11-10)

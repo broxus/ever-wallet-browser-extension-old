@@ -14,6 +14,7 @@ import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import Profile from '@popup/img/profile.svg'
 
 import { convertAddress } from '@shared/utils'
+import { LOCALES } from '@shared/constants'
 
 import './style.scss'
 
@@ -121,19 +122,11 @@ export function AccountModal() {
         })
     }
 
-    const setEnglishLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const setLocale = (locale: string) => async (event: React.MouseEvent<HTMLAnchorElement>) => {
         try {
             event.preventDefault()
             event.stopPropagation()
-            await rpc.setLocale('en')
-        } catch (e) {}
-    }
-
-    const setKoreanLocale = async (event: React.MouseEvent<HTMLAnchorElement>) => {
-        try {
-            event.preventDefault()
-            event.stopPropagation()
-            await rpc.setLocale('ko')
+            await rpc.setLocale(locale)
         } catch (e) {}
     }
 
@@ -149,16 +142,13 @@ export function AccountModal() {
                 <div ref={wrapperRef} className="account-settings noselect">
                     <div className="account-settings-section">
                         <div className="lang-switcher">
-                            <div className={selectedLocale === 'en' ? 'active' : ''}>
-                                <a href="#" onClick={setEnglishLocale}>
-                                    English
-                                </a>
-                            </div>
-                            <div className={selectedLocale === 'ko' ? 'active' : ''}>
-                                <a href="#" onClick={setKoreanLocale}>
-                                    한국어
-                                </a>
-                            </div>
+                            {LOCALES.map(({ name, title }) => (
+                                <div key={name} className={selectedLocale === name ? 'active' : ''}>
+                                    <a href="#" onClick={setLocale(name)}>
+                                        {title}
+                                    </a>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

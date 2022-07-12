@@ -1,4 +1,7 @@
+import Axios, { AxiosInstance } from 'axios'
+import { buildMemoryStorage, defaultHeaderInterpreter, setupCache } from 'axios-cache-interceptor'
 import { Mutex } from '@broxus/await-semaphore'
+
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
@@ -8,7 +11,6 @@ import {
     JrpcSocketParams,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
-
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 
 const ZEROSTATE_ADDRESSES: { [group: string]: string[] } = {
@@ -31,7 +33,7 @@ const NETWORK_PRESETS = {
         group: 'mainnet',
         type: 'jrpc',
         data: {
-            endpoint: 'https://extension-api.broxus.com/rpc',
+            endpoint: 'https://jrpc.everwallet.net/rpc',
         },
     } as unknown as ConnectionData,
     [1]: {
@@ -66,6 +68,16 @@ const NETWORK_PRESETS = {
         type: 'graphql',
         data: {
             endpoints: ['gql.custler.net'],
+            latencyDetectionInterval: 60000,
+            local: false,
+        },
+    } as ConnectionData,
+    [6]: {
+        name: 'Gosh',
+        group: 'gosh',
+        type: 'graphql',
+        data: {
+            endpoints: ['network.gosh.sh'],
             latencyDetectionInterval: 60000,
             local: false,
         },
@@ -676,22 +688,33 @@ export class JrpcSocket {
     ): Promise<nt.JrpcConnection> {
         class JrpcSender {
             private readonly params: JrpcSocketParams
+            private readonly instance: AxiosInstance
 
             constructor(params: JrpcSocketParams) {
                 this.params = params
+                this.instance = setupCache(
+                    Axios.create({
+                        headers: { 'Content-Type': 'application/json' },
+                        decompress: true,
+                        responseType: 'text',
+                        transformResponse: (data) => data,
+                    }),
+                    {
+                        storage: buildMemoryStorage(),
+                        headerInterpreter: defaultHeaderInterpreter,
+                        debug: undefined,
+                        interpretHeader: true,
+                        methods: ['post'],
+                        staleIfError: false,
+                    }
+                )
             }
 
             send(data: string, handler: nt.JrpcQuery) {
                 ;(async () => {
                     try {
-                        const response = await fetch(this.params.endpoint, {
-                            method: 'post',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: data,
-                        }).then((response) => response.text())
-                        handler.onReceive(response)
+                        const response = await this.instance.post(this.params.endpoint, data)
+                        handler.onReceive(response.data)
                     } catch (e: any) {
                         handler.onError(e)
                     }

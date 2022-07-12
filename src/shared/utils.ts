@@ -204,7 +204,6 @@ export class PortDuplexStream extends Duplex {
         this.port = port
         this.port.onMessage.addListener((msg: unknown) => this._onMessage(msg))
         this.port.onDisconnect.addListener(() => {
-            console.log('onDisconnect')
             this._onDisconnect()
         })
     }
@@ -783,6 +782,8 @@ export const transactionExplorerLink = ({ network, hash }: { network: string; ha
             return `https://dev.tonscan.io/transactions/${hash}`
         case 'fld':
             return `https://fld.ever.live/transactions/transactionDetails?id=${hash}`
+        case 'gosh':
+            return `https://gosh.live/transactions/transactionDetails?id=${hash}`
         case 'localnet':
             return `http://localhost/transactions/transactionDetails?id=${hash}`
         default:

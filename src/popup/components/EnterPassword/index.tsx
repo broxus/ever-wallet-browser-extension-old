@@ -5,15 +5,16 @@ import * as nt from '@nekoton'
 
 import Input from '@popup/components/Input'
 import Button from '@popup/components/Button'
+import { Switcher } from '@popup/components/Switcher'
 
 import './style.scss'
 
 type Props = {
-    keyEntry?: nt.KeyStoreEntry
+    keyEntry: nt.KeyStoreEntry
     minHeight?: string
     disabled?: boolean
     error?: string
-    handleNext(password: string): void
+    handleNext(password: string, cache: boolean): void
     handleBack(): void
 }
 
@@ -28,8 +29,10 @@ export function EnterPassword({
     const intl = useIntl()
     const { register, handleSubmit, formState } = useForm<{ password: string }>()
 
+    const [cache, setCache] = React.useState(false)
+
     const onSubmit = ({ password }: { password: string }) => {
-        handleNext(password)
+        handleNext(password, cache)
     }
 
     return (
@@ -72,6 +75,18 @@ export function EnterPassword({
                                 </div>
                             )}
                         </form>
+                        <div className="accounts-management__passwords-cache noselect">
+                            <Switcher
+                                id="visibility"
+                                checked={cache}
+                                onChange={() => setCache(!cache)}
+                            />
+                            <label htmlFor="visibility">
+                                {intl.formatMessage({
+                                    id: 'APPROVE_PASSWORD_CACHE_SWITCHER_LABEL',
+                                })}
+                            </label>
+                        </div>
                     </div>
                 )}
             </div>
