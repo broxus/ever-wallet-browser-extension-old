@@ -3,21 +3,6 @@
 version = 3
 
 [[package]]
-name = "addr2line"
-version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9ecd88a8c8378ca913a680cd98f0f13ac67383d35993f86c90a70e3f137816b"
-dependencies = [
- "gimli",
-]
-
-[[package]]
-name = "adler"
-version = "1.0.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
-
-[[package]]
 name = "aead"
 version = "0.5.0-pre.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -61,21 +46,6 @@ name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
-
-[[package]]
-name = "backtrace"
-version = "0.3.65"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "11a17d453482a265fd5f8479f2a3f405566e6ca627837aaddb85af8b1ab8ef61"
-dependencies = [
- "addr2line",
- "cc",
- "cfg-if",
- "libc",
- "miniz_oxide",
- "object",
- "rustc-demangle",
-]
 
 [[package]]
 name = "base58"
@@ -151,12 +121,6 @@ name = "byteorder"
 version = "1.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "14c189c53d098945499cdfa7ecc63567cf3886b3332b312a5b4585d8d3a6a610"
-
-[[package]]
-name = "cc"
-version = "1.0.73"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
 
 [[package]]
 name = "cfg-if"
@@ -266,9 +230,9 @@ checksum = "7a81dae078cea95a014a339291cec439d2f232ebe854a9d672b796c6afafa9b7"
 
 [[package]]
 name = "crypto-common"
-version = "0.1.4"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5999502d32b9c48d492abe66392408144895020ec4709e549e840799f3bb74c0"
+checksum = "2ccfd8c0ee4cce11e45b3fd6f9d5e69e0cc62912aa6a0cb1bf4617b0eba5a12f"
 dependencies = [
  "generic-array",
  "typenum",
@@ -370,28 +334,6 @@ name = "either"
 version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f107b87b6afc2a64fd13cac55fe06d6c8859f12d4b14cbcdd2c67d0976781be"
-
-[[package]]
-name = "failure"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d32e9bd16cc02eae7db7ef620b392808b89f6a5e16bb3497d159c6b92a0f4f86"
-dependencies = [
- "backtrace",
- "failure_derive",
-]
-
-[[package]]
-name = "failure_derive"
-version = "0.1.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa4da3c766cd7a0db8242e326e9e4e081edd567072893ed320008189715366a4"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
- "synstructure",
-]
 
 [[package]]
 name = "futures"
@@ -506,12 +448,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gimli"
-version = "0.26.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78cc372d058dcf6d5ecd98510e7fbc9e5aec4d21de70f65fea8fecebcd881bd4"
-
-[[package]]
 name = "graphql-introspection-query"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -522,19 +458,19 @@ dependencies = [
 
 [[package]]
 name = "graphql-parser"
-version = "0.2.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5613c31f18676f164112732202124f373bb2103ff017b3b85ca954ea6a66ada"
+checksum = "d2ebc8013b4426d5b81a4364c419a95ed0b404af2b82e2457de52d9348f0e474"
 dependencies = [
  "combine",
- "failure",
+ "thiserror",
 ]
 
 [[package]]
 name = "graphql_client"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a9b58571cfc3cc42c3e8ff44fc6cfbb6c0dea17ed22d20f9d8f1efc4e8209a3f"
+checksum = "7fc16d75d169fddb720d8f1c7aed6413e329e1584079b9734ff07266a193f5bc"
 dependencies = [
  "graphql_query_derive",
  "serde",
@@ -543,9 +479,9 @@ dependencies = [
 
 [[package]]
 name = "graphql_client_codegen"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4bf9cd823359d74ad3d3ecf1afd4a975f4ff2f891cdf9a66744606daf52de8c"
+checksum = "f290ecfa3bea3e8a157899dc8a1d96ee7dd6405c18c8ddd213fc58939d18a0e9"
 dependencies = [
  "graphql-introspection-query",
  "graphql-parser",
@@ -560,9 +496,9 @@ dependencies = [
 
 [[package]]
 name = "graphql_query_derive"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e56b093bfda71de1da99758b036f4cc811fd2511c8a76f75680e9ffbd2bb4251"
+checksum = "a755cc59cda2641ea3037b4f9f7ef40471c329f55c1fa2db6fa0bb7ae6c1f7ce"
 dependencies = [
  "graphql_client_codegen",
  "proc-macro2",
@@ -571,18 +507,15 @@ dependencies = [
 
 [[package]]
 name = "hashbrown"
-version = "0.12.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "db0d4cf898abf0081f964436dc980e96670a0f36863e4b83aaacdb65c9d7ccc3"
+checksum = "607c8a29735385251a339424dd462993c0fed8fa09d378f259377df08c126022"
 
 [[package]]
 name = "heck"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
-dependencies = [
- "unicode-segmentation",
-]
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hex"
@@ -722,18 +655,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "93c0d11ac30a033511ae414355d80f70d9f29a44a49140face477117a1ee90db"
 
 [[package]]
-name = "miniz_oxide"
-version = "0.5.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f5c75688da582b8ffc1f1799e9db273f32133c49e048f614d22ec3256773ccc"
-dependencies = [
- "adler",
-]
-
-[[package]]
 name = "nekoton"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#1802d95f42ce8b23b45bdb4d0f7c8c0d94e9cea5"
+source = "git+https://github.com/broxus/nekoton.git#f8baf94aeec2c156aa29a0023adc54eaaaaeaa3c"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -776,7 +700,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#1802d95f42ce8b23b45bdb4d0f7c8c0d94e9cea5"
+source = "git+https://github.com/broxus/nekoton.git#f8baf94aeec2c156aa29a0023adc54eaaaaeaa3c"
 dependencies = [
  "anyhow",
  "base64",
@@ -787,6 +711,7 @@ dependencies = [
  "nekoton-utils",
  "num-bigint",
  "num-traits",
+ "rustc-hash",
  "serde",
  "serde_json",
  "smallvec",
@@ -801,7 +726,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#1802d95f42ce8b23b45bdb4d0f7c8c0d94e9cea5"
+source = "git+https://github.com/broxus/nekoton.git#f8baf94aeec2c156aa29a0023adc54eaaaaeaa3c"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -815,7 +740,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#1802d95f42ce8b23b45bdb4d0f7c8c0d94e9cea5"
+source = "git+https://github.com/broxus/nekoton.git#f8baf94aeec2c156aa29a0023adc54eaaaaeaa3c"
 dependencies = [
  "either",
  "proc-macro2",
@@ -826,7 +751,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#1802d95f42ce8b23b45bdb4d0f7c8c0d94e9cea5"
+source = "git+https://github.com/broxus/nekoton.git#f8baf94aeec2c156aa29a0023adc54eaaaaeaa3c"
 dependencies = [
  "anyhow",
  "base64",
@@ -934,19 +859,10 @@ dependencies = [
 ]
 
 [[package]]
-name = "object"
-version = "0.28.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e42c982f2d955fac81dd7e1d0e1426a7d702acd9c98d19ab01083a6a0328c424"
-dependencies = [
- "memchr",
-]
-
-[[package]]
 name = "once_cell"
-version = "1.12.0"
+version = "1.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
+checksum = "18a6dbe30758c9f83eb00cbea4ac95966305f5a7772f3f42ebfc7fc7eddbd8e1"
 dependencies = [
  "parking_lot_core",
 ]
@@ -1090,12 +1006,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rustc-demangle"
-version = "0.1.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ef03e0a2b150c7a90d01faf6254c9c48a41e95fb2a8c2ac1c6f0d2b9aefc342"
-
-[[package]]
 name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1124,9 +1034,9 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "secstr"
-version = "0.4.0"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cce2c726741c320e5b8f1edd9a21b3c2c292ae94514afd001d41d81ba143dafc"
+checksum = "49fa8c1d89e7dc5e2776fbf507d8b088ff61bbaf83bf4da1cc9ed1c061358104"
 dependencies = [
  "libc",
  "serde",
@@ -1140,18 +1050,18 @@ checksum = "a2333e6df6d6598f2b1974829f853c2b4c5f4a6e503c10af918081aa6f8564e1"
 
 [[package]]
 name = "serde"
-version = "1.0.138"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1578c6245786b9d168c5447eeacfb96856573ca56c9d68fdcf394be134882a47"
+checksum = "0171ebb889e45aa68b44aee0859b3eede84c6f5f5c228e6f140c0b2a0a46cad6"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.138"
+version = "1.0.139"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "023e9b1467aef8a10fb88f25611870ada9800ef7e22afce356bb0d2387b6f27c"
+checksum = "dc1d3230c1de7932af58ad8ffbe1d784bd55efd5a9d84ac24f69c72d83543dfb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1324,7 +1234,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "2.1.0"
-source = "git+https://github.com/broxus/ton-labs-abi.git#58dab4e5779e5d463667e903a84c5ee8f8b47174"
+source = "git+https://github.com/broxus/ton-labs-abi.git#ec629f7b3c7381fbf010486f30712dfc05edb011"
 dependencies = [
  "anyhow",
  "base64",
@@ -1442,12 +1352,6 @@ checksum = "854cbdc4f7bc6ae19c820d44abdc3277ac3e1b2b93db20a636825d9322fb60e6"
 dependencies = [
  "tinyvec",
 ]
-
-[[package]]
-name = "unicode-segmentation"
-version = "1.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e8820f5d777f6224dc4be3632222971ac30164d4a258d595640799554ebfd99"
 
 [[package]]
 name = "unicode-xid"
