@@ -692,28 +692,29 @@ export class JrpcSocket {
 
             constructor(params: JrpcSocketParams) {
                 this.params = params
-                this.instance = setupCache(Axios.create(), {
-                    storage: buildMemoryStorage(),
-                    headerInterpreter: defaultHeaderInterpreter,
-                    debug: undefined,
-                    interpretHeader: true,
-                    methods: ['post'],
-                    staleIfError: false,
-                })
+                this.instance = setupCache(
+                    Axios.create({
+                        headers: { 'Content-Type': 'application/json' },
+                        decompress: true,
+                        responseType: 'text',
+                        transformResponse: (data) => data,
+                    }),
+                    {
+                        storage: buildMemoryStorage(),
+                        headerInterpreter: defaultHeaderInterpreter,
+                        debug: undefined,
+                        interpretHeader: true,
+                        methods: ['post'],
+                        staleIfError: false,
+                    }
+                )
             }
 
             send(data: string, handler: nt.JrpcQuery) {
                 ;(async () => {
                     try {
-                        const response = await this.instance
-                            .post(this.params.endpoint, data, {
-                                headers: { 'Content-Type': 'application/json' },
-                                decompress: true,
-                                responseType: 'text',
-                                transformResponse: undefined,
-                            })
-                            .then((response) => response.data)
-                        handler.onReceive(response)
+                        const response = await this.instance.post(this.params.endpoint, data)
+                        handler.onReceive(response.data)
                     } catch (e: any) {
                         handler.onError(e)
                     }
