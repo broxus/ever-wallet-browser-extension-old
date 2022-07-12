@@ -1,4 +1,7 @@
+import Axios, { AxiosInstance } from 'axios'
+import { buildMemoryStorage, defaultHeaderInterpreter, setupCache } from 'axios-cache-interceptor'
 import { Mutex } from '@broxus/await-semaphore'
+
 import { NekotonRpcError } from '@shared/utils'
 import { RpcErrorCode } from '@shared/errors'
 import {
@@ -8,7 +11,6 @@ import {
     JrpcSocketParams,
 } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
-
 import { BaseConfig, BaseController, BaseState } from './BaseController'
 
 const ZEROSTATE_ADDRESSES: { [group: string]: string[] } = {
@@ -686,21 +688,31 @@ export class JrpcSocket {
     ): Promise<nt.JrpcConnection> {
         class JrpcSender {
             private readonly params: JrpcSocketParams
+            private readonly instance: AxiosInstance
 
             constructor(params: JrpcSocketParams) {
                 this.params = params
+                this.instance = setupCache(Axios.create(), {
+                    storage: buildMemoryStorage(),
+                    headerInterpreter: defaultHeaderInterpreter,
+                    debug: undefined,
+                    interpretHeader: true,
+                    methods: ['post'],
+                    staleIfError: false,
+                })
             }
 
             send(data: string, handler: nt.JrpcQuery) {
                 ;(async () => {
                     try {
-                        const response = await fetch(this.params.endpoint, {
-                            method: 'post',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: data,
-                        }).then((response) => response.text())
+                        const response = await this.instance
+                            .post(this.params.endpoint, data, {
+                                headers: { 'Content-Type': 'application/json' },
+                                decompress: true,
+                                responseType: 'text',
+                                transformResponse: undefined,
+                            })
+                            .then((response) => response.data)
                         handler.onReceive(response)
                     } catch (e: any) {
                         handler.onError(e)
