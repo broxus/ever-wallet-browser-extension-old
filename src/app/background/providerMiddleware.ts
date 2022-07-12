@@ -668,6 +668,23 @@ const setCodeSalt: ProviderMethod<'setCodeSalt'> = async (req, res, _next, end, 
     }
 }
 
+const getCodeSalt: ProviderMethod<'getCodeSalt'> = async (req, res, _next, end, ctx) => {
+    requirePermissions(ctx, ['basic'])
+    requireParams(req)
+
+    const { code } = req.params
+    requireString(req, req.params, 'code')
+
+    try {
+        res.result = {
+            salt: nt.getCodeSalt(code),
+        }
+        end()
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+}
+
 const encodeInternalInput: ProviderMethod<'encodeInternalInput'> = async (
     req,
     res,
@@ -1402,6 +1419,7 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     mergeTvc,
     splitTvc,
     setCodeSalt,
+    getCodeSalt,
     encodeInternalInput,
     decodeInput,
     decodeEvent,
