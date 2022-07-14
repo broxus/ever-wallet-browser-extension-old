@@ -48,6 +48,7 @@ Features
 Bugfixes
 
 * Fixed timing issues when contract state was modified the same second it was used in `runLocal`
+* Fixed `codeHash` field in `FullContractState`
 
 ### 0.2.31 (2022-05-01)
 
