@@ -667,6 +667,7 @@ export type FullContractState = {
     genTimings: GenTimings;
     lastTransactionId: LastTransactionId;
     isDeployed: boolean;
+    codeHash?: string;
     boc: string;
 };
 "#;
@@ -678,6 +679,16 @@ pub fn make_full_contract_state(
 
     match contract_state {
         nt::transport::models::RawContractState::Exists(state) => {
+            let code_hash = match &state.account.storage.state {
+                ton_block::AccountState::AccountActive {
+                    state_init:
+                        ton_block::StateInit {
+                            code: Some(code), ..
+                        },
+                } => Some(code.repr_hash().to_hex_string()),
+                _ => None,
+            };
+
             let account_cell = state.account.serialize().handle_error()?;
             let boc = ton_types::serialize_toc(&account_cell)
                 .map(base64::encode)
@@ -697,6 +708,7 @@ pub fn make_full_contract_state(
                         ton_block::AccountState::AccountActive { .. }
                     ),
                 )
+                .set("codeHash", code_hash)
                 .set("boc", boc)
                 .build()
                 .unchecked_into())
