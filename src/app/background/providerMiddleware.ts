@@ -204,7 +204,7 @@ function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, ob
 
 function requireMethodOrArray<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     const property = object[key]
-    if (typeof property !== 'string' && !Array.isArray(property)) {
+    if (property != null && typeof property !== 'string' && !Array.isArray(property)) {
         throw invalidRequest(req, `'${key}' must be a method name or an array of possible names`)
     }
 }

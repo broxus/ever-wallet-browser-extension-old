@@ -252,6 +252,16 @@ pub fn decode_event(
     let contract_abi = parse_contract_abi(contract_abi)?;
     let events = &contract_abi.events;
     let event = match parse_method_name(event)? {
+        MethodName::Any => {
+            let id = match read_input_function_id(&contract_abi, message_body.clone(), true) {
+                Ok(id) => id,
+                Err(_) => return Ok(None),
+            };
+            match events.values().find(|event| event.id == id) {
+                Some(event) => event,
+                None => return Ok(None),
+            }
+        }
         MethodName::Known(name) => match events.get(&name) {
             Some(event) => event,
             None => return Ok(None),
@@ -303,9 +313,20 @@ pub fn decode_output(
     let method = parse_method_name(method)?;
 
     let method = match method {
+        MethodName::Any => {
+            let output_id = read_function_id(&message_body).handle_error()?;
+            match contract_abi
+                .functions
+                .values()
+                .find(|event| event.output_id == output_id)
+            {
+                Some(method) => method,
+                None => return Ok(None),
+            }
+        }
         MethodName::Known(name) => contract_abi.function(&name).handle_error()?,
         MethodName::Guess(names) => {
-            let output_id = nt_abi::read_function_id(&message_body).handle_error()?;
+            let output_id = read_function_id(&message_body).handle_error()?;
 
             let mut method = None;
             for name in names.iter() {
@@ -471,6 +492,17 @@ fn guess_method_by_input<'a>(
     internal: bool,
 ) -> Result<Option<&'a ton_abi::Function>, JsValue> {
     match parse_method_name(method)? {
+        MethodName::Any => {
+            let input_id =
+                match read_input_function_id(contract_abi, message_body.clone(), internal) {
+                    Ok(id) => id,
+                    Err(_) => return Ok(None),
+                };
+            Ok(contract_abi
+                .functions
+                .values()
+                .find(|method| method.input_id == input_id))
+        }
         MethodName::Known(name) => Ok(Some(contract_abi.function(&name).handle_error()?)),
         MethodName::Guess(names) => {
             let input_id =
@@ -520,18 +552,21 @@ fn read_input_function_id(
 }
 
 pub enum MethodName {
+    Any,
     Known(String),
     Guess(Vec<String>),
 }
 
 #[wasm_bindgen(typescript_custom_section)]
 const METHOD_NAME: &str = r#"
-export type MethodName = string | string[]
+export type MethodName = undefined | string | string[]
 "#;
 
 pub fn parse_method_name(value: JsMethodName) -> Result<MethodName, JsValue> {
     let value: JsValue = value.unchecked_into();
-    if let Some(value) = value.as_string() {
+    if value.is_null() || value.is_undefined() {
+        Ok(MethodName::Any)
+    } else if let Some(value) = value.as_string() {
         Ok(MethodName::Known(value))
     } else if js_sys::Array::is_array(&value) {
         let value: js_sys::Array = value.unchecked_into();
