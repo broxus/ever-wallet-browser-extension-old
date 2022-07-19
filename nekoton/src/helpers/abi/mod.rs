@@ -104,7 +104,7 @@ pub fn encode_internal_input(
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
     let body = method
-        .encode_input(&Default::default(), &input, true, None)
+        .encode_internal_input(&input)
         .and_then(|value| value.into_cell())
         .handle_error()?;
     let body = ton_types::serialize_toc(&body).handle_error()?;
@@ -147,7 +147,7 @@ pub fn create_external_message_without_signature(
 
     // Encode body
     let body = method
-        .encode_input(&header, &input, false, None)
+        .encode_input(&header, &input, false, None, Some(dst.clone()))
         .handle_error()?;
 
     // Build message
