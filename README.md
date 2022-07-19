@@ -32,6 +32,13 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.33 (2022-07-20)
+
+Features
+
+* Added support for ABI 2.3
+* Allow guessing method/event in `decodeInput`, `decodeEvent`, `decodeOutput`, `decodeTransaction`
+
 ### 0.2.32 (2022-07-13)
 
 Features
