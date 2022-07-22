@@ -428,7 +428,7 @@ const getTransactions: ProviderMethod<'getTransactions'> = async (req, res, _nex
     try {
         res.result = await connectionController.use(
             async ({ data: { transport } }) =>
-                await transport.getTransactions(address, continuation, limit || 50)
+                await transport.getTransactions(address, continuation?.lt, limit || 50)
         )
 
         end()

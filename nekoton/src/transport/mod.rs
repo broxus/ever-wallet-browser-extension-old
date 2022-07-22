@@ -1,4 +1,5 @@
 use std::convert::{TryFrom, TryInto};
+use std::str::FromStr;
 use std::sync::Arc;
 
 use ton_block::Serializable;
@@ -392,27 +393,27 @@ impl Transport {
     pub fn get_transactions(
         &self,
         address: &str,
-        continuation: Option<crate::core::models::TransactionId>,
+        continuation: Option<String>,
         limit: u8,
     ) -> Result<PromiseTransactionsList, JsValue> {
-        use crate::core::models::*;
-
         let address = parse_address(address)?;
-        let before_lt = continuation
-            .map(parse_transaction_id)
-            .transpose()?
-            .map(|id| id.lt);
+        let from_lt = continuation
+            .map(|s| u64::from_str(&s))
+            .transpose()
+            .handle_error()?
+            .unwrap_or(u64::MAX);
         let handle = self.handle.clone();
 
         Ok(JsCast::unchecked_into(future_to_promise(async move {
             let raw_transactions = handle
                 .as_ref()
-                .get_transactions(&address, before_lt.unwrap_or(u64::MAX), limit)
+                .get_transactions(&address, from_lt, limit)
                 .await
                 .handle_error()?;
             Ok(make_transactions_list(raw_transactions).unchecked_into())
         })))
     }
+
 
     #[wasm_bindgen(js_name = "getTransaction")]
     pub fn get_transaction(&self, hash: &str) -> Result<PromiseOptionTransaction, JsValue> {
