@@ -1,7 +1,7 @@
 import {
-    RawProviderApi,
+    ProviderApi,
     Permission,
-    RawFunctionCall,
+    FunctionCall,
     FullContractState,
     GenTimings,
     RawTokensObject,
@@ -37,7 +37,7 @@ interface CreateProviderMiddlewareOptions {
     subscriptionsController: SubscriptionController
 }
 
-type ProviderMethod<T extends keyof RawProviderApi> = RawProviderApi[T] extends {
+type ProviderMethod<T extends keyof ProviderApi<string>> = ProviderApi<string>[T] extends {
     input?: infer I
     output?: infer O
 }
@@ -196,7 +196,7 @@ function requireContractState<T, O, P extends keyof O>(req: JsonRpcRequest<T>, o
 
 function requireFunctionCall<T, O, P extends keyof O>(req: JsonRpcRequest<T>, object: O, key: P) {
     requireObject(req, object, key)
-    const property = object[key] as unknown as RawFunctionCall
+    const property = object[key] as unknown as FunctionCall<string>
     requireString(req, property, 'abi')
     requireString(req, property, 'method')
     requireObject(req, property, 'params')
@@ -225,6 +225,13 @@ function requireAssetTypeParams<T, O, P extends keyof O>(
         default:
             throw invalidRequest(req, 'Unknown asset type')
     }
+}
+
+function expectTransaction(transaction: nt.Transaction | undefined): nt.Transaction {
+    if (transaction == null) {
+        throw new NekotonRpcError(RpcErrorCode.MESSAGE_EXPIRED, 'Message expired')
+    }
+    return transaction
 }
 
 // Provider api
@@ -351,6 +358,7 @@ const getProviderState: ProviderMethod<'getProviderState'> = async (
     res.result = {
         version,
         numericVersion: convertVersionToInt32(version),
+        networkId: selectedConnection.networkId,
         selectedConnection: selectedConnection.group,
         supportedPermissions: ['basic', 'accountInteraction'],
         permissions,
@@ -872,11 +880,10 @@ const sendUnsignedExternalMessage: ProviderMethod<'sendUnsignedExternalMessage'>
             signedMessage
         )
     } else {
-        transaction = await subscriptionsController.sendMessage(
-            tabId,
-            repackedRecipient,
-            signedMessage
-        )
+        transaction = await subscriptionsController
+            .sendMessage(tabId, repackedRecipient, signedMessage)
+            .then((tx) => tx())
+            .then(expectTransaction)
     }
 
     let output: RawTokensObject | undefined
@@ -1181,6 +1188,141 @@ const estimateFees: ProviderMethod<'estimateFees'> = async (req, res, _next, end
     end()
 }
 
+const sendMessageDelayed: ProviderMethod<'sendMessageDelayed'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { sender, recipient, amount, bounce, payload } = req.params
+    requireString(req, req.params, 'sender')
+    requireString(req, req.params, 'recipient')
+    requireString(req, req.params, 'amount')
+    requireBoolean(req, req.params, 'bounce')
+    requireOptional(req, req.params, 'payload', requireFunctionCall)
+
+    const {
+        tabId,
+        origin,
+        permissionsController,
+        accountController,
+        approvalController,
+        subscriptionsController,
+    } = ctx
+    requireTabid(req, tabId)
+
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.address != sender) {
+        throw invalidRequest(req, 'Specified sender is not allowed')
+    }
+
+    const selectedAddress = allowedAccount.address
+    let repackedRecipient: string
+    try {
+        repackedRecipient = nt.repackAddress(recipient)
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    let body: string = ''
+    let knownPayload: nt.KnownPayload | undefined = undefined
+    if (payload != null) {
+        try {
+            body = nt.encodeInternalInput(payload.abi, payload.method, payload.params)
+            knownPayload = nt.parseKnownPayload(body)
+        } catch (e: any) {
+            throw invalidRequest(req, e.toString())
+        }
+    }
+
+    const approvalId = nanoid()
+    const password = await approvalController.addAndShowApprovalRequest({
+        id: approvalId,
+        origin,
+        type: 'sendMessage',
+        requestData: {
+            sender: selectedAddress,
+            recipient: repackedRecipient,
+            amount,
+            bounce,
+            payload,
+            knownPayload,
+        },
+    })
+
+    const signedMessage = await accountController.useTonWallet(selectedAddress, async (wallet) => {
+        const contractState = await wallet.getContractState()
+        if (contractState == null) {
+            throw invalidRequest(req, `Failed to get contract state for ${selectedAddress}`)
+        }
+
+        let unsignedMessage: nt.UnsignedMessage | undefined = undefined
+        try {
+            unsignedMessage = wallet.prepareTransfer(
+                contractState,
+                password.data.publicKey,
+                repackedRecipient,
+                amount,
+                bounce,
+                body,
+                60
+            )
+        } finally {
+            contractState.free()
+        }
+
+        if (unsignedMessage == null) {
+            throw invalidRequest(req, 'Contract must be deployed first')
+        }
+
+        try {
+            return await accountController.signPreparedMessage(unsignedMessage, password)
+        } catch (e: any) {
+            throw invalidRequest(req, e.toString())
+        } finally {
+            approvalController.deleteApproval(approvalId)
+            unsignedMessage.free()
+        }
+    })
+
+    const tx = await accountController.sendMessage(selectedAddress, {
+        signedMessage,
+        info: {
+            type: 'transfer',
+            data: {
+                amount,
+                recipient: repackedRecipient,
+            },
+        },
+    })
+
+    tx()
+        .then((transaction) => {
+            subscriptionsController.config.notifyTab?.(tabId, {
+                method: 'messageStatusUpdated',
+                params: {
+                    address: selectedAddress,
+                    hash: signedMessage.hash,
+                    transaction,
+                },
+            })
+        })
+        .catch(console.error)
+
+    res.result = {
+        message: {
+            account: selectedAddress,
+            hash: signedMessage.hash,
+            expireAt: signedMessage.expireAt,
+        },
+    }
+    end()
+}
+
 const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, ctx) => {
     requirePermissions(ctx, ['accountInteraction'])
     requireParams(req)
@@ -1268,16 +1410,19 @@ const sendMessage: ProviderMethod<'sendMessage'> = async (req, res, _next, end, 
         }
     })
 
-    const transaction: nt.Transaction = await accountController.sendMessage(selectedAddress, {
-        signedMessage,
-        info: {
-            type: 'transfer',
-            data: {
-                amount,
-                recipient: repackedRecipient,
+    const transaction = await accountController
+        .sendMessage(selectedAddress, {
+            signedMessage,
+            info: {
+                type: 'transfer',
+                data: {
+                    amount,
+                    recipient: repackedRecipient,
+                },
             },
-        },
-    })
+        })
+        .then((tx) => tx())
+        .then(expectTransaction)
 
     if (transaction.resultCode != 0) {
         throw invalidRequest(req, 'Action phase failed')
@@ -1377,11 +1522,10 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
             signedMessage
         )
     } else {
-        transaction = await subscriptionsController.sendMessage(
-            tabId,
-            repackedRecipient,
-            signedMessage
-        )
+        transaction = await subscriptionsController
+            .sendMessage(tabId, repackedRecipient, signedMessage)
+            .then((tx) => tx())
+            .then(expectTransaction)
     }
 
     let output: RawTokensObject | undefined
@@ -1397,7 +1541,111 @@ const sendExternalMessage: ProviderMethod<'sendExternalMessage'> = async (
     end()
 }
 
-const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
+const sendExternalMessageDelayed: ProviderMethod<'sendExternalMessageDelayed'> = async (
+    req,
+    res,
+    _next,
+    end,
+    ctx
+) => {
+    requirePermissions(ctx, ['accountInteraction'])
+    requireParams(req)
+
+    const { publicKey, recipient, stateInit, payload } = req.params
+    requireString(req, req.params, 'publicKey')
+    requireString(req, req.params, 'recipient')
+    requireOptionalString(req, req.params, 'stateInit')
+    requireFunctionCall(req, req.params, 'payload')
+
+    const {
+        tabId,
+        origin,
+        clock,
+        permissionsController,
+        approvalController,
+        accountController,
+        subscriptionsController,
+    } = ctx
+    requireTabid(req, tabId)
+
+    const allowedAccount = permissionsController.getPermissions(origin).accountInteraction
+    if (allowedAccount?.publicKey != publicKey) {
+        throw invalidRequest(req, 'Specified signer is not allowed')
+    }
+
+    const selectedPublicKey = allowedAccount.publicKey
+    let repackedRecipient: string
+    try {
+        repackedRecipient = nt.repackAddress(recipient)
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    let unsignedMessage: nt.UnsignedMessage
+    try {
+        unsignedMessage = nt.createExternalMessage(
+            clock,
+            repackedRecipient,
+            payload.abi,
+            payload.method,
+            stateInit,
+            payload.params,
+            selectedPublicKey,
+            60
+        )
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    }
+
+    const approvalId = nanoid()
+    const password = await approvalController.addAndShowApprovalRequest({
+        origin,
+        id: approvalId,
+        type: 'callContractMethod',
+        requestData: {
+            publicKey: selectedPublicKey,
+            recipient: repackedRecipient,
+            payload,
+        },
+    })
+
+    let signedMessage: nt.SignedMessage
+    try {
+        unsignedMessage.refreshTimeout(clock)
+        signedMessage = await accountController.signPreparedMessage(unsignedMessage, password)
+    } catch (e: any) {
+        throw invalidRequest(req, e.toString())
+    } finally {
+        unsignedMessage.free()
+        approvalController.deleteApproval(approvalId)
+    }
+
+    const tx = await subscriptionsController.sendMessage(tabId, repackedRecipient, signedMessage)
+
+    tx()
+        .then((transaction) => {
+            subscriptionsController.config.notifyTab?.(tabId, {
+                method: 'messageStatusUpdated',
+                params: {
+                    address: repackedRecipient,
+                    hash: signedMessage.hash,
+                    transaction,
+                },
+            })
+        })
+        .catch(console.error)
+
+    res.result = {
+        message: {
+            account: repackedRecipient,
+            hash: signedMessage.hash,
+            expireAt: signedMessage.expireAt,
+        },
+    }
+    end()
+}
+
+const providerRequests: { [K in keyof ProviderApi<string>]: ProviderMethod<K> } = {
     requestPermissions,
     changeAccount,
     disconnect,
@@ -1435,7 +1683,9 @@ const providerRequests: { [K in keyof RawProviderApi]: ProviderMethod<K> } = {
     decryptData,
     estimateFees,
     sendMessage,
+    sendMessageDelayed,
     sendExternalMessage,
+    sendExternalMessageDelayed,
 }
 
 export const createProviderMiddleware = (

@@ -171,17 +171,29 @@ export class SubscriptionController extends BaseController<
         })
     }
 
-    public async sendMessage(tabId: number, address: string, signedMessage: nt.SignedMessage) {
+    public async sendMessage(
+        tabId: number,
+        address: string,
+        signedMessage: nt.SignedMessage
+    ): Promise<() => Promise<nt.Transaction | undefined>> {
         let messageRequests = await this._sendMessageRequests.get(address)
         if (messageRequests == null) {
             messageRequests = new Map()
             this._sendMessageRequests.set(address, messageRequests)
         }
 
-        return new Promise<nt.Transaction>(async (resolve, reject) => {
-            const id = signedMessage.hash
-            messageRequests!.set(id, { resolve, reject })
+        let callback: SendMessageCallback
+        const promise = new Promise<nt.Transaction | undefined>((promiseResolve, promiseReject) => {
+            callback = {
+                resolve: (tx) => promiseResolve(tx),
+                reject: (e) => promiseReject(e),
+            }
+        })
 
+        const id = signedMessage.hash
+        messageRequests!.set(id, callback!)
+
+        try {
             await this.subscribeToContract(tabId, address, { state: true })
             const subscription = this._subscriptions.get(address)
             if (subscription == null) {
@@ -192,19 +204,20 @@ export class SubscriptionController extends BaseController<
             }
 
             await subscription.prepareReliablePolling()
-            await subscription
-                .use(async (contract) => {
-                    try {
-                        await contract.sendMessage(signedMessage)
-                        subscription.skipRefreshTimer()
-                    } catch (e: any) {
-                        throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
-                    }
-                })
-                .catch((e) => {
-                    this._rejectMessageRequest(address, id, e)
-                })
-        })
+            await subscription.use(async (contract) => {
+                try {
+                    await contract.sendMessage(signedMessage)
+                    subscription.skipRefreshTimer()
+                } catch (e: any) {
+                    throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
+                }
+            })
+        } catch (e: any) {
+            await this._rejectMessageRequest(address, id, e)
+            throw e
+        }
+
+        return () => promise
     }
 
     private async _createSubscription(address: string, subscriptionTabs: Set<number>) {
@@ -225,10 +238,10 @@ export class SubscriptionController extends BaseController<
             onMessageExpired(pendingTransaction: nt.PendingTransaction) {
                 this._enabled &&
                     this._controller
-                        ._rejectMessageRequest(
+                        ._resolveMessageRequest(
                             this._address,
                             pendingTransaction.messageHash,
-                            new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
+                            undefined
                         )
                         .catch(console.error)
             }
@@ -304,7 +317,11 @@ export class SubscriptionController extends BaseController<
         await this._subscriptionsMutex.use(async () => this._tryUnsubscribe(address))
     }
 
-    private async _resolveMessageRequest(address: string, id: string, transaction: nt.Transaction) {
+    private async _resolveMessageRequest(
+        address: string,
+        id: string,
+        transaction?: nt.Transaction
+    ) {
         this._deleteMessageRequestAndGetCallback(address, id).resolve(transaction)
         await this._subscriptionsMutex.use(async () => this._tryUnsubscribe(address))
     }

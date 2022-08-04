@@ -1152,7 +1152,10 @@ export class AccountController extends BaseController<
         return this.config.keyStore.decryptData(data, password)
     }
 
-    public async sendMessage(address: string, { signedMessage, info }: WalletMessageToSend) {
+    public async sendMessage(
+        address: string,
+        { signedMessage, info }: WalletMessageToSend
+    ): Promise<() => Promise<nt.Transaction | undefined>> {
         const subscription = await this._tonWalletSubscriptions.get(address)
         requireTonWalletSubscription(address, subscription)
 
@@ -1162,10 +1165,18 @@ export class AccountController extends BaseController<
             this._sendMessageRequests.set(address, accountMessageRequests)
         }
 
-        return new Promise<nt.Transaction>(async (resolve, reject) => {
-            const id = signedMessage.hash
-            accountMessageRequests!.set(id, { resolve, reject })
+        let callback: SendMessageCallback
+        const promise = new Promise<nt.Transaction | undefined>((promiseResolve, promiseReject) => {
+            callback = {
+                resolve: (tx) => promiseResolve(tx),
+                reject: (e) => promiseReject(e),
+            }
+        })
 
+        const id = signedMessage.hash
+        accountMessageRequests!.set(id, callback!)
+
+        try {
             await subscription.prepareReliablePolling()
             await this.useTonWallet(address, async (wallet) => {
                 try {
@@ -1194,10 +1205,13 @@ export class AccountController extends BaseController<
                 } catch (e: any) {
                     throw new NekotonRpcError(RpcErrorCode.RESOURCE_UNAVAILABLE, e.toString())
                 }
-            }).catch((e) => {
-                this._rejectMessageRequest(address, id, e)
             })
-        })
+        } catch (e: any) {
+            this._rejectMessageRequest(address, id, e)
+            throw e
+        }
+
+        return () => promise
     }
 
     public async preloadTransactions(address: string, lt: string) {
@@ -1287,10 +1301,10 @@ export class AccountController extends BaseController<
                     pendingTransaction.messageHash,
                     false
                 )
-                this._controller._rejectMessageRequest(
+                this._controller._resolveMessageRequest(
                     this._address,
                     pendingTransaction.messageHash,
-                    new NekotonRpcError(RpcErrorCode.INTERNAL, 'Message expired')
+                    undefined
                 )
             }
 
@@ -1525,7 +1539,7 @@ export class AccountController extends BaseController<
         this._deleteMessageRequestAndGetCallback(address, id).reject(error)
     }
 
-    private _resolveMessageRequest(address: string, id: string, transaction: nt.Transaction) {
+    private _resolveMessageRequest(address: string, id: string, transaction?: nt.Transaction) {
         this._deleteMessageRequestAndGetCallback(address, id).resolve(transaction)
     }
 

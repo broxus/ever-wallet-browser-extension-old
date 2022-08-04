@@ -30,7 +30,7 @@ type Props = {
         rootTokenContract: string,
         params: TokenMessageToPrepare
     ): Promise<nt.InternalMessage>
-    sendMessage(params: WalletMessageToSend): Promise<nt.Transaction>
+    sendMessage(params: WalletMessageToSend): Promise<void>
     onBack(): void
 }
 

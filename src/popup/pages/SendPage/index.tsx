@@ -64,7 +64,7 @@ export function SendPage(): JSX.Element | null {
     }
 
     const sendMessage = async (message: WalletMessageToSend) => {
-        return rpc.sendMessage(accountAddress as string, message)
+        await rpc.sendMessage(accountAddress, message)
     }
 
     return (

@@ -30,14 +30,16 @@ const ZEROSTATE_ADDRESSES: { [group: string]: string[] } = {
 const NETWORK_PRESETS = {
     [0]: {
         name: 'Mainnet (ADNL)',
+        networkId: 1,
         group: 'mainnet',
         type: 'jrpc',
         data: {
             endpoint: 'https://jrpc.everwallet.net/rpc',
         },
-    } as unknown as ConnectionData,
+    } as ConnectionData,
     [1]: {
         name: 'Mainnet (GQL)',
+        networkId: 1,
         group: 'mainnet',
         type: 'graphql',
         data: {
@@ -54,6 +56,7 @@ const NETWORK_PRESETS = {
     } as ConnectionData,
     [4]: {
         name: 'Testnet',
+        networkId: 2,
         group: 'testnet',
         type: 'graphql',
         data: {
@@ -64,6 +67,7 @@ const NETWORK_PRESETS = {
     } as ConnectionData,
     [5]: {
         name: 'fld.ton.dev',
+        networkId: 10,
         group: 'fld',
         type: 'graphql',
         data: {
@@ -74,6 +78,7 @@ const NETWORK_PRESETS = {
     } as ConnectionData,
     [6]: {
         name: 'Gosh',
+        networkId: 30,
         group: 'gosh',
         type: 'graphql',
         data: {
@@ -84,6 +89,7 @@ const NETWORK_PRESETS = {
     } as ConnectionData,
     [100]: {
         name: 'Local node',
+        networkId: 31337,
         group: 'localnet',
         type: 'graphql',
         data: {
@@ -98,10 +104,10 @@ const getPreset = (id: number): ConnectionDataItem | undefined => {
     const preset = (NETWORK_PRESETS as { [id: number]: ConnectionData })[id] as
         | ConnectionData
         | undefined
-    return preset != null ? { id, ...preset } : undefined
+    return preset != null ? { connectionId: id, ...preset } : undefined
 }
 
-export type InitializedConnection = { group: string } & (
+export type InitializedConnection = { networkId: number; group: string } & (
     | nt.EnumItem<
           'graphql',
           {
@@ -279,7 +285,7 @@ export class ConnectionController extends BaseController<
     public getAvailableNetworks(): ConnectionDataItem[] {
         return window.ObjectExt.entries(NETWORK_PRESETS).map(([id, value]) => ({
             ...(value as ConnectionData),
-            id: ~~id,
+            connectionId: ~~id,
         }))
     }
 
@@ -287,8 +293,8 @@ export class ConnectionController extends BaseController<
         const availableConnections = [first]
         availableConnections.push(
             ...Object.entries(NETWORK_PRESETS)
-                .filter(([id, item]) => ~~id != first.id && item.group == first.group)
-                .map(([id, item]) => ({ id: ~~id, ...item }))
+                .filter(([id, item]) => ~~id != first.connectionId && item.group == first.group)
+                .map(([id, item]) => ({ connectionId: ~~id, ...item }))
         )
         return availableConnections
     }
@@ -405,6 +411,7 @@ export class ConnectionController extends BaseController<
                           shouldTest: !params.data.local,
                           connection,
                           connectionData: {
+                              networkId: params.networkId,
                               group: params.group,
                               type: 'graphql',
                               data: {
@@ -424,6 +431,7 @@ export class ConnectionController extends BaseController<
                           shouldTest: true,
                           connection,
                           connectionData: {
+                              networkId: params.networkId,
                               group: params.group,
                               type: 'jrpc',
                               data: {
@@ -444,7 +452,7 @@ export class ConnectionController extends BaseController<
             }
 
             this._initializedConnection = connectionData
-            await this._saveSelectedConnectionId(params.id)
+            await this._saveSelectedConnectionId(params.connectionId)
         } catch (e: any) {
             throw new NekotonRpcError(
                 RpcErrorCode.INTERNAL,
