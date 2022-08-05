@@ -46,7 +46,7 @@ export function NetworkSettings(): JSX.Element {
 
     const makeNetworkTitle = () => {
         const pendingNetwork = rpcState.state.pendingConnection
-        if (pendingNetwork == null || pendingNetwork.id == currentNetwork.id) {
+        if (pendingNetwork == null || pendingNetwork.connectionId == currentNetwork.connectionId) {
             return currentNetwork.name
         } else {
             return `${pendingNetwork.name}...`
@@ -73,7 +73,7 @@ export function NetworkSettings(): JSX.Element {
 
                         <ul className="network-settings__networks-list">
                             {availableNetworks.map((network) => {
-                                const current = network.id == currentNetwork.id
+                                const current = network.connectionId == currentNetwork.connectionId
 
                                 const className = classNames(
                                     'network-settings__networks-list-item',
@@ -83,7 +83,7 @@ export function NetworkSettings(): JSX.Element {
                                 const onClick = current ? undefined : onSelectNetwork(network)
 
                                 return (
-                                    <li key={network.id}>
+                                    <li key={network.connectionId}>
                                         <a role="button" className={className} onClick={onClick}>
                                             <div className="network-settings__networks-list-item-title">
                                                 {network.name}

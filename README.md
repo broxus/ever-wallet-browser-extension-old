@@ -32,6 +32,15 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.33 (2022-08-05)
+
+Features
+
+* Added support for ABI 2.3.
+* Allow guessing method/event in `decodeInput`, `decodeEvent`, `decodeOutput`, `decodeTransaction`.
+* Added `networkId` to the `getProviderState` method and `networkChanged` notification.
+* Added `sendMessageDelayed` and `sendExternalMessageDelayed` methods to the provider api.
+
 ### 0.2.32 (2022-07-13)
 
 Features

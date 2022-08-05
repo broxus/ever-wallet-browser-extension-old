@@ -38,7 +38,7 @@ export interface PermissionsConfig extends BaseConfig {
     approvalController: ApprovalController
     notifyDomain?: <T extends ProviderEvent>(
         origin: string,
-        payload: { method: ProviderEvent; params: RawProviderEventData<T> }
+        payload: { method: T; params: RawProviderEventData<T> }
     ) => void
 }
 

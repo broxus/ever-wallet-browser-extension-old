@@ -1,9 +1,4 @@
-import {
-    WalletContractType,
-    RawPermissions,
-    Permission,
-    RawFunctionCall,
-} from 'everscale-inpage-provider'
+import type { RawPermissions, Permission, FunctionCall } from 'everscale-inpage-provider'
 import * as nt from '@nekoton'
 
 export type WindowInfo = {
@@ -108,12 +103,13 @@ export type JrpcSocketParams = {
     endpoint: string
 }
 
-export type ConnectionData = { name: string; group: string } & (
-    | nt.EnumItem<'graphql', GqlSocketParams>
-    | nt.EnumItem<'jrpc', JrpcSocketParams>
-)
+export type ConnectionData = {
+    name: string
+    networkId: number
+    group: string
+} & (nt.EnumItem<'graphql', GqlSocketParams> | nt.EnumItem<'jrpc', JrpcSocketParams>)
 
-export type ConnectionDataItem = { id: number } & ConnectionData
+export type ConnectionDataItem = { connectionId: number } & ConnectionData
 
 export type ApprovalApi = {
     requestPermissions: {
@@ -158,7 +154,7 @@ export type ApprovalApi = {
         input: {
             publicKey: string
             recipient: string
-            payload: RawFunctionCall
+            payload: FunctionCall<string>
         }
         output: nt.KeyPassword
     }
@@ -168,7 +164,7 @@ export type ApprovalApi = {
             recipient: string
             amount: string
             bounce: boolean
-            payload?: RawFunctionCall
+            payload?: FunctionCall<string>
             knownPayload: nt.KnownPayload | undefined
         }
         output: nt.KeyPassword
