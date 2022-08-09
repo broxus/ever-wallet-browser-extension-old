@@ -299,19 +299,15 @@ export function PrepareMessage({
                             onChange={onChangeAsset}
                         />
                         {decimals != null && (
-                            <div
-                                className="prepare-message__balance"
-                                dangerouslySetInnerHTML={{
-                                    __html: intl.formatMessage(
-                                        { id: 'SEND_MESSAGE_CURRENCY_SELECT_HINT' },
-                                        {
-                                            value: convertCurrency(balance.toString(), decimals),
-                                            symbol: currencyName,
-                                        },
-                                        { ignoreTag: true }
-                                    ),
-                                }}
-                            />
+                            <div className="prepare-message__balance">
+                                <span className="noselect">
+                                    {intl.formatMessage({
+                                        id: 'SEND_MESSAGE_CURRENCY_SELECT_HINT',
+                                    })}
+                                    :&nbsp;
+                                </span>
+                                {convertCurrency(balance.toString(), decimals)}&nbsp;{currencyName}
+                            </div>
                         )}
                         <Input
                             type="text"

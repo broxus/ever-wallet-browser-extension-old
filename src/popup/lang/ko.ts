@@ -192,7 +192,7 @@ export default {
     PENDING_APPROVAL_COUNTER: '총 <span class="pending-approvals__counter-counts">{total}의 {value}<\/span> 승인대기 중',
     SEND_MESSAGE_PANEL_ENTER_ADDRESS_HEADER: '메시지 보내기',
     SEND_MESSAGE_PANEL_ENTER_PASSWORD_HEADER: '메시지 확인',
-    SEND_MESSAGE_CURRENCY_SELECT_HINT: '<span class="noselect">귀하의 잔고:&nbsp;<\/span>{value}&nbsp;{symbol}',
+    SEND_MESSAGE_CURRENCY_SELECT_HINT: '귀하의 잔고',
     SEND_MESSAGE_AMOUNT_FIELD_PLACEHOLDER: '액수...',
     SEND_MESSAGE_RECIPIENT_FIELD_PLACEHOLDER: '수신인 주소',
     SEND_MESSAGE_COMMENT_FIELD_PLACEHOLDER: '코멘트',

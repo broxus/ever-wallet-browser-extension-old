@@ -193,7 +193,7 @@ export default {
     PENDING_APPROVAL_COUNTER: 'Pending approval <span class="pending-approvals__counter-counts">{value} of {total}<\/span>',
     SEND_MESSAGE_PANEL_ENTER_ADDRESS_HEADER: 'Send message',
     SEND_MESSAGE_PANEL_ENTER_PASSWORD_HEADER: 'Confirm message',
-    SEND_MESSAGE_CURRENCY_SELECT_HINT: '<span class="noselect">Your balance:&nbsp;<\/span>{value}&nbsp;{symbol}',
+    SEND_MESSAGE_CURRENCY_SELECT_HINT: 'Your balance',
     SEND_MESSAGE_AMOUNT_FIELD_PLACEHOLDER: 'Amount...',
     SEND_MESSAGE_RECIPIENT_FIELD_PLACEHOLDER: 'Recipient address...',
     SEND_MESSAGE_COMMENT_FIELD_PLACEHOLDER: 'Comment...',

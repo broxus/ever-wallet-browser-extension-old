@@ -192,7 +192,7 @@ export default {
     PENDING_APPROVAL_COUNTER: '承認待ち <span class="pending-approvals__counter-counts">{total}のうち{value}<\/span>',
     SEND_MESSAGE_PANEL_ENTER_ADDRESS_HEADER: 'メッセージを送信',
     SEND_MESSAGE_PANEL_ENTER_PASSWORD_HEADER: 'メッセージの確認',
-    SEND_MESSAGE_CURRENCY_SELECT_HINT: '<span class="noselect">残高：<\/span> {value}&nbsp;{symbol}',
+    SEND_MESSAGE_CURRENCY_SELECT_HINT: '残高',
     SEND_MESSAGE_AMOUNT_FIELD_PLACEHOLDER: '数量',
     SEND_MESSAGE_RECIPIENT_FIELD_PLACEHOLDER: '受取人のアドレス',
     SEND_MESSAGE_COMMENT_FIELD_PLACEHOLDER: 'コメント',
