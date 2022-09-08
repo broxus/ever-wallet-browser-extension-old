@@ -32,6 +32,15 @@ docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-exte
 
 ## Changelog
 
+### 0.2.35 (2022-09-09)
+
+Features
+
+* Changed default GQL endpoints.
+* Added RFLD network.
+* Allow specifying ABI version in `packIntoCell` and `unpackFromCell`.
+* Added `findTransaction` method to the provider api.
+
 ### 0.2.34 (2022-08-09)
 
 Security fix
