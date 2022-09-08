@@ -439,6 +439,35 @@ impl Transport {
             )
         })))
     }
+
+    #[wasm_bindgen(js_name = "getDstTransaction")]
+    pub fn get_dst_transaction(
+        &self,
+        message_hash: &str,
+    ) -> Result<PromiseOptionTransaction, JsValue> {
+        let message_hash = parse_hash(message_hash)?;
+        let handle = self.handle.clone();
+
+        Ok(JsCast::unchecked_into(future_to_promise(async move {
+            Ok(
+                match handle
+                    .as_ref()
+                    .get_dst_transaction(&message_hash)
+                    .await
+                    .handle_error()?
+                {
+                    Some(transaction) => nt::core::models::Transaction::try_from((
+                        transaction.hash,
+                        transaction.data,
+                    ))
+                    .map(crate::core::models::make_transaction)
+                    .handle_error()?
+                    .unchecked_into(),
+                    None => JsValue::undefined(),
+                },
+            )
+        })))
+    }
 }
 
 #[wasm_bindgen(typescript_custom_section)]

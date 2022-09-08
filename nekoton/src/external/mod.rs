@@ -185,10 +185,11 @@ impl nt::external::GqlConnection for GqlConnectionImpl {
         self.sender.is_local()
     }
 
-    async fn post(&self, data: &str) -> Result<String> {
+    async fn post(&self, req: nt::external::GqlRequest) -> Result<String> {
         let (tx, rx) = oneshot::channel();
 
-        self.sender.send(data, GqlQuery { tx });
+        self.sender.send(&req.data, GqlQuery { tx });
+        drop(req);
 
         let response = rx.await.unwrap_or(Err(GqlQueryError::RequestDropped))?;
         Ok(response)
@@ -439,10 +440,10 @@ impl JrpcQuery {
 
 #[async_trait]
 impl nt::external::JrpcConnection for JrpcConnector {
-    async fn post(&self, data: &str) -> Result<String> {
+    async fn post(&self, req: nt::external::JrpcRequest) -> Result<String> {
         let (tx, rx) = oneshot::channel();
         let query = JrpcQuery { tx };
-        self.sender.send(data, query);
+        self.sender.send(&req.data, query);
         Ok(rx.await.unwrap_or(Err(JrpcError::RequestFailed))?)
     }
 }

@@ -103,6 +103,10 @@ pub fn parse_cell(boc: &str) -> Result<ton_types::Cell, JsValue> {
     }
 }
 
+pub fn parse_state_init(state_init: &str) -> Result<ton_block::StateInit, JsValue> {
+    ton_block::StateInit::construct_from_base64(state_init).handle_error()
+}
+
 pub fn parse_account_stuff(boc: &str) -> Result<ton_block::AccountStuff, JsValue> {
     use ton_block::MaybeDeserialize;
 
@@ -141,6 +145,13 @@ impl ClockWithOffset {
         Self {
             inner: Arc::new(Default::default()),
         }
+    }
+
+    #[wasm_bindgen(getter, js_name = "nowMs")]
+    pub fn now_ms(&self) -> f64 {
+        use nt::utils::Clock;
+
+        self.inner.now_ms_f64()
     }
 
     #[wasm_bindgen(js_name = "updateOffset")]
