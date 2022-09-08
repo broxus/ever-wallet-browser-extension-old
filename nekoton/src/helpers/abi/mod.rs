@@ -111,6 +111,34 @@ pub fn encode_internal_input(
     Ok(base64::encode(&body))
 }
 
+#[wasm_bindgen(js_name = "createRawExternalMessage")]
+pub fn create_raw_external_message(
+    dst: &str,
+    state_init: Option<String>,
+    body: Option<String>,
+    expire_at: u32,
+) -> Result<crate::crypto::JsSignedMessage, JsValue> {
+    // Parse params
+    let dst = parse_address(dst)?;
+
+    // Build message
+    let mut message =
+        ton_block::Message::with_ext_in_header(ton_block::ExternalInboundMessageHeader {
+            dst,
+            ..Default::default()
+        });
+
+    if let Some(state_init) = state_init {
+        message.set_state_init(parse_state_init(&state_init)?);
+    }
+    if let Some(body) = body {
+        message.set_body(parse_slice(&body)?);
+    }
+
+    // Serialize message
+    crate::crypto::make_signed_message(nt::crypto::SignedMessage { message, expire_at })
+}
+
 #[wasm_bindgen(js_name = "createExternalMessageWithoutSignature")]
 pub fn create_external_message_without_signature(
     dst: &str,
@@ -126,11 +154,6 @@ pub fn create_external_message_without_signature(
     let dst = parse_address(dst)?;
     let contract_abi = parse_contract_abi(contract_abi)?;
     let method = contract_abi.function(method).handle_error()?;
-    let state_init = state_init
-        .as_deref()
-        .map(ton_block::StateInit::construct_from_base64)
-        .transpose()
-        .handle_error()?;
     let input = parse_tokens_object(&method.inputs, input).handle_error()?;
 
     // Prepare headers
@@ -157,7 +180,7 @@ pub fn create_external_message_without_signature(
             ..Default::default()
         });
     if let Some(state_init) = state_init {
-        message.set_state_init(state_init);
+        message.set_state_init(parse_state_init(&state_init)?);
     }
     message.set_body(body.into());
 
@@ -1063,6 +1086,24 @@ fn parse_tokens_object(
     Ok(result)
 }
 
+pub fn parse_optional_abi_version(
+    version: Option<String>,
+) -> Result<ton_abi::contract::AbiVersion, JsValue> {
+    match version {
+        Some(version) => parse_abi_version(&version),
+        None => Ok(ton_abi::contract::ABI_VERSION_2_2),
+    }
+}
+
+pub fn parse_abi_version(version: &str) -> Result<ton_abi::contract::AbiVersion, JsValue> {
+    let version = ton_abi::contract::AbiVersion::parse(version).handle_error()?;
+    if version.is_supported() {
+        Ok(version)
+    } else {
+        Err("Unsupported ABI version").handle_error()
+    }
+}
+
 fn insert_init_data(
     contract_abi: &ton_abi::Contract,
     data: ton_types::SliceData,
@@ -1295,11 +1336,16 @@ pub fn get_boc_hash(boc: &str) -> Result<String, JsValue> {
 }
 
 #[wasm_bindgen(js_name = "packIntoCell")]
-pub fn pack_into_cell(params: ParamsList, tokens: TokensObject) -> Result<String, JsValue> {
+pub fn pack_into_cell(
+    params: ParamsList,
+    tokens: TokensObject,
+    abi_version: Option<String>,
+) -> Result<String, JsValue> {
     let params = parse_params_list(params).handle_error()?;
     let tokens = parse_tokens_object(&params, tokens).handle_error()?;
 
-    let cell = nt_abi::pack_into_cell(&tokens).handle_error()?;
+    let abi_version = parse_optional_abi_version(abi_version)?;
+    let cell = nt_abi::pack_into_cell(&tokens, abi_version).handle_error()?;
     let bytes = ton_types::serialize_toc(&cell).handle_error()?;
     Ok(base64::encode(&bytes))
 }
@@ -1309,10 +1355,12 @@ pub fn unpack_from_cell(
     params: ParamsList,
     boc: &str,
     allow_partial: bool,
+    abi_version: Option<String>,
 ) -> Result<TokensObject, JsValue> {
     let params = parse_params_list(params).handle_error()?;
     let cell = parse_slice(boc)?;
-    nt_abi::unpack_from_cell(&params, cell.into(), allow_partial)
+    let abi_version = parse_optional_abi_version(abi_version)?;
+    nt_abi::unpack_from_cell(&params, cell.into(), allow_partial, abi_version)
         .handle_error()
         .and_then(|tokens| make_tokens_object(&tokens))
 }

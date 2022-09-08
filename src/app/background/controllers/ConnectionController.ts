@@ -43,13 +43,7 @@ const NETWORK_PRESETS = {
         group: 'mainnet',
         type: 'graphql',
         data: {
-            endpoints: [
-                'eri01.main.everos.dev',
-                'gra01.main.everos.dev',
-                'gra02.main.everos.dev',
-                'lim01.main.everos.dev',
-                'rbx01.main.everos.dev',
-            ],
+            endpoints: ['https://mainnet.evercloud.dev/89a3b8f46a484f2ea3bdd364ddaee3a3/graphql'],
             latencyDetectionInterval: 60000,
             local: false,
         },
@@ -60,13 +54,13 @@ const NETWORK_PRESETS = {
         group: 'testnet',
         type: 'graphql',
         data: {
-            endpoints: ['eri01.net.everos.dev', 'rbx01.net.everos.dev', 'gra01.net.everos.dev'],
+            endpoints: ['https://devnet.evercloud.dev/89a3b8f46a484f2ea3bdd364ddaee3a3/graphql'],
             latencyDetectionInterval: 60000,
             local: false,
         },
     } as ConnectionData,
     [5]: {
-        name: 'fld.ton.dev',
+        name: 'FLD network',
         networkId: 10,
         group: 'fld',
         type: 'graphql',
@@ -76,13 +70,13 @@ const NETWORK_PRESETS = {
             local: false,
         },
     } as ConnectionData,
-    [6]: {
-        name: 'Gosh',
-        networkId: 30,
-        group: 'gosh',
+    [7]: {
+        name: 'RFLD network',
+        networkId: 20,
+        group: 'rfld',
         type: 'graphql',
         data: {
-            endpoints: ['network.gosh.sh'],
+            endpoints: ['https://rfld-dapp.itgold.io/graphql'],
             latencyDetectionInterval: 60000,
             local: false,
         },
