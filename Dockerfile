@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM rust:1.63.0-bullseye
 
 WORKDIR /app
 
@@ -7,16 +7,18 @@ RUN set -eux; \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
       binaryen \
       libssl-dev \
-      build-essential \
       pkg-config \
       curl \
       git \
-      nodejs \
       npm \
     ;
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y;
-ENV PATH="/root/.cargo/bin:${PATH}"
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash; \
+    export NVM_DIR="$HOME/.nvm"; \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"; \
+    nvm install v18.7.0 \
+    npm install npm@latest -g \
+    ;
 
 RUN set -eux; \
     mkdir -p /usr/local/cargo/registry/cache; \
