@@ -94,10 +94,14 @@ module.exports = {
         new ProvidePlugin({
             process: 'process/browser',
         }),
-        new WasmPackPlugin({
-            extraArgs: '--target web',
-            crateDirectory: path.resolve(__dirname, './nekoton'),
-        }),
+        ...(process.env.SKIP_WASM == null
+            ? [
+                  new WasmPackPlugin({
+                      extraArgs: '--target web',
+                      crateDirectory: path.resolve(__dirname, './nekoton'),
+                  }),
+              ]
+            : []),
     ],
     output: {
         filename: '[name].js',
