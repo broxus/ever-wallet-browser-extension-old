@@ -4,7 +4,7 @@ export * from './ripple'
 
 import * as nt from '@nekoton'
 
-export const DEFAULT_CONTRACT_TYPE: nt.ContractType = 'SafeMultisigWallet'
+export const DEFAULT_CONTRACT_TYPE: nt.ContractType = 'EverWallet'
 
 export const hideModalOnClick = (
     ref: React.MutableRefObject<null>,

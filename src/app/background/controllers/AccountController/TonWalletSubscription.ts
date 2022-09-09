@@ -1,10 +1,12 @@
 import * as nt from '@nekoton'
 
+import { isSimpleWallet } from '@shared/utils'
 import { ConnectionController } from '../ConnectionController'
 import { ContractSubscription, IContractHandler } from '../../utils/ContractSubscription'
 
 export interface ITonWalletHandler extends IContractHandler<nt.Transaction> {
     onUnconfirmedTransactionsChanged(unconfirmedTransactions: nt.MultisigPendingTransaction[]): void
+
     onCustodiansChanged(custodians: string[]): void
 }
 
@@ -96,8 +98,8 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
     }
 
     protected async onBeforeRefresh(): Promise<void> {
-        const isWalletV3 = this._contractType == 'WalletV3'
-        if (isWalletV3 && this._hasCustodians) {
+        const simpleWallet = isSimpleWallet(this._contractType)
+        if (simpleWallet && this._hasCustodians) {
             return
         }
 
@@ -110,7 +112,7 @@ export class TonWalletSubscription extends ContractSubscription<nt.TonWallet> {
                 }
             }
 
-            if (isWalletV3) {
+            if (simpleWallet) {
                 return
             }
 

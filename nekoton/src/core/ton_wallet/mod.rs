@@ -491,7 +491,10 @@ export type ContractType =
     | 'SetcodeMultisigWallet'
     | 'BridgeMultisigWallet'
     | 'SurfWallet'
-    | 'WalletV3';
+    | 'WalletV3'
+    | 'EverWallet'
+    | 'Multisig2'
+    | 'HighloadWalletV2';
 "#;
 
 impl TryFrom<ContractType> for nt::core::ton_wallet::WalletType {

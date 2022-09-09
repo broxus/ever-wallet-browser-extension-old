@@ -2,10 +2,15 @@ import * as React from 'react'
 import { useIntl } from 'react-intl'
 import { NATIVE_CURRENCY } from '@shared/constants'
 
-import { CopyText } from '@popup/components/CopyText'
+import { hideModalOnClick } from '@popup/common'
+import { useRpc } from '@popup/providers/RpcProvider'
 import { convertAddress, convertPublicKey } from '@shared/utils'
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+
+import { CopyText } from '@popup/components/CopyText'
 
 import Pattern from '@popup/img/ton-pattern.svg'
+import Elipsis from '@popup/img/ellipsis.svg'
 
 import './style.scss'
 
@@ -18,8 +23,30 @@ type Props = {
 
 export function AccountCard({ accountName, address, balance, publicKey }: Props): JSX.Element {
     const intl = useIntl()
+    const rpc = useRpc()
+    const accountability = useAccountability()
     const wholePart = balance.split('.')?.[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
     const decimals = balance.split('.')?.[1]
+
+    const [contextMenuOpen, setContextMenuOpen] = React.useState(false)
+    const [inProcess, setInProcess] = React.useState(false)
+
+    const iconRef = React.useRef(null)
+    const wrapperRef = React.useRef(null)
+
+    hideModalOnClick(wrapperRef, iconRef, () => setContextMenuOpen(false))
+
+    const canRemove = accountability.accounts.length > 1
+
+    const onRemove = () => {
+        if (inProcess || address == null || !canRemove) {
+            return
+        }
+        setInProcess(true)
+        rpc.removeAccount(address)
+            .catch(console.error)
+            .finally(() => setInProcess(false))
+    }
 
     return (
         <div className="account-card">
@@ -63,10 +90,27 @@ export function AccountCard({ accountName, address, balance, publicKey }: Props)
 
             <div className="account-card__pattern">
                 <img src={Pattern} alt="" />
-                {/*<div className="account-card__pattern-ellipsis">*/}
-                {/*    <Ellipsis />*/}
-                {/*</div>*/}
+                {address != null && canRemove && (
+                    <div className="account-card__pattern-ellipsis">
+                        <img
+                            src={Elipsis}
+                            alt=""
+                            onClick={() => setContextMenuOpen(!contextMenuOpen)}
+                            ref={iconRef}
+                        />
+                    </div>
+                )}
             </div>
+
+            {contextMenuOpen && (
+                <div className="account-card__context-menu noselect">
+                    <div className="account-card__context-menu__content" ref={wrapperRef}>
+                        <div className="account-card__context-menu__item remove" onClick={onRemove}>
+                            Remove
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

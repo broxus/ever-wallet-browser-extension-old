@@ -4,9 +4,9 @@
     display: flex;
     justify-content: space-between;
     background: linear-gradient(
-        239.75deg,
-        rgba(255, 255, 255, 0) 26.52%,
-        rgba(255, 255, 255, 0.12) 100%
+                    239.75deg,
+                    rgba(255, 255, 255, 0) 26.52%,
+                    rgba(255, 255, 255, 0.12) 100%
     );
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
     border-left: 1px solid rgba(255, 255, 255, 0.2);
@@ -33,6 +33,7 @@
                 color: $accountName;
                 margin-bottom: 6px;
             }
+
             &-public-key {
                 color: $accountTextFg;
                 display: flex;
@@ -65,6 +66,7 @@
 
             &--resized {
                 font-size: 22px;
+
                 & > span {
                     font-size: 16px;
                 }
@@ -84,6 +86,63 @@
             position: absolute;
             top: 10px;
             right: 10px;
+        }
+    }
+
+    &__context-menu {
+        position: relative;
+
+        &__content {
+            position: absolute;
+
+            top: 52px;
+            right: 32px;
+
+            border-radius: 2px;
+            z-index: 9;
+            background: $windowBg;
+            border: 1px solid $modalBorder;
+            box-shadow: 0 4px 19px rgb(0 0 0 / 25%);
+            padding: 10px;
+        }
+
+        &__header {
+            font-size: 12px;
+            font-weight: bold;
+            line-height: 20px;
+            letter-spacing: 0.75px;
+            text-transform: uppercase;
+            color: $accountHeader;
+            max-width: 100%;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        &__separator {
+            margin: 16px -16px;
+            border-bottom: 1px solid $modalBorder;
+            min-width: 100%;
+            display: block;
+        }
+
+        &__item {
+            cursor: pointer;
+            font-style: normal;
+            font-weight: normal;
+            font-size: 14px;
+            letter-spacing: 0.25px;
+            line-height: 14px;
+            margin-bottom: 0;
+
+            &.remove {
+                color: #cc0022;
+            }
+
+            &:hover {
+                font-weight: bold;
+            }
         }
     }
 }

@@ -14,6 +14,9 @@ const CONTRACT_TYPES: { [K in nt.ContractType]: string } = {
     SurfWallet: 'Surf',
     WalletV3: 'WalletV3',
     SetcodeMultisigWallet: 'SetcodeMultisigWallet',
+    Multisig2: 'Multisig',
+    EverWallet: 'Simple wallet',
+    HighloadWalletV2: 'HighloadWalletV2',
 }
 
 interface ISelectWallet {
