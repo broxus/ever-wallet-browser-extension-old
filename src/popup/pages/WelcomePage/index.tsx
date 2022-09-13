@@ -1,13 +1,11 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
-import * as nt from '@nekoton'
 
 import Button from '@popup/components/Button'
 import NewAccountPage from '@popup/pages/NewAccountPage'
 import ImportAccountPage from '@popup/pages/ImportAccountPage'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
-import { KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import LedgerSignIn from '@popup/components/Ledger/SignIn'
 import { parseError } from '@popup/utils'
 import { LOCALES } from '@shared/constants'
@@ -77,11 +75,6 @@ export function WelcomePage(): JSX.Element {
     const [localStep, setStep] = React.useState(Step.WELCOME)
     const [restoreInProcess, setRestoreInProcess] = React.useState(false)
     const [restoreError, setRestoreError] = React.useState<string | undefined>()
-    // const [checked, setChecked] = React.useState(false)
-
-    const createAccount = (params: nt.AccountToAdd) => rpc.createAccount(params)
-    const createMasterKey = (params: MasterKeyToCreate) => rpc.createMasterKey(params)
-    const removeKey = (params: KeyToRemove) => rpc.removeKey(params)
 
     const restoreFromBackup = () => {
         if (restoreInProcess) {
@@ -156,19 +149,6 @@ export function WelcomePage(): JSX.Element {
                             </h1>
                             <img src={SittingMan} alt="" />
                         </div>
-                        {/*<div className="welcome-page__content-checkbox">*/}
-                        {/*    <Checkbox checked={checked} onChange={setChecked} />*/}
-                        {/*    <span className="welcome-page__content-checkbox-label">*/}
-                        {/*        I Agree to&nbsp;*/}
-                        {/*        <a*/}
-                        {/*            className="welcome-page__content-checkbox-label--link"*/}
-                        {/*            href="https://l1.broxus.com/everscale/wallet/privacy"*/}
-                        {/*            target="_blank"*/}
-                        {/*        >*/}
-                        {/*            Privacy Policy*/}
-                        {/*        </a>*/}
-                        {/*    </span>*/}
-                        {/*</div>*/}
                         <br />
                         <div>
                             <div className="welcome-page__content-button">
@@ -223,9 +203,6 @@ export function WelcomePage(): JSX.Element {
             {localStep == Step.CREATE_ACCOUNT && (
                 <NewAccountPage
                     name={FIRST_ACCOUNT_NAME}
-                    createAccount={createAccount}
-                    createMasterKey={createMasterKey}
-                    removeKey={removeKey}
                     onBack={() => {
                         setStep(Step.WELCOME)
                     }}
@@ -235,9 +212,6 @@ export function WelcomePage(): JSX.Element {
             {localStep == Step.IMPORT_ACCOUNT && (
                 <ImportAccountPage
                     name={FIRST_ACCOUNT_NAME}
-                    createAccount={createAccount}
-                    createMasterKey={createMasterKey}
-                    removeKey={removeKey}
                     onBack={() => {
                         setStep(Step.WELCOME)
                     }}

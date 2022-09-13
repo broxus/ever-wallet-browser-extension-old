@@ -65,7 +65,7 @@ impl AccountsStorage {
         &self,
         new_accounts: AccountToAddList,
     ) -> Result<PromiseAssetsListList, JsValue> {
-        if js_sys::Array::is_array(&new_accounts) {
+        if !js_sys::Array::is_array(&new_accounts) {
             return Err("Expected new_accounts to be an array").handle_error();
         }
         let new_accounts: js_sys::Array = new_accounts.unchecked_into();

@@ -1,65 +1,16 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
-
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import {
+    ContractEntry,
+    CONTRACT_TYPE_NAMES,
+    DEFAULT_WALLET_CONTRACTS,
+    OTHER_WALLET_CONTRACTS,
+} from '@shared/contracts'
 import * as nt from '@nekoton'
+
 import Button from '@popup/components/Button'
 import RadioButton from '@popup/components/RadioButton'
-import { useAccountability } from '@popup/providers/AccountabilityProvider'
-
-type ContractEntry = { type: nt.ContractType; name: string; description: string }
-
-const NEW_CONTRACTS: ContractEntry[] = [
-    {
-        type: 'EverWallet',
-        name: 'Simple wallet',
-        description: `Small wallet with one custodian. Deploys automatically.`,
-    },
-    {
-        type: 'Multisig2',
-        name: 'Multisig',
-        description: 'Multisig contract with upgradable code. Requires deployment.',
-    },
-]
-
-const OTHER_WALLETS: ContractEntry[] = [
-    {
-        type: 'SurfWallet',
-        name: 'Surf wallet',
-        description: 'Wallet contract used in Surf. Requires deployment.',
-    },
-    {
-        type: 'WalletV3',
-        name: 'WalletV3',
-        description: 'Small legacy wallet with one custodian. Deploys automatically.',
-    },
-    {
-        type: 'SafeMultisigWallet',
-        name: 'SafeMultisig',
-        description: 'Multisig contract without upgradable code. Requires deployment.',
-    },
-    {
-        type: 'SafeMultisigWallet24h',
-        name: 'SafeMultisig24h',
-        description:
-            'Multisig contract without upgradable code. Pending transactions lifetime extended to 24 hours. Requires deployment.',
-    },
-    {
-        type: 'SetcodeMultisigWallet',
-        name: 'SetcodeMultisig',
-        description: 'Multisig contract with upgradable code. Requires deployment.',
-    },
-    {
-        type: 'BridgeMultisigWallet',
-        name: 'BridgeMultisig',
-        description: 'Modified multisig. Requires deployment.',
-    },
-    {
-        type: 'HighloadWalletV2',
-        name: 'HighloadWalletV2',
-        description:
-            'Small legacy wallet with one custodian and advanced replay protection. Deploys automatically.',
-    },
-]
 
 type Props = {
     contractType: nt.ContractType
@@ -95,8 +46,8 @@ export function NewAccountContractType({
                 }, new Map<nt.ContractType, ContractEntry>())
 
             return {
-                newContracts: makeMap(NEW_CONTRACTS),
-                otherContracts: makeMap(OTHER_WALLETS),
+                defaultContracts: makeMap(DEFAULT_WALLET_CONTRACTS),
+                otherContracts: makeMap(OTHER_WALLET_CONTRACTS),
             }
         }
 
@@ -118,8 +69,8 @@ export function NewAccountContractType({
             }, new Map<nt.ContractType, ContractEntry>())
 
         return {
-            newContracts: filterAddresses(NEW_CONTRACTS),
-            otherContracts: filterAddresses(OTHER_WALLETS),
+            defaultContracts: filterAddresses(DEFAULT_WALLET_CONTRACTS),
+            otherContracts: filterAddresses(OTHER_WALLET_CONTRACTS),
         }
     }, [accountability.currentDerivedKeyAccounts])
 
@@ -137,10 +88,10 @@ export function NewAccountContractType({
             return false
         }
 
-        !availableContracts.newContracts.has(contractType) &&
+        !availableContracts.defaultContracts.has(contractType) &&
             !availableContracts.otherContracts.has(contractType) &&
-            (selectFirst(NEW_CONTRACTS, availableContracts.newContracts) ||
-                selectFirst(OTHER_WALLETS, availableContracts.otherContracts))
+            (selectFirst(DEFAULT_WALLET_CONTRACTS, availableContracts.defaultContracts) ||
+                selectFirst(OTHER_WALLET_CONTRACTS, availableContracts.otherContracts))
     }, [availableContracts, contractType])
 
     return (
@@ -154,7 +105,7 @@ export function NewAccountContractType({
             <div className="accounts-management__wrapper">
                 <div className="accounts-management__content">
                     <p className="accounts-management__content-subtitle">Default contracts:</p>
-                    {NEW_CONTRACTS.map(({ type, name, description }) => {
+                    {DEFAULT_WALLET_CONTRACTS.map(({ type, description }) => {
                         if (excludedContracts?.includes(type)) {
                             return null
                         }
@@ -162,18 +113,18 @@ export function NewAccountContractType({
                         return (
                             <RadioButton<nt.ContractType>
                                 onChange={onSelectContractType}
-                                disabled={!availableContracts.newContracts.has(type)}
+                                disabled={!availableContracts.defaultContracts.has(type)}
                                 id={type}
                                 key={type}
                                 checked={type === contractType}
-                                label={name}
-                                description={description}
+                                label={CONTRACT_TYPE_NAMES[type]}
+                                description={intl.formatMessage({ id: description })}
                                 value={type}
                             />
                         )
                     })}
                     <p className="accounts-management__content-subtitle">Other contracts:</p>
-                    {OTHER_WALLETS.map(({ type, name, description }) => {
+                    {OTHER_WALLET_CONTRACTS.map(({ type, description }) => {
                         if (excludedContracts?.includes(type)) {
                             return null
                         }
@@ -185,8 +136,8 @@ export function NewAccountContractType({
                                 id={type}
                                 key={type}
                                 checked={type === contractType}
-                                label={name}
-                                description={description}
+                                label={CONTRACT_TYPE_NAMES[type]}
+                                description={intl.formatMessage({ id: description })}
                                 value={type}
                             />
                         )

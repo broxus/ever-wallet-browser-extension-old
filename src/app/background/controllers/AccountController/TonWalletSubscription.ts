@@ -1,6 +1,6 @@
 import * as nt from '@nekoton'
 
-import { isSimpleWallet } from '@shared/utils'
+import { isSimpleWallet } from '@shared/contracts'
 import { ConnectionController } from '../ConnectionController'
 import { ContractSubscription, IContractHandler } from '../../utils/ContractSubscription'
 

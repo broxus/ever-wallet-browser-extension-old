@@ -1,49 +1,35 @@
 import React, { useState } from 'react'
 import { useIntl } from 'react-intl'
-import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { validateMnemonic } from '@popup/store/app/actions'
-import { KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
-import SignPolicy from '@popup/components/SignPolicy'
-import SelectContractType from '@popup/components/SelectContractType'
 import { EnterSeedLogin } from '@popup/components/EnterSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
 
 import './style.scss'
 import { parseError } from '@popup/utils'
+import { useRpc } from '@popup/providers/RpcProvider'
+import { DEFAULT_WALLET_TYPE, ACCOUNTS_TO_SEARCH, CONTRACT_TYPE_NAMES } from '@shared/contracts'
 
 enum LocalStep {
-    // SIGN_POLICY,
-    SELECT_CONTRACT_TYPE,
     ENTER_PHRASE,
     ENTER_PASSWORD,
 }
 
 interface IRestoreAccountPage {
     name: string
-    createMasterKey: (params: MasterKeyToCreate) => Promise<nt.KeyStoreEntry>
-    removeKey: (params: KeyToRemove) => Promise<nt.KeyStoreEntry | undefined>
-    createAccount: (params: nt.AccountToAdd) => Promise<nt.AssetsList>
     onBack: () => void
 }
 
-const ImportAccountPage: React.FC<IRestoreAccountPage> = ({
-    name,
-    createMasterKey,
-    removeKey,
-    createAccount,
-    onBack,
-}) => {
+const ImportAccountPage: React.FC<IRestoreAccountPage> = ({ name, onBack }) => {
     const intl = useIntl()
+    const rpc = useRpc()
     const [inProcess, setInProcess] = useState<boolean>(false)
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_CONTRACT_TYPE) // LocalStep.SIGN_POLICY
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.ENTER_PHRASE)
     const [error, setError] = useState<string>()
 
     const [seed, setSeed] = useState<nt.GeneratedMnemonic>()
-
-    const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
     const onSubmit = async (password: string) => {
         let key: nt.KeyStoreEntry | undefined
@@ -53,52 +39,65 @@ const ImportAccountPage: React.FC<IRestoreAccountPage> = ({
                 throw Error('Seed must be specified')
             }
 
-            key = await createMasterKey({ select: true, seed, password })
-            await createAccount({ name, contractType, publicKey: key.publicKey, workchain: 0 })
+            key = await rpc.createMasterKey({ select: true, seed, password })
+
+            const existingWallets = await rpc.findExistingWallets({
+                publicKey: key.publicKey,
+                contractTypes: ACCOUNTS_TO_SEARCH,
+                workchainId: 0,
+            })
+
+            const makeAccountName = (type: nt.ContractType) =>
+                type === DEFAULT_WALLET_TYPE ? name : `${name} (${CONTRACT_TYPE_NAMES[type]})`
+
+            const accountsToAdd = existingWallets
+                .filter(
+                    (wallet) =>
+                        wallet.contractState.isDeployed || wallet.contractState.balance !== '0'
+                )
+                .map<nt.AccountToAdd>((wallet) => ({
+                    name: makeAccountName(wallet.contractType),
+                    publicKey: wallet.publicKey,
+                    contractType: wallet.contractType,
+                    workchain: 0,
+                }))
+            if (accountsToAdd.length === 0) {
+                accountsToAdd.push({
+                    name: makeAccountName(DEFAULT_WALLET_TYPE),
+                    publicKey: key.publicKey,
+                    contractType: DEFAULT_WALLET_TYPE,
+                    workchain: 0,
+                })
+            }
+            await rpc.createAccounts(accountsToAdd)
+            await rpc.ensureAccountSelected()
         } catch (e: any) {
-            key && removeKey({ publicKey: key.publicKey }).catch(console.error)
+            key && rpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
             setError(parseError(e))
         }
     }
 
-    const mnemonicType: nt.MnemonicType =
-        contractType == 'WalletV3' ? { type: 'legacy' } : { type: 'labs', accountId: 0 }
-    const wordCount = contractType === 'WalletV3' ? 24 : 12
-
     return (
         <>
-            {/*{localStep == LocalStep.SIGN_POLICY && (*/}
-            {/*    <SignPolicy*/}
-            {/*        onSubmit={() => {*/}
-            {/*            setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)*/}
-            {/*        }}*/}
-            {/*        onBack={onBack}*/}
-            {/*    />*/}
-            {/*)}*/}
-            {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
-                <SelectContractType
-                    onSubmit={(contractType) => {
-                        setContractType(contractType)
-                        setLocalStep(LocalStep.ENTER_PHRASE)
-                    }}
-                    onBack={onBack}
-                />
-            )}
             {localStep == LocalStep.ENTER_PHRASE && (
                 <EnterSeedLogin
-                    onSubmit={(words) => {
-                        const phrase = words.join(' ')
+                    onSubmit={async (mnemonicType, phrase) => {
+                        if (inProcess) {
+                            return
+                        }
+                        setInProcess(true)
                         try {
                             validateMnemonic(phrase, mnemonicType)
                             setSeed({ phrase, mnemonicType })
                             setLocalStep(LocalStep.ENTER_PASSWORD)
                         } catch (e: any) {
                             setError(parseError(e))
+                        } finally {
+                            setInProcess(false)
                         }
                     }}
-                    onBack={() => setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)}
-                    wordCount={wordCount}
+                    onBack={onBack}
                 />
             )}
             {localStep == LocalStep.ENTER_PASSWORD && (

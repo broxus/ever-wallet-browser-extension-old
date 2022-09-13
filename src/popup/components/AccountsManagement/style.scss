@@ -494,10 +494,16 @@
 				border: 1px solid rgba(0, 136, 204, 0.3);
 				color: #0088cc;
 
-				svg {
+				svg:not(.hover-stoke) {
 					path,
 					rect {
 						fill: rgba(0, 136, 204, 1);
+					}
+				}
+
+				svg.hover-stoke {
+					path {
+						stroke: rgba(0, 136, 204, 1);
 					}
 				}
 			}

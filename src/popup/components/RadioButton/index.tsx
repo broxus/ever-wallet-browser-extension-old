@@ -22,7 +22,7 @@ export class RadioButton<T extends RadioButtonValue> extends React.Component<IRa
         return (
             <div
                 className={classNames('radio-button', {
-                    'radio-button-checked': checked,
+                    'radio-button-checked': checked || disabled,
                     'radio-button-disabled': disabled,
                     'with-description': description != null,
                 })}
@@ -36,7 +36,7 @@ export class RadioButton<T extends RadioButtonValue> extends React.Component<IRa
                     }}
                     value={value}
                     type="radio"
-                    checked={checked}
+                    checked={checked || disabled}
                 />
                 <label htmlFor={id}>
                     {label}

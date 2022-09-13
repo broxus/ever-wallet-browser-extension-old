@@ -791,12 +791,6 @@ export const transactionExplorerLink = ({ network, hash }: { network: string; ha
     }
 }
 
-export const isWithoutDeploy = (contract?: nt.ContractType) =>
-    contract === 'WalletV3' || contract === 'EverWallet' || contract === 'HighloadWalletV2'
-
-export const isSimpleWallet = (contract?: nt.ContractType) =>
-    contract === 'WalletV3' || contract === 'EverWallet' || contract === 'HighloadWalletV2'
-
 export interface SendMessageCallback {
     resolve: (transaction?: nt.Transaction) => void
     reject: (error?: Error) => void

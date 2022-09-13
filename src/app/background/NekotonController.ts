@@ -330,6 +330,7 @@ export class NekotonController extends EventEmitter {
             setLocale: nodeifyAsync(localizationController, 'setLocale'),
             createAccount: nodeifyAsync(accountController, 'createAccount'),
             createAccounts: nodeifyAsync(accountController, 'createAccounts'),
+            ensureAccountSelected: nodeifyAsync(accountController, 'ensureAccountSelected'),
             addExternalAccount: nodeifyAsync(accountController, 'addExternalAccount'),
             selectAccount: nodeifyAsync(accountController, 'selectAccount'),
             removeAccount: nodeifyAsync(accountController, 'removeAccount'),

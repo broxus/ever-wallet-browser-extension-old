@@ -1,21 +1,17 @@
 import React, { useState } from 'react'
 import { useIntl } from 'react-intl'
-import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
 import { generateSeed } from '@popup/store/app/actions'
-import { KeyToRemove, MasterKeyToCreate } from '@shared/backgroundApi'
 import * as nt from '@nekoton'
 
-import SignPolicy from '@popup/components/SignPolicy'
-import SelectContractType from '@popup/components/SelectContractType'
+import { useRpc } from '@popup/providers/RpcProvider'
 import ExportedSeed from '@popup/components/ExportedSeed'
 import { CheckSeedOnCreation } from '@popup/components/CheckSeed'
 import EnterNewPassword from '@popup/components/EnterNewPassword'
 import Modal from '@popup/components/Modal'
 import { parseError } from '@popup/utils'
+import { DEFAULT_WALLET_TYPE } from '@shared/contracts'
 
 enum LocalStep {
-    // SIGN_POLICY,
-    SELECT_CONTRACT_TYPE,
     SHOW_PHRASE,
     CHECK_PHRASE,
     ENTER_PASSWORD,
@@ -23,41 +19,36 @@ enum LocalStep {
 
 interface INewAccountPage {
     name: string
-    createMasterKey: (params: MasterKeyToCreate) => Promise<nt.KeyStoreEntry>
-    removeKey: (params: KeyToRemove) => Promise<nt.KeyStoreEntry | undefined>
-    createAccount: (params: nt.AccountToAdd) => Promise<nt.AssetsList>
     onBack: () => void
 }
 
-const NewAccountPage: React.FC<INewAccountPage> = ({
-    name,
-    createMasterKey,
-    removeKey,
-    createAccount,
-    onBack,
-}) => {
+const NewAccountPage: React.FC<INewAccountPage> = ({ name, onBack }) => {
     const intl = useIntl()
+    const rpc = useRpc()
     const [inProcess, setInProcess] = useState<boolean>(false)
-    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SELECT_CONTRACT_TYPE) // LocalStep.SIGN_POLICY
+    const [localStep, setLocalStep] = useState<LocalStep>(LocalStep.SHOW_PHRASE)
     const [error, setError] = useState<string>()
 
     const seed = useState<nt.GeneratedMnemonic>(generateSeed())[0]
-
-    const [contractType, setContractType] = useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
 
     const onSubmit = async (password: string) => {
         let key: nt.KeyStoreEntry | undefined
         try {
             setInProcess(true)
 
-            key = await createMasterKey({
+            key = await rpc.createMasterKey({
                 select: true,
                 seed,
                 password,
             })
-            await createAccount({ name, publicKey: key.publicKey, contractType, workchain: 0 })
+            await rpc.createAccount({
+                name,
+                publicKey: key.publicKey,
+                contractType: DEFAULT_WALLET_TYPE,
+                workchain: 0,
+            })
         } catch (e: any) {
-            key && removeKey({ publicKey: key.publicKey }).catch(console.error)
+            key && rpc.removeKey({ publicKey: key.publicKey }).catch(console.error)
             setInProcess(false)
             setError(parseError(e))
         }
@@ -67,28 +58,9 @@ const NewAccountPage: React.FC<INewAccountPage> = ({
 
     return (
         <>
-            {/*{localStep == LocalStep.SIGN_POLICY && (*/}
-            {/*    <SignPolicy*/}
-            {/*        onSubmit={() => {*/}
-            {/*            setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)*/}
-            {/*        }}*/}
-            {/*        onBack={onBack}*/}
-            {/*    />*/}
-            {/*)}*/}
-            {localStep == LocalStep.SELECT_CONTRACT_TYPE && (
-                <SelectContractType
-                    onSubmit={(contractType) => {
-                        setContractType(contractType)
-                        setLocalStep(LocalStep.SHOW_PHRASE)
-                    }}
-                    onBack={onBack}
-                />
-            )}
             {localStep == LocalStep.SHOW_PHRASE && (
                 <ExportedSeed
-                    onBack={() => {
-                        setLocalStep(LocalStep.SELECT_CONTRACT_TYPE)
-                    }}
+                    onBack={onBack}
                     onNext={() => {
                         setLocalStep(LocalStep.CHECK_PHRASE)
                     }}

@@ -131,7 +131,11 @@ $md-radio-ripple-size: 15px;
             cursor: not-allowed;
 
             &::before {
-                border-color: #dde1e2;
+                border-color: #dde1e2 !important;
+            }
+
+            &::after {
+                background: #dde1e2;
             }
         }
     }

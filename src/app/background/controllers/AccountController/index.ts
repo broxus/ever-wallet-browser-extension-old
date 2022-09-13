@@ -34,6 +34,7 @@ import {
     StoredBriefMessageInfo,
 } from '@shared/backgroundApi'
 import { NATIVE_CURRENCY } from '@shared/constants'
+import { DEFAULT_WALLET_TYPE } from '@shared/contracts'
 import * as nt from '@nekoton'
 
 import { BaseConfig, BaseController, BaseState } from '../BaseController'
@@ -706,11 +707,11 @@ export class AccountController extends BaseController<
         }
     }
 
-    public async createAccounts(params: nt.AccountToAdd[]): Promise<nt.AssetsList[]> {
+    public async createAccounts(accounts: nt.AccountToAdd[]): Promise<nt.AssetsList[]> {
         const { accountsStorage } = this.config
 
         try {
-            const newAccounts = await accountsStorage.addAccounts(params)
+            const newAccounts = await accountsStorage.addAccounts(accounts)
 
             const accountEntries = { ...this.state.accountEntries }
             const accountsVisibility: { [address: string]: boolean } = {}
@@ -727,13 +728,75 @@ export class AccountController extends BaseController<
                 accountEntries,
             })
 
-            // TODO: select first account?
+            await this._saveAccountsVisibility()
 
             await this.startSubscriptions()
             return newAccounts
         } catch (e: any) {
             throw new NekotonRpcError(RpcErrorCode.INVALID_REQUEST, e.toString())
         }
+    }
+
+    public async ensureAccountSelected() {
+        const selectedAccountAddress = await this._loadSelectedAccountAddress()
+        if (selectedAccountAddress != null) {
+            const selectedAccount = await this.config.accountsStorage.getAccount(
+                selectedAccountAddress
+            )
+            if (selectedAccount != null) {
+                return
+            }
+        }
+
+        const accountEntries: AccountControllerState['accountEntries'] = {}
+        const entries = await this.config.accountsStorage.getStoredAccounts()
+        if (entries.length === 0) {
+            throw new Error('No accounts')
+        }
+        const selectedAccount =
+            entries.find((item) => item.tonWallet.contractType === DEFAULT_WALLET_TYPE) ||
+            entries[0]
+
+        for (const entry of entries) {
+            accountEntries[entry.tonWallet.address] = entry
+        }
+
+        let externalAccounts = await this._loadExternalAccounts()
+        if (externalAccounts == null) {
+            externalAccounts = []
+        }
+
+        let selectedMasterKey = await this._loadSelectedMasterKey()
+        if (selectedMasterKey == null) {
+            const keyStoreEntries = await this.config.keyStore.getKeys()
+            const storedKeys: typeof defaultState.storedKeys = {}
+            for (const entry of keyStoreEntries) {
+                storedKeys[entry.publicKey] = entry
+            }
+            selectedMasterKey = storedKeys[selectedAccount.tonWallet.publicKey]?.masterKey
+
+            if (selectedMasterKey == null) {
+                const address = selectedAccount.tonWallet.address
+                for (const externalAccount of externalAccounts) {
+                    if (externalAccount.address != address) {
+                        continue
+                    }
+
+                    const externalIn = externalAccount.externalIn[0] as string | undefined
+                    if (externalIn != null) {
+                        selectedMasterKey = storedKeys[externalIn]?.masterKey
+                    }
+                    break
+                }
+            }
+        }
+
+        this.update({
+            selectedAccount,
+            selectedMasterKey,
+        })
+
+        await this._saveSelectedAccountAddress()
     }
 
     public async addExternalAccount(
