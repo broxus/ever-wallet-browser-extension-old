@@ -1137,7 +1137,7 @@ fn insert_init_data(
 
             let builder = parse_token_value(&param.value.kind, value)
                 .handle_error()?
-                .pack_into_chain(&ton_abi::contract::ABI_VERSION_2_0)
+                .pack_into_chain(&contract_abi.abi_version)
                 .handle_error()?;
 
             map.set_builder(param.key.write_to_new_cell().trust_me().into(), &builder)
@@ -1280,11 +1280,11 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         }
         s if s.starts_with("varint") => {
             let len = usize::from_str(&s[6..]).map_err(|_| AbiError::ExpectedParamType)?;
-            ton_abi::ParamType::Int(len)
+            ton_abi::ParamType::VarInt(len)
         }
         s if s.starts_with("varuint") => {
             let len = usize::from_str(&s[7..]).map_err(|_| AbiError::ExpectedParamType)?;
-            ton_abi::ParamType::Uint(len)
+            ton_abi::ParamType::VarUint(len)
         }
         s if s.starts_with("map(") && s.ends_with(')') => {
             let types: Vec<&str> = kind[4..kind.len() - 1].splitn(2, ',').collect();
@@ -1296,8 +1296,11 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
             let value_type = parse_param_type(types[1])?;
 
             match key_type {
-                ton_abi::ParamType::Int(_)
+                ton_abi::ParamType::Bool
+                | ton_abi::ParamType::Int(_)
                 | ton_abi::ParamType::Uint(_)
+                | ton_abi::ParamType::VarInt(_)
+                | ton_abi::ParamType::VarUint(_)
                 | ton_abi::ParamType::Address => {
                     ton_abi::ParamType::Map(Box::new(key_type), Box::new(value_type))
                 }
