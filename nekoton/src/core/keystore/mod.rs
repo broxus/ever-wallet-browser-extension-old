@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::time::Duration;
 
+use gloo_utils::format::JsValueSerdeExt;
 use serde::Deserialize;
 use sha2::Digest;
 use wasm_bindgen::prelude::*;

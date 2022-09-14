@@ -202,7 +202,7 @@ export type AccountToAdd = {
 }
 "#;
 
-#[wasm_bindgen(typescript_custom_section)]
+#[wasm_bindgen]
 extern "C" {
     #[wasm_bindgen(typescript_type = "AccountToAdd")]
     pub type AccountToAdd;

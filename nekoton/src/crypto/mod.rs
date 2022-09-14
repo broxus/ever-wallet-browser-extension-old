@@ -1,6 +1,7 @@
 use ed25519_dalek::Verifier;
 use std::convert::TryFrom;
 
+use gloo_utils::format::JsValueSerdeExt;
 use serde::Deserialize;
 use ton_block::Serializable;
 use wasm_bindgen::prelude::*;
