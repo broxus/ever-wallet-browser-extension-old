@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
+use std::convert::TryInto;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
@@ -830,10 +831,12 @@ fn parse_token_value(
                     return Err(AbiError::ExpectedMapItem);
                 }
 
-                let key = parse_token_value(param_key.as_ref(), value.get(0))?;
+                let key = parse_token_value(param_key.as_ref(), value.get(0))?
+                    .try_into()
+                    .map_err(|_| AbiError::InvalidMappingKey)?;
                 let value = parse_token_value(param_value.as_ref(), value.get(1))?;
 
-                result.insert(key.to_string(), value);
+                result.insert(key, value);
             }
 
             ton_abi::TokenValue::Map(*param_key.clone(), *param_value.clone(), result)
@@ -1016,7 +1019,7 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
             .iter()
             .map(|(key, value)| {
                 Result::<JsValue, JsValue>::Ok(
-                    [JsValue::from_str(key.as_str()), make_token_value(value)?]
+                    [JsValue::from(key.to_string()), make_token_value(value)?]
                         .iter()
                         .collect::<js_sys::Array>()
                         .unchecked_into(),
@@ -1388,6 +1391,8 @@ enum AbiError {
     ExpectedArray,
     #[error("Expected tuple of two elements")]
     ExpectedMapItem,
+    #[error("Invalid mapping key")]
+    InvalidMappingKey,
     #[error("Expected object")]
     ExpectedObject,
     #[error("Expected message")]
