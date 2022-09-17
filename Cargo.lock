@@ -202,18 +202,18 @@ dependencies = [
 
 [[package]]
 name = "crc"
-version = "2.1.0"
+version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49fc9a695bca7f35f5f4c15cddc84415f66a74ea78eef08e90c5024f2b540e23"
+checksum = "53757d12b596c16c78b83458d732a5d1a17ab3f53f2f7412f6fb57cc8a140ab3"
 dependencies = [
  "crc-catalog",
 ]
 
 [[package]]
 name = "crc-catalog"
-version = "1.1.1"
+version = "2.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ccaeedb56da03b09f598226e25e80088cb4cd25f316e6e4df7d695f0feeb1403"
+checksum = "2d0165d2900ae6778e36e80bbc4da3b5eefccee9ba939761f9c2882a5d9af3ff"
 
 [[package]]
 name = "crunchy"
@@ -622,7 +622,7 @@ checksum = "93c0d11ac30a033511ae414355d80f70d9f29a44a49140face477117a1ee90db"
 [[package]]
 name = "nekoton"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#ccf843d229484d6350e4d18f770e8a7271a5839b"
+source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -666,7 +666,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#ccf843d229484d6350e4d18f770e8a7271a5839b"
+source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
 dependencies = [
  "anyhow",
  "base64",
@@ -692,7 +692,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#ccf843d229484d6350e4d18f770e8a7271a5839b"
+source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -706,7 +706,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#ccf843d229484d6350e4d18f770e8a7271a5839b"
+source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
 dependencies = [
  "either",
  "proc-macro2",
@@ -717,7 +717,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#ccf843d229484d6350e4d18f770e8a7271a5839b"
+source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
 dependencies = [
  "anyhow",
  "base64",
@@ -738,9 +738,9 @@ dependencies = [
 
 [[package]]
 name = "num"
-version = "0.3.1"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b7a8e9be5e039e2ff869df49155f1c06bd01ade2117ec783e56ab0932b67a8f"
+checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
 dependencies = [
  "num-bigint",
  "num-complex",
@@ -752,9 +752,9 @@ dependencies = [
 
 [[package]]
 name = "num-bigint"
-version = "0.3.3"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f6f7833f2cbf2360a6cfd58cd41a53aa7a90bd4c202f5b1c7dd2ed73c57b2c3"
+checksum = "f93ab6289c7b344a8a9f60f88d80aa20032336fe78da341afc91c8a2341fc75f"
 dependencies = [
  "autocfg",
  "num-integer",
@@ -764,9 +764,9 @@ dependencies = [
 
 [[package]]
 name = "num-complex"
-version = "0.3.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "747d632c0c558b87dbabbe6a82f3b4ae03720d0646ac5b7b4dae89394be5f2c5"
+checksum = "7ae39348c8bc5fbd7f40c727a9925f03517afd2ab27d46702108b6a7e5414c19"
 dependencies = [
  "num-traits",
 ]
@@ -805,9 +805,9 @@ dependencies = [
 
 [[package]]
 name = "num-rational"
-version = "0.3.2"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12ac428b1cb17fce6f731001d307d351ec70a6d202fc2e60f7d4c5e42d8f4f07"
+checksum = "0638a1c9d0a3c0914158145bc76cff373a75a627e6ecbfb71cbe6f453a5a19b0"
 dependencies = [
  "autocfg",
  "num-bigint",
@@ -955,9 +955,9 @@ dependencies = [
 
 [[package]]
 name = "rand_core"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d34f1408f55294453790c48b2f1ebbb1c5b4b7563eb1f418bcfcfdbb06ebb4e7"
+checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
 ]
@@ -1060,9 +1060,9 @@ dependencies = [
 
 [[package]]
 name = "signature"
-version = "1.6.1"
+version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e90531723b08e4d6d71b791108faf51f03e1b4a7784f96b2b87f852ebc247228"
+checksum = "deb766570a2825fa972bceff0d195727876a9cdf2460ab2e52d455dc2de47fd9"
 
 [[package]]
 name = "slab"
@@ -1204,7 +1204,7 @@ dependencies = [
 [[package]]
 name = "ton_abi"
 version = "2.1.0"
-source = "git+https://github.com/broxus/ton-labs-abi.git#f76338d992d492646d0a2093bc35eb2038de9790"
+source = "git+https://github.com/broxus/ton-labs-abi.git#5429246f11bdb794910c295a5aab4318accdd894"
 dependencies = [
  "anyhow",
  "base64",
@@ -1227,7 +1227,7 @@ dependencies = [
 [[package]]
 name = "ton_block"
 version = "1.7.14"
-source = "git+https://github.com/broxus/ton-labs-block.git#2bcafe861f0d2a38c5f92bc1f9197ac7ccc6ba6f"
+source = "git+https://github.com/broxus/ton-labs-block.git#bf7a53587cc98da4b51b58f3c4160e8f85985159"
 dependencies = [
  "anyhow",
  "base64",
@@ -1262,7 +1262,7 @@ dependencies = [
 [[package]]
 name = "ton_types"
 version = "1.10.2"
-source = "git+https://github.com/broxus/ton-labs-types.git#e7dcdd4a4c194baff47bc7e882f2aa6b4a69413f"
+source = "git+https://github.com/broxus/ton-labs-types.git#dea1147b9fa25153e20dc79d9f0141f325f3921a"
 dependencies = [
  "anyhow",
  "base64",
@@ -1284,7 +1284,7 @@ dependencies = [
 [[package]]
 name = "ton_vm"
 version = "1.8.29"
-source = "git+https://github.com/broxus/ton-labs-vm.git#998c7499b3db63cb42080f852213587da7d728f2"
+source = "git+https://github.com/broxus/ton-labs-vm.git#72059801850016bad0a2b909600a043e0694feda"
 dependencies = [
  "anyhow",
  "ed25519",
@@ -1316,18 +1316,18 @@ checksum = "dcc811dc4066ac62f84f11307873c4850cb653bfa9b1719cee2bd2204a4bc5dd"
 
 [[package]]
 name = "unicode-normalization"
-version = "0.1.21"
+version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "854cbdc4f7bc6ae19c820d44abdc3277ac3e1b2b93db20a636825d9322fb60e6"
+checksum = "5c5713f0fc4b5db668a2ac63cdb7bb4469d8c9fed047b1d0292cc7b0ce2ba921"
 dependencies = [
  "tinyvec",
 ]
 
 [[package]]
 name = "unicode-xid"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "957e51f3646910546462e67d5f7599b9e4fb8acdd304b087a6494730f9eebf04"
+checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "universal-hash"
