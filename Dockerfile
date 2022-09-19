@@ -23,6 +23,7 @@ RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | b
 RUN set -eux; \
     mkdir -p /usr/local/cargo/registry/cache; \
     rustup target add wasm32-unknown-unknown; \
-    cargo install --git https://github.com/broxus/wasm-pack.git;
+    cargo install --git https://github.com/broxus/wasm-pack.git; \
+    cargo install wasm-bindgen-cli;
 
 CMD ["/app/build.sh"]
