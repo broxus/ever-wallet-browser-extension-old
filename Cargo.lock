@@ -531,9 +531,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.132"
+version = "0.2.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8371e4e5341c3a96db127eb2465ac681ced4c433e01dd0e938adbef26ba93ba5"
+checksum = "c0f80d65747a3e43d1596c7c5492d95d5edddaabd45a7fcdb02b95f644164966"
 
 [[package]]
 name = "libsecp256k1"
@@ -622,7 +622,7 @@ checksum = "93c0d11ac30a033511ae414355d80f70d9f29a44a49140face477117a1ee90db"
 [[package]]
 name = "nekoton"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
+source = "git+https://github.com/broxus/nekoton.git#a8bb7860a6a75b05018c22eb17e932848ee4fe7a"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -666,7 +666,7 @@ dependencies = [
 [[package]]
 name = "nekoton-abi"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
+source = "git+https://github.com/broxus/nekoton.git#a8bb7860a6a75b05018c22eb17e932848ee4fe7a"
 dependencies = [
  "anyhow",
  "base64",
@@ -692,7 +692,7 @@ dependencies = [
 [[package]]
 name = "nekoton-contracts"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
+source = "git+https://github.com/broxus/nekoton.git#a8bb7860a6a75b05018c22eb17e932848ee4fe7a"
 dependencies = [
  "anyhow",
  "nekoton-abi",
@@ -706,7 +706,7 @@ dependencies = [
 [[package]]
 name = "nekoton-derive"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
+source = "git+https://github.com/broxus/nekoton.git#a8bb7860a6a75b05018c22eb17e932848ee4fe7a"
 dependencies = [
  "either",
  "proc-macro2",
@@ -717,7 +717,7 @@ dependencies = [
 [[package]]
 name = "nekoton-utils"
 version = "0.11.0"
-source = "git+https://github.com/broxus/nekoton.git#c3c3359c31575d8020939a82b748740fa60fa2ec"
+source = "git+https://github.com/broxus/nekoton.git#a8bb7860a6a75b05018c22eb17e932848ee4fe7a"
 dependencies = [
  "anyhow",
  "base64",
@@ -1093,9 +1093,9 @@ checksum = "734676eb262c623cec13c3155096e08d1f8f29adce39ba17948b18dad1e54142"
 
 [[package]]
 name = "syn"
-version = "1.0.99"
+version = "1.0.100"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "58dbef6ec655055e20b86b15a8cc6d439cca19b667537ac6a1369572d151ab13"
+checksum = "52205623b1b0f064a4e71182c3b18ae902267282930c6d5462c91b859668426e"
 dependencies = [
  "proc-macro2",
  "quote",
