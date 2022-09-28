@@ -87,12 +87,6 @@ export class ContractSubscription<C extends IContract> {
                 const pollingMethodChanged = previousPollingMethod != this._currentPollingMethod
                 previousPollingMethod = this._currentPollingMethod
 
-                try {
-                    await this.onBeforeRefresh()
-                } catch (e: any) {
-                    console.error(`Error before refresh for ${this._address}`, e)
-                }
-
                 if (isSimpleTransport || this._currentPollingMethod == 'manual') {
                     this._currentBlockId = undefined
 
@@ -238,6 +232,4 @@ export class ContractSubscription<C extends IContract> {
                 throw err
             })
     }
-
-    protected async onBeforeRefresh(): Promise<void> {}
 }

@@ -52,10 +52,9 @@ export function TransactionsList({
     ] as AggregatedMultisigTransactions | undefined
 
     const contractType = tonWalletAsset.contractType
-
-    const tonWalletDetails = React.useMemo(() => {
-        return nt.getContractTypeDetails(contractType)
-    }, [rpcState, contractType])
+    const tonWalletDetails =
+        rpcState.state.accountDetails[tonWalletAsset.address] ||
+        nt.getContractTypeDefaultDetails(contractType)
 
     React.useEffect(() => {
         setScroll(scrollArea.current?.scrollTop || 0)

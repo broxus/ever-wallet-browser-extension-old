@@ -113,7 +113,8 @@ export function ApproveChangeAccount({
                                         onSubmit({
                                             address: selectedAccount.tonWallet.address,
                                             publicKey: selectedAccount.tonWallet.publicKey,
-                                            contractType: selectedAccount.tonWallet.contractType,
+                                            contractType: selectedAccount.tonWallet
+                                                .contractType as any,
                                         })
                                     }
                                 }}

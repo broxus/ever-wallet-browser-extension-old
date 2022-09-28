@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap};
+use std::convert::TryInto;
 use std::str::FromStr;
 
 use num_bigint::{BigInt, BigUint};
@@ -830,10 +831,12 @@ fn parse_token_value(
                     return Err(AbiError::ExpectedMapItem);
                 }
 
-                let key = parse_token_value(param_key.as_ref(), value.get(0))?;
+                let key = parse_token_value(param_key.as_ref(), value.get(0))?
+                    .try_into()
+                    .map_err(|_| AbiError::InvalidMappingKey)?;
                 let value = parse_token_value(param_value.as_ref(), value.get(1))?;
 
-                result.insert(key.to_string(), value);
+                result.insert(key, value);
             }
 
             ton_abi::TokenValue::Map(*param_key.clone(), *param_value.clone(), result)
@@ -1016,7 +1019,7 @@ fn make_token_value(value: &ton_abi::TokenValue) -> Result<JsValue, JsValue> {
             .iter()
             .map(|(key, value)| {
                 Result::<JsValue, JsValue>::Ok(
-                    [JsValue::from_str(key.as_str()), make_token_value(value)?]
+                    [JsValue::from(key.to_string()), make_token_value(value)?]
                         .iter()
                         .collect::<js_sys::Array>()
                         .unchecked_into(),
@@ -1137,7 +1140,7 @@ fn insert_init_data(
 
             let builder = parse_token_value(&param.value.kind, value)
                 .handle_error()?
-                .pack_into_chain(&ton_abi::contract::ABI_VERSION_2_0)
+                .pack_into_chain(&contract_abi.abi_version)
                 .handle_error()?;
 
             map.set_builder(param.key.write_to_new_cell().trust_me().into(), &builder)
@@ -1280,11 +1283,11 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
         }
         s if s.starts_with("varint") => {
             let len = usize::from_str(&s[6..]).map_err(|_| AbiError::ExpectedParamType)?;
-            ton_abi::ParamType::Int(len)
+            ton_abi::ParamType::VarInt(len)
         }
         s if s.starts_with("varuint") => {
             let len = usize::from_str(&s[7..]).map_err(|_| AbiError::ExpectedParamType)?;
-            ton_abi::ParamType::Uint(len)
+            ton_abi::ParamType::VarUint(len)
         }
         s if s.starts_with("map(") && s.ends_with(')') => {
             let types: Vec<&str> = kind[4..kind.len() - 1].splitn(2, ',').collect();
@@ -1296,8 +1299,11 @@ fn parse_param_type(kind: &str) -> Result<ton_abi::ParamType, AbiError> {
             let value_type = parse_param_type(types[1])?;
 
             match key_type {
-                ton_abi::ParamType::Int(_)
+                ton_abi::ParamType::Bool
+                | ton_abi::ParamType::Int(_)
                 | ton_abi::ParamType::Uint(_)
+                | ton_abi::ParamType::VarInt(_)
+                | ton_abi::ParamType::VarUint(_)
                 | ton_abi::ParamType::Address => {
                     ton_abi::ParamType::Map(Box::new(key_type), Box::new(value_type))
                 }
@@ -1360,7 +1366,7 @@ pub fn unpack_from_cell(
     let params = parse_params_list(params).handle_error()?;
     let cell = parse_slice(boc)?;
     let abi_version = parse_optional_abi_version(abi_version)?;
-    nt_abi::unpack_from_cell(&params, cell.into(), allow_partial, abi_version)
+    nt_abi::unpack_from_cell(&params, cell, allow_partial, abi_version)
         .handle_error()
         .and_then(|tokens| make_tokens_object(&tokens))
 }
@@ -1385,6 +1391,8 @@ enum AbiError {
     ExpectedArray,
     #[error("Expected tuple of two elements")]
     ExpectedMapItem,
+    #[error("Invalid mapping key")]
+    InvalidMappingKey,
     #[error("Expected object")]
     ExpectedObject,
     #[error("Expected message")]

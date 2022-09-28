@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use gloo_utils::format::JsValueSerdeExt;
 use serde::Deserialize;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
@@ -639,14 +640,14 @@ extern "C" {
 }
 
 pub fn make_multisig_pending_transaction(
-    data: models::MultisigPendingTransaction,
+    data: &models::MultisigPendingTransaction,
 ) -> MultisigPendingTransaction {
     ObjectBuilder::new()
         .set("id", format!("{:x}", data.id))
         .set(
             "confirmations",
             data.confirmations
-                .into_iter()
+                .iter()
                 .map(|item| hex::encode(item.as_slice()))
                 .map(JsValue::from)
                 .collect::<js_sys::Array>(),

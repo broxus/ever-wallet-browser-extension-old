@@ -36,6 +36,10 @@
 			line-height: 32px;
 			margin: 0;
 		}
+
+		&--with-subtitles {
+			margin-bottom: 10px;
+		}
 	}
 
 	&__wrapper {
@@ -78,6 +82,10 @@
 
 		&-title {
 			margin-bottom: 20px;
+		}
+
+		&-subtitle {
+			margin: 10px 0;
 		}
 
 		&-header {
@@ -486,10 +494,16 @@
 				border: 1px solid rgba(0, 136, 204, 0.3);
 				color: #0088cc;
 
-				svg {
+				svg:not(.hover-stoke) {
 					path,
 					rect {
 						fill: rgba(0, 136, 204, 1);
+					}
+				}
+
+				svg.hover-stoke {
+					path {
+						stroke: rgba(0, 136, 204, 1);
 					}
 				}
 			}

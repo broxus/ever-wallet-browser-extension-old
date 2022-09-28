@@ -1,34 +1,92 @@
 @import '../../styles/colors';
 
 .enter-seed {
-  &__content {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    &__content {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
 
-    &__seed-form {
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+        &__seed-form {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
 
-      &__title {
-        margin-bottom: 28px;
-      }
+            &__title {
+                margin-bottom: 28px;
+            }
 
-      input {
-        cursor: text;
-      }
+            input {
+                cursor: text;
+            }
+        }
+
+        .rc-select, .rc-select input {
+            cursor: pointer;
+        }
+
+        .MuiInputBase-root {
+            padding: 8px 16px;
+            border-radius: 0;
+        }
+
+        .MuiAutocomplete-inputRoot[class*="MuiOutlinedInput-root"] {
+            padding: 4px;
+        }
+
+        .MuiAutocomplete-inputRoot.Mui-focused .MuiOutlinedInput-notchedOutline {
+            border: 1px solid #b3b3b3;
+        }
+
+        .MuiOutlinedInput-root {
+            font-family: inherit;
+        }
+
+        .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline {
+            border-color: #b3b3b3;
+        }
+
+        .MuiOutlinedInput-notchedOutline {
+            border: 1px solid #dde1e2;
+        }
     }
-  }
 
-  &__buttons {
-    display: flex;
-    flex-direction: column;
+    &__buttons {
+        display: flex;
+        flex-direction: column;
 
-    & > button:not(:last-child),
-    .panel {
-      margin-bottom: 12px;
+        & > button:not(:last-child),
+        .panel {
+            margin-bottom: 12px;
+        }
     }
-  }
+}
+
+.MuiPaper-root {
+    font-family: inherit !important;
+}
+
+.MuiAutocomplete-listbox {
+    padding: 5px 0 !important;
+    border-radius: 2px !important;
+}
+
+.MuiPaper-elevation1 {
+    box-shadow: 0 3px 9px rgb(43 51 56 / 30%) !important;
+}
+
+.MuiAutocomplete-option {
+    color: #000000;
+    display: block;
+    font-size: 16px !important;;
+    font-weight: normal;
+    line-height: 30px !important;
+    padding: 5px 20px !important;;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+
+    &[data-focus="true"] {
+        background-color: #efefef;
+    }
 }

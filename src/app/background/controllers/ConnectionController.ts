@@ -565,13 +565,12 @@ export class GqlSocket {
 
                         const response = await fetch(endpoint, {
                             method: 'post',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
+                            headers: HEADERS,
                             body: data,
                         }).then((response) => response.text())
                         handler.onReceive(response)
                     } catch (e: any) {
+                        console.error(e)
                         handler.onError(e)
                     }
                 })()
@@ -696,7 +695,7 @@ export class JrpcSocket {
                 this.params = params
                 this.instance = setupCache(
                     Axios.create({
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: HEADERS,
                         decompress: true,
                         responseType: 'text',
                         transformResponse: (data) => data,
@@ -718,6 +717,7 @@ export class JrpcSocket {
                         const response = await this.instance.post(this.params.endpoint, data)
                         handler.onReceive(response.data)
                     } catch (e: any) {
+                        console.error(e)
                         handler.onError(e)
                     }
                 })()
@@ -727,3 +727,5 @@ export class JrpcSocket {
         return new nt.JrpcConnection(clock, new JrpcSender(params))
     }
 }
+
+const HEADERS = { 'Content-Type': 'application/json' }

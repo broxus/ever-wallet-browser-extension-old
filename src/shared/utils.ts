@@ -17,7 +17,7 @@ import {
     PendingJsonRpcResponse,
     JsonRpcEngine,
 } from './jrpc'
-import * as nt from '@nekoton'
+import type * as nt from '@nekoton'
 
 export const ONE_TON = '1000000000'
 
@@ -777,17 +777,17 @@ export const parseCurrency = (amount: string, decimals: number) => {
 export const transactionExplorerLink = ({ network, hash }: { network: string; hash: string }) => {
     switch (network) {
         case 'mainnet':
-            return `https://tonscan.io/transactions/${hash}`
+            return `https://everscan.io/transactions/${hash}`
         case 'testnet':
-            return `https://dev.tonscan.io/transactions/${hash}`
+            return `https://testnet.everscan.io/transactions/${hash}`
         case 'fld':
             return `https://fld.ever.live/transactions/transactionDetails?id=${hash}`
-        case 'gosh':
-            return `https://gosh.live/transactions/transactionDetails?id=${hash}`
+        case 'rfld':
+            return `https://rfld.ever.live/transactions/transactionDetails?id=${hash}`
         case 'localnet':
             return `http://localhost/transactions/transactionDetails?id=${hash}`
         default:
-            return `https://tonscan.io/transactions/${hash}`
+            return `https://everscan.io/transactions/${hash}`
     }
 }
 

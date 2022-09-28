@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { useIntl } from 'react-intl'
 import _ from 'lodash'
 import { createStyles, makeStyles, Theme } from '@material-ui/core/styles'
 import { formatSeed } from '@popup/utils'
@@ -7,6 +6,7 @@ import * as nt from '@nekoton'
 
 import Autocomplete from '@material-ui/lab/Autocomplete'
 import TextField from '@material-ui/core/TextField'
+import Paper from '@material-ui/core/Paper'
 
 import './style.scss'
 
@@ -25,10 +25,10 @@ interface ITagsInput {
     words: string[]
     setWords: (words: string[]) => void
     wordCount: number
+    disabled?: boolean
 }
 
-const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount }) => {
-    const intl = useIntl()
+const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount, disabled }) => {
     const classes = useStyles()
     const [hints, setHints] = useState<string[]>([])
 
@@ -62,16 +62,13 @@ const TagsInput: React.FC<ITagsInput> = ({ setWords, words, wordCount }) => {
                 id="tags-standard"
                 options={hints}
                 value={words}
+                disabled={disabled}
                 onInputChange={(event, values) => onInputChange(event, values)}
                 onChange={(event, values) => onSelectTag(event, values)}
                 getOptionSelected={() => false}
+                PaperComponent={(props) => <Paper {...props} square={true} />}
                 renderInput={(params) => (
-                    <TextField
-                        {...params}
-                        variant="standard"
-                        label={intl.formatMessage({ id: 'ENTER_YOUR_SEED_FIELD_PLACEHOLDER' })}
-                        margin="normal"
-                    />
+                    <TextField {...params} variant="outlined" margin="normal" />
                 )}
             />
         </div>

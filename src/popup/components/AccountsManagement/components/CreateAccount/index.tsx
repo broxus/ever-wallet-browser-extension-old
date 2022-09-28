@@ -2,7 +2,7 @@ import * as React from 'react'
 import { IntlShape, useIntl } from 'react-intl'
 
 import * as nt from '@nekoton'
-import { DEFAULT_CONTRACT_TYPE } from '@popup/common'
+import { DEFAULT_WALLET_TYPE } from '@shared/contracts'
 import {
     NewAccountContractType,
     SelectAccountAddingFlow,
@@ -57,7 +57,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
     const [inProcess, setInProcess] = React.useState(false)
     const [step, setStep] = React.useState(FlowStep.INDEX)
     const [name, setName] = React.useState(defaultAccountName(accountability, intl))
-    const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_CONTRACT_TYPE)
+    const [contractType, setContractType] = React.useState<nt.ContractType>(DEFAULT_WALLET_TYPE)
 
     const onManageDerivedKey = () => {
         accountability.setStep(Step.MANAGE_DERIVED_KEY)
@@ -232,7 +232,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
         ) {
             accountability.setCurrentDerivedKey(accountability.derivedKeys[0])
         }
-        setContractType(DEFAULT_CONTRACT_TYPE)
+        setContractType(DEFAULT_WALLET_TYPE)
     }, [accountability.currentDerivedKey])
 
     return (
@@ -253,7 +253,7 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                         <h2 className="accounts-management__header-title">
                             {step === FlowStep.ENTER_ADDRESS
                                 ? intl.formatMessage({
-                                      id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_AN_EXISTING_LABEL',
+                                      id: 'ADD_ACCOUNT_PANEL_FLOW_ADD_EXTERNAL_LABEL',
                                   })
                                 : intl.formatMessage({
                                       id: 'ADD_ACCOUNT_PANEL_FLOW_CREATE_LABEL',
@@ -290,19 +290,6 @@ export function CreateAccount({ onBackFromIndex }: Props): JSX.Element {
                                             value={address || ''}
                                             onChange={(e) => setAddress(e.target.value)}
                                         />
-                                    </div>
-                                )}
-                                {step === FlowStep.ENTER_NAME && (
-                                    <div className="accounts-management__content-comment">
-                                        {intl.formatMessage({
-                                            id: 'CREATE_NEW_ACCOUNT_PANEL_COMMENT',
-                                        })}{' '}
-                                        <a role="button" onClick={onManageDerivedKey}>
-                                            {intl.formatMessage({
-                                                id: 'CREATE_NEW_ACCOUNT_PANEL_COMMENT_MANAGE_KEY_LINK_LABEL',
-                                            })}
-                                        </a>
-                                        .
                                     </div>
                                 )}
                             </div>

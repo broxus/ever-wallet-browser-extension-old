@@ -1,5 +1,7 @@
 @use "sass:math";
 
+@import '../../styles/colors';
+
 label,
 label:before,
 label:after {
@@ -45,6 +47,24 @@ $md-radio-ripple-size: 15px;
 
         &:checked + label::after {
             transform: scale(1);
+        }
+    }
+
+    &.with-description {
+        label {
+            height: auto;
+
+            padding-top: 10px;
+            padding-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+
+            small {
+                color: $windowSubTextFgOver;
+                margin-top: 0.1em;
+                font-size: 0.7rem;
+                line-height: 0.9rem;
+            }
         }
     }
 
@@ -111,7 +131,11 @@ $md-radio-ripple-size: 15px;
             cursor: not-allowed;
 
             &::before {
-                border-color: #dde1e2;
+                border-color: #dde1e2 !important;
+            }
+
+            &::after {
+                background: #dde1e2;
             }
         }
     }

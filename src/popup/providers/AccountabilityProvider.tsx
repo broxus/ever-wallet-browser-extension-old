@@ -247,8 +247,17 @@ export function AccountabilityProvider({ children }: Props): JSX.Element {
         if (rpcState.state.selectedAccount == null) {
             return undefined
         }
-        return nt.getContractTypeDetails(rpcState.state.selectedAccount.tonWallet.contractType)
-    }, [rpcState.state.selectedAccount?.tonWallet.contractType])
+
+        const details = rpcState.state.accountDetails[
+            rpcState.state.selectedAccount.tonWallet.address
+        ] as nt.TonWalletDetails | undefined
+
+        return details != null
+            ? details
+            : nt.getContractTypeDefaultDetails(
+                  rpcState.state.selectedAccount.tonWallet.contractType
+              )
+    }, [rpcState, selectedAccountAddress])
 
     const nextAccountId = React.useMemo(() => {
         if (currentMasterKey == null) {

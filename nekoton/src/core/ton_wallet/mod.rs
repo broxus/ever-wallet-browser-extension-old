@@ -1,4 +1,4 @@
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 
@@ -23,8 +23,6 @@ pub struct TonWallet {
     #[wasm_bindgen(skip)]
     pub contract_type: ton_wallet::WalletType,
     #[wasm_bindgen(skip)]
-    pub details: ton_wallet::TonWalletDetails,
-    #[wasm_bindgen(skip)]
     pub inner: Arc<TonWalletImpl>,
 }
 
@@ -34,7 +32,6 @@ impl TonWallet {
             address: wallet.address().to_string(),
             public_key: hex::encode(wallet.public_key().as_bytes()),
             contract_type: wallet.wallet_type(),
-            details: wallet.details(),
             inner: Arc::new(TonWalletImpl {
                 transport,
                 wallet: Mutex::new(wallet),
@@ -58,11 +55,6 @@ impl TonWallet {
     #[wasm_bindgen(getter, js_name = "contractType")]
     pub fn contract_type(&self) -> ContractType {
         self.contract_type.into()
-    }
-
-    #[wasm_bindgen(getter, js_name = "details")]
-    pub fn details(&self) -> TonWalletDetails {
-        make_ton_wallet_details(self.details)
     }
 
     #[wasm_bindgen(js_name = "contractState")]
@@ -181,7 +173,7 @@ impl TonWallet {
         Some(
             custodians
                 .iter()
-                .map(|item| JsValue::from_str(&item.to_hex_string()))
+                .map(|item| JsValue::from(item.to_hex_string()))
                 .collect::<js_sys::Array>()
                 .unchecked_into(),
         )
@@ -194,7 +186,7 @@ impl TonWallet {
         let wallet = inner.wallet.lock().trust_me();
         let pending_transactions = wallet.get_unconfirmed_transactions().to_vec();
         pending_transactions
-            .into_iter()
+            .iter()
             .map(make_multisig_pending_transaction)
             .collect::<js_sys::Array>()
             .unchecked_into()
@@ -359,6 +351,21 @@ extern "C" {
         transactions: TransactionsList,
         batch_info: crate::core::models::TransactionsBatchInfo,
     );
+
+    #[wasm_bindgen(method, js_name = "onDetailsChanged")]
+    pub fn on_details_changed(this: &TonWalletSubscriptionHandlerImpl, details: TonWalletDetails);
+
+    #[wasm_bindgen(method, js_name = "onCustodiansChanged")]
+    pub fn on_custodians_changed(
+        this: &TonWalletSubscriptionHandlerImpl,
+        custodians: CustodiansList,
+    );
+
+    #[wasm_bindgen(method, js_name = "onUnconfirmedTransactionsChanged")]
+    pub fn on_unconfirmed_transactions_changed(
+        this: &TonWalletSubscriptionHandlerImpl,
+        transactions: MultisigPendingTransactionList,
+    );
 }
 
 unsafe impl Send for TonWalletSubscriptionHandlerImpl {}
@@ -416,6 +423,34 @@ impl ton_wallet::TonWalletSubscriptionHandler for TonWalletSubscriptionHandler {
             make_transactions_batch_info(batch_info),
         )
     }
+
+    fn on_details_changed(&self, details: ton_wallet::TonWalletDetails) {
+        self.inner
+            .on_details_changed(make_ton_wallet_details(details));
+    }
+
+    fn on_custodians_changed(&self, custodians: &[ton_types::UInt256]) {
+        self.inner.on_custodians_changed(
+            custodians
+                .iter()
+                .map(|item| JsValue::from(item.to_hex_string()))
+                .collect::<js_sys::Array>()
+                .unchecked_into(),
+        );
+    }
+
+    fn on_unconfirmed_transactions_changed(
+        &self,
+        unconfirmed_transactions: &[core_models::MultisigPendingTransaction],
+    ) {
+        self.inner.on_unconfirmed_transactions_changed(
+            unconfirmed_transactions
+                .iter()
+                .map(make_multisig_pending_transaction)
+                .collect::<js_sys::Array>()
+                .unchecked_into(),
+        );
+    }
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -435,7 +470,7 @@ extern "C" {
     pub type TonWalletDetails;
 }
 
-fn make_ton_wallet_details(data: nt::core::ton_wallet::TonWalletDetails) -> TonWalletDetails {
+fn make_ton_wallet_details(data: ton_wallet::TonWalletDetails) -> TonWalletDetails {
     ObjectBuilder::new()
         .set("requiresSeparateDeploy", data.requires_separate_deploy)
         .set("minAmount", data.min_amount.to_string())
@@ -491,7 +526,10 @@ export type ContractType =
     | 'SetcodeMultisigWallet'
     | 'BridgeMultisigWallet'
     | 'SurfWallet'
-    | 'WalletV3';
+    | 'WalletV3'
+    | 'EverWallet'
+    | 'Multisig2'
+    | 'HighloadWalletV2';
 "#;
 
 impl TryFrom<ContractType> for nt::core::ton_wallet::WalletType {
@@ -512,8 +550,12 @@ impl From<nt::core::ton_wallet::WalletType> for ContractType {
     }
 }
 
-#[wasm_bindgen(js_name = "getContractTypeDetails")]
-pub fn get_contract_type_details(contract_type: ContractType) -> Result<TonWalletDetails, JsValue> {
+#[wasm_bindgen(js_name = "getContractTypeDefaultDetails")]
+pub fn get_contract_type_default_details(
+    contract_type: ContractType,
+) -> Result<TonWalletDetails, JsValue> {
+    use std::convert::TryInto;
+
     let contract_type: nt::core::ton_wallet::WalletType = contract_type.try_into()?;
     Ok(make_ton_wallet_details(contract_type.details()))
 }

@@ -2,7 +2,7 @@ import * as React from 'react'
 import { useIntl } from 'react-intl'
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
-
+import { requiresSeparateDeploy } from '@shared/contracts'
 import { createRipple, removeRipple } from '@popup/common'
 import { DeployWallet } from '@popup/components/DeployWallet'
 import { TransactionsList } from '@popup/components/TransactionsList'
@@ -73,8 +73,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
             return (
                 tonWalletState == null ||
                 (!tonWalletState.isDeployed &&
-                    nt.getContractTypeDetails(account.tonWallet.contractType)
-                        .requiresSeparateDeploy)
+                    requiresSeparateDeploy(account.tonWallet.contractType))
             )
         }
         return false
@@ -168,7 +167,7 @@ export function AssetFull({ tokenWalletStates, selectedAsset, selectedKeys }: Pr
         (balance || '0') != '0' &&
         (selectedAsset.type === 'ton_wallet' ||
             tonWalletState.isDeployed ||
-            !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy)
+            !requiresSeparateDeploy(account.tonWallet.contractType))
 
     return (
         <>

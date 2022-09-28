@@ -15,6 +15,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { convertTons } from '@shared/utils'
+import { requiresSeparateDeploy } from '@shared/contracts'
 
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
@@ -145,7 +146,9 @@ export function AccountDetails(): JSX.Element {
                             removeRipple(event)
                             if (
                                 accountability.tonWalletState?.isDeployed ||
-                                accountability.selectedAccount?.tonWallet.contractType == 'WalletV3'
+                                !requiresSeparateDeploy(
+                                    accountability.selectedAccount?.tonWallet.contractType
+                                )
                             ) {
                                 await onSend()
                             } else {
@@ -155,7 +158,9 @@ export function AccountDetails(): JSX.Element {
                     >
                         <div className="account-details__controls__button__content">
                             {accountability.tonWalletState?.isDeployed ||
-                            accountability.selectedAccount?.tonWallet.contractType == 'WalletV3' ? (
+                            !requiresSeparateDeploy(
+                                accountability.selectedAccount?.tonWallet.contractType
+                            ) ? (
                                 <>
                                     <img src={SendIcon} alt="" style={{ marginRight: '8px' }} />
                                     {intl.formatMessage({ id: 'SEND_BTN_TEXT' })}

@@ -1,19 +1,16 @@
 import * as React from 'react'
 import { useIntl } from 'react-intl'
-
+import { useAccountability } from '@popup/providers/AccountabilityProvider'
+import {
+    ContractEntry,
+    CONTRACT_TYPE_NAMES,
+    DEFAULT_WALLET_CONTRACTS,
+    OTHER_WALLET_CONTRACTS,
+} from '@shared/contracts'
 import * as nt from '@nekoton'
+
 import Button from '@popup/components/Button'
 import RadioButton from '@popup/components/RadioButton'
-import { useAccountability } from '@popup/providers/AccountabilityProvider'
-
-const CONTRACT_TYPES: { [K in nt.ContractType]?: string } = {
-    SafeMultisigWallet: 'SafeMultisig (default)',
-    SafeMultisigWallet24h: 'SafeMultisig24',
-    BridgeMultisigWallet: 'BridgeMultisigWallet',
-    SurfWallet: 'Surf',
-    WalletV3: 'WalletV3',
-    SetcodeMultisigWallet: 'SetcodeMultisigWallet',
-}
 
 type Props = {
     contractType: nt.ContractType
@@ -42,28 +39,64 @@ export function NewAccountContractType({
         const { currentDerivedKey } = accountability
 
         if (currentDerivedKey == null) {
-            return window.ObjectExt.keys(CONTRACT_TYPES)
+            const makeMap = (entries: ContractEntry[]) =>
+                entries.reduce((obj, item) => {
+                    obj.set(item.type, item)
+                    return obj
+                }, new Map<nt.ContractType, ContractEntry>())
+
+            return {
+                defaultContracts: makeMap(DEFAULT_WALLET_CONTRACTS),
+                otherContracts: makeMap(OTHER_WALLET_CONTRACTS),
+            }
         }
 
         const accountAddresses = accountability.currentDerivedKeyAccounts.map(
             (account) => account.tonWallet.address
         )
 
-        return window.ObjectExt.keys(CONTRACT_TYPES).filter((type) => {
-            const address = nt.computeTonWalletAddress(currentDerivedKey.publicKey, type, 0)
-            return !accountAddresses.includes(address)
-        })
+        const filterAddresses = (entries: ContractEntry[]) =>
+            entries.reduce((obj, item) => {
+                const address = nt.computeTonWalletAddress(
+                    currentDerivedKey.publicKey,
+                    item.type,
+                    0
+                )
+                if (!accountAddresses.includes(address)) {
+                    obj.set(item.type, item)
+                }
+                return obj
+            }, new Map<nt.ContractType, ContractEntry>())
+
+        return {
+            defaultContracts: filterAddresses(DEFAULT_WALLET_CONTRACTS),
+            otherContracts: filterAddresses(OTHER_WALLET_CONTRACTS),
+        }
     }, [accountability.currentDerivedKeyAccounts])
 
     React.useEffect(() => {
-        if (!availableContracts.includes(contractType)) {
-            onSelectContractType(availableContracts[0])
+        const selectFirst = (
+            entries: ContractEntry[],
+            available: Map<nt.ContractType, ContractEntry>
+        ) => {
+            for (const { type } of entries) {
+                if (available.has(type)) {
+                    onSelectContractType(type)
+                    return true
+                }
+            }
+            return false
         }
+
+        !availableContracts.defaultContracts.has(contractType) &&
+            !availableContracts.otherContracts.has(contractType) &&
+            (selectFirst(DEFAULT_WALLET_CONTRACTS, availableContracts.defaultContracts) ||
+                selectFirst(OTHER_WALLET_CONTRACTS, availableContracts.otherContracts))
     }, [availableContracts, contractType])
 
     return (
         <div className="accounts-management">
-            <header className="accounts-management__header">
+            <header className="accounts-management__header accounts-management__header--with-subtitles">
                 <h2 className="accounts-management__header-title">
                     {intl.formatMessage({ id: 'CONTRACT_TYPE_PANEL_HEADER' })}
                 </h2>
@@ -71,7 +104,8 @@ export function NewAccountContractType({
 
             <div className="accounts-management__wrapper">
                 <div className="accounts-management__content">
-                    {window.ObjectExt.keys(CONTRACT_TYPES).map((type) => {
+                    <p className="accounts-management__content-subtitle">Default contracts:</p>
+                    {DEFAULT_WALLET_CONTRACTS.map(({ type, description }) => {
                         if (excludedContracts?.includes(type)) {
                             return null
                         }
@@ -79,16 +113,35 @@ export function NewAccountContractType({
                         return (
                             <RadioButton<nt.ContractType>
                                 onChange={onSelectContractType}
-                                disabled={!availableContracts.includes(type)}
+                                disabled={!availableContracts.defaultContracts.has(type)}
                                 id={type}
                                 key={type}
                                 checked={type === contractType}
-                                label={CONTRACT_TYPES[type] as string}
+                                label={CONTRACT_TYPE_NAMES[type]}
+                                description={intl.formatMessage({ id: description })}
                                 value={type}
                             />
                         )
                     })}
+                    <p className="accounts-management__content-subtitle">Other contracts:</p>
+                    {OTHER_WALLET_CONTRACTS.map(({ type, description }) => {
+                        if (excludedContracts?.includes(type)) {
+                            return null
+                        }
 
+                        return (
+                            <RadioButton<nt.ContractType>
+                                onChange={onSelectContractType}
+                                disabled={!availableContracts.otherContracts.has(type)}
+                                id={type}
+                                key={type}
+                                checked={type === contractType}
+                                label={CONTRACT_TYPE_NAMES[type]}
+                                description={intl.formatMessage({ id: description })}
+                                value={type}
+                            />
+                        )
+                    })}
                     {error !== undefined && (
                         <div className="accounts-management__content-error">{error}</div>
                     )}

@@ -168,7 +168,7 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                     </span>
                     <span className="transactions-list-item__description transactions-list-item__date">
                         {new Date(transaction.createdAt * 1000).toLocaleString('default', {
-                            month: 'long',
+                            month: 'short',
                             day: 'numeric',
                             hour: 'numeric',
                             minute: 'numeric',
@@ -202,8 +202,8 @@ export function ListItem({ symbol, transaction, style, onViewTransaction }: Prop
                                     { id: 'TRANSACTIONS_LIST_ITEM_LABEL_EXPIRES_AT' },
                                     {
                                         date: new Date(expiresAt * 1000).toLocaleString('default', {
-                                            month: 'long', // TODO: remove
-                                            day: 'numeric', // TODO: remove
+                                            month: 'short',
+                                            day: 'numeric',
                                             hour: 'numeric',
                                             minute: 'numeric',
                                         }),
