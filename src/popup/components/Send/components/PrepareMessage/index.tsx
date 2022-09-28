@@ -139,7 +139,8 @@ export function PrepareMessage({
         }
     }
 
-    const walletInfo = nt.getContractTypeDetails(tonWalletAsset.contractType)
+    // TODO: get from state
+    const walletInfo = nt.getContractTypeDefaultDetails(tonWalletAsset.contractType)
 
     const submitMessageParams = async (data: MessageFromData) => {
         if (selectedKey == null) {

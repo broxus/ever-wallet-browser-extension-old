@@ -15,7 +15,7 @@ import { useRpc } from '@popup/providers/RpcProvider'
 import { useRpcState } from '@popup/providers/RpcStateProvider'
 import { getScrollWidth } from '@popup/utils/getScrollWidth'
 import { convertTons } from '@shared/utils'
-import { isWithoutDeploy } from '@shared/contracts'
+import { requiresSeparateDeploy } from '@shared/contracts'
 
 import DeployIcon from '@popup/img/deploy-icon.svg'
 import NotificationsIcon from '@popup/img/notifications.svg'
@@ -146,7 +146,7 @@ export function AccountDetails(): JSX.Element {
                             removeRipple(event)
                             if (
                                 accountability.tonWalletState?.isDeployed ||
-                                isWithoutDeploy(
+                                !requiresSeparateDeploy(
                                     accountability.selectedAccount?.tonWallet.contractType
                                 )
                             ) {
@@ -158,7 +158,7 @@ export function AccountDetails(): JSX.Element {
                     >
                         <div className="account-details__controls__button__content">
                             {accountability.tonWalletState?.isDeployed ||
-                            isWithoutDeploy(
+                            !requiresSeparateDeploy(
                                 accountability.selectedAccount?.tonWallet.contractType
                             ) ? (
                                 <>

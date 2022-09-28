@@ -128,10 +128,8 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
     }, [source, transactionId, rpcState.state.accountMultisigTransactions])
 
     const expirationTime = React.useMemo(() => {
-        const account = rpcState.state.accountEntries[source] as nt.AssetsList | undefined
-        return account != null
-            ? nt.getContractTypeDetails(account.tonWallet.contractType).expirationTime
-            : 3600
+        const details = rpcState.state.accountDetails[source] as nt.TonWalletDetails | undefined
+        return details != null ? details.expirationTime : 3600
     }, [rpcState, source])
 
     const confirmations: string[] = multisigTransaction?.confirmations || []

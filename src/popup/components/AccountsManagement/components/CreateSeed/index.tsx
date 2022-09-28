@@ -15,8 +15,8 @@ import { Step, useAccountability } from '@popup/providers/AccountabilityProvider
 import { generateSeed, validateMnemonic } from '@popup/store/app/actions'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { parseError } from '@popup/utils'
-import { useRpcState } from '@popup/providers/RpcStateProvider'
 import AccountManager from '@popup/components/Ledger/AccountManager'
+import { ACCOUNTS_TO_SEARCH, CONTRACT_TYPE_NAMES, DEFAULT_WALLET_TYPE } from '@shared/contracts'
 
 enum AddSeedFlow {
     CREATE,
@@ -44,7 +44,6 @@ export function CreateSeed(): JSX.Element {
     const intl = useIntl()
     const accountability = useAccountability()
     const rpc = useRpc()
-    const rpcState = useRpcState()
 
     const flowOptions = React.useMemo<OptionType[]>(
         () => [
@@ -94,16 +93,58 @@ export function CreateSeed(): JSX.Element {
                 nameToSave = undefined
             }
 
-            const entry = await rpc.createMasterKey({
+            const key = await rpc.createMasterKey({
                 select: false,
                 name: nameToSave,
                 password,
                 seed,
             })
 
-            if (entry != null) {
-                accountability.onManageMasterKey(entry)
-                accountability.onManageDerivedKey(entry)
+            if (key != null && (flow == AddSeedFlow.IMPORT || flow == AddSeedFlow.IMPORT_LEGACY)) {
+                try {
+                    let name = key.name
+
+                    const existingWallets = await rpc.findExistingWallets({
+                        publicKey: key.publicKey,
+                        contractTypes: ACCOUNTS_TO_SEARCH,
+                        workchainId: 0,
+                    })
+
+                    const makeAccountName = (type: nt.ContractType) =>
+                        type === DEFAULT_WALLET_TYPE
+                            ? name
+                            : `${name} (${CONTRACT_TYPE_NAMES[type]})`
+
+                    const accountsToAdd = existingWallets
+                        .filter(
+                            (wallet) =>
+                                wallet.contractState.isDeployed ||
+                                wallet.contractState.balance !== '0'
+                        )
+                        .map<nt.AccountToAdd>((wallet) => ({
+                            name: makeAccountName(wallet.contractType),
+                            publicKey: wallet.publicKey,
+                            contractType: wallet.contractType,
+                            workchain: 0,
+                        }))
+                    if (accountsToAdd.length === 0) {
+                        accountsToAdd.push({
+                            name: makeAccountName(DEFAULT_WALLET_TYPE),
+                            publicKey: key.publicKey,
+                            contractType: DEFAULT_WALLET_TYPE,
+                            workchain: 0,
+                        })
+                    }
+                    await rpc.createAccounts(accountsToAdd)
+                    await rpc.ensureAccountSelected()
+                } catch (e) {
+                    console.error('Failed to import accounts')
+                }
+            }
+
+            if (key != null) {
+                accountability.onManageMasterKey(key)
+                accountability.onManageDerivedKey(key)
             }
         } catch (e: any) {
             setError(parseError(e))

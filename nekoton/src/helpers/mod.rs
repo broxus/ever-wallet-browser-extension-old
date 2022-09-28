@@ -85,17 +85,6 @@ pub fn repack_address(address: &str) -> Result<String, JsValue> {
         .handle_error()
 }
 
-#[wasm_bindgen(js_name = "checkEthAddress")]
-pub fn check_eth_address(address: &str) -> bool {
-    match address.strip_prefix("0x") {
-        Some(address) => hex::decode(address)
-            .ok()
-            .and_then(|bytes| (bytes.len() == 20).then(|| ()))
-            .is_some(),
-        None => false,
-    }
-}
-
 #[wasm_bindgen(js_name = "getBip39Hints")]
 pub fn get_hints(word: &str) -> StringArray {
     nt::crypto::dict::get_hints(word)

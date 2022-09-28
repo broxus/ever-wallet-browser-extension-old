@@ -4,6 +4,7 @@ import Decimal from 'decimal.js'
 
 import * as nt from '@nekoton'
 import { NATIVE_CURRENCY } from '@shared/constants'
+import { requiresSeparateDeploy } from '@shared/contracts'
 import { useSelectableKeys } from '@popup/hooks/useSelectableKeys'
 import { useRpc } from '@popup/providers/RpcProvider'
 import { parseError, ignoreCheckPassword } from '@popup/utils'
@@ -118,8 +119,7 @@ export function ApproveSendMessage({
     const balance = new Decimal(contractState?.balance || '0')
 
     const isDeployed =
-        contractState?.isDeployed ||
-        !nt.getContractTypeDetails(account.tonWallet.contractType).requiresSeparateDeploy
+        contractState?.isDeployed || !requiresSeparateDeploy(account.tonWallet.contractType)
 
     const trySubmit = async (keyPassword: nt.KeyPassword) => {
         if (inProcess) {

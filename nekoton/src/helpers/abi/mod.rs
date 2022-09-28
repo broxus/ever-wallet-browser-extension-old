@@ -1366,7 +1366,7 @@ pub fn unpack_from_cell(
     let params = parse_params_list(params).handle_error()?;
     let cell = parse_slice(boc)?;
     let abi_version = parse_optional_abi_version(abi_version)?;
-    nt_abi::unpack_from_cell(&params, cell.into(), allow_partial, abi_version)
+    nt_abi::unpack_from_cell(&params, cell, allow_partial, abi_version)
         .handle_error()
         .and_then(|tokens| make_tokens_object(&tokens))
 }
