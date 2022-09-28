@@ -56,7 +56,7 @@ export function MessageItem({ tonWalletAsset, message, style }: Props): JSX.Elem
                     </span>
                     <span className="transactions-list-item__description transactions-list-item__date">
                         {new Date(message.createdAt * 1000).toLocaleString('default', {
-                            month: 'long',
+                            month: 'short',
                             day: 'numeric',
                             hour: 'numeric',
                             minute: 'numeric',
