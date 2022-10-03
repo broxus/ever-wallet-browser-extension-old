@@ -342,7 +342,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                         <>
                             <div className="transaction-info-tx-details-separator" />
 
-                            {unconfirmedTransaction != null ? (
+                            {unconfirmedTransaction != null && !isExpired ? (
                                 <div className="transaction-info-tx-details-param">
                                     <span className="transaction-info-tx-details-param-desc">
                                         {intl.formatMessage({ id: 'TRANSACTION_TERM_SIGNATURES' })}
@@ -444,7 +444,7 @@ export function MultisigTransactionSign({ transaction }: Props): JSX.Element | n
                             text={intl.formatMessage({ id: 'OPEN_IN_EXPLORER_BTN_TEXT' })}
                         />
                     </footer>
-                ) : unconfirmedTransaction != null ? (
+                ) : unconfirmedTransaction != null && !isExpired ? (
                     <footer className="multisig-transaction__footer">
                         <Button
                             text={intl.formatMessage({ id: 'CONFIRM_BTN_TEXT' })}

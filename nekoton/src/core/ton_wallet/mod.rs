@@ -79,6 +79,7 @@ impl TonWallet {
         timeout: u32,
         custodians: CustodiansList,
         req_confirms: u8,
+        expiration_time: Option<u32>,
     ) -> Result<crate::crypto::UnsignedMessage, JsValue> {
         let wallet = self.inner.wallet.lock().trust_me();
 
@@ -89,6 +90,7 @@ impl TonWallet {
                 core_models::Expiration::Timeout(timeout),
                 &custodians,
                 req_confirms,
+                expiration_time,
             )
             .handle_error()?;
         Ok(crate::crypto::UnsignedMessage { inner })
