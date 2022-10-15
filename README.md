@@ -17,6 +17,9 @@
 # Prepare builder container
 docker build --tag ever-wallet-extension .
 
+# Prepare builder container for aarch(M1)
+docker build --platform linux/amd64 --tag ever-wallet-extension .
+
 # Build extension
 docker run -ti --rm --mount type=bind,source=$(pwd),target=/app ever-wallet-extension
 
